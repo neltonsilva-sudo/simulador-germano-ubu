@@ -670,8 +670,9 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
  function start(){overlay('<p style="margin:0">Verificando acesso…</p>');
   call('acessoConfig',[],function(c){var ov=function(){var o=document.getElementById('gateOv');if(o)o.remove();};
    if(!c||!c.protegido){if(window.__ACC.role==='pending')window.__ACC.role='open';ov();return;}
-   if(as)call('acessoAdminValido',[as],function(v){if(v)ov();else showLogin('Sua sessão expirou. Entre novamente.');},function(){showLogin('Não foi possível verificar a sessão.');});
-   else if(k)call('acessoValido',[k],function(v){if(v&&v.ok)ov();else showGate(area,'Seu acesso expirou ou foi encerrado. Solicite uma nova autorização.');},function(){showGate(area,'Não foi possível verificar o acesso.');});
+   var clean=function(){try{history.replaceState(null,'',base+(area&&!as?'?area='+encodeURIComponent(area):''));}catch(x){}};
+   if(as)call('acessoAdminAbrir',[as],function(v){if(v){clean();ov();}else showLogin('Sua sessão foi encerrada (o simulador foi fechado ou recarregado). Entre novamente com a senha.');},function(){showLogin('Não foi possível verificar a sessão.');});
+   else if(k)call('acessoAbrir',[k],function(v){if(v&&v.ok){clean();ov();}else showGate(area,'Seu acesso foi encerrado (página fechada ou recarregada, prazo vencido ou encerrado pela sala de controle). Solicite uma nova autorização.');},function(){showGate(area,'Não foi possível verificar o acesso.');});
    else if(area)showGate(area,'');else showLogin('');},function(e){overlay('<p style="color:#ff8a7a">Não foi possível falar com o servidor do simulador ('+esc(e.message)+'). Tente recarregar a página.</p>');});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
