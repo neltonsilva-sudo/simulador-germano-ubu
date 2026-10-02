@@ -644,7 +644,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
  function runner(ok,bad){return new Proxy({},{get:function(t,k){if(k==='withSuccessHandler')return function(f){return runner(f,bad);};if(k==='withFailureHandler')return function(f){return runner(ok,f);};if(k==='withUserObject')return function(){return runner(ok,bad);};return function(){call(k,Array.prototype.slice.call(arguments),ok,bad);};}});}
  window.google={script:{run:runner(null,null),host:{},url:{getLocation:function(cb){var o={};P.forEach(function(v,k){o[k]=v;});cb({parameter:o,parameters:{}});}}}};
  window.__BRIDGE=true;window.__API=call;
- var as=P.get('as'),k=P.get('k'),area=(P.get('area')||'').replace(/[^\w-]/g,'').slice(0,20),base=location.origin+location.pathname;
+ var qv=(P.get('q')||'').replace(/[^\w]/g,'').slice(0,20),as=P.get('as'),k=P.get('k'),area=(P.get('area')||'').replace(/[^\w-]/g,'').slice(0,20),base=location.origin+location.pathname;
  window.__ACC=as?{role:'admin',adm:as}:k?{role:'oper',k:k,area:area}:{role:'pending'};
  var CSS='position:fixed;inset:0;z-index:2147483000;background:#0b1622;display:flex;align-items:center;justify-content:center;color:#dce6ee;font:15px/1.5 system-ui,sans-serif';
  var BOX='max-width:420px;width:90vw;background:#13233a;border:1px solid #2c4d75;border-left:4px solid #ffd24a;border-radius:10px;padding:20px';
@@ -661,7 +661,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
    '<div id="gFm"><p style="margin:6px 0">Para ver e operar esta área, a sala de controle precisa autorizar o seu acesso.</p><input id="gN" maxlength="40" placeholder="Seu nome ou matrícula" autocomplete="name" style="'+INP+'"><button id="gGo" style="'+BTN+'">Solicitar acesso</button></div><p id="gSt" style="font-size:13px;color:#9fb0bd"></p><p style="font-size:13px;color:#9fb0bd">O acesso vale só para esta área, enquanto o simulador da sala de controle estiver aberto (máx. 8 h).</p>');
   var fm=document.getElementById('gFm');
   document.getElementById('gGo').onclick=function(){var n=document.getElementById('gN').value.trim();if(n.length<2){st('Informe seu nome ou matrícula.',1);return;}fm.style.display='none';st('Enviando pedido…');
-   call('acessoSolicitar',[a,n],function(r){if(!r||!r.ok){fm.style.display='';st(esc(r&&r.msg||'Não foi possível enviar o pedido.'),1);return;}st('Aguardando autorização da sala de controle…');poll(r.id);},function(e){fm.style.display='';st('Erro: '+esc(e.message),1);});};
+   call('acessoSolicitar',[a,n,qv],function(r){if(!r||!r.ok){fm.style.display='';st(esc(r&&r.msg||'Não foi possível enviar o pedido.'),1);return;}st('Aguardando autorização da sala de controle…');poll(r.id);},function(e){fm.style.display='';st('Erro: '+esc(e.message),1);});};
   function poll(id){call('acessoStatus',[id],function(r){if(!r){setTimeout(function(){poll(id);},3000);return;}
     if(r.status==='ok'){st('Autorizado. Abrindo…');location.href=base+'?area='+encodeURIComponent(r.area)+'&k='+encodeURIComponent(r.token);}
     else if(r.status==='negado'){st('Pedido negado pela sala de controle.',1);fm.style.display='';}
@@ -672,8 +672,8 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
    if(!c||!c.protegido){if(window.__ACC.role==='pending')window.__ACC.role='open';ov();return;}
    var clean=function(){try{history.replaceState(null,'',base+(area&&!as?'?area='+encodeURIComponent(area):''));}catch(x){}};
    if(as)call('acessoAdminAbrir',[as],function(v){if(v){clean();ov();}else showLogin('Sua sessão foi encerrada (o simulador foi fechado ou recarregado). Entre novamente com a senha.');},function(){showLogin('Não foi possível verificar a sessão.');});
-   else if(k)call('acessoAbrir',[k],function(v){if(v&&v.ok){clean();ov();}else showGate(area,'Seu acesso foi encerrado (página fechada ou recarregada, prazo vencido ou encerrado pela sala de controle). Solicite uma nova autorização.');},function(){showGate(area,'Não foi possível verificar o acesso.');});
-   else if(area)showGate(area,'');else showLogin('');},function(e){overlay('<p style="color:#ff8a7a">Não foi possível falar com o servidor do simulador ('+esc(e.message)+'). Tente recarregar a página.</p>');});}
+   else if(k)call('acessoAbrir',[k],function(v){if(v&&v.ok){clean();ov();}else {showGate(area,'Seu acesso foi encerrado. Leia o QR Code da área novamente para pedir uma nova autorização.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'Não foi possível verificar o acesso.');});
+   else if(area)call('acessoQrOk',[qv],function(v){if(v)showGate(area,'');else{showGate(area,'Este QR Code é antigo ou inválido e não dá mais acesso. Use a placa atualizada da área.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'');});else showLogin('');},function(e){overlay('<p style="color:#ff8a7a">Não foi possível falar com o servidor do simulador ('+esc(e.message)+'). Tente recarregar a página.</p>');});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
@@ -3508,7 +3508,7 @@ setInterval(()=>{const by={};(typeof ALARMS!=='undefined'?ALARMS:[]).forEach(a=>
   document.querySelectorAll('#labels .tag').forEach(t=>{const o=by[t.dataset.id];t.classList.toggle('al',!!o);t.classList.toggle('crit',!!(o&&o.crit));const b=t.querySelector('.alb');if(b&&o){b.textContent=o.n>1?o.n:'!';t.title=(o.crit?'ALARME':'AVISO')+' · Etapa '+EQ[t.dataset.id].num+'\n'+o.msg.join('\n');}else t.removeAttribute('title');});},500);
 /* ============ QR CODE POR ÁREA · MODO OPERADOR · REGISTRO DE INSPEÇÃO ============ */
 const APP_URL='https:'+'/'+'/script.google.com/macros/s/AKfycbzI3n1FQsK7H1_Guhcwz7dK21wDqK-4aeBLHF4ryNnhWE0eHH0Y7x_W97tP9Gee62Q/exec';
-const areaURL=id=>(window.__BRIDGE?location.origin+location.pathname:APP_URL)+'?area='+encodeURIComponent(id);
+let QRV=null;const areaURL=id=>(window.__BRIDGE?location.origin+location.pathname:APP_URL)+'?area='+encodeURIComponent(id)+(QRV?'&q='+QRV:'');
 const OPER={area:null};
 const unitArea=k=>{for(const id in UNITS)if(UNITS[id].some(u=>u.k===k))return id;return EQ[k]?k:null;};
 const canEdit=k=>!OPER.area||(CMETA[k]?CTRL_STAGE[k]===OPER.area:unitArea(k)===OPER.area);
@@ -3532,7 +3532,7 @@ const ACC=window.__ACC||{role:'open'};
 (()=>{const go=a=>{if(a&&EQ[a])setOperator(a);};if(ACC.role==='oper'){go(ACC.area);return;}if(ACC.role==='admin')return;try{if(HAS_GAS&&google.script.url)google.script.url.getLocation(l=>go(l&&l.parameter&&l.parameter.area));else go(new URLSearchParams(location.search).get('area'));}catch(e){}})();
 /* ---- Controle de acesso pelo QR Code ---- */
 let ACCST={pendentes:[],ativos:[]},accFirst=true,accSeen=new Set();
-function accPulse(){if(ACC.role!=='admin'||!HAS_GAS)return;google.script.run.withSuccessHandler(r=>{accFirst=false;ACCST=r||ACCST;accCardUpd();
+function accPulse(){if(ACC.role!=='admin'||!HAS_GAS)return;google.script.run.withSuccessHandler(r=>{accFirst=false;ACCST=r||ACCST;accCardUpd();if(r&&r.q&&r.q!==QRV){QRV=r.q;if(AREA&&typeof renderAreaExtra==='function')try{renderAreaExtra(AREA);}catch(e){}}
     const nov=ACCST.pendentes.filter(q=>!accSeen.has(q.id));nov.forEach(q=>{accSeen.add(q.id);logEvent('Acesso',`${q.nome} pediu acesso à área ${EQ[q.area]?EQ[q.area].num:q.area} pelo QR Code`);});
     if(nov.length&&$('#wifDlg').hidden)accOpen();else if(!$('#wifDlg').hidden&&$('#wifT').textContent==='Acessos pelo QR Code')accOpen();})
   .withFailureHandler(e=>console.warn('acesso',e)).acessoHost(ACC.adm,accFirst);}
@@ -3557,14 +3557,15 @@ if(ACC.role==='admin'&&HAS_GAS){accPulse();setInterval(accPulse,15000);$('#accCa
 function accBlock(){paused=true;let o=$('#accBlk');if(!o){o=document.createElement('div');o.id='accBlk';o.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(5,12,20,.97);display:flex;align-items:center;justify-content:center;padding:20px';
   o.innerHTML='<div style="max-width:420px;background:#13233a;border:1px solid #2c4d75;border-left:4px solid #ffd24a;border-radius:10px;padding:20px;color:#dce6ee;font-size:15px"><h2 style="color:#ffd24a;margin:0 0 8px;font-size:18px">Acesso encerrado</h2><p>A sala de controle encerrou o seu acesso, o simulador foi fechado ou o prazo terminou.</p><p>Leia o QR Code da área novamente para pedir uma nova autorização.</p></div>';document.body.appendChild(o);}
   document.querySelectorAll('#app,main,.panel,#area,#dash').forEach(x=>{x.style.visibility='hidden';});}
-if(ACC.role==='oper'&&HAS_GAS){const chk=()=>google.script.run.withSuccessHandler(r=>{if(!r||!r.ok)accBlock();}).withFailureHandler(()=>{}).acessoValido(ACC.k);setInterval(chk,60000);
+if(ACC.role==='oper'&&HAS_GAS){const chk=()=>google.script.run.withSuccessHandler(r=>{if(!r||!r.ok)accBlock();}).withFailureHandler(()=>{}).acessoValido(ACC.k);setInterval(chk,15000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk();});}
 if(ACC.semChave)console.warn('Controle de acesso do QR Code desligado: cadastre ADMIN_KEY nas Propriedades do script.');
 // bloco da área: QR code + registro de inspeção
 const INSP_LOCAL='inspRegs';const inspLocal=()=>{try{return JSON.parse(localStorage.getItem(INSP_LOCAL)||'[]');}catch(e){return[];}};
 let INSP_CACHE={};
 function renderAreaExtra(id){const box=$('#arExtra');if(!box)return;const e=EQ[id],mine=!OPER.area||OPER.area===id;const pts=(HS[id]||[]).map(h=>h[0]);
-  box.innerHTML=`<div><h4>QR Code da área</h4><div class="qrrow"><div id="arQr">${qrSVG(areaURL(id),128)}</div><div class="hint">Fixo para a área ${e.num}. Ao escanear com o celular, o operador abre o simulador <b>nesta área</b>, podendo <b>alterar só os parâmetros dela</b>; as demais ficam só para visualização.<br><a href="${esc(areaURL(id))}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir o link</a> · <button class="btn" id="qrPrint" style="padding:2px 8px">Imprimir placa</button> <button class="btn" id="qrAll" style="padding:2px 8px">Imprimir todos</button></div></div></div>
+  const qrBlk=ACC.role==='oper'||ACC.role==='pending'||(ACC.role==='admin'&&!QRV);
+  box.innerHTML=`${qrBlk?`<div><h4>QR Code da área</h4><p class="hint">${ACC.role==='admin'?'Carregando o QR Code atual…':'Os QR Codes são gerados e impressos só pela sala de controle.'}</p></div>`:`<div><h4>QR Code da área</h4><div class="qrrow"><div id="arQr">${qrSVG(areaURL(id),128)}</div><div class="hint">Fixo para a área ${e.num}. Ao escanear com o celular, o operador abre o simulador <b>nesta área</b>, podendo <b>alterar só os parâmetros dela</b>; as demais ficam só para visualização.<br><a href="${esc(areaURL(id))}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir o link</a> · <button class="btn" id="qrPrint" style="padding:2px 8px">Imprimir placa</button> <button class="btn" id="qrAll" style="padding:2px 8px">Imprimir todos</button>${ACC.role==='admin'?' <button class="btn" id="qrNew" style="padding:2px 8px;border-color:#ff6b5b;color:#ffb3a8">Gerar novos QR Codes</button>':''}</div></div></div>`}
    <div><h4>Registro de inspeção</h4>${mine?`<div class="inspf"><div class="airow"><select id="inTipo"><option>Anomalia</option><option>Falha</option><option>Erro operacional</option><option>Condição insegura</option><option>Vazamento</option><option>Ruído/vibração</option><option>Acidente de trabalho</option></select>
      <select id="inSev"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Crítica</option></select><select id="inLocal"><option value="">Local/equipamento…</option>${pts.map(p=>`<option>${esc(p)}</option>`).join('')}<option>Outro</option></select></div>
      <textarea id="inDesc" rows="3" maxlength="1500" placeholder="Descreva o que foi encontrado na inspeção: o quê, onde, desde quando, condições observadas…"></textarea>
@@ -3572,7 +3573,9 @@ function renderAreaExtra(id){const box=$('#arExtra');if(!box)return;const e=EQ[i
      <span class="hint" id="inMsg"></span></div>`:`<p class="hint">Registro disponível para o operador desta área (acesso pelo QR da área ${e.num}).</p>`}
      <div id="inList" style="margin-top:8px"></div><div id="inAiOut" class="aiout" style="margin-top:8px"></div></div>`;
   const pr=(ids)=>{const w=window.open('','_blank');if(!w){toast('Permita pop-ups para imprimir.');return;}w.document.write(`<html><head><title>QR Codes · Germano–Ubu</title><style>body{font-family:Arial,sans-serif;margin:0}.pl{width:9.5cm;height:12.5cm;border:2px solid #111;border-radius:10px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin:.4cm;page-break-inside:avoid;text-align:center;padding:.3cm;box-sizing:border-box}.n{font-size:34px;font-weight:800;background:#0d3b4f;color:#fff;border-radius:50%;width:56px;height:56px;line-height:56px}h2{font-size:17px;margin:.25cm 0}p{font-size:11px;color:#333;margin:.2cm 0 0}</style></head><body>${ids.map(i=>`<div class="pl"><div class="n">${EQ[i].num}</div><h2>${esc(EQ[i].name)}</h2>${qrSVG(areaURL(i),230)}<p>Escaneie com o celular para acessar e operar esta área</p></div>`).join('')}</body></html>`);w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(x){}},500);};
-  $('#qrPrint').addEventListener('click',()=>pr([id]));$('#qrAll').addEventListener('click',()=>pr(Object.keys(EQ).sort((a,b)=>EQ[a].num-EQ[b].num)));
+  if($('#qrPrint')){$('#qrPrint').addEventListener('click',()=>pr([id]));$('#qrAll').addEventListener('click',()=>pr(Object.keys(EQ).sort((a,b)=>EQ[a].num-EQ[b].num)));}
+  if($('#qrNew'))$('#qrNew').addEventListener('click',()=>confirmCmd('Gerar novos QR Codes?','Todas as placas impressas até agora deixam de funcionar e todos os celulares conectados perdem o acesso. Depois, imprima as placas novas.',()=>{
+    google.script.run.withSuccessHandler(r=>{QRV=r&&r.q;accPulse();renderAreaExtra(id);logEvent('Acesso','Novos QR Codes gerados: placas antigas invalidadas e acessos encerrados');toast('Novos QR Codes gerados. Imprima as placas novas.');}).withFailureHandler(e=>toast(String(e.message||e))).acessoQrNovo(ACC.adm);}));
   if(mine){const save=ai=>{const r={etapa:e.num,area:id,tipo:$('#inTipo').value,severidade:$('#inSev').value,local:$('#inLocal').value,descricao:$('#inDesc').value.trim(),operador:$('#inOper').value.trim(),tempo:simStamp()};
       if(r.descricao.length<5){$('#inMsg').textContent='Descreva o que foi encontrado.';return;}const done=res=>{r.linha=res&&res.linha;r.data=new Date().toLocaleString('pt-BR');$('#inDesc').value='';$('#inMsg').innerHTML=res&&res.url?`Registrado na planilha compartilhada. <a href="${esc(res.url)}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir</a>`:'Registrado neste navegador.';
         logEvent('Inspeção',`Área ${e.num}: ${r.tipo} (${r.severidade}) · ${r.descricao.slice(0,80)}`);(INSP_CACHE[id]=INSP_CACHE[id]||[]).unshift(r);inspDraw(id);if(ai)inspAI(id,r);};
