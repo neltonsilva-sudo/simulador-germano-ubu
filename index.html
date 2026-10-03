@@ -1611,15 +1611,50 @@ CRU.updateMatrixWorld(true);const s3T=(x,y,z)=>S3.group.localToWorld(V3(x,y,z));
 const TCLD=conveyor(LP(V3(-67.5,1.2,-15.5)),S3?s3T(45,17.9,2.4):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
 /* ---------- 4 Regularization stockpile ---------- */
 const PILE=grp(-80,20);
-const pileMesh=(()=>{const gm=new THREE.ConeGeometry(9.5,8.5,48,6);gm.translate(0,4.25,0);const pos=gm.attributes.position;for(let i=0;i<pos.count;i++){const y=pos.getY(i);if(y>.2&&y<8.3){pos.setX(i,pos.getX(i)*(1+(rnd()-.5)*.08));pos.setZ(i,pos.getZ(i)*(1+(rnd()-.5)*.08));}}gm.computeVertexNormals();return mesh(gm,MAT.ore,0,0,2,PILE);})();
+/* ---- Pilha de regularização · gêmeo digital (foto de campo): cone no ângulo de repouso (~37°) com camadas claras/escuras,
+   topo escuro do minério úmido recém-empilhado, empilhadeira em treliça galvanizada e minério caindo da cabeça no topo ---- */
+const PILE_R=10,PILE_H=7.6;
+const pileTex=(()=>{const c=document.createElement('canvas');c.width=1024;c.height=1024;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,1024);g.addColorStop(0,'#2e1a10');g.addColorStop(.05,'#4f2f1c');g.addColorStop(.16,'#7a4c2f');g.addColorStop(.5,'#8d5b3a');g.addColorStop(1,'#93633f');x.fillStyle=g;x.fillRect(0,0,1024,1024);
+  for(let k=0;k<1400;k++){const px=rnd()*1024,py=60+rnd()*964,w=20+rnd()*140,h=2+rnd()*7,dk=rnd()<.55;x.fillStyle=dk?`rgba(70,40,24,${.08+rnd()*.16})`:`rgba(185,140,98,${.06+rnd()*.12})`;x.beginPath();x.ellipse(px,py,w,h,0,0,Math.PI*2);x.fill();}
+  for(let y=80;y<1024;y+=18+rnd()*40){x.strokeStyle=`rgba(62,36,20,${.08+rnd()*.12})`;x.lineWidth=1+rnd()*3;x.beginPath();x.moveTo(0,y);for(let k=0;k<=64;k++)x.lineTo(k*16,y+Math.sin(k*.4+y)*4+(rnd()-.5)*5);x.stroke();}
+  for(let k=0;k<70000;k++){const v=rnd();x.fillStyle=v<.5?`rgba(55,30,18,${rnd()*.3})`:`rgba(200,160,118,${rnd()*.18})`;x.fillRect(rnd()*1024,rnd()*1024,1+rnd()*1.6,1+rnd()*1.6);}
+  const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.repeat.set(4,1);t.anisotropy=8;if('encoding' in t)t.encoding=THREE.sRGBEncoding;return t;})();
+const pileMat=new THREE.MeshStandardMaterial({map:pileTex,roughness:.97,metalness:0});
+const pileMesh=(()=>{const gm=new THREE.ConeGeometry(PILE_R,PILE_H,128,28,true);gm.translate(0,PILE_H/2,0);const pos=gm.attributes.position;
+  for(let i=0;i<pos.count;i++){const y=pos.getY(i),xx=pos.getX(i),zz=pos.getZ(i),a=Math.atan2(zz,xx);if(y>.15&&y<PILE_H-.25){const k=1+Math.sin(a*9+y*1.7)*.012+Math.sin(a*23+y*.6)*.008+(rnd()-.5)*.012;pos.setX(i,xx*k);pos.setZ(i,zz*k);}}
+  gm.computeVertexNormals();const m=mesh(gm,pileMat,0,0,2,PILE);return m;})();
+/* fluxo de minério caindo da cabeça da empilhadeira no topo da pilha + poeira no impacto */
+const PILEFALL=(()=>{const n=140,geo=new THREE.DodecahedronGeometry(.13),im=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:0x5a3220,roughness:.95}),n);im.castShadow=true;PILE.add(im);
+  const dust=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),new THREE.MeshBasicMaterial({color:0xb08060,transparent:true,opacity:.18,depthWrite:false}));PILE.add(dust);
+  return{im,dust,d:Array.from({length:n},()=>({u:Math.random(),x:(Math.random()-.5)*.5,z:(Math.random()-.5)*.5,r:Math.random()*6}))};})();
 {
   const st=new THREE.Group();PILE.add(st);st.position.set(0,0,-8.8);
-  box(2.2,3.6,2.2,MAT.yellow,0,1.8,0,st);cyl(1.3,1.3,.5,MAT.dark,0,3.8,0,st,16);
-  truss(V3(0,4.6,0),V3(0,10.4,10.6),st,1.2,1.1);
-  box(1.1,.05,11.8,MAT.rubber,0,7.6,5.2,st).rotation.x=-Math.atan2(5.8,10.6);
-  beam(V3(0,4.2,0),V3(0,12.5,4),.12,MAT.yellow,st);beam(V3(0,12.5,4),V3(0,10.6,10.4),.06,MAT.steel,st,true);beam(V3(0,12.5,4),V3(0,4.6,-3),.06,MAT.steel,st,true);
-  box(1.6,1.2,1.6,MAT.dark,0,4.6,-3.3,st);
-  PILE.userData.stacker=st;
+  const galv=std(0x9aa4aa,.75,.38),galvDk=std(0x6f787e,.7,.45);
+  // pé (pórtico) e mesa giratória
+  for(const sx of [-1,1]){beam(V3(sx*1.2,0,-.8),V3(sx*.5,4.4,0),.22,galv,st);beam(V3(sx*1.2,0,.8),V3(sx*.5,4.4,0),.22,galv,st);}
+  cyl(1.4,1.4,.45,galvDk,0,4.5,0,st,24);box(2.2,1.4,2.2,galv,0,5.3,-1,st);
+  // lança em treliça galvanizada com passarela e guarda-corpo (foto)
+  truss(V3(0,4.8,0),V3(0,10.4,10.6),st,1.25,1.25,galv);
+  const ang=Math.atan2(5.6,10.6),L=Math.hypot(5.6,10.6);
+  box(1.05,.05,L,MAT.rubber,0,7.8,5.3,st).rotation.x=-ang;
+  const wk=new THREE.Group();wk.position.set(.95,7.35,5.3);wk.rotation.x=-ang;st.add(wk);box(.7,.05,L,galvDk,0,0,0,wk);
+  for(let k=0;k<=12;k++){box(.04,1,.04,galv,.33,.5,-L/2+k*L/12,wk);}box(.04,.04,L,galv,.33,1,0,wk);box(.04,.04,L,galv,.33,.55,0,wk);
+  // casa da cabeça com refletor, chute de descarga
+  const hd=new THREE.Group();hd.position.set(0,10.4,10.6);st.add(hd);box(1.9,1.3,1.6,galv,0,.25,.2,hd);box(1.5,.9,.9,galvDk,0,-.75,.55,hd);
+  for(const sx of [-1,1])box(.04,.9,1.7,galv,sx*.95,1.2,.2,hd);
+  const lamp=new THREE.Mesh(new THREE.BoxGeometry(.35,.22,.12),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff1c8,emissiveIntensity:2.5}));lamp.position.set(-.5,.35,1.02);hd.add(lamp);
+  beam(V3(0,5.6,-1.4),V3(0,13.2,4.2),.14,galv,st);beam(V3(0,13.2,4.2),V3(0,10.9,10.4),.05,galvDk,st,true);beam(V3(0,13.2,4.2),V3(0,5.4,-3.4),.05,galvDk,st,true);
+  box(1.6,1.2,1.6,galvDk,0,4.9,-3.6,st);
+  PILE.userData.stacker=st;PILE.userData.head=hd;
+}
+/* base da pilha: tanques redondos e cerca (foto), túnel de retomada com 3 alimentadores de placa (TCC) */
+{
+  const tk=std(0x2f6fa8,.25,.45);for(const [x,z] of [[12.5,10],[14.6,8.4],[16.6,6.6]]){cyl(1.05,1.05,1.25,tk,x,.62,z,PILE,24);cyl(1.08,1.08,.08,std(0x23557f,.3,.5),x,1.28,z,PILE,24);}
+  for(let k=0;k<=10;k++){const a=-.15+k*.11,x=Math.cos(a)*14.2,z=2+Math.sin(a)*14.2;box(.08,1.6,.08,std(0x55606a,.6,.5),x,.8,z,PILE);}
+  const tun=new THREE.Group();tun.position.set(9.5,0,13.5);tun.rotation.y=-.6;PILE.add(tun);
+  box(4.2,3.2,.6,MAT.concrete,0,1.6,0,tun);box(3,2.4,.62,MAT.dark,0,1.25,.02,tun);
+  PILE.userData.tunnel=tun;
 }
 const B34=conveyor(S3?s3T(67.5,2.6,22):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
 const B45=conveyor(V3(-68,.8,24),V3(-62,6,-5),1.2,{yellow:true});
@@ -2973,7 +3008,12 @@ function frame(){
   {const sp=clamp(.7+c.mine/Math.max(1,P.feedC*2)*.3,.7,1);MINE.userData.pile.scale.setScalar(sp);MINE.userData.pile.position.y=2.25*sp;}BPIT.update(dt,c.mine,RUN.mine);
   TCLD.update(dt,c.mine,RUN.tcld);B34.update(dt,c.mine,RUN.crush);B45.update(dt,G.F,RUN.conc);B78.update(dt,G.sand,RUN.sandf);
   const pr=clamp(Math.cbrt(ST.stockPile/200000),.3,1.12);pileMesh.scale.set(pr,pr,pr);
-  if(RUN.crush)PILE.userData.stacker.rotation.y=Math.sin(t*.12)*.3;
+  if(RUN.crush)PILE.userData.stacker.rotation.y=Math.sin(t*.06)*.18;
+  {const F=PILEFALL,on=RUN.crush&&(CUR.mine||0)>1;F.im.visible=on;F.dust.visible=on;if(on){PILE.updateMatrixWorld(true);
+    const h=PILE.worldToLocal(PILE.userData.head.localToWorld(V3(0,-1.2,.6))),ap=V3(h.x,PILE_H*pr-.05,h.z),q=CUR.mine/4000,M4=new THREE.Matrix4(),E4=new THREE.Euler(),Q4=new THREE.Quaternion(),S4=new THREE.Vector3(1,1,1),P4=new THREE.Vector3();
+    const nv=Math.round(F.d.length*clamp(.35+q*.6,.2,1));F.im.count=nv;
+    for(let k=0;k<nv;k++){const d=F.d[k];d.u+=dt*.9;if(d.u>1)d.u-=1;const u=d.u;P4.set(h.x+(ap.x-h.x)*u+d.x*(.25+u*.9),h.y+(ap.y-h.y)*u,h.z+(ap.z-h.z)*u+d.z*(.25+u*.9));E4.set(d.r+t*4,d.r*2,0);Q4.setFromEuler(E4);S4.setScalar(.8+(d.r%1)*.6);M4.compose(P4,Q4,S4);F.im.setMatrixAt(k,M4);}
+    F.im.instanceMatrix.needsUpdate=true;const pu=1+Math.sin(t*3.1)*.25;F.dust.position.copy(ap);F.dust.scale.set(1.4*pu,.6*pu,1.4*pu);F.dust.material.opacity=.12+.06*Math.sin(t*2.3);}}
   if(typeof tw3Tick==='function')tw3Tick(t,dt);
   mills.forEach((m,i)=>{const k=['c1','c2','c3'][i];const onM=RUN.conc&&RUN[k]&&G.F>0;if(onM)m.rotation.z+=dt*1.2;m.userData.mats[0].color.setHex(RUN[k]?0x4f9aa6:0x9aa3ac);m.userData.mats[1].color.setHex(RUN[k]?0x3c7c87:0x7d868f);});
   sfDrums.forEach((d,i)=>d.color.setHex(RUN[['f1','f2','f3'][i]]?0xffffff:0x8d959c));
@@ -3264,7 +3304,7 @@ const HS={
   tcld:[['Correia TCLD',()=>LP(V3(-74,6,-9)),'tcldLoad']],
   crush:[...(S3?S3.hotspots.filter(h=>/PN|BR/.test(h.tag)).map(h=>[`${/PN/.test(h.tag)?'Peneira':/BR00[12]/.test(h.tag)?'HP 400':'Barmac'} ${h.tag}`,()=>S3.group.localToWorld(h.pos.clone()),null,null,()=>tw3Short(h.tag),()=>tw3State(h.tag)]):[]),
     ['Carga circulante',()=>W(CRU,3,1.2,2),'circ'],['Produto britado (P80 da moagem)',()=>W(CRU,8,1,3),'p80']],
-  pile:[['Pilha de regularização',()=>W(PILE,0,9,2),'pile'],['Empilhadeira radial',()=>W(PILE,0,12,-8),'feed']],
+  pile:[['Pilha de regularização (estoque)',()=>W(PILE,0,PILE_H*.8,2),'pile'],['Empilhadeira · minério caindo na pilha',()=>W(PILE,0,11,1),'mine'],['Retomada · 3 alimentadores de placa',()=>W(PILE,9.5,2.5,13.5),'feed']],
   conc:[['Moinho C1',()=>W(CON,-8,6.5,-5),null,'c1',()=>RUN.c1?hv('kwht'):'em revitalização'],['Moinho C2',()=>W(CON,0,6.5,-5),'kwht','c2'],['Moinho C3',()=>W(CON,8,6.5,-5),'p80','c3'],
     ['Ciclones de deslamagem',()=>W(CON,-9,9.5,1.2),null,null,()=>'lama '+fmt(CUR.G.slime,0)+' t/h'],['Flotação · SiO₂',()=>W(CON,-2,5,7.3),'siC'],['Flotação · Fe',()=>W(CON,6,5,7.3),'feC'],['Recuperação mássica',()=>W(CON,-10,5,9.6),'mr']],
   thick6:[['Espessador de concentrado',()=>LP(V3(-38,5,20)),'ovf'],['Tanques de estocagem',()=>LP(V3(-28,10,20)),'tank6'],['Underflow',()=>LP(V3(-33,2,16)),null,null,()=>'máx. '+fmt(CUR.TH?CUR.TH.cuMax:0,1)+' % sól.']],
