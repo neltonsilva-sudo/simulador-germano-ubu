@@ -3284,7 +3284,7 @@ function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s||'ok';}
 function tw3Alarms(add){if(!RUN.crush||!S3)return;for(const a of (S3.sim.kpi.alarms||[]))add('crush',a.st==='crit'?'crit':'warn',`${a.tag}: ${a.why}`);}
 const tw3Hrs=h=>!isFinite(h)?'–':h>48?`≈ ${fmt(h/24,0)} dias`:`≈ ${fmt(h,0)} h`;
 /* abre o gêmeo digital imersivo do setor 3 (nova aba), levando a sessão para o acesso */
-function twin3URL(){return 'https:'+'/'+'/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/?t='+encodeURIComponent((typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'');}
+function twin3URL(){return 'https:'+'/'+'/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/?v='+Date.now().toString(36)+'&t='+encodeURIComponent((typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'');}
 function openTwin3(){const w=window.open(twin3URL(),'_blank');if(w)try{w.opener=null;}catch(e){}if(!w)toast('Permita pop-ups para abrir o gêmeo digital do setor 3 (ou use o botão no painel da área).');else logEvent('Navegação','Gêmeo digital imersivo do setor 3 aberto');}
 function tw3Panel(){const el=$('#tw3');if(!el)return;const V=tw3Calc(),can=!OPER.area||OPER.area==='crush',tag=s=>`<span class="tagp ${s==='crit'?'crit':s==='warn'?'warn':s==='off'?'':'ok'}">${s==='crit'?'crítico':s==='warn'?'alerta':s==='off'?'parado':'normal'}</span>`;
   const imURL=twin3URL();
