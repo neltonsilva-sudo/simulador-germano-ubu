@@ -1585,12 +1585,12 @@ const BPIT=conveyor(V3(-81,-2.4,-29),V3(-70,4.6,-19.5),1,{yellow:true});
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
 /* ---- Setor 3 · estrutura do gêmeo digital (mesmo modelo do gêmeo imersivo, em escala reduzida, embutido via window.Setor3) ---- */
-let S3=null;const S3K=.27;
+let S3=null;const S3K=.38;
 try{if(window.Setor3){S3=Setor3.buildSetor3({embed:true});S3.group.scale.setScalar(S3K);S3.group.position.set(3-32*S3K,0,-12*S3K);CRU.add(S3.group);}}catch(e){console.warn('setor3',e);S3=null;}
 if(!S3){bld(CRU,0,0,11,9,10,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});bld(CRU,8.5,1,6,6,13,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});}
 /* correias ligadas à estrutura do setor 3: TCLD chega na ponta do distribuidor (tripper) e a B34 sai da correia do produto */
-CRU.updateMatrixWorld(true);const s3W=(x,y,z)=>CRU.localToWorld(V3(x,y,z));
-const TCLD=conveyor(LP(V3(-67.5,1.2,-15.5)),S3?s3W(6.6,4.85,-2.6):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
+CRU.updateMatrixWorld(true);const s3T=(x,y,z)=>S3.group.localToWorld(V3(x,y,z));/* coordenadas do gêmeo (m) */
+const TCLD=conveyor(LP(V3(-67.5,1.2,-15.5)),S3?s3T(45,17.9,2.4):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
 /* ---------- 4 Regularization stockpile ---------- */
 const PILE=grp(-80,20);
 const pileMesh=(()=>{const gm=new THREE.ConeGeometry(9.5,8.5,48,6);gm.translate(0,4.25,0);const pos=gm.attributes.position;for(let i=0;i<pos.count;i++){const y=pos.getY(i);if(y>.2&&y<8.3){pos.setX(i,pos.getX(i)*(1+(rnd()-.5)*.08));pos.setZ(i,pos.getZ(i)*(1+(rnd()-.5)*.08));}}gm.computeVertexNormals();return mesh(gm,MAT.ore,0,0,2,PILE);})();
@@ -1603,7 +1603,7 @@ const pileMesh=(()=>{const gm=new THREE.ConeGeometry(9.5,8.5,48,6);gm.translate(
   box(1.6,1.2,1.6,MAT.dark,0,4.6,-3.3,st);
   PILE.userData.stacker=st;
 }
-const B34=conveyor(S3?s3W(12.6,.75,2.65):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
+const B34=conveyor(S3?s3T(67.5,2.6,22):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
 const B45=conveyor(V3(-68,.8,24),V3(-62,6,-5),1.2,{yellow:true});
 /* ---------- 5 Concentrator: grinding, desliming, flotation ---------- */
 const CON=grp(-50,4);
