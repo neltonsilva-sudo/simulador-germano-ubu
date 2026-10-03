@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS } from './layout.js?v=20261003144432';
-import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003144432';
+import { B, LV, SCREENS } from './layout.js?v=20261003145318';
+import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003145318';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -27,6 +27,7 @@ export function buildBuilding(scene, M, opt = {}) {
   box(g, B.screenEnd - x0, t, B.D, M.concrete, (B.screenEnd + x0) / 2, y1 - t / 2, B.D / 2);
   for (const [a, b] of holes) { box(g, b - a, t, 3.4, M.concrete, (a + b) / 2, y1 - t / 2, 1.7); box(g, b - a, t, 5.6, M.concrete, (a + b) / 2, y1 - t / 2, B.D - 2.8); }
   for (const [a, b] of holes) { railing(g, V(a, y1, 3.4), V(a, y1, B.D - 5.6), M.yellow); railing(g, V(b, y1, 3.4), V(b, y1, B.D - 5.6), M.yellow); }
+  for (const [a, b] of holes) railing(g, V(a, y1, B.D - 5.6), V(b, y1, B.D - 5.6), M.yellow);   // frente de cada vão (lado da circulação)
   railing(g, V(B.screenEnd, y1, 0.3), V(B.screenEnd, y1, B.D - .3), M.yellow);
   // PISO DOS ALIMENTADORES (L2): faixa sobre a alimentação das peneiras, com grade e guarda-corpo voltado ao vão
   const E = B.screenEnd;

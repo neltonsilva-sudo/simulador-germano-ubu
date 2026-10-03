@@ -2,8 +2,8 @@
 // caixa de alimentação, deck superior de painéis de poliuretano com relevo piramidal, deck inferior, vibradores amarelos modulares,
 // molas sobre vigas, calhas de descarga, moegas de passante; alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261003144432';
-import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003144432';
+import { SCREENS, LV } from './layout.js?v=20261003145318';
+import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003145318';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 
