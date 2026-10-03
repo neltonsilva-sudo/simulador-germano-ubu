@@ -1296,7 +1296,10 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
  function showLogin(msg){overlay('<h1 style="font-size:20px;margin:0 0 6px;color:#ffd24a">Acesso restrito</h1><p style="margin:6px 0">Este simulador só abre para a sala de controle ou pelo QR Code de uma área, com autorização.</p>'+(msg?'<p style="color:#ff8a7a">'+esc(msg)+'</p>':'')+
    '<form id="gF"><input id="gS" type="password" autocomplete="current-password" placeholder="Senha da sala de controle" style="'+INP+'"><button type="submit" style="'+BTN+'">Entrar</button></form><p id="gSt" style="font-size:13px;color:#9fb0bd"></p><p style="font-size:13px;color:#9fb0bd">Operadores: leiam o QR Code da área para pedir acesso.</p>');
   document.getElementById('gF').onsubmit=function(ev){ev.preventDefault();var v=document.getElementById('gS').value;if(!v){st('Digite a senha.',1);return;}st('Verificando…');
-   call('acessoAdminLogin',[v],function(r){if(!r||!r.ok){st(esc(r&&r.msg||'Não foi possível entrar.'),1);document.getElementById('gS').value='';return;}location.href=base+'?as='+encodeURIComponent(r.token);},function(e){st('Erro: '+esc(e.message),1);});};}
+   call('acessoAdminLogin',[v,true],function(r){if(!r||!r.ok){st(esc(r&&r.msg||'Não foi possível entrar.'),1);document.getElementById('gS').value='';return;}
+   /* sessão já aberta pelo próprio login: entra sem recarregar a página (uma ida ao servidor em vez de três) */
+   if(r.aberto){window.__ACC.role='admin';window.__ACC.adm=r.token;try{history.replaceState(null,'',base);}catch(x){}var o=document.getElementById('gateOv');if(o)o.remove();try{window.dispatchEvent(new Event('acc-admin'));}catch(x){}return;}
+   location.href=base+'?as='+encodeURIComponent(r.token);},function(e){st('Erro: '+esc(e.message),1);});};}
  function showGate(a,msg){var nm=a.toUpperCase();try{if(typeof EQ!=='undefined'&&EQ[a])nm=EQ[a].num+' · '+EQ[a].name;}catch(x){}overlay('<h1 style="font-size:18px;margin:0 0 6px;color:#ffd24a">Acesso à área '+esc(nm)+'</h1>'+(msg?'<p style="color:#ff8a7a">'+esc(msg)+'</p>':'')+
    '<div id="gFm"><p style="margin:6px 0">Para ver e operar esta área, a sala de controle precisa autorizar o seu acesso.</p><input id="gN" maxlength="40" placeholder="Seu nome ou matrícula" autocomplete="name" style="'+INP+'"><button id="gGo" style="'+BTN+'">Solicitar acesso</button></div><p id="gSt" style="font-size:13px;color:#9fb0bd"></p><p style="font-size:13px;color:#9fb0bd">O acesso vale só para esta área, enquanto o simulador da sala de controle estiver aberto (máx. 8 h).</p>');
   var fm=document.getElementById('gFm');
@@ -1308,12 +1311,18 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
     else if(r.status==='expirado'){st('O pedido expirou. Solicite novamente.',1);fm.style.display='';}
     else setTimeout(function(){poll(id);},3000);},function(){setTimeout(function(){poll(id);},5000);});}}
  function start(){overlay('<p style="margin:0">Verificando acesso…</p>');
-  call('acessoConfig',[],function(c){var ov=function(){var o=document.getElementById('gateOv');if(o)o.remove();};
+  var ov=function(){var o=document.getElementById('gateOv');if(o)o.remove();};
+  /* sem chave na URL: mostra a senha na hora e só confere em segundo plano se a proteção está ligada (isso também 'acorda' o servidor enquanto a senha é digitada) */
+  if(!as&&!k&&!area){showLogin('');call('acessoConfig',[],function(c){if(c&&!c.protegido&&window.__ACC.role==='pending'){window.__ACC.role='open';ov();}},function(){});return;}
+  var go=function(c){
    if(!c||!c.protegido){if(window.__ACC.role==='pending')window.__ACC.role='open';ov();return;}
    var clean=function(){try{history.replaceState(null,'',base+(area&&!as?'?area='+encodeURIComponent(area):''));}catch(x){}};
    if(as)call('acessoAdminAbrir',[as],function(v){if(v){clean();ov();}else showLogin('Sua sessão foi encerrada (o simulador foi fechado ou recarregado). Entre novamente com a senha.');},function(){showLogin('Não foi possível verificar a sessão.');});
    else if(k)call('acessoAbrir',[k],function(v){if(v&&v.ok){clean();ov();}else {showGate(area,'Seu acesso foi encerrado. Leia o QR Code da área novamente para pedir uma nova autorização.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'Não foi possível verificar o acesso.');});
-   else if(area)call('acessoQrOk',[qv],function(v){if(v)showGate(area,'');else{showGate(area,'Este QR Code é antigo ou inválido e não dá mais acesso. Use a placa atualizada da área.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'');});else showLogin('');},function(e){overlay('<p style="color:#ff8a7a;margin-top:0">Não foi possível falar com o servidor do simulador ('+esc(e.message)+').</p><p style="font-size:13px;color:#9fb0bd">Pode ser uma falha momentânea do servidor do Google.</p><button id="gRetry" style="'+BTN+'">Tentar de novo</button>');var b=document.getElementById('gRetry');if(b)b.onclick=start;});}
+   else if(area)call('acessoQrOk',[qv],function(v){if(v)showGate(area,'');else{showGate(area,'Este QR Code é antigo ou inválido e não dá mais acesso. Use a placa atualizada da área.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'');});else showLogin('');};
+  /* com chave na URL a proteção está ligada: vai direto à verificação da chave (uma chamada só) */
+  if(as||k){go({protegido:true});return;}
+  call('acessoConfig',[],go,function(e){overlay('<p style="color:#ff8a7a;margin-top:0">Não foi possível falar com o servidor do simulador ('+esc(e.message)+').</p><p style="font-size:13px;color:#9fb0bd">Pode ser uma falha momentânea do servidor do Google.</p><button id="gRetry" style="'+BTN+'">Tentar de novo</button>');var b=document.getElementById('gRetry');if(b)b.onclick=start;});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
@@ -4262,8 +4271,9 @@ function accOpen(){const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent='A
   d.querySelectorAll('[data-acc-end]').forEach(b=>b.addEventListener('click',()=>{b.disabled=true;run('acessoEncerrar',b.dataset.accEnd);logEvent('Acesso','Acesso encerrado pela sala de controle');}));
   $('#accAll').addEventListener('click',()=>confirmCmd('Encerrar todos os acessos pelo QR Code?','Todos os celulares perdem o acesso em até 1 minuto e precisarão de nova autorização.',()=>{run('acessoEncerrar','');logEvent('Acesso','Todos os acessos pelo QR Code foram encerrados');}));
   $('#wifClose').addEventListener('click',()=>{d.hidden=true;});}
-if(ACC.role==='admin'&&HAS_GAS){accPulse();setInterval(accPulse,15000);$('#accCard').addEventListener('click',accOpen);
+let accOn=false;function accAdminInit(){if(accOn||ACC.role!=='admin'||!HAS_GAS)return;accOn=true;accPulse();setInterval(accPulse,15000);$('#accCard').addEventListener('click',accOpen);
   window.addEventListener('pagehide',()=>{try{google.script.run.acessoFechar(ACC.adm);}catch(e){}});}
+accAdminInit();window.addEventListener('acc-admin',accAdminInit);// login sem recarregar a página
 /* operador: confere a chave a cada minuto; se expirou ou foi encerrada, bloqueia a tela */
 function accBlock(){paused=true;let o=$('#accBlk');if(!o){o=document.createElement('div');o.id='accBlk';o.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(5,12,20,.97);display:flex;align-items:center;justify-content:center;padding:20px';
   o.innerHTML='<div style="max-width:420px;background:#13233a;border:1px solid #2c4d75;border-left:4px solid #ffd24a;border-radius:10px;padding:20px;color:#dce6ee;font-size:15px"><h2 style="color:#ffd24a;margin:0 0 8px;font-size:18px">Acesso encerrado</h2><p>A sala de controle encerrou o seu acesso, o simulador foi fechado ou o prazo terminou.</p><p>Leia o QR Code da área novamente para pedir uma nova autorização.</p></div>';document.body.appendChild(o);}
