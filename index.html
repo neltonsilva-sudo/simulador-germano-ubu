@@ -1599,7 +1599,7 @@ const trucks=[];
   // ramp stacker
 }
 /* ---------- 2 TCLD ---------- */
-const BPIT=conveyor(V3(-81,-2.4,-29),V3(-70,4.6,-19.5),1,{yellow:true});
+const BPIT=conveyor(V3(-80.5,.4,-28.6),V3(-70,4.6,-19.5),1,{yellow:true});/* acima do talude da cava, contínua até a transferência para a TCLD */
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
 /* ---- Setor 3 · estrutura do gêmeo digital (mesmo modelo do gêmeo imersivo, em escala reduzida, embutido via window.Setor3) ---- */
@@ -1608,7 +1608,7 @@ try{if(window.Setor3){S3=Setor3.buildSetor3({embed:true});S3.group.scale.setScal
 if(!S3){bld(CRU,0,0,11,9,10,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});bld(CRU,8.5,1,6,6,13,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});}
 /* correias ligadas à estrutura do setor 3: TCLD chega na ponta do distribuidor (tripper) e a B34 sai da correia do produto */
 CRU.updateMatrixWorld(true);const s3T=(x,y,z)=>S3.group.localToWorld(V3(x,y,z));/* coordenadas do gêmeo (m) */
-const TCLD=conveyor(LP(V3(-67.5,1.2,-15.5)),S3?s3T(45,17.9,2.4):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
+const TCLD=conveyor(LP(V3(-70,2.3,-19.5)),/* início sob a descarga da correia da mina (BPIT) */S3?s3T(45,17.9,2.4):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
 /* ---------- 4 Regularization stockpile ---------- */
 const PILE=grp(-80,20);
 /* ---- Pilha de regularização · gêmeo digital (foto de campo): cone no ângulo de repouso (~37°) com camadas claras/escuras,
