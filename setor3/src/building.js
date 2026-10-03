@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS } from './layout.js?v=20261003125016';
-import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003125016';
+import { B, LV, SCREENS } from './layout.js?v=20261003130901';
+import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003130901';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);

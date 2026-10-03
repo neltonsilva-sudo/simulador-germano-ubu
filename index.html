@@ -1255,7 +1255,7 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
  function auth(){var a=window.__ACC||{};return a.adm||a.k||'';}
  function call(fn,args,ok,bad){var body=JSON.stringify({fn:fn,args:args||[],auth:auth()});
   if(fn==='acessoFechar'&&navigator.sendBeacon){try{navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));}catch(e){}return;}
-  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body,redirect:'follow'}).then(function(r){return r.json();})
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body,redirect:'follow',credentials:'omit',cache:'no-store'}).then(function(r){return r.text();}).then(function(x){try{return JSON.parse(x);}catch(e){throw new Error('o servidor respondeu com uma página em vez de dados; tente de novo');}})
    .then(function(j){if(j&&j.ok){if(ok)ok(j.r);}else if(bad)bad(new Error(j&&j.e||'Falha na API'));}).catch(function(e){if(bad)bad(e);});}
  function runner(ok,bad){return new Proxy({},{get:function(t,k){if(k==='withSuccessHandler')return function(f){return runner(f,bad);};if(k==='withFailureHandler')return function(f){return runner(ok,f);};if(k==='withUserObject')return function(){return runner(ok,bad);};return function(){call(k,Array.prototype.slice.call(arguments),ok,bad);};}});}
  window.google={script:{run:runner(null,null),host:{},url:{getLocation:function(cb){var o={};P.forEach(function(v,k){o[k]=v;});cb({parameter:o,parameters:{}});}}}};
