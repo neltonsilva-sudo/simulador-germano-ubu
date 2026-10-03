@@ -1,3 +1,4 @@
+import { call, getToken, SIM_URL } from './api.js?v=20261003135802';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -34,10 +35,15 @@ const CSS = `
 .s3acc td button{border:1px solid var(--cline);border-radius:5px;padding:2px 7px;font:600 10.5px system-ui;cursor:pointer;background:rgba(10,30,60,.6);color:#e8edf1}.s3acc td a{color:var(--accent);cursor:pointer;text-decoration:underline}
 .s3acc .al{border-left:3px solid var(--warn);padding:5px 8px;margin:4px 0;background:var(--card);border-radius:0 6px 6px 0}.s3acc .al.crit{border-color:var(--crit)}
 .s3acc .ev{color:#c3cfd9;font-size:11.5px;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.08)}.s3acc .ev b{color:var(--accent)}
+.s3acc select,.s3acc textarea,.s3acc input[type=text]{width:100%;box-sizing:border-box;background:rgba(4,20,44,.75);border:1px solid var(--cline);border-radius:6px;color:#e8edf1;padding:7px 8px;font:12.5px "IBM Plex Sans",system-ui;margin:3px 0}
+.s3acc .row2{display:flex;gap:6px}.s3acc .row2>*{flex:1}.s3acc .btn2{border:1px solid var(--cline);border-radius:6px;padding:7px 10px;background:rgba(10,30,60,.7);color:#e8edf1;font:600 12px "IBM Plex Sans",system-ui;cursor:pointer}
+.s3acc .btn2.ai{background:#5cc6dc;color:#08202a;border-color:#5cc6dc}.s3acc .btn2.red{border-color:#ff6b5b;color:#ffb3a8}.s3acc .hint{color:var(--muted);font-size:11.5px}
+.s3acc .qrrow{display:flex;gap:10px;align-items:flex-start}.s3acc .qrbox{background:#fff;border-radius:6px;padding:6px;flex:none;width:128px;height:128px}.s3acc .qrbox svg,.s3acc .qrbox img{width:100%;height:100%}
+.s3acc .card h6{margin:6px 0 2px;font:600 12px var(--disp);letter-spacing:.08em;color:#ffd24a;text-transform:uppercase}
 @media (max-width:860px){.s3acc{top:auto;bottom:150px;right:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
-const SECS = [['pi', 'Pontos de inspeção'], ['prob', 'Problemas detectados'], ['ind', 'Indicadores em tempo real'], ['tend', 'Tendências'], ['ctl', 'Controles e ajustes'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos']];
+const SECS = [['pi', 'Pontos de inspeção'], ['prob', 'Problemas detectados'], ['ind', 'Indicadores em tempo real'], ['tend', 'Tendências'], ['ctl', 'Controles e ajustes'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['insp', 'Registro de inspeção']];
 
 export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -146,6 +152,64 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     if (on('al') || force) $('#pB_al').innerHTML = (K.alarms.length ? K.alarms.map((a) => `<div class="al ${a.st}"><b>${a.tag}</b> · ${a.why}</div>`).join('') : '<div style="color:#2fbf71">Sem alarmes ativos.</div>') +
       `<div style="margin-top:8px;color:#9fb0bd;font-weight:600">Eventos</div>${sim.log.slice(0, 30).map((v) => `<div class="ev">${v.h} · <b>${v.tipo}</b> · ${v.txt}</div>`).join('') || '<div class="ev">Nenhum evento ainda.</div>'}`;
   }
+  // ---- QR Code da área (sessão atual; só a sala de controle gera e imprime)
+  const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const QB = $('#pB_qr'); let QV = null;
+  const qrURL = () => SIM_URL + '?area=crush' + (QV ? '&q=' + QV : '');
+  const loadQRLib = () => new Promise((res) => { if (window.qrcode) return res(); const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'; sc.onload = () => res(); sc.onerror = () => res(); document.head.appendChild(sc); });
+  const qrSVG = (txt, px) => { try { const q = window.qrcode(0, 'M'); q.addData(txt); q.make(); return q.createSvgTag({ cellSize: Math.max(2, Math.floor(px / (q.getModuleCount() + 8))), margin: 4, scalable: true }); } catch (e) { return ''; } };
+  async function drawQR() {
+    QB.innerHTML = '<p class="hint">Carregando o QR Code atual…</p>';
+    let info = { admin: false, q: null }; try { info = await call('acessoQrInfo', [getToken()]); } catch (e) { info = { admin: false, q: null, err: e.message }; }
+    if (!info.admin) { QB.innerHTML = `<p class="hint">Os QR Codes são gerados e impressos só pela sala de controle (entre no simulador com a senha).${info.err ? ' · ' + esc(info.err) : ''}</p>`; return; }
+    QV = info.q; await loadQRLib();
+    QB.innerHTML = `<div class="qrrow"><div class="qrbox">${qrSVG(qrURL(), 128)}</div><div class="hint"><b style="color:#ffd24a">Válido só nesta sessão:</b> a cada abertura do simulador os QR Codes mudam e os anteriores deixam de funcionar. Ao escanear com o celular e ter o acesso autorizado, o operador abre o simulador <b>nesta área</b>, podendo <b>alterar só os parâmetros dela</b>.<br>
+      <a href="${esc(qrURL())}" target="_blank" rel="noopener" style="color:#5cc6dc">Abrir o link</a></div></div>
+      <div class="row2" style="margin-top:8px"><button class="btn2" id="qrPr">Imprimir placa</button><button class="btn2 red" id="qrNew">Gerar novos QR Codes</button></div>`;
+    $('#qrPr').onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<html><head><title>QR Code · área 3</title><style>body{font-family:Arial,sans-serif;margin:0}.pl{width:9.5cm;height:12.5cm;border:2px solid #111;border-radius:10px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin:.4cm;text-align:center;padding:.3cm;box-sizing:border-box}.n{font-size:34px;font-weight:800;background:#0d3b4f;color:#fff;border-radius:50%;width:56px;height:56px;line-height:56px}h2{font-size:17px;margin:.25cm 0}p{font-size:11px;color:#333;margin:.2cm 0 0}svg{width:6cm;height:6cm}</style></head><body><div class="pl"><div class="n">3</div><h2>Peneiramento e britagem</h2>${qrSVG(qrURL(), 230)}<p>Escaneie com o celular para acessar e operar esta área</p></div></body></html>`); w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (x) { /* impressão */ } }, 500); };
+    $('#qrNew').onclick = async () => { if (!confirm('Gerar novos QR Codes? Todas as placas impressas deixam de funcionar e todos os celulares conectados perdem o acesso.')) return; try { const r = await call('acessoQrNovo', [getToken()]); QV = r && r.q; logEv('Acesso', 'Novos QR Codes gerados pelo gêmeo digital'); drawQR(); } catch (e) { alert('Não foi possível gerar: ' + e.message); } };
+  }
+  let qrDone = false;
+  // ---- Registro de inspeção (mesma planilha do simulador) + análise pela IA
+  const IB = $('#pB_insp'); let INSP = [];
+  const locais = Object.keys(sim.eq).map((t) => (sim.eq[t].k === 'pn' ? 'Peneira ' : sim.eq[t].k === 'cone' ? 'HP 400 ' : 'Barmac ') + t);
+  IB.innerHTML = `<div class="row2"><select id="inTipo"><option>Anomalia</option><option>Falha</option><option>Erro operacional</option><option>Condição insegura</option><option>Vazamento</option><option>Ruído/vibração</option><option>Acidente de trabalho</option></select><select id="inSev"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Crítica</option></select></div>
+    <select id="inLocal"><option value="">Local/equipamento…</option>${locais.map((l) => `<option>${l}</option>`).join('')}<option>Correias / transferências</option><option>Outro</option></select>
+    <textarea id="inDesc" rows="3" maxlength="1500" placeholder="Descreva o que foi encontrado na inspeção: o quê, onde, desde quando, condições observadas…"></textarea>
+    <div class="row2"><input type="text" id="inOper" maxlength="60" placeholder="Operador (nome ou matrícula, opcional)" style="flex:2"><button class="btn2" id="inSave">Registrar</button></div>
+    <button class="btn2 ai" id="inSaveAi" style="width:100%;margin-top:4px">Registrar e analisar com IA</button><p class="hint" id="inMsg"></p><div id="inList"></div><div id="inAi"></div>`;
+  const sevc = (v) => (/crít|alta/i.test(v) ? 'crit' : /méd/i.test(v) ? 'warn' : '');
+  function drawList() { $('#inList').innerHTML = INSP.length ? '<h5 style="margin:8px 0 4px;font:600 12px var(--disp);letter-spacing:.08em;color:#ffd24a;text-transform:uppercase">Registros recentes</h5>' + INSP.slice(0, 8).map((r, i) => `<div class="card ${sevc(r.severidade)}"><b>${esc(r.tipo)} · ${esc(r.severidade)}</b>${r.local ? ' · ' + esc(r.local) : ''}<small>${esc(r.data || r.tempo || '')}${r.operador ? ' · ' + esc(r.operador) : ''}${r.status ? ' · ' + esc(r.status) : ''}</small><div>${esc(r.descricao)}</div>${r.analise ? `<small>IA: ${esc(String(r.analise).slice(0, 220))}…</small>` : ''}<button class="btn2" data-ai="${i}" style="margin-top:5px;padding:3px 8px">Analisar com IA</button></div>`).join('') : '<p class="hint">Nenhum registro de inspeção para esta área.</p>';
+    el.querySelectorAll('#inList [data-ai]').forEach((b) => b.onclick = () => analyze(INSP[+b.dataset.ai])); }
+  async function loadList() { try { INSP = (await call('inspListar', ['crush'])) || []; } catch (e) { $('#inMsg').textContent = 'Não foi possível carregar os registros: ' + e.message; } drawList(); }
+  function ctxIA(reg) {
+    const E = sim.eq, K = sim.kpi;
+    return { area: 'Área 3 · Peneiramento e britagem (Usina II)', indicadores: { lavra_t_h: Math.round(K.F), alimentacao_peneiras_t_h: Math.round(K.T), produto_t_h: Math.round(K.prod), carga_circulante_pct: Math.round(K.circ), potencia_kW: Math.round(K.kw), umidade_rom_pct: sim.moist, apf_mm: sim.css },
+      pontos: Object.entries(E).map(([t, e], i) => ({ id: 'P' + (i + 1), nome: t, estado: e.st, carga_pct: Math.round(e.load * 100), vibracao_mm_s: +e.vib.toFixed(1), desgaste_pct: Math.round(e.w), eficiencia_pct: e.k === 'pn' ? Math.round(e.eff) : undefined })),
+      alarmes: K.alarms, registros: [reg].concat(INSP.filter((r) => r !== reg).slice(0, 5)).map((r) => ({ tipo: r.tipo, severidade: r.severidade, local: r.local, descricao: r.descricao, data: r.data || r.tempo })) };
+  }
+  async function analyze(reg) {
+    const out = $('#inAi'); out.innerHTML = '<p class="hint">A IA está analisando o registro de inspeção…</p>';
+    try {
+      const r = await call('aiAnalyze', [{ modo: 'inspecao', escopo: 'Área 3 · Peneiramento e britagem', pergunta: '', contexto: ctxIA(reg) }]);
+      const sv = (x) => (/alta/i.test(x) ? 'crit' : /m[eé]dia/i.test(x) ? 'warn' : '');
+      out.innerHTML = `<div class="card"><h6>Análise da IA</h6><b>${esc(r.resumo || '')}</b></div>${(r.achados || []).map((a) => `<div class="card ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><small>${esc(a.evidencia || '')}</small></div>`).join('')}${(r.causas || []).map((c) => `<div class="card"><b>Causa provável:</b> ${esc(c.titulo || c.causa || c)}<small>${esc(c.explicacao || c.evidencia || '')}</small></div>`).join('')}${(r.recomendacoes || []).filter((c) => c && c.titulo).map((c) => `<div class="card"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><small>${esc(c.efeito_esperado || '')}</small></div>`).join('')}<p class="hint">Gerado por ${esc(r.modelo || 'Gemini')}. A decisão final é do operador.</p>`;
+      if (reg.linha) { const txt = [r.resumo].concat((r.recomendacoes || []).map((x) => '• ' + x.titulo)).join('\n'); call('inspSalvarAnalise', [{ linha: reg.linha, texto: txt }]).then(loadList).catch(() => {}); }
+      logEv('IA', 'Análise de inspeção: ' + String(r.resumo || '').slice(0, 80));
+    } catch (e) { out.innerHTML = `<p class="hint" style="color:#ff8a7a">Não foi possível analisar: ${esc(e.message)}</p>`; }
+  }
+  async function saveInsp(ai) {
+    const r = { etapa: 3, area: 'crush', tipo: $('#inTipo').value, severidade: $('#inSev').value, local: $('#inLocal').value, descricao: $('#inDesc').value.trim(), operador: $('#inOper').value.trim(), tempo: new Date().toLocaleString('pt-BR') };
+    if (r.descricao.length < 5) { $('#inMsg').textContent = 'Descreva o que foi encontrado.'; return; }
+    $('#inMsg').textContent = 'Registrando…';
+    try { const res = await call('inspRegistrar', [r]); r.linha = res && res.linha; r.data = r.tempo; $('#inDesc').value = ''; $('#inMsg').innerHTML = res && res.url ? `Registrado na planilha compartilhada. <a href="${esc(res.url)}" target="_blank" rel="noopener" style="color:#5cc6dc">Abrir</a>` : 'Registrado.';
+      logEv('Inspeção', `${r.tipo} (${r.severidade}) · ${r.descricao.slice(0, 70)}`); INSP.unshift(r); drawList(); if (ai) analyze(r);
+    } catch (e) { $('#inMsg').textContent = 'Não foi possível registrar: ' + e.message; }
+  }
+  $('#inSave').onclick = () => saveInsp(false); $('#inSaveAi').onclick = () => saveInsp(true);
+  let inspDone = false;
+  const lazy = () => { if (open.includes('qr') && !qrDone) { qrDone = true; drawQR(); } if (open.includes('insp') && !inspDone) { inspDone = true; loadList(); } };
+  el.querySelectorAll('.s3sec>h5').forEach((h) => h.addEventListener('click', lazy)); lazy();
   render(true);
   return { update(frame) { if (frame % 20 === 0) render(false); } };
 }
