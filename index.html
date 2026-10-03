@@ -1517,7 +1517,7 @@ const clouds=[];for(let i=0;i<34;i++){const m=new THREE.SpriteMaterial({map:clou
 /* ============ BUILDERS ============ */
 const EQ={};const pickables=[];
 function reg(id,num,group,meta){const o=Object.assign({id,num,group},meta);EQ[id]=o;group.traverse(m=>{if(m.isMesh){m.userData.eq=id;pickables.push(m);}});return o;}
-function conveyor(a,b,w,{kind='ore',nominal=2600,cover=false,yellow=false}={}){a=LP(a);b=LP(b);
+function conveyor(a,b,w,{kind='ore',nominal=2600,cover=false,yellow=false,raw=false}={}){if(!raw){a=LP(a);b=LP(b);}
   const g=new THREE.Group();root.add(g);
   const d=b.clone().sub(a),L=d.length(),dir=d.clone().normalize();
   const inner=new THREE.Group();inner.position.copy(a);inner.quaternion.setFromUnitVectors(XA,dir);g.add(inner);
@@ -1582,13 +1582,15 @@ const trucks=[];
 }
 /* ---------- 2 TCLD ---------- */
 const BPIT=conveyor(V3(-81,-2.4,-29),V3(-70,4.6,-19.5),1,{yellow:true});
-const TCLD=conveyor(V3(-67.5,1.2,-15.5),V3(-80,9,-2.5),1.4,{yellow:true});
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
 /* ---- Setor 3 · estrutura do gêmeo digital (mesmo modelo do gêmeo imersivo, em escala reduzida, embutido via window.Setor3) ---- */
 let S3=null;const S3K=.27;
 try{if(window.Setor3){S3=Setor3.buildSetor3({embed:true});S3.group.scale.setScalar(S3K);S3.group.position.set(3-32*S3K,0,-12*S3K);CRU.add(S3.group);}}catch(e){console.warn('setor3',e);S3=null;}
 if(!S3){bld(CRU,0,0,11,9,10,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});bld(CRU,8.5,1,6,6,13,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});}
+/* correias ligadas à estrutura do setor 3: TCLD chega na ponta do distribuidor (tripper) e a B34 sai da correia do produto */
+CRU.updateMatrixWorld(true);const s3W=(x,y,z)=>CRU.localToWorld(V3(x,y,z));
+const TCLD=conveyor(LP(V3(-67.5,1.2,-15.5)),S3?s3W(6.6,4.85,-2.6):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
 /* ---------- 4 Regularization stockpile ---------- */
 const PILE=grp(-80,20);
 const pileMesh=(()=>{const gm=new THREE.ConeGeometry(9.5,8.5,48,6);gm.translate(0,4.25,0);const pos=gm.attributes.position;for(let i=0;i<pos.count;i++){const y=pos.getY(i);if(y>.2&&y<8.3){pos.setX(i,pos.getX(i)*(1+(rnd()-.5)*.08));pos.setZ(i,pos.getZ(i)*(1+(rnd()-.5)*.08));}}gm.computeVertexNormals();return mesh(gm,MAT.ore,0,0,2,PILE);})();
@@ -1601,7 +1603,7 @@ const pileMesh=(()=>{const gm=new THREE.ConeGeometry(9.5,8.5,48,6);gm.translate(
   box(1.6,1.2,1.6,MAT.dark,0,4.6,-3.3,st);
   PILE.userData.stacker=st;
 }
-const B34=conveyor(V3(-79,9.5,6.6),V3(-80,5.2,11.2),1.2,{yellow:true});
+const B34=conveyor(S3?s3W(12.6,.75,2.65):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
 const B45=conveyor(V3(-68,.8,24),V3(-62,6,-5),1.2,{yellow:true});
 /* ---------- 5 Concentrator: grinding, desliming, flotation ---------- */
 const CON=grp(-50,4);
@@ -2550,6 +2552,7 @@ TEXMAT.forEach(m=>addDust(m));
 const STDMATS=[];scene.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(m.isMeshStandardMaterial&&!STDMATS.includes(m))STDMATS.push(m);});}});
 // light poles
 const POLES=[];for(const id in EQ){if(['fence','dry','cava'].includes(id))continue;const b=EQ[id].box;for(const [x,z] of [[b.min.x-1.5,b.min.z-1.5],[b.max.x+1.5,b.max.z+1.5],[b.min.x-1.5,b.max.z+1.5]])POLES.push([x,z]);}
+{const inB=(x,z)=>['crush'].some(id=>EQ[id]&&x>EQ[id].box.min.x-.6&&x<EQ[id].box.max.x+.6&&z>EQ[id].box.min.z-.6&&z<EQ[id].box.max.z+.6);for(let i=POLES.length-1;i>=0;i--)if(inB(POLES[i][0],POLES[i][1]))POLES.splice(i,1);}/* postes não atravessam o prédio do setor 3 */
 for(let z=-58;z<=-34;z+=6)POLES.push([113.5,z]);for(let x=90;x<=106;x+=6)POLES.push([x,-26.8]);
 const poleM=new THREE.InstancedMesh(new THREE.CylinderGeometry(.12,.16,8,6),MAT.frame,POLES.length),bulbMat=new THREE.MeshBasicMaterial({color:0x777777,toneMapped:false}),bulbM=new THREE.InstancedMesh(new THREE.SphereGeometry(.24,10,8),bulbMat,POLES.length);
 {const M=new THREE.Matrix4();POLES.forEach(([x,z],i)=>{const y=Math.max(0,H(x,z));M.makeTranslation(x,y+4,z);poleM.setMatrixAt(i,M);M.makeTranslation(x,y+8.2,z);bulbM.setMatrixAt(i,M);});poleM.castShadow=true;root.add(poleM,bulbM);}
