@@ -2,11 +2,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { B, LV, CAMS } from './layout.js';
-import { buildMaterials } from './mats.js';
 import { createRenderer, buildLighting, createComposer } from './render.js';
-import { buildBuilding } from './building.js';
-import { buildScreens } from './screens.js';
-import { buildCrushers } from './crushers.js';
+import { buildSetor3, sim, stepSim } from './lib.js';
 import { buildUI } from './ui.js';
 import { gate } from './gate.js';
 gate();
@@ -16,12 +13,8 @@ const canvas = document.getElementById('c');
 const renderer = createRenderer(canvas);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .05, 600);
-const M = buildMaterials(renderer);
-const parts = {};
-for (const [k, fn] of Object.entries({ building: buildBuilding, screens: buildScreens, crushers: buildCrushers })) {
-  try { parts[k] = fn(scene, M) || {}; } catch (e) { console.error('falha ao montar', k, e); parts[k] = {}; }
-}
-buildLighting(scene, renderer, parts.building.lamps || []);
+const S3 = buildSetor3(); scene.add(S3.group); const parts = S3.parts; console.log('setor3: malhas fundidas', S3.stats);
+buildLighting(scene, renderer, S3.lamps);
 const composer = createComposer(renderer, scene, camera);
 
 const controls = new OrbitControls(camera, canvas);
@@ -60,8 +53,9 @@ function setWalk(on, lv) {
     controls.minDistance = controls.maxDistance = .6; controls.enablePan = false; controls.rotateSpeed = -.35;
   } else { controls.minDistance = .5; controls.maxDistance = 160; controls.enablePan = true; controls.rotateSpeed = 1; }
 }
-const hotspots = [parts.screens, parts.crushers].flatMap((p) => p.hotspots || []);
-const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk: () => ({ walk, level }), CAMS });
+const hotspots = S3.hotspots;
+stepSim(0);
+const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk: () => ({ walk, level }), CAMS, sim, flowLabels: parts.flows.labels || [] });
 
 function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); composer && composer.setSize(innerWidth, innerHeight); }
 addEventListener('resize', resize); resize();
@@ -73,12 +67,13 @@ function frame() {
     camera.position.lerpVectors(tween.p0, tween.to.p, e); controls.target.lerpVectors(tween.t0, tween.to.t, e); camera.fov = THREE.MathUtils.lerp(tween.f0, tween.to.fov, e); camera.updateProjectionMatrix(); if (tween.k >= 1) tween = null; }
   if (walk) walkStep(dt, ui && ui.joy);
   controls.update();
-  for (const p of Object.values(parts)) p.update && p.update(dt, t);
+  stepSim(dt);
+  S3.update(dt, t, camera);
   ui && ui.update();
   if (composer) composer.render(dt); else renderer.render(scene, camera);
   frames++; acc += dt; if (acc > 1) { window.__fps = Math.round(frames / acc); frames = 0; acc = 0; }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__twin = { scene, camera, controls, renderer, composer, parts, setCam, setWalk };
+window.__twin = { scene, camera, controls, renderer, composer, parts, setCam, setWalk, sim };
 window.__ready = true;

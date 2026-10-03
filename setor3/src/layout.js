@@ -15,5 +15,5 @@ export const CAMS = {
   peneira: { pos: [11.7, 8.85, 17.6], look: [9.0, 9.2, 12.5], fov: 72, label: 'Peneira 03PN002' },
   britadores: { pos: [47.5, 1.55, 1.6], look: [59, 1.6, 8.5], fov: 68, label: 'Britagem primária (HP 400)' },
   vsi: { pos: [56.8, 2.2, 23.2], look: [61, 2.0, 17.5], fov: 62, label: 'Barmac 03BR006' },
-  geral: { pos: [32, 34, 74], look: [32, 6, 10], fov: 45, label: 'Vista geral' },
+  geral: { pos: [-10, 40, 72], look: [32, 3, 10], fov: 50, label: 'Vista geral (corte)' },
 };

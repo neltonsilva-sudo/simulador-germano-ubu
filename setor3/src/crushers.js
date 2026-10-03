@@ -7,8 +7,10 @@ import { V, box, cyl, beam, railing, plateMesh } from './util.js';
 
 export function buildCrushers(scene, M) {
   const g = new THREE.Group(); scene.add(g);
-  const spin = [], beacons = {}, hot = [];
-  const bc = () => new THREE.Mesh(new THREE.SphereGeometry(.16, 16, 12), new THREE.MeshStandardMaterial({ color: 0x5ff0ff, emissive: 0x5ff0ff, emissiveIntensity: 4 }));
+  const spin = [], beacons = {}, hot = [], streams = [], belts = [], rings = [];
+  const rockGeo = new THREE.DodecahedronGeometry(.09); const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3(1, 1, 1), p4 = new THREE.Vector3();
+  const stream = (tag, x, z, y0, y1) => { const n = 46, im = new THREE.InstancedMesh(rockGeo, M.ore, n); g.add(im); streams.push({ tag, im, x, z, y0, y1, d: Array.from({ length: n }, () => ({ u: Math.random(), x: (Math.random() - .5) * .45, z: (Math.random() - .5) * .45 })) }); };
+  const bc = () => { const m = new THREE.Mesh(new THREE.SphereGeometry(.16, 16, 12), new THREE.MeshStandardMaterial({ color: 0x5ff0ff, emissive: 0x5ff0ff, emissiveIntensity: 4 })); m.userData.keep = true; return m; };
   function silo(x, z, r, yb, h) {
     const s = new THREE.Group(); s.position.set(x, yb, z); g.add(s);
     cyl(s, r, r, h, M.steel, 0, h / 2 + 2.2, 0, 28); cyl(s, r, .5, 2.2, M.steel, 0, 1.1, 0, 28);
@@ -26,7 +28,7 @@ export function buildCrushers(scene, M) {
     box(T, 3.4, 1.2, 3.4, M.chute, 0, 1.2, 0);                                   // quadro metálico
     for (const [dx, dz, ry] of [[1.71, 0, 0], [-1.71, 0, 0], [0, 1.71, Math.PI / 2], [0, -1.71, Math.PI / 2]]) for (const o of [-.9, .9]) { const h = new THREE.Mesh(new THREE.CircleGeometry(.24, 18), M.black); h.position.set(dx + (ry ? o : 0), 1.2, dz + (ry ? 0 : o)); h.rotation.y = ry ? 0 : Math.PI / 2; if (dx < 0 || dz < 0) h.rotation.y += Math.PI; T.add(h); }
     cyl(T, 1.45, 1.55, 1.3, M.beige, 0, 2.45, 0, 32);                             // carcaça inferior
-    const ring = cyl(T, 1.75, 1.75, .3, M.orange, 0, 3.25, 0, 40);               // coroa de ajuste
+    const ring = cyl(T, 1.75, 1.75, .3, M.orange, 0, 3.25, 0, 40); ring.userData.keep = true;               // coroa de ajuste
     const teeth = new THREE.InstancedMesh(new THREE.BoxGeometry(.1, .26, .16), M.orange, 44); const m4 = new THREE.Matrix4();
     for (let k = 0; k < 44; k++) { const a = k / 44 * Math.PI * 2; m4.makeRotationY(-a).setPosition(Math.cos(a) * 1.8, 3.25, Math.sin(a) * 1.8); teeth.setMatrixAt(k, m4); } T.add(teeth);
     cyl(T, 1.35, 1.6, .7, M.beige, 0, 3.75, 0, 32); cyl(T, .7, 1.1, .7, M.beige, 0, 4.4, 0, 24);   // cuba superior e funil
@@ -35,10 +37,12 @@ export function buildCrushers(scene, M) {
       cyl(T, .14, .14, 1.4, M.beige, ax, 2.3, az, 12);
       const acc = new THREE.Mesh(new THREE.SphereGeometry(.24, 14, 10), M.beige); acc.scale.y = 1.45; acc.position.set(ax * 1.12, 2.15, az * 1.12); acc.castShadow = true; T.add(acc);
     }
-    box(T, 1.2, .9, 1.0, M.motor, 2.6, 1.05, 0); cyl(T, .12, .12, 1.4, M.greyDk, 1.9, 1.3, 0, 10).rotation.z = Math.PI / 2;  // motor e eixo
+    box(T, 1.2, .9, 1.0, M.motor, 2.6, 1.05, 0); const sh = cyl(T, .12, .12, 1.4, M.greyDk, 1.9, 1.3, 0, 10); sh.rotation.z = Math.PI / 2;  // motor e eixo
+    const cp = cyl(T, .26, .26, .16, M.orange, 1.55, 1.3, 0, 8); cp.rotation.z = Math.PI / 2; cp.userData.keep = true; spin.push({ tag: c.tag, o: cp, ax: 'x', w: 30 });
     const warn = new THREE.Mesh(new THREE.PlaneGeometry(.42, .42), M.warn()); warn.position.set(1.0, 3.85, 1.27); warn.rotation.y = .7; T.add(warn);
     plateMesh(T, M.plateW('BRITADOR PRIMÁRIO', c.tag), .8, 0, 1.25, 1.72);
-    const b = bc(); b.position.set(1.4, 4.9, .9); T.add(b); beacons[c.tag] = b; spin.push({ o: ring, w: .05 });
+    const b = bc(); b.position.set(1.4, 4.9, .9); T.add(b); beacons[c.tag] = b; rings.push({ tag: c.tag, ring, teeth });
+    stream(c.tag, c.x, c.z, 9.4, 4.75);
     silo(c.x, c.z, 2.2, 7.5, 5.5); beam(g, V(c.x, 9.6, c.z), V(c.x, 4.8, c.z), .45, M.chute);
     hot.push({ tag: c.tag, tipo: 'Britador cônico HP 400 · britagem primária', pos: V(c.x, 4.6, c.z), info: `${c.tag} · britador cônico HP 400 (compressão). Recebe o retido no 1º deck das peneiras pelo silo; o produto volta às peneiras (circuito fechado).` });
   });
@@ -53,7 +57,8 @@ export function buildCrushers(scene, M) {
     cyl(T, 1.5, 1.5, 1.55, M.beige, 0, 2.48, 0, 40);                              // tambor
     cyl(T, 1.56, 1.56, .2, M.chute, 0, 3.3, 0, 40); cyl(T, 1.56, 1.56, .14, M.chute, 0, 1.75, 0, 40);
     cyl(T, .7, 1.0, .9, M.beige, 0, 3.85, 0, 24); cyl(T, .45, .45, .5, M.steel, 0, 4.5, 0, 16);
-    const rot = cyl(T, .9, .9, .08, M.greyDk, 0, 3.42, 0, 6); spin.push({ o: rot, w: 9 });
+    const rot = cyl(T, .9, .9, .08, M.greyDk, 0, 3.42, 0, 6); rot.userData.keep = true; spin.push({ tag: c.tag, o: rot, ax: 'y', w: 14 });
+    stream(c.tag, c.x, c.z, 9.4, 4.75);
     for (const s of [-1, 1]) {                                                    // motores laterais com aletas e proteção das correias
       const mx = s * 2.35; box(T, 1.0, 1.1, 1.3, M.motor, mx, 2.35, -.3);
       for (let f = 0; f < 7; f++) box(T, 1.02, .04, 1.32, M.greyDk, mx, 1.9 + f * .14, -.3);
@@ -68,10 +73,19 @@ export function buildCrushers(scene, M) {
   const belt = (a, b, w = 1.2) => { const d = new THREE.Vector3().subVectors(b, a), L = d.length(); const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
     box(grp, w + .2, .25, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .16, 0);
     const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.13), M.ore, Math.floor(L * 3)); const m4 = new THREE.Matrix4();
-    for (let k = 0; k < oreG.count; k++) { m4.makeTranslation((Math.random() - .5) * w * .6, .25, -L / 2 + k / 3); oreG.setMatrixAt(k, m4); } grp.add(oreG);
+    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 3 + Math.random() * .2, x: (Math.random() - .5) * w * .6, r: Math.random() * 6 })); grp.add(oreG); belts.push({ im: oreG, rk, L });
     for (let s = 0; s < L; s += 1.2) { box(grp, w + .3, .08, .1, M.grey, 0, .08, -L / 2 + s); } return grp; };
   belt(V(B.W - 1, 1.0, 12), V(B.screenEnd + 1, 1.0, 12));
   belt(V(B.screenEnd + 1, 1.0, 12), V(B.screenEnd - 3, 15.6, 1.4), 1.0);
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);                    // correia do passante (< 12,5 mm) → pilha
-  return { group: g, hotspots: hot, beacons, update(dt) { for (const s of spin) s.o.rotation.y += dt * s.w; } };
+  const COL = { ok: 0x5ff0ff, warn: 0xffb020, crit: 0xff3b2f, off: 0x4a525a };
+  return { group: g, hotspots: hot, beacons, update(dt, t, S) {
+    const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 };
+    for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w; }
+    for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); r.teeth.rotation.y = r.ring.rotation.y; }
+    for (const st of streams) { const e = E[st.tag] || { on: true, flow: 1, load: .7 }, run = e.on && e.flow > 0; st.im.visible = run; if (!run) continue;
+      const k = .6 + Math.min(1.2, e.load); for (let i = 0; i < st.d.length; i++) { const d = st.d[i]; d.u += dt * 1.4 * k; if (d.u > 1) d.u -= 1; p4.set(st.x + d.x, st.y0 + (st.y1 - st.y0) * d.u * d.u, st.z + d.z); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.setScalar(1); m4.compose(p4, q4, s4); st.im.setMatrixAt(i, m4); } st.im.instanceMatrix.needsUpdate = true; }
+    const run = K.F > 0; for (const b of belts) { b.im.visible = run; if (!run) continue; for (let i = 0; i < b.rk.length; i++) { const r = b.rk[i]; r.z += dt * 2.2; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .25, r.z); e4.set(r.r, r.r * 2, 0); q4.setFromEuler(e4); s4.setScalar(1); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); } b.im.instanceMatrix.needsUpdate = true; }
+    for (const [tag, b] of Object.entries(beacons)) { const e = E[tag] || { st: 'ok' }; const c = COL[e.st] || COL.ok; b.material.color.setHex(c); b.material.emissive.setHex(c); b.material.emissiveIntensity = e.st === 'off' ? .15 : e.st === 'crit' ? (Math.sin(t * 9) > 0 ? 6 : .5) : 2.5 + Math.max(0, Math.sin(t * 6 + tag.length)) * 3; }
+  } };
 }
