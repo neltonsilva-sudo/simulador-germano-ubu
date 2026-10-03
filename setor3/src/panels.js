@@ -1,4 +1,4 @@
-import { call, getToken, SIM_URL } from './api.js?v=20261003135802';
+import { call, getToken, SIM_URL } from './api.js?v=20261003140136';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -170,16 +170,16 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     $('#qrNew').onclick = async () => { if (!confirm('Gerar novos QR Codes? Todas as placas impressas deixam de funcionar e todos os celulares conectados perdem o acesso.')) return; try { const r = await call('acessoQrNovo', [getToken()]); QV = r && r.q; logEv('Acesso', 'Novos QR Codes gerados pelo gêmeo digital'); drawQR(); } catch (e) { alert('Não foi possível gerar: ' + e.message); } };
   }
   let qrDone = false;
-  // ---- Registro de inspeção (mesma planilha do simulador) + análise pela IA
+  // ---- Registro de inspeção (mesma planilha do simulador) + análise pela Simulação
   const IB = $('#pB_insp'); let INSP = [];
   const locais = Object.keys(sim.eq).map((t) => (sim.eq[t].k === 'pn' ? 'Peneira ' : sim.eq[t].k === 'cone' ? 'HP 400 ' : 'Barmac ') + t);
   IB.innerHTML = `<div class="row2"><select id="inTipo"><option>Anomalia</option><option>Falha</option><option>Erro operacional</option><option>Condição insegura</option><option>Vazamento</option><option>Ruído/vibração</option><option>Acidente de trabalho</option></select><select id="inSev"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Crítica</option></select></div>
     <select id="inLocal"><option value="">Local/equipamento…</option>${locais.map((l) => `<option>${l}</option>`).join('')}<option>Correias / transferências</option><option>Outro</option></select>
     <textarea id="inDesc" rows="3" maxlength="1500" placeholder="Descreva o que foi encontrado na inspeção: o quê, onde, desde quando, condições observadas…"></textarea>
     <div class="row2"><input type="text" id="inOper" maxlength="60" placeholder="Operador (nome ou matrícula, opcional)" style="flex:2"><button class="btn2" id="inSave">Registrar</button></div>
-    <button class="btn2 ai" id="inSaveAi" style="width:100%;margin-top:4px">Registrar e analisar com IA</button><p class="hint" id="inMsg"></p><div id="inList"></div><div id="inAi"></div>`;
+    <button class="btn2 ai" id="inSaveAi" style="width:100%;margin-top:4px">Registrar e analisar com Simulação</button><p class="hint" id="inMsg"></p><div id="inList"></div><div id="inAi"></div>`;
   const sevc = (v) => (/crít|alta/i.test(v) ? 'crit' : /méd/i.test(v) ? 'warn' : '');
-  function drawList() { $('#inList').innerHTML = INSP.length ? '<h5 style="margin:8px 0 4px;font:600 12px var(--disp);letter-spacing:.08em;color:#ffd24a;text-transform:uppercase">Registros recentes</h5>' + INSP.slice(0, 8).map((r, i) => `<div class="card ${sevc(r.severidade)}"><b>${esc(r.tipo)} · ${esc(r.severidade)}</b>${r.local ? ' · ' + esc(r.local) : ''}<small>${esc(r.data || r.tempo || '')}${r.operador ? ' · ' + esc(r.operador) : ''}${r.status ? ' · ' + esc(r.status) : ''}</small><div>${esc(r.descricao)}</div>${r.analise ? `<small>IA: ${esc(String(r.analise).slice(0, 220))}…</small>` : ''}<button class="btn2" data-ai="${i}" style="margin-top:5px;padding:3px 8px">Analisar com IA</button></div>`).join('') : '<p class="hint">Nenhum registro de inspeção para esta área.</p>';
+  function drawList() { $('#inList').innerHTML = INSP.length ? '<h5 style="margin:8px 0 4px;font:600 12px var(--disp);letter-spacing:.08em;color:#ffd24a;text-transform:uppercase">Registros recentes</h5>' + INSP.slice(0, 8).map((r, i) => `<div class="card ${sevc(r.severidade)}"><b>${esc(r.tipo)} · ${esc(r.severidade)}</b>${r.local ? ' · ' + esc(r.local) : ''}<small>${esc(r.data || r.tempo || '')}${r.operador ? ' · ' + esc(r.operador) : ''}${r.status ? ' · ' + esc(r.status) : ''}</small><div>${esc(r.descricao)}</div>${r.analise ? `<small>Simulação: ${esc(String(r.analise).slice(0, 220))}…</small>` : ''}<button class="btn2" data-ai="${i}" style="margin-top:5px;padding:3px 8px">Analisar com Simulação</button></div>`).join('') : '<p class="hint">Nenhum registro de inspeção para esta área.</p>';
     el.querySelectorAll('#inList [data-ai]').forEach((b) => b.onclick = () => analyze(INSP[+b.dataset.ai])); }
   async function loadList() { try { INSP = (await call('inspListar', ['crush'])) || []; } catch (e) { $('#inMsg').textContent = 'Não foi possível carregar os registros: ' + e.message; } drawList(); }
   function ctxIA(reg) {
@@ -189,13 +189,13 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       alarmes: K.alarms, registros: [reg].concat(INSP.filter((r) => r !== reg).slice(0, 5)).map((r) => ({ tipo: r.tipo, severidade: r.severidade, local: r.local, descricao: r.descricao, data: r.data || r.tempo })) };
   }
   async function analyze(reg) {
-    const out = $('#inAi'); out.innerHTML = '<p class="hint">A IA está analisando o registro de inspeção…</p>';
+    const out = $('#inAi'); out.innerHTML = '<p class="hint">A Simulação está analisando o registro de inspeção…</p>';
     try {
       const r = await call('aiAnalyze', [{ modo: 'inspecao', escopo: 'Área 3 · Peneiramento e britagem', pergunta: '', contexto: ctxIA(reg) }]);
       const sv = (x) => (/alta/i.test(x) ? 'crit' : /m[eé]dia/i.test(x) ? 'warn' : '');
-      out.innerHTML = `<div class="card"><h6>Análise da IA</h6><b>${esc(r.resumo || '')}</b></div>${(r.achados || []).map((a) => `<div class="card ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><small>${esc(a.evidencia || '')}</small></div>`).join('')}${(r.causas || []).map((c) => `<div class="card"><b>Causa provável:</b> ${esc(c.titulo || c.causa || c)}<small>${esc(c.explicacao || c.evidencia || '')}</small></div>`).join('')}${(r.recomendacoes || []).filter((c) => c && c.titulo).map((c) => `<div class="card"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><small>${esc(c.efeito_esperado || '')}</small></div>`).join('')}<p class="hint">Gerado por ${esc(r.modelo || 'Gemini')}. A decisão final é do operador.</p>`;
+      out.innerHTML = `<div class="card"><h6>Análise da Simulação</h6><b>${esc(r.resumo || '')}</b></div>${(r.achados || []).map((a) => `<div class="card ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><small>${esc(a.evidencia || '')}</small></div>`).join('')}${(r.causas || []).map((c) => `<div class="card"><b>Causa provável:</b> ${esc(c.titulo || c.causa || c)}<small>${esc(c.explicacao || c.evidencia || '')}</small></div>`).join('')}${(r.recomendacoes || []).filter((c) => c && c.titulo).map((c) => `<div class="card"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><small>${esc(c.efeito_esperado || '')}</small></div>`).join('')}<p class="hint">Gerado por ${esc(r.modelo || 'Gemini')}. A decisão final é do operador.</p>`;
       if (reg.linha) { const txt = [r.resumo].concat((r.recomendacoes || []).map((x) => '• ' + x.titulo)).join('\n'); call('inspSalvarAnalise', [{ linha: reg.linha, texto: txt }]).then(loadList).catch(() => {}); }
-      logEv('IA', 'Análise de inspeção: ' + String(r.resumo || '').slice(0, 80));
+      logEv('Simulação', 'Análise de inspeção: ' + String(r.resumo || '').slice(0, 80));
     } catch (e) { out.innerHTML = `<p class="hint" style="color:#ff8a7a">Não foi possível analisar: ${esc(e.message)}</p>`; }
   }
   async function saveInsp(ai) {

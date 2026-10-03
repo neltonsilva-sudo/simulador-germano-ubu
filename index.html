@@ -490,7 +490,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
       <button class="btn" id="lblBtn" aria-pressed="true">Rótulos</button>
       <div class="seg" id="todSeg" role="group" aria-label="Iluminação"><div class="dd"><button type="button" class="ddbtn" aria-haspopup="true" aria-expanded="false" title="Turno (iluminação)">Turno <b class="ddv"></b> ▾</button><div class="ddmenu" role="menu"><button data-t="day" aria-pressed="false">Dia</button><button data-t="dusk" aria-pressed="false">Entardecer</button><button data-t="night" aria-pressed="false">Noite</button></div></div><button data-t="cycle" aria-pressed="true">Ciclo real</button></div>
       <button class="btn" id="engBtn" title="Gêmeo digital: geometalurgia, previsão, reconciliação, sensores virtuais, modelos avançados, calibração e dados reais">Gêmeo digital</button>
-      <button class="btn" id="aiBtn" title="Análise do processo com IA (Gemini)">Assistente IA</button>
+      <button class="btn" id="aiBtn" title="Análise do processo com Simulação (Gemini)">Assistente de Simulação</button>
             <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button>
     </div>
   </header>
@@ -564,7 +564,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
     </div>
     <div class="dfoot" id="dFlows"></div>
   </section>
-  <section id="ai" class="collapsed" aria-label="Assistente de processo com IA">
+  <section id="ai" class="collapsed" aria-label="Assistente de processo com Simulação">
     <header class="ah" role="button" tabindex="0" aria-expanded="false"><div style="flex:1"><h3>Assistente de processo · Gemini<span class="chev">▾</span></h3><small id="aiSub">Analisa o estado atual do simulador: KPIs, alarmes, tendências de 48 h, unidades e setpoints</small></div></header>
     <div class="ab">
       <div class="aimodes" id="aiModes">
@@ -596,7 +596,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
   <section id="area" hidden aria-label="Área do processo"><header class="ah2"><span class="dn" id="arNum">5</span><h3 id="arTitle">–</h3><button class="btn" id="arPrev" title="Área anterior">◀</button><button class="btn" id="arNext" title="Próxima área">▶</button><button class="btn" id="arExit">Sair da área</button><button class="arx" id="arClose" title="Fechar" aria-label="Fechar tela da área">✕</button></header>
     <div class="ab2"><div><h4>Pontos de inspeção</h4><div id="arHs" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div></div>
       <div><h4>Problemas detectados</h4><div id="arProb" style="margin-top:8px"></div></div>
-      <div><h4>Diagnóstico com IA</h4><div class="airow" style="margin-top:8px"><button id="arAi" class="btn" style="background:var(--accent);color:#08202a;font-weight:600">Analisar esta área com IA</button><button class="btn" id="arPdf" hidden>Gerar PDF</button></div><div id="arAiOut" class="aiout" style="margin-top:8px"></div></div><div id="arExtra" style="display:flex;flex-direction:column;gap:12px"></div></div></section>
+      <div><h4>Diagnóstico com Simulação</h4><div class="airow" style="margin-top:8px"><button id="arAi" class="btn" style="background:var(--accent);color:#08202a;font-weight:600">Analisar esta área com Simulação</button><button class="btn" id="arPdf" hidden>Gerar PDF</button></div><div id="arAiOut" class="aiout" style="margin-top:8px"></div></div><div id="arExtra" style="display:flex;flex-direction:column;gap:12px"></div></div></section>
   <div id="operBar" hidden></div><button id="panTgl" type="button" aria-pressed="false">✕ Ocultar painéis</button><div id="wifDlg" hidden role="dialog" aria-modal="true" aria-labelledby="wifT"><div class="box" style="max-width:640px;border-left-color:#5cc6dc"><h3 id="wifT">Testar antes de aplicar</h3><div id="wifBody"></div></div></div><div id="ltnDlg" hidden role="dialog" aria-modal="true" aria-labelledby="ltnDlgT"><div class="box" style="border-left-color:#ff3b2f"><h3 id="ltnDlgT">Alerta de raios ativado</h3><div id="ltnDlgM"></div><div class="row"><button class="btn" id="ldKeep" style="background:var(--accent);color:#08202a;font-weight:600">Manter ativado</button><button class="btn" id="ldOff">Desativar por 1 h</button><button class="btn" id="ldMore">Ver detalhes do clima</button></div></div></div><div id="rainDlg" hidden role="dialog" aria-modal="true" aria-labelledby="rainDlgT"><div class="box"><h3 id="rainDlgT">Alerta de chuva ativado</h3><div id="rainDlgM"></div><div class="row"><button class="btn" id="rdKeep" style="background:var(--accent);color:#08202a;font-weight:600">Manter ativado</button><button class="btn" id="rdOff">Desativar</button><button class="btn" id="rdMore">Ver detalhes do clima</button></div></div></div><div id="areaHint" hidden>Arraste para olhar em volta · role para aproximar · Esc para sair da área</div>
   <footer id="foot">
     <div class="legend">
@@ -2337,7 +2337,7 @@ function ltnStep(dt){if(!(dt>0))return;
     const r=k==='g'?RAIN.rate:RAIN.rateU;if(r>18){want=2;src='tempestade com descargas';}else if(r>8&&want<1){want=1;src='chuva forte: risco de descargas';}
     if(LTN.man[k]>ST.ct){want=2;src='alerta acionado manualmente (teste)';}
     if(LTN.sup&&LTN.sup[k]>ST.ct){want=0;src='';LTN[k].until=0;}
-    if(want<1&&LTN_BOL&&LTN_BOL[k]==='alto'){want=1;src='boletim da IA: risco alto de raios';}
+    if(want<1&&LTN_BOL&&LTN_BOL[k]==='alto'){want=1;src='boletim da Simulação: risco alto de raios';}
     const S=LTN[k];if(want===2)S.until=ST.ct+1800;const lvl=(want===2||ST.ct<S.until)?2:want;
     if(lvl!==S.lvl){const nm=k==='g'?'Germano':'Ubu';if(lvl===2){LTN.events[k]++;logEvent('Raios',`Alerta VERMELHO em ${nm}: ${src}`);}else if(S.lvl===2)logEvent('Raios',`Liberação (all clear) em ${nm} após 30 min sem descargas`);else if(lvl===1)logEvent('Raios',`Alerta AMARELO em ${nm}: ${src}`);}
     S.lvl=lvl;S.src=want?src:(lvl===2?'aguardando 30 min sem descargas para liberar':'');if(lvl===2)LTN.stopH[k]+=dt/3600;}}
@@ -3158,7 +3158,7 @@ function makePdf(r,btn){
 }
 function runAI(){
   const out=$('#aiOut');
-  if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O assistente Gemini funciona na versão publicada no Google Apps Script, onde a chave da IA fica protegida no servidor. Nesta página ele não tem acesso à internet.</p>';return;}
+  if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O assistente Gemini funciona na versão publicada no Google Apps Script, onde a chave do serviço de Simulação fica protegida no servidor. Nesta página ele não tem acesso à internet.</p>';return;}
   const scope=$('#aiScope').value;if(scope==='stage'&&!selected){out.innerHTML='<p class="aimsg err">Selecione uma etapa no mapa primeiro.</p>';return;}
   const go=$('#aiGo');go.disabled=true;out.innerHTML='<p class="aimsg"><span class="spin"></span>O Gemini está analisando o processo… (10 a 40 s)</p>';
   const ctx=buildContext(scope);aiReq={modo:aiMode,escopo:$('#aiScope').selectedOptions[0].textContent,pergunta:$('#aiQ').value.slice(0,800),ctx};
@@ -3167,7 +3167,7 @@ function runAI(){
 }
 document.querySelectorAll('#aiModes button').forEach(b=>b.addEventListener('click',()=>{aiMode=b.dataset.m;document.querySelectorAll('#aiModes button').forEach(x=>x.setAttribute('aria-pressed',x===b));}));
 setInterval(()=>{const on=(id,v)=>{const b=$(id);if(b)b.setAttribute('aria-pressed',!!v);};on('#engBtn',!$('#eng').hidden);on('#almBtn',!$('#alm').hidden);const a=$('#ai');on('#aiBtn',a&&!a.classList.contains('collapsed'));},300);
-$('#aiBtn').addEventListener('click',()=>{const a=$('#ai');setCollapsed(a,!a.classList.contains('collapsed'));if(!a.classList.contains('collapsed')&&selected){$('#aiScope').value='stage';}if(!HAS_GAS)$('#aiSub').textContent='Disponível na versão Google Apps Script (a chave da IA fica no servidor).';});
+$('#aiBtn').addEventListener('click',()=>{const a=$('#ai');setCollapsed(a,!a.classList.contains('collapsed'));if(!a.classList.contains('collapsed')&&selected){$('#aiScope').value='stage';}if(!HAS_GAS)$('#aiSub').textContent='Disponível na versão Google Apps Script (a chave do serviço de Simulação fica no servidor).';});
 function setCollapsed(el,c){el.classList.toggle('collapsed',c);const h=el.querySelector('.ph,.ah');if(h)h.setAttribute('aria-expanded',!c);}
 {const rcol=document.createElement('div');rcol.id='rcol';$('#app').appendChild(rcol);rcol.appendChild($('#ai'));rcol.appendChild($('#right'));
  [['#left','.ph'],['#right','.ph'],['#ai','.ah']].forEach(([p,h])=>{const el=$(p),hd=el.querySelector(h);const tg=e=>{if(e.target.closest('button,select,input,textarea'))return;setCollapsed(el,!el.classList.contains('collapsed'));};
@@ -3386,7 +3386,7 @@ function enterArea(id){
   const tgt=V3(c.x,Math.max(1,e.box.min.y+e.size.y*v.ty),c.z);const pos=tgt.clone().addScaledVector(dh,R*Math.cos(v.el));pos.y=tgt.y+R*Math.sin(v.el);
   pos.y=Math.max(pos.y,H(pos.x,pos.z)+5);flyTo(pos,tgt,1.6);controls.minDistance=3;
   $('#labels').classList.add('inarea');$('#rcol').style.display='none';$('#area').hidden=false;$('#areaHint').hidden=false;setTimeout(()=>{$('#areaHint').hidden=true;},6000);
-  $('#arNum').textContent=e.num;$('#arTitle').textContent=e.name;$('#arAiOut').innerHTML=`<p class="aimsg">${HAS_GAS?'A IA recebe os pontos de inspeção, tendências, alarmes e controles desta área e marca no 3D onde estão os problemas.':'O diagnóstico com IA funciona na versão Google Apps Script.'}</p>`;$('#arPdf').hidden=true;
+  $('#arNum').textContent=e.num;$('#arTitle').textContent=e.name;$('#arAiOut').innerHTML=`<p class="aimsg">${HAS_GAS?'A Simulação recebe os pontos de inspeção, tendências, alarmes e controles desta área e marca no 3D onde estão os problemas.':'O diagnóstico com Simulação funciona na versão Google Apps Script.'}</p>`;$('#arPdf').hidden=true;
   areaEls.forEach(x=>x.remove());areaEls=(HS[id]||[]).map((h,i)=>{const d=document.createElement('div');d.className='hs';d.innerHTML=`<b>${h[0]}</b><span></span>`;d.addEventListener('click',()=>focusHs(i));$('#labels').appendChild(d);return d;});
   openDash(id);const dm=$('#dash');dm.classList.add('min');$('#dMin').setAttribute('aria-pressed','true');$('#dMin').textContent='Maximizar';setTimeout(applyViewOffset,0);renderArea();renderAreaExtra(id);logEvent('Navegação',`Entrou na área ${e.num} · ${e.name}`);
 }
@@ -3396,25 +3396,25 @@ function exitArea(){if(!AREA)return;restoreShells();areaEls.forEach(x=>x.remove(
 function focusHs(i){const h=HS[AREA][i];const p=h[1]();const dir=camera.position.clone().sub(p);dir.y=Math.max(dir.y,2);dir.normalize();flyTo(p.clone().addScaledVector(dir,9),p,1.1);}
 function stepArea(d){const i=(ORDER.indexOf(AREA)+d+ORDER.length)%ORDER.length;enterArea(ORDER[i]);}
 function renderArea(){if(!AREA)return;const list=HS[AREA]||[];
-  $('#arHs').innerHTML=list.map((h,i)=>{const st=hsState(h);return `<div class="hsrow ${st}" data-i="${i}"><i></i><div>${h[0]}${areaAI[i]?` <span class="tagp crit" style="font-size:10px">IA</span>`:''}</div><span>${hsVal(h)}</span></div>`;}).join('')||'<p class="hint">Sem pontos de inspeção definidos.</p>';
+  $('#arHs').innerHTML=list.map((h,i)=>{const st=hsState(h);return `<div class="hsrow ${st}" data-i="${i}"><i></i><div>${h[0]}${areaAI[i]?` <span class="tagp crit" style="font-size:10px">Simulação</span>`:''}</div><span>${hsVal(h)}</span></div>`;}).join('')||'<p class="hint">Sem pontos de inspeção definidos.</p>';
   $('#arHs').querySelectorAll('.hsrow').forEach(r=>r.addEventListener('click',()=>focusHs(+r.dataset.i)));
   const probs=[];list.forEach((h,i)=>{const st=hsState(h);if(st!=='ok'){const unitOff=h[3]&&!RUN[h[3]];probs.push(`<div class="aicard ${st==='crit'?'alta':'media'}"><b>${h[0]}</b> · ${hsVal(h)}<br>${unitOff?'Unidade parada ou fora de operação.':(SUGG[h[2]]||'Fora da faixa operacional.')}</div>`);}});
   ALARMS.filter(a=>a.eq===AREA).forEach(a=>{if(!probs.some(p=>p.indexOf(a.msg)>=0))probs.push(`<div class="aicard ${a.sev==='crit'?'alta':'media'}">${a.msg}</div>`);});
   $('#arProb').innerHTML=probs.join('')||'<div class="aicard baixa">Nenhum desvio nos pontos de inspeção desta área.</div>';}
 function updateHotspots(){if(!AREA||!showLbl)return;const w=stage.clientWidth,h=stage.clientHeight;(HS[AREA]||[]).forEach((hh,i)=>{const el=areaEls[i];if(!el)return;tmpV.copy(hh[1]()).project(camera);
   if(tmpV.z>1||Math.abs(tmpV.x)>1.05||Math.abs(tmpV.y)>1.05){el.style.display='none';return;}el.style.display='';el.className='hs '+hsState(hh);el.querySelector('span').textContent=hsVal(hh);
-  let ai=el.querySelector('.ai');if(areaAI[i]&&!ai){ai=document.createElement('em');ai.className='ai';el.appendChild(ai);}if(ai){ai.textContent='IA';ai.title=areaAI[i]||'';if(!areaAI[i])ai.remove();}
+  let ai=el.querySelector('.ai');if(areaAI[i]&&!ai){ai=document.createElement('em');ai.className='ai';el.appendChild(ai);}if(ai){ai.textContent='Simulação';ai.title=areaAI[i]||'';if(!areaAI[i])ai.remove();}
   el.style.transform=`translate(${((tmpV.x*.5+.5)*w-12).toFixed(0)}px,${((-tmpV.y*.5+.5)*h-40).toFixed(0)}px)`;});}
-function runAreaAI(){const out=$('#arAiOut');if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O diagnóstico com IA funciona na versão Google Apps Script.</p>';return;}
+function runAreaAI(){const out=$('#arAiOut');if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O diagnóstico com Simulação funciona na versão Google Apps Script.</p>';return;}
   const btn=$('#arAi');btn.disabled=true;out.innerHTML='<p class="aimsg"><span class="spin"></span>O Gemini está inspecionando a área…</p>';
   const ctx=buildContext('stage');ctx.pontos=(HS[AREA]||[]).map((h,i)=>({id:'P'+(i+1),nome:h[0],valor:hsVal(h),estado:hsState(h),indicador:h[2]||null}));
   aiReq={modo:'area',escopo:`Área ${EQ[AREA].num} · ${EQ[AREA].name}`,pergunta:'',ctx};
   google.script.run.withSuccessHandler(r=>{btn.disabled=false;areaAI={};(r.achados||[]).forEach(a=>{const m=String(a.ponto||'').match(/P(\d+)/i);if(m){const i=+m[1]-1;if(HS[AREA][i])areaAI[i]=(areaAI[i]?areaAI[i]+' | ':'')+a.titulo;}});
       renderAI(r);out.innerHTML=$('#aiOut').innerHTML;$('#aiOut').innerHTML='';
       out.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}if(UKEYS.includes(c.chave)){RUN[c.chave]=c.valor_sugerido?1:0;}else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);inputs[c.chave].sync();}
-        logEvent('IA',`Ajuste aplicado: ${c.titulo}`);b.textContent='Aplicado ✓';b.disabled=true;renderArea();}));
+        logEvent('Simulação',`Ajuste aplicado: ${c.titulo}`);b.textContent='Aplicado ✓';b.disabled=true;renderArea();}));
       const pb=out.querySelector('#aiPdf');if(pb)pb.addEventListener('click',()=>makePdf(r,pb));const sv=out.querySelector('#aiSave');if(sv)sv.remove();
-      renderArea();logEvent('IA',`Diagnóstico da área ${EQ[AREA].num} pelo Gemini`);})
+      renderArea();logEvent('Simulação',`Diagnóstico da área ${EQ[AREA].num} pelo Gemini`);})
     .withFailureHandler(e=>{btn.disabled=false;out.innerHTML=`<p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
     .aiAnalyze({modo:'area',escopo:'stage',pergunta:'',contexto:ctx});}
 $('#arExit').addEventListener('click',exitArea);$('#arClose').addEventListener('click',exitArea);{const PANS=['#left','#ai','#right'].map(q=>$(q)).filter(Boolean);const mob=()=>matchMedia('(max-width:860px)').matches;
@@ -3556,7 +3556,7 @@ function livePrev(){if(!GEO.on)return '<p class="aimsg">Ligue a <b>alimentação
     ${tr?`<br><em>Esse minério chega a Ubu cerca de ${fmt(tr+8,0)} h depois (trânsito do mineroduto + tanques).</em>`:''}</div>`).join(''):'<p>Com o plano atual e os ajustes de hoje, o concentrado fica dentro da especificação nas próximas 48 h.</p>'}`;}
 function drawPrev(){if(!FC)return;const P_=FC.pts;lineChart($('#fc1'),[{pts:P_.map(q=>[q.h,q.si]),color:'#ffb070',label:'SiO₂ (%)'},{pts:P_.map(q=>[q.h,q.al*2]),color:'#9fdcf0',label:'Al₂O₃ ×2 (%)',dash:[5,3]}],{title:'Previsão do concentrado · próximas 48 h',hl:[{y:SPEC.siMax,color:'#ff6b5b',label:'limite SiO₂'}],yd:2,xfmt:v=>'+'+fmt(v,0)+' h'});
   lineChart($('#fc2'),[{pts:P_.map(q=>[q.h,q.fe]),color:'#5cc6dc',label:'Fe conc. (%)'},{pts:P_.map(q=>[q.h,q.p80]),color:'#c9a04a',label:'P80 (µm)',y2:true}],{title:'Fe no concentrado e P80 da moagem',hl:[{y:SPEC.feMin,color:'#ff6b5b',label:'Fe mínimo'}],yd:2,y2:true,xfmt:v=>'+'+fmt(v,0)+' h'});}
-function engRec(){return `<p>Cada instrumento de vazão tem ruído e pode falhar. A <b>reconciliação de dados</b> ajusta todas as medições ao mesmo tempo, ponderadas pela incerteza de cada uma, para que os <b>balanços de massa fechem</b> em cada nó (entrada = saída + acúmulo). O <b>teste global (χ²)</b> indica inconsistência; o <b>teste por medição</b> aponta o instrumento suspeito, que passa a ser estimado pelos balanços. A IA recebe os valores reconciliados.</p>
+function engRec(){return `<p>Cada instrumento de vazão tem ruído e pode falhar. A <b>reconciliação de dados</b> ajusta todas as medições ao mesmo tempo, ponderadas pela incerteza de cada uma, para que os <b>balanços de massa fechem</b> em cada nó (entrada = saída + acúmulo). O <b>teste global (χ²)</b> indica inconsistência; o <b>teste por medição</b> aponta o instrumento suspeito, que passa a ser estimado pelos balanços. A Simulação recebe os valores reconciliados.</p>
   <div class="airow"><label class="hint">Injetar falha em <select id="recTag" style="width:auto">${INSTR.map(I=>`<option value="${I.tag}">${I.tag} · ${I.nome}</option>`).join('')}</select></label>
   <select id="recTipo" style="width:auto"><option value="bias">Descalibração (+8 %)</option><option value="biasn">Descalibração (−10 %)</option><option value="drift">Deriva (+6 %/dia)</option><option value="stuck">Travado (valor congelado)</option><option value="noise">Ruído alto (×5)</option></select>
   <button class="btn" id="recAdd">Injetar</button><button class="btn" id="recClr">Remover falhas</button><span class="hint" id="recMsg">${Object.keys(FAULT).length?'Falhas ativas: '+Object.entries(FAULT).map(([k,f])=>k+' ('+f.tipo+')').join(', '):'Nenhuma falha injetada.'}</span></div>
@@ -3624,7 +3624,7 @@ function surgeCalc(sc,tc,prot,pshhIn,maopIn){const c=CUR,HY=c.HY;if(!HY||!HY.hgl
   const d50=(c.G&&c.G.P80||45)*.42e-6,vs=g*d50*d50*(RHO-1)*1000/(18*1e-3)*Math.pow(1-Cv,4.65),tSet=D/Math.max(vs,1e-6);
   return{a,dJ,dValve,dTrip,T2L,pts,mx,mn,tDep,tSet,v,vdep:HY.vdep,rho,K,P2,pshh,pshhMax,tcNeed,packMax,prv};}
 const SC_TXT={valve:'Fechamento da válvula de chegada em Ubu',trip:'Queda de energia · parada de todas as bombas',eb2:'Parada da EB2 (estação intermediária)'};
-/* resumo dos três cenários, com e sem proteção, para a IA comparar e apontar o pior */
+/* resumo dos três cenários, com e sem proteção, para a Simulação comparar e apontar o pior */
 function surgeAll(){const out=[];for(const sc of Object.keys(SC_TXT))for(const pr of [false,true]){const r=surgeCalc(sc,SURGE.tc,pr,SURGE.pshh,SURGE.maop);if(!r)continue;
   out.push({cenario:SC_TXT[sc],protecao:pr,pressao_max_bar:+r.mx.max.toFixed(1),km_max:r.mx.km,origem_max:r.mx.src,acima_da_PMO:r.mx.max>SURGE.maop,pressao_min_bar:+Math.max(-.97,r.mn.raw).toFixed(1),km_min:r.mn.km,separacao_de_coluna:r.mn.raw<-.9});}return out;}
 function surgeFacts(){const r=surgeCalc(SURGE.sc,SURGE.tc,SURGE.prot,SURGE.pshh),A=surgeAll(),M=SURGE.maop,F=[];if(!r)return{fatos:F,risco:false};
@@ -3648,8 +3648,8 @@ function surgeOpen(){const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent=
    <label class="hint">PMO do tubo <input type="number" id="sgMaop" min="80" max="300" step="5" value="${SURGE.maop}" style="width:60px"> bar</label>
    <label class="hint" id="sgVsL"><input type="checkbox" id="sgVs"${SURGE.vs?' checked':''}> Estações de válvulas (Guaçuí, Alegre) fecham na parada</label>
    <label class="hint"><input type="checkbox" id="sgProt"${SURGE.prot?' checked':''}> Proteção (vaso hidropneumático + válvula de alívio em 95 % da PMO)</label></div>
-   <div class="dtcard" style="margin-top:8px"><canvas id="sgCv" style="width:100%;height:230px"></canvas></div><div id="sgOut"></div><div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da IA</h4><p class="hint">Clique em <b>Analisar com IA</b>: o Gemini compara os três cenários (com e sem proteção), aponta o pior caso e recomenda ações de operação e de projeto.</p></div>
-   <div class="row"><button class="btn" id="sgAi" style="background:var(--accent);color:#08202a;font-weight:600">Analisar com IA</button><button class="btn" id="sgAl">Registrar resultado nos alarmes</button><button class="btn" id="wifClose">Fechar</button></div>`;
+   <div class="dtcard" style="margin-top:8px"><canvas id="sgCv" style="width:100%;height:230px"></canvas></div><div id="sgOut"></div><div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da Simulação</h4><p class="hint">Clique em <b>Analisar com Simulação</b>: o Gemini compara os três cenários (com e sem proteção), aponta o pior caso e recomenda ações de operação e de projeto.</p></div>
+   <div class="row"><button class="btn" id="sgAi" style="background:var(--accent);color:#08202a;font-weight:600">Analisar com Simulação</button><button class="btn" id="sgAl">Registrar resultado nos alarmes</button><button class="btn" id="wifClose">Fechar</button></div>`;
   $('#sgAi').addEventListener('click',()=>{const r=surgeCalc(SURGE.sc,SURGE.tc,SURGE.prot,SURGE.pshh);studyAI('surge',{cenario_na_tela:SC_TXT[SURGE.sc],tempo_fechamento_s:SURGE.tc,PMO_bar:SURGE.maop,PSHH_EB2_bar:SURGE.pshh,protecao:SURGE.prot,
     tipo_de_bomba:'deslocamento positivo (pistão/diafragma)',tempo_fechamento_necessario_s:r?(r.tcNeed===0?'qualquer (onda já abaixo da PMO)':isFinite(r.tcNeed)?Math.round(r.tcNeed):'não resolve só com o tempo'):null,PSHH_maximo_para_empacotamento_abaixo_da_PMO_bar:r?+r.pshhMax.toFixed(0):null,descarga_EB2_regime_bar:r?+r.P2.toFixed(0):null,estacoes_de_valvulas_fecham:SURGE.vs,
     todos_os_cenarios:surgeAll(),fatos_obrigatorios:surgeFacts().fatos,existe_risco:surgeFacts().risco},'#sgOut');});
@@ -3708,30 +3708,30 @@ function heatOpen(){const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent='
    <li><b>Umidade −0,5 ponto:</b> ≈ ${fmt(-lev[2].dq,1)} Mcal/t (≈ ${fmt(-lev[2].gas,0)} Nm³/h). ${mBall?'<b>Atenção:</b> ficaria abaixo de ≈ 8,8 %, faixa em que o pelotamento piora (pelotas cruas fracas e mais finos).':'Ainda dentro da faixa boa de pelotamento (≈ 8,8–9,5 %).'} A chuva no pátio faz o contrário.</li>
    <li><b>Gases de chaminé e ar de resfriamento</b> (${fmt((r.out[5][1]+r.out[3][1])/r.tot*100,0)} % do calor) são perdas <b>parcialmente recuperáveis</b>: parte é inevitável (os gases precisam sair acima do ponto de orvalho). Ganhos vêm de vedação dos carros, controle do ar falso e mais recirculação do ar quente do resfriamento para a secagem.</li></ul></div>
    <p class="hint">Modelo didático: calores específicos médios (pelota 0,20 kcal/kg·°C, água 0,62 Mcal/kg evaporada); perdas de parede 8 %. <b>Os gases de chaminé não são calculados: são o fechamento do balanço</b> e acumulam os erros das outras parcelas (a parcela menos confiável). Calibrar com vazões e temperaturas de gás por zona e análise de combustível.</p>
-   <div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da IA</h4><p class="hint">Clique em <b>Analisar com IA</b>: o Gemini interpreta o balanço, aponta as maiores perdas e recomenda como reduzir o consumo sem perder resistência.</p></div>
-   <div class="row"><button class="btn" id="htAi" style="background:var(--accent);color:#08202a;font-weight:600">Analisar com IA</button><button class="btn" id="wifClose">Fechar</button></div>`;
+   <div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da Simulação</h4><p class="hint">Clique em <b>Analisar com Simulação</b>: o Gemini interpreta o balanço, aponta as maiores perdas e recomenda como reduzir o consumo sem perder resistência.</p></div>
+   <div class="row"><button class="btn" id="htAi" style="background:var(--accent);color:#08202a;font-weight:600">Analisar com Simulação</button><button class="btn" id="wifClose">Fechar</button></div>`;
   $('#htAi').addEventListener('click',()=>studyAI('heat',{temperatura_queima_C:ST.Tq,umidade_pct:r.m,resistencia_CS_atual_kgf:+(U.CS||0).toFixed(0),producao_t_h:+prod.toFixed(0),chamine_e_fechamento_do_balanco:true,alavancas:lev.map(l=>({mudanca:l.dT?'queima '+l.dT+' °C':'umidade -0,5 ponto',economia_Mcal_t:+(-l.dq).toFixed(1),economia_gas_Nm3_h:+(-l.gas).toFixed(0),variacao_CS_kgf:+l.cs.toFixed(0)})),umidade_minima_pelotamento_pct:8.8,existe_risco:false,fatos_obrigatorios:[`Consumo ${fmt(r.fuel,0)} Mcal/t a ${fmt(ST.Tq,0)} °C; ${fmt(r.gcal,0)} Gcal/h ≈ ${fmt(r.gas,0)} Nm³/h de gás.`,
    ...r.out.map(o=>`${o[0]}: ${fmt(o[1],0)} Mcal/t (${fmt(o[1]/r.tot*100,0)} %).`),
    ...lev.map(l=>l.dT?`Queima ${l.dT} °C: −${fmt(-l.dq,1)} Mcal/t, −${fmt(-l.gas,0)} Nm³/h, CS ${fmt(l.cs,0)} kgf → ${fmt(l.csNew,0)} kgf${l.csNew<250?' (ABAIXO do mínimo de 250 kgf: não recomendar)':''}.`:`Umidade −0,5 ponto: −${fmt(-l.dq,1)} Mcal/t, −${fmt(-l.gas,0)} Nm³/h${mBall?' (abaixo de 8,8 %: piora o pelotamento)':' (ainda na faixa boa de pelotamento)'}.`),
    `Recuperação do ar de resfriamento já recircula ≈ ${fmt(r.recup,0)} Mcal/t; chaminé e ar de resfriamento são perdas parcialmente recuperáveis.`,
    'Os gases de chaminé são o fechamento do balanço (parcela menos confiável).']},'#wifBody'));
   $('#wifClose').addEventListener('click',()=>{d.hidden=true;});logEvent('Estudo',`Balanço térmico do forno: ${fmt(r.fuel,0)} Mcal/t, chaminé ${fmt(r.out[5][1],0)} Mcal/t`);}
-/* confere se a IA citou cada fato obrigatório (pelos números); o que faltar aparece como complemento do modelo */
+/* confere se a Simulação citou cada fato obrigatório (pelos números); o que faltar aparece como complemento do modelo */
 function numsOf(t){return (String(t).replace(/(\d)\.(\d{3})(?!\d)/g,'$1$2').match(/\d+(?:,\d+)?/g)||[]).map(x=>x.replace(',','.')).filter(x=>x.length>=2||x.includes('.')).map(x=>String(+x));}
 function studyMissing(F,r){if(!Array.isArray(F)||!F.length)return '';const txt=JSON.stringify([r.resumo,r.achados,r.recomendacoes]),have=new Set(numsOf(txt));
   const miss=F.filter(f=>{const n=[...new Set(numsOf(f))].filter(x=>x!=='200'&&x!=='250');if(!n.length)return false;return n.filter(x=>have.has(x)).length<Math.ceil(n.length/2);});
-  if(!miss.length)return '';return `<div class="aicard media" style="border-left-color:#ffd24a"><b style="color:#ffd24a">Complemento do modelo (não citado pela IA)</b><ul style="margin:6px 0 0 16px;padding:0">${miss.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;}
-/* IA no estudo de engenharia: o Gemini interpreta os resultados do modelo */
+  if(!miss.length)return '';return `<div class="aicard media" style="border-left-color:#ffd24a"><b style="color:#ffd24a">Complemento do modelo (não citado pela Simulação)</b><ul style="margin:6px 0 0 16px;padding:0">${miss.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;}
+/* Simulação no estudo de engenharia: o Gemini interpreta os resultados do modelo */
 function studyAI(tipo,params,outSel){const box=$('#stAi');if(!box)return;
-  if(!HAS_GAS){box.innerHTML='<h4>Análise da IA</h4><p class="aimsg err">A análise com IA funciona na versão Google Apps Script (a chave da IA fica no servidor).</p>';return;}
-  box.innerHTML='<h4>Análise da IA</h4><p class="aimsg"><span class="spin"></span>A IA está analisando o estudo…</p>';
+  if(!HAS_GAS){box.innerHTML='<h4>Análise da Simulação</h4><p class="aimsg err">A análise com Simulação funciona na versão Google Apps Script (a chave do serviço de Simulação fica no servidor).</p>';return;}
+  box.innerHTML='<h4>Análise da Simulação</h4><p class="aimsg"><span class="spin"></span>A Simulação está analisando o estudo…</p>';
   const prevSel=selected;selected=tipo==='surge'?'pump':'furnace';const ctx=buildContext('stage');selected=prevSel;
   ctx.estudo={tipo:tipo==='surge'?'Golpe de aríete no mineroduto':'Balanço térmico do forno de grelha móvel',parametros:params,resultados:(($(outSel)||{innerText:''}).innerText).replace(box.innerText,'').slice(0,5000)};
   google.script.run.withSuccessHandler(r=>{const sv=c=>/alta/i.test(c)?'alta':/m[eé]dia/i.test(c)?'media':'baixa';const dec=String(r.resumo||'');
-      box.innerHTML=`<h4>Análise da IA</h4><div class="aicard ${/risco|n[ãa]o|acima|separa/i.test(dec)?'alta':'baixa'}"><b>${esc(dec)}</b></div>${(r.achados||[]).map(a=>`<div class="aicard ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><br>${esc(a.evidencia||'')}</div>`).join('')}
+      box.innerHTML=`<h4>Análise da Simulação</h4><div class="aicard ${/risco|n[ãa]o|acima|separa/i.test(dec)?'alta':'baixa'}"><b>${esc(dec)}</b></div>${(r.achados||[]).map(a=>`<div class="aicard ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><br>${esc(a.evidencia||'')}</div>`).join('')}
         ${(r.recomendacoes||[]).filter(c=>c&&c.titulo).map(c=>`<div class="aicard"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><br>${esc(c.efeito_esperado||'')}</div>`).join('')}
-        ${studyMissing(params.fatos_obrigatorios,r)}<p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')} a partir deste estudo. A decisão final é da engenharia e da operação.</p>`;logEvent('IA','Análise do estudo: '+dec.slice(0,90));})
-    .withFailureHandler(e=>{box.innerHTML=`<h4>Análise da IA</h4><p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
+        ${studyMissing(params.fatos_obrigatorios,r)}<p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')} a partir deste estudo. A decisão final é da engenharia e da operação.</p>`;logEvent('Simulação','Análise do estudo: '+dec.slice(0,90));})
+    .withFailureHandler(e=>{box.innerHTML=`<h4>Análise da Simulação</h4><p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
     .aiAnalyze({modo:'estudo',escopo:'stage',pergunta:'',contexto:ctx});}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-study]');if(!b)return;e.preventDefault();b.dataset.study==='surge'?surgeOpen():heatOpen();});
 const DATASETS=[
@@ -3742,7 +3742,7 @@ const DATASETS=[
   {id:'tags',nome:'5 · Mapa de tags do PI',para:'Conector ao vivo',freq:'uma vez',cols:['tag_simulador','tag_pi','unidade','descricao'],ex:'FIT-0501;GER.CON.FIT0501.PV;t/h;Alimentação dos concentradores'},
   {id:'perfil',nome:'6 · Perfil do mineroduto e reologia',para:'Modelos avançados',freq:'uma vez',cols:['km','cota_m','diametro_m','estacao'],ex:'0;1010;0,51;EB1 Germano'},
   {id:'forno',nome:'7 · Forno (zonas e resistência)',para:'Modelos avançados',freq:'por turno · 1 mês',cols:['data','usina','producao_t_h','velocidade_grelha_m_min','t_queima_c','t_udd','t_ddd','t_ph','cs_kgf','abrasao_pct'],ex:'2026-08-01 06:00;4;1120;2,0;1325;330;390;1080;282;4,1'}];
-function engDados(){return `<p>Roteiro para o engenheiro de processo da Samarco validar e calibrar o simulador com dados reais. Cada conjunto alimenta uma aba. <b>Os dados ficam no navegador</b>: nada é enviado a servidores, exceto o resumo que a IA analisa quando você pede um diagnóstico.</p>
+function engDados(){return `<p>Roteiro para o engenheiro de processo da Samarco validar e calibrar o simulador com dados reais. Cada conjunto alimenta uma aba. <b>Os dados ficam no navegador</b>: nada é enviado a servidores, exceto o resumo que a Simulação analisa quando você pede um diagnóstico.</p>
   <p class="hint" style="color:var(--warn)">Use somente dados cujo compartilhamento esteja autorizado pela Samarco. Para confidencialidade máxima, rode a cópia local (index.html) dentro da rede da empresa.</p>
   <h4>Conjuntos de dados</h4><div style="overflow-x:auto"><table class="eqt"><tr><th>Conjunto</th><th>Usado em</th><th>Frequência e período</th><th>Colunas (separador ;)</th><th></th></tr>${DATASETS.map(d=>`<tr><td><b>${d.nome}</b></td><td>${d.para}</td><td>${d.freq}</td><td><code>${d.cols.join(';')}</code></td><td><button class="btn" data-tpl="${d.id}">Copiar modelo</button></td></tr>`).join('')}</table></div>
   <h4>Importar histórico de instrumentos (reconciliação em lote)</h4><div class="airow"><label class="btn" style="cursor:pointer">Escolher CSV (conjunto 3)<input type="file" id="batFile" accept=".csv,.txt" hidden></label><span class="hint" id="batMsg">Cada linha é reconciliada; o resultado mostra quais instrumentos mais falham e o ajuste médio de cada um.</span></div><div id="batOut"></div>
@@ -3914,7 +3914,7 @@ function engClima(){return `<p>Simulação do <b>período chuvoso</b> e dos seus
   <h4>Tempo real</h4><div class="airow"><label class="hint" style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" id="rnAuto" ${AUTOWX?'checked':''}> <b>Configurar automaticamente pela previsão do dia</b></label></div>${AUTOWX&&AUTOMSG?`<p class="hint" style="color:#9fdcf0">${esc(AUTOMSG)}</p>`:''}<div class="airow"><label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="rnReal" ${RAIN.real?'checked':''}> Usar a previsão do tempo real (Germano e Ubu, hora a hora)</label>
    <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="rnClock" ${RAIN.clock?'checked':''}> Relógio do simulador = hora real (1×)</label>
    <label class="hint" style="display:flex;gap:6px;align-items:center">Dia 1 = <input type="date" id="rnD0" value="${new Date(SIM_T0).toISOString().slice(0,10)}" style="width:auto"></label>
-   <button class="btn" id="rnReload">Atualizar previsão</button><button class="btn" id="rnBolGo" style="background:var(--accent);color:#08202a;font-weight:600">Boletim do dia com IA</button></div>
+   <button class="btn" id="rnReload">Atualizar previsão</button><button class="btn" id="rnBolGo" style="background:var(--accent);color:#08202a;font-weight:600">Boletim do dia com Simulação</button></div>
   <p class="hint">A previsão horária vem da Open-Meteo, que recebe só as coordenadas fixas das plantas e atualiza a cada 30 min. O <b>Boletim do dia</b> usa o Gemini com busca no Google para ler a previsão e os alertas oficiais (INMET, Defesa Civil) e traduzir em impactos por área.</p>
   <div id="rnBol">${bolHTML(WXBOL)}</div>
   <div id="engLive"></div>`;}
@@ -3964,7 +3964,7 @@ function rainFrame(dt){const tg=clamp(RAIN.rate/14,0,1),tu=clamp(RAIN.rateU/14,0
   const inG=controls.target.x<RAIN_REG.split,vc=inG?RAIN_REG.g.v:RAIN_REG.u.v,vo=inG?RAIN_REG.u.v:RAIN_REG.g.v;const far=clamp((Math.hypot(camera.position.x-controls.target.x,camera.position.z-controls.target.z,camera.position.y)-120)/120,0,1);RAIN.vis=far>0?Math.min(RAIN_REG.g.v,RAIN_REG.u.v)+(.45*Math.max(RAIN_REG.g.v,RAIN_REG.u.v)-Math.min(RAIN_REG.g.v,RAIN_REG.u.v))*far*.5+(1-far)*vc:Math.max(vc,.35*vo);
   if(window.__terrWet){const u=window.__terrWet;u.wetG.value+=(clamp(RAIN.wetG||0,0,1)-u.wetG.value)*Math.min(1,dt);u.wetU.value+=(clamp(RAIN.wetU||0,0,1)-u.wetU.value)*Math.min(1,dt);u.split.value=RAIN_REG.split;}}
 function rainVis(){const v=RAIN.vis;if(v<.01)return;sun.intensity*=1-.72*v;hemi.intensity*=1-.25*v;scene.fog.near=320*(1-.75*v);scene.fog.far=2600*(1-.8*v);scene.fog.color.lerp(_c1.setRGB(.55,.6,.64),.7*v);}
-/* ---- Tempo real: previsão horária (Open-Meteo) + boletim do dia pela IA (Gemini com busca Google) ---- */
+/* ---- Tempo real: previsão horária (Open-Meteo) + boletim do dia pela Simulação (Gemini com busca Google) ---- */
 const WXURL=(la,lo,el)=>'https:'+'/'+'/api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo+'&elevation='+el+'&hourly=precipitation,precipitation_probability,weather_code,wind_speed_10m,cape,temperature_2m,relative_humidity_2m,surface_pressure&wind_speed_unit=ms&past_days=2&forecast_days=7&timezone=America%2FSao_Paulo';
 let WXMSG='',WXBOL=null,wxTimer=null;
 function wxApply(d){const g=d.germano,u=d.ubu;if(!g||!g.time)throw new Error('resposta sem dados horários');const now=d.gerado||new Date().toISOString().slice(0,16);
@@ -4042,11 +4042,11 @@ function bolHTML(r){if(!r)return '';const site=(n,o)=>o?`<div class="aicard"><b>
    ${r.fontes&&r.fontes.length?`<p class="hint">Fontes consultadas: ${r.fontes.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(f.titulo||'fonte')}</a>`).join(' · ')}</p>`:''}
    ${!RAIN.real&&isFinite(r.intensidade_sugerida)?`<button class="apply" id="bolApply">Aplicar no modo simulado (intensidade ×${fmt(r.intensidade_sugerida,1)}, ${esc(r.modo_sugerido||'eventos')})</button>`:''}
    <p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')}. Confirme sempre nos canais oficiais (INMET, Defesa Civil) antes de decisões operacionais.</p>`;}
-function runBoletim(){const o=$('#rnBol');if(!HAS_GAS){o.innerHTML='<p class="aimsg err">O boletim com IA funciona na versão Google Apps Script (a chave da IA fica no servidor).</p>';return;}
-  const b=$('#rnBolGo');b.disabled=true;o.innerHTML='<p class="aimsg"><span class="spin"></span>A IA está pesquisando a previsão e os alertas do dia… (20 a 60 s)</p>';
+function runBoletim(){const o=$('#rnBol');if(!HAS_GAS){o.innerHTML='<p class="aimsg err">O boletim com Simulação funciona na versão Google Apps Script (a chave do serviço de Simulação fica no servidor).</p>';return;}
+  const b=$('#rnBolGo');b.disabled=true;o.innerHTML='<p class="aimsg"><span class="spin"></span>A Simulação está pesquisando a previsão e os alertas do dia… (20 a 60 s)</p>';
   const numerica=RAIN.wx?wxDaily().slice(0,3).map(d=>({dia:d.d,germano_mm:+d.gmm.toFixed(1),germano_prob:d.gp,germano_pico_mm_h:+d.gmax.toFixed(1),germano_trovoada:d.gt,ubu_mm:+d.umm.toFixed(1),ubu_prob:d.up,ubu_trovoada:d.ut})):'previsão numérica não carregada';
   const estado={umidade_rom:+romM().toFixed(1),saturacao_pilha_pct:Math.round(RAIN.stack*100),reservatorio_pct:Math.round(RAIN.res*100),bacia_ubu_pct:Math.round(ST.basin*100),umidade_pellet_feed:+pfYardM().toFixed(2),tml:TML};
-  google.script.run.withSuccessHandler(r=>{b.disabled=false;WXBOL=r;LTN_BOL=r.raios?{g:String(r.raios.germano||'').toLowerCase(),u:String(r.raios.ubu||'').toLowerCase()}:null;o.innerHTML=bolHTML(r);logEvent('Clima','Boletim do dia gerado pela IA');const ap=$('#bolApply');if(ap)ap.addEventListener('click',()=>{RAIN.on=true;RAIN.int=clamp(+r.intensidade_sugerida||1,.4,2);RAIN.modo=r.modo_sugerido==='continua'?'continua':'eventos';renderEng();});})
+  google.script.run.withSuccessHandler(r=>{b.disabled=false;WXBOL=r;LTN_BOL=r.raios?{g:String(r.raios.germano||'').toLowerCase(),u:String(r.raios.ubu||'').toLowerCase()}:null;o.innerHTML=bolHTML(r);logEvent('Clima','Boletim do dia gerado pela Simulação');const ap=$('#bolApply');if(ap)ap.addEventListener('click',()=>{RAIN.on=true;RAIN.int=clamp(+r.intensidade_sugerida||1,.4,2);RAIN.modo=r.modo_sugerido==='continua'?'continua':'eventos';renderEng();});})
     .withFailureHandler(e=>{b.disabled=false;o.innerHTML=`<p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;}).boletimClima({numerica,estado});}
 {let moved=false;controls.addEventListener('start',()=>{moved=true;});window.addEventListener('resize',()=>{if(!moved&&!AREA&&!tween){camera.position.copy(homeP());controls.target.copy(homeT());controls.maxDistance=isPortrait()?820:340;controls.update();}});}
 $('#wxNow').addEventListener('click',()=>{const e=$('#eng');e.hidden=false;engTab='clima';document.querySelectorAll('#engTabs button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.t==='clima'));renderEng();});
@@ -4067,7 +4067,7 @@ function ltnPanel(){const row=(nm,k,imp)=>{const S=LTN[k];return `<tr><td>${nm}<
   return `<h4>Alerta de raios</h4><div style="overflow-x:auto"><table class="eqt"><tr><th>Local</th><th>Nível</th><th>Origem</th><th>Protocolo no nível vermelho</th><th>Tempo parado</th></tr>
    ${row('Germano (MG)','g','Paralisa lavra, empilhamento de rejeito e trabalhos externos; concentração e mineroduto seguem com o estoque da pilha e dos tanques')}
    ${row('Ubu (ES)','u','Paralisa carregador de navios e trabalhos no píer; pelotização segue (área coberta)')}</table></div>
-   <p class="hint">Vinculado à previsão do tempo real (Open-Meteo) da data e hora mostradas no relógio, mesmo sem o modo tempo real. Amarelo: trovoada prevista em até 3 h, energia convectiva alta (CAPE &gt; 1.500 J/kg) ou risco alto no boletim da IA. Vermelho: trovoada na hora, tempestade simulada ou teste manual. Liberação após 30 min sem descargas. Limiares ilustrativos; ajustar ao procedimento de descargas atmosféricas da Samarco e, se houver, ao sistema de detecção de raios da empresa.</p>`;}
+   <p class="hint">Vinculado à previsão do tempo real (Open-Meteo) da data e hora mostradas no relógio, mesmo sem o modo tempo real. Amarelo: trovoada prevista em até 3 h, energia convectiva alta (CAPE &gt; 1.500 J/kg) ou risco alto no boletim da Simulação. Vermelho: trovoada na hora, tempestade simulada ou teste manual. Liberação após 30 min sem descargas. Limiares ilustrativos; ajustar ao procedimento de descargas atmosféricas da Samarco e, se houver, ao sistema de detecção de raios da empresa.</p>`;}
 
 /* ---- Localização, altitude e efeitos no processo ---- */
 const fmtLat=v=>`${fmt(Math.abs(v),3)}° ${v<0?'S':'N'}`,fmtLon=v=>`${fmt(Math.abs(v),3)}° ${v<0?'O':'L'}`,hm=x=>{const h=((x%24)+24)%24;return`${String(Math.floor(h)).padStart(2,'0')}:${String(Math.round(h%1*60)%60).padStart(2,'0')}`;};
@@ -4280,7 +4280,7 @@ function renderAreaExtra(id){const box=$('#arExtra');if(!box)return;const e=EQ[i
    <div><h4>Registro de inspeção</h4>${mine?`<div class="inspf"><div class="airow"><select id="inTipo"><option>Anomalia</option><option>Falha</option><option>Erro operacional</option><option>Condição insegura</option><option>Vazamento</option><option>Ruído/vibração</option><option>Acidente de trabalho</option></select>
      <select id="inSev"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Crítica</option></select><select id="inLocal"><option value="">Local/equipamento…</option>${pts.map(p=>`<option>${esc(p)}</option>`).join('')}<option>Outro</option></select></div>
      <textarea id="inDesc" rows="3" maxlength="1500" placeholder="Descreva o que foi encontrado na inspeção: o quê, onde, desde quando, condições observadas…"></textarea>
-     <div class="airow"><input id="inOper" maxlength="60" placeholder="Operador (nome ou matrícula, opcional)" style="flex:1;min-width:140px"><button class="btn" id="inSave">Registrar</button><button class="btn" id="inSaveAi" style="background:var(--accent);color:#08202a;font-weight:600">Registrar e analisar com IA</button></div>
+     <div class="airow"><input id="inOper" maxlength="60" placeholder="Operador (nome ou matrícula, opcional)" style="flex:1;min-width:140px"><button class="btn" id="inSave">Registrar</button><button class="btn" id="inSaveAi" style="background:var(--accent);color:#08202a;font-weight:600">Registrar e analisar com Simulação</button></div>
      <span class="hint" id="inMsg"></span></div>`:`<p class="hint">Registro disponível para o operador desta área (acesso pelo QR da área ${e.num}).</p>`}
      <div id="inList" style="margin-top:8px"></div><div id="inAiOut" class="aiout" style="margin-top:8px"></div></div>`;
   const pr=(ids)=>{const w=window.open('','_blank');if(!w){toast('Permita pop-ups para imprimir.');return;}w.document.write(`<html><head><title>QR Codes · Germano–Ubu</title><style>body{font-family:Arial,sans-serif;margin:0}.pl{width:9.5cm;height:12.5cm;border:2px solid #111;border-radius:10px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin:.4cm;page-break-inside:avoid;text-align:center;padding:.3cm;box-sizing:border-box}.n{font-size:34px;font-weight:800;background:#0d3b4f;color:#fff;border-radius:50%;width:56px;height:56px;line-height:56px}h2{font-size:17px;margin:.25cm 0}p{font-size:11px;color:#333;margin:.2cm 0 0}</style></head><body>${ids.map(i=>`<div class="pl"><div class="n">${EQ[i].num}</div><h2>${esc(EQ[i].name)}</h2>${qrSVG(areaURL(i),230)}<p>Escaneie com o celular para acessar e operar esta área</p></div>`).join('')}</body></html>`);w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(x){}},500);};
@@ -4297,17 +4297,17 @@ function renderAreaExtra(id){const box=$('#arExtra');if(!box)return;const e=EQ[i
   inspLoad(id);}
 function inspLoad(id){if(HAS_GAS)google.script.run.withSuccessHandler(l=>{INSP_CACHE[id]=l||[];if(AREA===id)inspDraw(id);}).withFailureHandler(()=>{}).inspListar(id);else{INSP_CACHE[id]=inspLocal().filter(r=>r.area===id);inspDraw(id);}}
 function inspDraw(id){const el=$('#inList');if(!el)return;const L=(INSP_CACHE[id]||[]).slice(0,8);const mine=!OPER.area||OPER.area===id;
-  el.innerHTML=L.length?`<h4 style="margin-top:4px">Registros recentes</h4>`+L.map((r,i)=>`<div class="aicard ${/crít|alta/i.test(r.severidade)?'alta':/méd/i.test(r.severidade)?'media':'baixa'}"><b>${esc(r.tipo)} · ${esc(r.severidade)}</b>${r.local?` · ${esc(r.local)}`:''}<br><em>${esc(r.data||'')}${r.operador?' · '+esc(r.operador):''}${r.status?' · '+esc(r.status):''}</em><br>${esc(r.descricao)}${r.analise?`<br><em>IA: ${esc(r.analise.slice(0,220))}…</em>`:''}${mine?`<br><button class="apply" data-ai="${i}">Analisar com IA</button>`:''}</div>`).join(''):'<p class="hint">Nenhum registro de inspeção para esta área.</p>';
+  el.innerHTML=L.length?`<h4 style="margin-top:4px">Registros recentes</h4>`+L.map((r,i)=>`<div class="aicard ${/crít|alta/i.test(r.severidade)?'alta':/méd/i.test(r.severidade)?'media':'baixa'}"><b>${esc(r.tipo)} · ${esc(r.severidade)}</b>${r.local?` · ${esc(r.local)}`:''}<br><em>${esc(r.data||'')}${r.operador?' · '+esc(r.operador):''}${r.status?' · '+esc(r.status):''}</em><br>${esc(r.descricao)}${r.analise?`<br><em>Simulação: ${esc(r.analise.slice(0,220))}…</em>`:''}${mine?`<br><button class="apply" data-ai="${i}">Analisar com Simulação</button>`:''}</div>`).join(''):'<p class="hint">Nenhum registro de inspeção para esta área.</p>';
   el.querySelectorAll('[data-ai]').forEach(b=>b.addEventListener('click',()=>inspAI(id,L[+b.dataset.ai])));}
-function inspAI(id,reg){const out=$('#inAiOut');if(!HAS_GAS){out.innerHTML='<p class="aimsg err">A análise com IA funciona na versão Google Apps Script.</p>';return;}
-  out.innerHTML='<p class="aimsg"><span class="spin"></span>A IA está analisando o registro de inspeção…</p>';const ctx=buildContext('stage');ctx.pontos=(HS[id]||[]).map((h,i)=>({id:'P'+(i+1),nome:h[0],valor:hsVal(h),estado:hsState(h)}));
+function inspAI(id,reg){const out=$('#inAiOut');if(!HAS_GAS){out.innerHTML='<p class="aimsg err">A análise com Simulação funciona na versão Google Apps Script.</p>';return;}
+  out.innerHTML='<p class="aimsg"><span class="spin"></span>A Simulação está analisando o registro de inspeção…</p>';const ctx=buildContext('stage');ctx.pontos=(HS[id]||[]).map((h,i)=>({id:'P'+(i+1),nome:h[0],valor:hsVal(h),estado:hsState(h)}));
   ctx.registros=[reg].concat((INSP_CACHE[id]||[]).filter(r=>r!==reg).slice(0,5)).map(r=>({tipo:r.tipo,severidade:r.severidade,local:r.local,descricao:r.descricao,data:r.data||r.tempo}));
   aiReq={modo:'inspecao',escopo:`Área ${EQ[id].num} · ${EQ[id].name}`,pergunta:'',ctx};
   google.script.run.withSuccessHandler(r=>{renderAI(r);out.innerHTML=$('#aiOut').innerHTML;$('#aiOut').innerHTML='';
-      out.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(!c||!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}if(UKEYS.includes(c.chave))RUN[c.chave]=c.valor_sugerido?1:0;else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);inputs[c.chave].sync();}logEvent('IA',`Ajuste aplicado (inspeção): ${c.titulo}`);b.textContent='Aplicado ✓';b.disabled=true;}));
+      out.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(!c||!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}if(UKEYS.includes(c.chave))RUN[c.chave]=c.valor_sugerido?1:0;else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);inputs[c.chave].sync();}logEvent('Simulação',`Ajuste aplicado (inspeção): ${c.titulo}`);b.textContent='Aplicado ✓';b.disabled=true;}));
       const pb=out.querySelector('#aiPdf');if(pb)pb.addEventListener('click',()=>makePdf(r,pb));const sv=out.querySelector('#aiSave');if(sv)sv.remove();
       if(reg.linha){const txt=[r.resumo].concat((r.recomendacoes||[]).map(x=>'• '+x.titulo+': '+(x.efeito_esperado||''))).join('\n');google.script.run.inspSalvarAnalise({linha:reg.linha,texto:txt});reg.analise=txt;reg.status='Em tratamento';}
-      logEvent('IA',`Registro de inspeção da área ${EQ[id].num} analisado`);})
+      logEvent('Simulação',`Registro de inspeção da área ${EQ[id].num} analisado`);})
     .withFailureHandler(e=>{out.innerHTML=`<p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
     .aiAnalyze({modo:'inspecao',escopo:'stage',pergunta:'',contexto:ctx});}
 /* ============ CONTADORES P1/P2 NO STATUS ============ */
@@ -4335,7 +4335,7 @@ function wifOpen(key){const m=CMETA[key];if(!m)return;WIF.key=key;WIF.res=null;c
   $('#wifBody').innerHTML=`<p><b>${esc(label)}</b> · etapa ${ctlNum(key)} · valor atual <b>${fmt(P[key],dec)} ${unit}</b></p>
    <div class="airow"><label class="hint">Novo valor <input type="number" id="wifV" step="${st}" min="${min}" max="${max}" value="${P[key]}" style="width:100px"> ${unit}</label><input type="range" id="wifR" min="${min}" max="${max}" step="${st}" value="${P[key]}" style="flex:1;min-width:140px">
    <select id="wifH" style="width:auto"><option value="8">8 h</option><option value="24" selected>24 h</option><option value="48">48 h</option></select><button class="btn" id="wifGo" style="background:var(--accent);color:#08202a;font-weight:600">Simular</button></div>
-   <div id="wifOut"><p class="hint">A simulação roda uma cópia do processo a partir de agora, com o valor atual e com o novo valor, sem mexer na operação.</p></div><div id="wifAi" class="aiout" style="margin-top:10px"><h4>Avaliação da IA</h4><p class="hint">Depois de simular, a IA explica se cada fator impacta ou não o processo e recomenda aplicar ou não.</p></div>
+   <div id="wifOut"><p class="hint">A simulação roda uma cópia do processo a partir de agora, com o valor atual e com o novo valor, sem mexer na operação.</p></div><div id="wifAi" class="aiout" style="margin-top:10px"><h4>Avaliação da Simulação</h4><p class="hint">Depois de simular, a Simulação explica se cada fator impacta ou não o processo e recomenda aplicar ou não.</p></div>
    <div class="row"><button class="btn" id="wifApply" disabled>${locked?'Bloqueado (outra área)':'Aplicar'}</button><button class="btn" id="wifClose">Descartar</button></div>`;
   const v=$('#wifV'),r=$('#wifR');v.addEventListener('input',()=>{r.value=v.value;});r.addEventListener('input',()=>{v.value=r.value;});
   $('#wifGo').addEventListener('click',()=>{const nv=clamp(+v.value,min,max),H=+$('#wifH').value;$('#wifOut').innerHTML='<p class="aimsg"><span class="spin"></span>Simulando as próximas '+H+' h…</p>';
@@ -4343,16 +4343,16 @@ function wifOpen(key){const m=CMETA[key];if(!m)return;WIF.key=key;WIF.res=null;c
   $('#wifApply').addEventListener('click',()=>{if(!WIF.res)return;P[key]=WIF.res.nv;inputs[key]&&inputs[key].sync();logEvent('E se…',`${label}: ${fmt(WIF.res.nv,dec)} ${unit} aplicado após simulação de ${WIF.res.H} h`);d.hidden=true;});
   $('#wifClose').addEventListener('click',()=>{d.hidden=true;});}
 
-/* ---- Avaliação da IA no "Testar antes de aplicar" ---- */
+/* ---- Avaliação da Simulação no "Testar antes de aplicar" ---- */
 function wifAI(desc,key){const box=$('#wifAi');if(!box)return;
-  if(!HAS_GAS){box.innerHTML='<h4>Avaliação da IA</h4><p class="aimsg err">A avaliação com IA funciona na versão Google Apps Script (a chave da IA fica no servidor).</p>';return;}
-  box.innerHTML='<h4>Avaliação da IA</h4><p class="aimsg"><span class="spin"></span>A IA está avaliando o impacto de cada fator no processo…</p>';
+  if(!HAS_GAS){box.innerHTML='<h4>Avaliação da Simulação</h4><p class="aimsg err">A avaliação com Simulação funciona na versão Google Apps Script (a chave do serviço de Simulação fica no servidor).</p>';return;}
+  box.innerHTML='<h4>Avaliação da Simulação</h4><p class="aimsg"><span class="spin"></span>A Simulação está avaliando o impacto de cada fator no processo…</p>';
   const prevSel=selected;if(key&&CTRL_STAGE[key])selected=CTRL_STAGE[key];const ctx=buildContext(key&&CTRL_STAGE[key]?'stage':'all');selected=prevSel;ctx.teste={mudanca_proposta:desc,resultado_da_simulacao:$('#wifOut').innerText.slice(0,5000)};
   google.script.run.withSuccessHandler(r=>{const sv=c=>/alta/i.test(c)?'alta':/m[eé]dia/i.test(c)?'media':'baixa';const dec=String(r.resumo||'');const cls=/n[ãa]o aplicar/i.test(dec)?'alta':/cautela/i.test(dec)?'media':'baixa';
-      box.innerHTML=`<h4>Avaliação da IA</h4><div class="aicard ${cls}"><b>${esc(dec)}</b></div>${(r.achados||[]).map(a=>`<div class="aicard ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><br>${esc(a.evidencia||'')}</div>`).join('')}
+      box.innerHTML=`<h4>Avaliação da Simulação</h4><div class="aicard ${cls}"><b>${esc(dec)}</b></div>${(r.achados||[]).map(a=>`<div class="aicard ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><br>${esc(a.evidencia||'')}</div>`).join('')}
         ${(r.recomendacoes||[]).filter(c=>c&&c.titulo).map(c=>`<div class="aicard"><b><span style="color:#ffd24a">Alternativa:</span> ${esc(c.titulo)}</b>${c.chave&&CMETA[c.chave]?`<br><em>${esc(CMETA[c.chave][2])}: ${esc(c.valor_sugerido)} ${esc(CMETA[c.chave][3])}</em>`:''}<br>${esc(c.efeito_esperado||'')}</div>`).join('')}
-        <p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')} a partir desta simulação. A decisão final é do operador.</p>`;logEvent('IA','Avaliação do teste: '+dec.slice(0,90));})
-    .withFailureHandler(e=>{box.innerHTML=`<h4>Avaliação da IA</h4><p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p><button class="btn" id="wifAiRetry">Tentar de novo</button>`;const b=$('#wifAiRetry');if(b)b.addEventListener('click',()=>wifAI(desc,key));})
+        <p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')} a partir desta simulação. A decisão final é do operador.</p>`;logEvent('Simulação','Avaliação do teste: '+dec.slice(0,90));})
+    .withFailureHandler(e=>{box.innerHTML=`<h4>Avaliação da Simulação</h4><p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p><button class="btn" id="wifAiRetry">Tentar de novo</button>`;const b=$('#wifAiRetry');if(b)b.addEventListener('click',()=>wifAI(desc,key));})
     .aiAnalyze({modo:'teste',escopo:key&&CTRL_STAGE[key]?'stage':'all',pergunta:'',contexto:ctx});}
 function wifShow(A,B,H,label,nv,unit,dec,ms){const R=[['Produção (pelotas + pellet feed)','tot','t/h',0,1],['Produção no período','mt','mil t',1,1],['Fe no concentrado','fe','%',2,1],['SiO₂ no concentrado','si','%',2,-1],['Resistência da pelota','cs','kgf',0,1],['Energia da moagem','kwh','kWh/t',1,-1],['Emissão na chaminé','em','mg/Nm³',0,-1],['Velocidade no mineroduto','v','m/s',2,0],['Nível dos tanques de Germano','lv6','%',0,0],['Nível dos tanques de Ubu','lvH','%',0,0]];
   const cls=(d,good)=>Math.abs(d)<1e-6||!good?'':(d*good>0?'up':'dn');
@@ -4371,20 +4371,20 @@ $('#wifDlg').addEventListener('click',e=>{if(e.target.id==='wifDlg')$('#wifDlg')
 
 /* ---- botão IHM ISA-101 ---- */
 document.body.classList.remove('isa');try{localStorage.removeItem('isa101');}catch(e){}/* botão IHM ISA-101 removido a pedido */
-/* ---- "Simular recomendações da IA antes de aplicar" ---- */
+/* ---- "Simular recomendações da Simulação antes de aplicar" ---- */
 let AI_RECS=[];
 function aiSimOpen(){const recs=(AI_RECS||[]).map((c,i)=>({c,i})).filter(o=>o.c&&o.c.chave&&(CMETA[o.c.chave]||UKEYS.includes(o.c.chave))&&isFinite(o.c.valor_sugerido));if(!recs.length){toast('Nenhuma recomendação com ajuste aplicável.');return;}
-  const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent='Simular as recomendações da IA';
+  const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent='Simular as recomendações da Simulação';
   const lbl=c=>CMETA[c.chave]?`${CMETA[c.chave][2]}: ${fmt(P[c.chave],CMETA[c.chave][7])} → <b>${fmt(clamp(+c.valor_sugerido,CMETA[c.chave][4],CMETA[c.chave][5]),CMETA[c.chave][7])} ${CMETA[c.chave][3]}</b>`:`${esc(c.chave)}: ${RUN[c.chave]?'ligado':'desligado'} → <b>${c.valor_sugerido?'ligar':'desligar'}</b>`;
   $('#wifBody').innerHTML=`<p class="hint">Marque as recomendações a testar. O simulador roda uma cópia do processo com elas <b>juntas</b> e mostra o efeito e a resposta das malhas de controle, sem mexer na operação.</p>
    ${recs.map(o=>`<label class="hint" style="display:flex;gap:6px;align-items:flex-start;margin:4px 0;color:var(--ink)"><input type="checkbox" class="aisel" data-i="${o.i}" checked ${canEdit(o.c.chave)?'':'disabled'}> <span><b>${esc(o.c.titulo)}</b><br>${lbl(o.c)}${canEdit(o.c.chave)?'':' <em>(outra área: bloqueado)</em>'}</span></label>`).join('')}
    <div class="airow"><select id="wifH" style="width:auto"><option value="8">8 h</option><option value="24" selected>24 h</option><option value="48">48 h</option></select><button class="btn" id="wifGo" style="background:var(--accent);color:#08202a;font-weight:600">Simular</button></div>
-   <div id="wifOut"></div><div id="wifAi" class="aiout" style="margin-top:10px"><h4>Avaliação da IA</h4><p class="hint">Depois de simular, a IA avalia o impacto das recomendações e diz se vale aplicar.</p></div><div class="row"><button class="btn" id="wifApply" disabled>Aplicar selecionadas</button><button class="btn" id="wifClose">Descartar</button></div>`;
+   <div id="wifOut"></div><div id="wifAi" class="aiout" style="margin-top:10px"><h4>Avaliação da Simulação</h4><p class="hint">Depois de simular, a Simulação avalia o impacto das recomendações e diz se vale aplicar.</p></div><div class="row"><button class="btn" id="wifApply" disabled>Aplicar selecionadas</button><button class="btn" id="wifClose">Descartar</button></div>`;
   const chosen=()=>[...document.querySelectorAll('.aisel')].filter(x=>x.checked&&!x.disabled).map(x=>AI_RECS[+x.dataset.i]);
   const apply=list=>list.forEach(c=>{if(UKEYS.includes(c.chave))RUN[c.chave]=c.valor_sugerido?1:0;else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);for(const L of Object.values(LOOPS))if(L.spKey===c.chave)L.sp=P[c.chave];}});
   $('#wifGo').addEventListener('click',()=>{const L=chosen();if(!L.length){$('#wifOut').innerHTML='<p class="hint">Marque ao menos uma recomendação.</p>';return;}const H=+$('#wifH').value;$('#wifOut').innerHTML=`<p class="aimsg"><span class="spin"></span>Simulando ${L.length} ajuste(s) por ${H} h…</p>`;
     setTimeout(()=>{const t0=performance.now(),A=simProject(H,null,true),B=simProject(H,()=>apply(L),true);wifShow(A,B,H,'recomendações',L.length,'ajuste(s)',0,performance.now()-t0);loopResp(A,B);$('#wifApply').disabled=false;wifAI(L.map(c=>`${c.titulo} (${CMETA[c.chave]?CMETA[c.chave][2]+': '+c.valor_sugerido+' '+CMETA[c.chave][3]:c.chave})`).join('; ')+` · horizonte ${H} h`,null);},30);});
-  $('#wifApply').addEventListener('click',()=>{const L=chosen();apply(L);L.forEach(c=>{if(inputs[c.chave])inputs[c.chave].sync();logEvent('IA',`Recomendação aplicada após simulação: ${c.titulo}`);});refreshEq&&refreshEq(true);d.hidden=true;toast(`${L.length} recomendação(ões) aplicada(s).`);});
+  $('#wifApply').addEventListener('click',()=>{const L=chosen();apply(L);L.forEach(c=>{if(inputs[c.chave])inputs[c.chave].sync();logEvent('Simulação',`Recomendação aplicada após simulação: ${c.titulo}`);});refreshEq&&refreshEq(true);d.hidden=true;toast(`${L.length} recomendação(ões) aplicada(s).`);});
   $('#wifClose').addEventListener('click',()=>{d.hidden=true;});}
 function loopResp(A,B){const out=$('#wifOut');if(!A.lp)return;const rows=Object.keys(LOOPS).map(k=>{const L=LOOPS[k],a=A.lp[k],b=B.lp[k];const dm=Math.abs(b.mv[b.mv.length-1]-a.mv[a.mv.length-1])/Math.max(1e-9,L.hi-L.lo)*100,sat=b.sat.filter(Boolean).length,err=Math.max(...b.pv.map((v,i)=>Math.abs(v-b.sp[i])));
     let st=b.pv.length;for(let i=b.pv.length-1;i>=0;i--){if(Math.abs(b.pv[i]-b.sp[i])>Math.max(.02*Math.abs(b.sp[i]),.3)){st=i+1;break;}if(i===0)st=0;}return{k,L,dm,sat,err,st,b};}).filter(r=>r.dm>1||r.sat>0);
