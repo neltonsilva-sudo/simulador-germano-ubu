@@ -969,12 +969,58 @@ const BPIT=conveyor(V3(-81,-2.4,-29),V3(-70,4.6,-19.5),1,{yellow:true});
 const TCLD=conveyor(V3(-67.5,1.2,-15.5),V3(-80,9,-2.5),1.4,{yellow:true});
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
+/* ---- Setor 3 · gêmeo digital: interior modelado a partir das fotos de campo (peneiras 03PN, britador secundário VSI 03BR006, britadores cônicos 03BR007/008) ---- */
+const TW3G={screens:[],beacons:{},rotors:[],gears:[]};
+function plateTex(t1,t2,bg,fg){const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,256,128);x.strokeStyle=fg;x.lineWidth=6;x.strokeRect(5,5,246,118);x.fillStyle=fg;x.textAlign='center';
+  x.font='bold 22px Arial';x.fillText(t1,128,44);x.font='bold 46px Arial';x.fillText(t2,128,100);const tx=new THREE.CanvasTexture(c);tx.anisotropy=4;return tx;}
+function plate(t1,t2,x,y,z,p,ry=0,w=1.1,bg='#ffd200',fg='#111'){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w/2),new THREE.MeshBasicMaterial({map:plateTex(t1,t2,bg,fg),side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.y=ry;p.add(m);return m;}
+function railLine(a,b,p,h=1.05){const M=MAT.yellow;beam(V3(a.x,a.y+h,a.z),V3(b.x,b.y+h,b.z),.05,M,p,true);beam(V3(a.x,a.y+h*.5,a.z),V3(b.x,b.y+h*.5,b.z),.04,M,p,true);
+  const n=Math.max(1,Math.round(a.distanceTo(b)/1.4));for(let i=0;i<=n;i++){const q=a.clone().lerp(b,i/n);beam(q,V3(q.x,q.y+h,q.z),.04,M,p,true);}}
 {
   bld(CRU,0,0,11,9,10,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});
   bld(CRU,8.5,1,6,6,13,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});
-  for(const k of [-1,1]){cyl(1.6,.6,2.2,MAT.teal,k*2.6,2.4,8.4,CRU,16);cyl(.6,.6,1,MAT.dark,k*2.6,4,8.4,CRU,12);for(const [dx,dz] of [[-1,-1],[1,-1],[-1,1],[1,1]])box(.2,1.4,.2,MAT.frame,k*2.6+dx*1.1,.7,8.4+dz*1.1,CRU);}
-  box(8,.3,2.4,MAT.frame,0,5,8.4,CRU);
-  for(const k of [-2.5,0,2.5])box(2.2,.8,2.2,MAT.steel,k,5.6,8.4,CRU);
+  const rust=std(0x8a4a2a,.35,.75),rustDk=std(0x5e3320,.35,.8),beige=std(0xd8d1bd,.3,.55),rub=std(0x6c6a66,0,.92),motor=std(0x56606a,.55,.45),slab=std(0x9b9a95,0,.9),orange=std(0xb8692a,.3,.6);
+  box(10.8,.25,8.8,slab,0,.12,0,CRU);box(5.8,.25,5.8,slab,8.5,.12,1,CRU);
+  /* pisos: plataforma das peneiras (3,4 m) e piso superior dos alimentadores (7 m), colunas */
+  for(const x of [-5.2,-2.6,0,2.6,5.2])for(const z of [-4.2,4.2])box(.35,9.6,.35,rust,x,4.8,z,CRU);
+  box(10.6,.18,1.6,slab,0,3.4,3.4,CRU);box(10.6,.18,3.2,slab,0,7,-2.8,CRU);
+  railLine(V3(-5.2,3.5,4.15),V3(5.2,3.5,4.15),CRU);railLine(V3(-5.2,7.1,-1.25),V3(5.2,7.1,-1.25),CRU);
+  /* escada amarela */
+  for(let i=0;i<9;i++)box(1,.08,.35,MAT.yellow,-4.7,.4+i*.36,3.9-i*.32,CRU);beam(V3(-5.2,.3,4.1),V3(-5.2,3.6,1.2),.05,MAT.yellow,CRU,true);beam(V3(-4.2,.3,4.1),V3(-4.2,3.6,1.2),.05,MAT.yellow,CRU,true);
+  /* 4 peneiras vibratórias primárias 03PN001–004 (decks inclinados, vibradores amarelos, moegas embaixo) */
+  [-3.9,-1.3,1.3,3.9].forEach((x,i)=>{const g=new THREE.Group();g.position.set(x,4.4,-.3);g.rotation.x=.24;CRU.add(g);
+    box(2,.9,4.4,MAT.steel,0,0,0,g);box(1.8,.06,4.2,rub,0,.46,0,g);
+    for(let r=0;r<7;r++)for(let c=0;c<3;c++){const py=mesh(new THREE.ConeGeometry(.2,.12,4),rub,-.6+c*.6,.52,-1.8+r*.6,g);py.rotation.y=Math.PI/4;}
+    for(const s of [-1,1])box(.08,1.3,4.5,MAT.steel,s*1.02,.2,0,g);
+    for(let k=0;k<4;k++){const ex=box(.42,.5,.62,MAT.yellow,-.66+k*.44,.95,-1.55,g);ex.userData.tw=1;}box(1.9,.18,.5,MAT.dark,0,.62,-1.55,g);
+    for(const s of [-1,1])for(const zz of [-1.9,1.9]){cyl(.12,.12,.5,MAT.dark,s*.85,-.7,zz,g,8);}
+    TW3G.screens.push({g,y0:4.4});
+    const hp=box(2.1,1.6,2,rust,x,1.5,2.2,CRU);box(1,.6,1,rustDk,x,.5,2.6,CRU);
+    plate('PENEIRA VIBRATÓRIA PRIMÁRIA','03PN00'+(i+1),x,3.95,4.25,CRU,0,1.15);
+    /* alimentador no piso superior com placa azul e sinaleiro (cor = estado do gêmeo digital) */
+    box(1.6,1.3,1.4,std(0x9aa0a4,.3,.55),x,7.75,-3,CRU);plate('ALIMENTADOR','03AL00'+(i+1),x,8.15,-2.29,CRU,0,.9,'#1f63b3','#ffffff');
+    beam(V3(x,7.1,-2.3),V3(x,5.3,-2.2),.5,rustDk,CRU);
+    const bc=new THREE.Mesh(new THREE.SphereGeometry(.16,14,10),new THREE.MeshStandardMaterial({color:0x58e6ff,emissive:0x58e6ff,emissiveIntensity:2}));bc.position.set(x+.55,8.55,-2.25);CRU.add(bc);TW3G.beacons['03PN00'+(i+1)]=bc;});
+  /* correia de finos sob as moegas */
+  box(11,.08,.9,MAT.rubber,0,.75,3.4,CRU);box(11,.35,1.1,MAT.frame,0,.5,3.4,CRU);
+  /* torre: britador secundário VSI 03BR006 (tambor bege sobre base metálica, dois motores) */
+  {const T=new THREE.Group();T.position.set(8.5,0,-.6);CRU.add(T);
+    box(2.8,1.1,2.2,rust,0,.8,0,T);for(const s of [-1,1])box(.08,.5,.5,rustDk,s*1.41,.8,0,T);
+    cyl(1.05,1.05,1.3,beige,0,2,0,T,32);cyl(1.1,1.1,.18,rust,0,2.7,0,T,32);cyl(.45,.6,.8,beige,0,3.2,0,T,20);
+    const rot=cyl(.7,.7,.12,MAT.dark,0,2.82,0,T,6);TW3G.rotors.push(rot);
+    for(const s of [-1,1]){box(.9,.8,.9,motor,s*1.75,1.75,0,T);for(let f=0;f<5;f++)box(.92,.04,.94,MAT.dark,s*1.75,1.45+f*.15,0,T);}
+    plate('BRITADOR SECUNDÁRIO','03BR006',0,.85,1.12,T,0,1.05,'#f4f4f2','#111');
+    const bc=new THREE.Mesh(new THREE.SphereGeometry(.15,14,10),new THREE.MeshStandardMaterial({color:0x58e6ff,emissive:0x58e6ff,emissiveIntensity:2}));bc.position.set(1,3.7,.6);T.add(bc);TW3G.beacons['03BR006']=bc;}
+  /* torre: britadores cônicos 03BR007/008 (base de concreto, quadro metálico com furos, coroa dentada, acumuladores hidráulicos) */
+  [[7,2.6,'03BR007'],[10,2.6,'03BR008']].forEach(([x,z,tag])=>{const T=new THREE.Group();T.position.set(x,0,z);CRU.add(T);
+    box(2.6,.5,2.6,MAT.concrete,0,.25,0,T);box(2.2,.8,2.2,rust,0,.9,0,T);
+    for(const s of [-1,1]){const h=cyl(.22,.22,.1,MAT.dark,s*1.11,.9,0,T,16);h.rotation.z=Math.PI/2;}
+    cyl(1,1.05,1.2,beige,0,1.9,0,T,28);const gr=cyl(1.15,1.15,.22,orange,0,2.6,0,T,32);
+    for(let k=0;k<28;k++){const a=k/28*Math.PI*2;box(.08,.18,.12,orange,Math.cos(a)*1.18,2.6,Math.sin(a)*1.18,T).rotation.y=-a;}
+    TW3G.gears.push(gr);cyl(.8,1,.5,orange,0,2.95,0,T,24);cyl(.35,.5,.6,beige,0,3.45,0,T,16);
+    for(let k=0;k<4;k++){const a=k/4*Math.PI*2+.4;const ax=Math.cos(a)*1.25,az=Math.sin(a)*1.25;cyl(.14,.14,.9,beige,ax,1.75,az,T,10);const b=mesh(new THREE.SphereGeometry(.2,12,8),beige,ax,2.35,az,T);b.scale.y=1.35;}
+    plate('BRITADOR CÔNICO',tag,0,.95,1.12,T,0,.95,'#f4f4f2','#111');
+    const bc=new THREE.Mesh(new THREE.SphereGeometry(.15,14,10),new THREE.MeshStandardMaterial({color:0x58e6ff,emissive:0x58e6ff,emissiveIntensity:2}));bc.position.set(.9,3.6,.6);T.add(bc);TW3G.beacons[tag]=bc;});
 }
 /* ---------- 4 Regularization stockpile ---------- */
 const PILE=grp(-80,20);
@@ -1103,10 +1149,6 @@ const SCR=grp(45,-22);
 /* ---------- interiores (visíveis no modo "entrar na área", com telhados e paredes em corte) ---------- */
 const ANIM_IN=[];
 {
-  // 3 britagem: peneira vibratória + britador cônico + chute
-  const sc=new THREE.Group();sc.position.set(0,5.2,0);sc.rotation.z=-.22;CRU.add(sc);box(7,.18,3.2,std(0x8c939b,.6,.45),0,0,0,sc);for(const k of [-1,1])box(7.2,.8,.12,MAT.gTank,0,.35,k*1.65,sc);cyl(.35,.35,3.5,MAT.dark,.5,.9,0,sc,10).rotation.x=Math.PI/2;
-  for(const [x,z] of [[-3,-1.4],[3,-1.4],[-3,1.4],[3,1.4]])box(.25,4.6,.25,MAT.yellow,x,2.4,z,CRU);ANIM_IN.push(t=>{sc.position.y=5.2+Math.sin(t*60)*.04*(RUN.crush?1:0);});
-  const cc=new THREE.Group();cc.position.set(8.5,0,1);CRU.add(cc);cyl(1.6,2,2.6,MAT.gTank,0,3.5,0,cc,24);cyl(1.1,1.6,1,MAT.dark,0,5.3,0,cc,24);box(3.4,1.4,3.4,MAT.concrete,0,.7,0,cc);const hd=cyl(.5,.5,1.4,MAT.steel,0,6.3,0,cc,12);ANIM_IN.push(t=>{if(RUN.crush)hd.rotation.y+=.3;});
   // 7 filtragem de rejeito: 3 filtros horizontais de correia + tanques de vácuo
   for(let i=0;i<3;i++){const g=new THREE.Group();g.position.set(-6+i*6,0,0);SF.add(g);box(4.6,.7,2.6,MAT.frame,0,1.6,0,g);const bt=beltTex.clone();bt.needsUpdate=true;bt.repeat.set(4,1);const bm=std(0xffffff,0,.8,{map:bt});box(4.4,.08,2.2,bm,0,2,0,g);
     box(4.4,.14,2.2,MAT.sand,0,2.12,0,g);for(const k of [-2,2])cyl(.35,.35,2.4,MAT.steel,k,1.95,0,g,12).rotation.x=Math.PI/2;cyl(.6,.6,1.8,MAT.teal,0,.9,-2,g,14);ANIM_IN.push(()=>{if(RUN[['f1','f2','f3'][i]])bt.offset.x-=.01;});}
@@ -2183,6 +2225,7 @@ function evalAlarms(){const c=CUR,G=c.G,U=c.U,A=[];const add=(eq,sev,msg)=>A.pus
   if(typeof ctlAlarms==='function')try{ctlAlarms(add);}catch(e){}
   if(typeof rainAlarms==='function')try{rainAlarms(add);}catch(e){}
   if(typeof rcAlarms==='function')try{rcAlarms(add);}catch(e){}
+  if(typeof tw3Alarms==='function')try{tw3Alarms(add);}catch(e){}
   if(typeof wxAlarms==='function')try{wxAlarms(add);}catch(e){}
   if(typeof ltnAlarms==='function')try{ltnAlarms(add);}catch(e){}
   if(U.emis>50)add('esp',U.emis>200?'crit':'warn',`Emissão na chaminé ${fmt(U.emis,0)} mg/Nm³ (limite 50)`);
@@ -2343,6 +2386,7 @@ function frame(){
   TCLD.update(dt,c.mine,RUN.tcld);B34.update(dt,c.mine,RUN.crush);B45.update(dt,G.F,RUN.conc);B78.update(dt,G.sand,RUN.sandf);
   const pr=clamp(Math.cbrt(ST.stockPile/200000),.3,1.12);pileMesh.scale.set(pr,pr,pr);
   if(RUN.crush)PILE.userData.stacker.rotation.y=Math.sin(t*.12)*.3;
+  if(typeof tw3Tick==='function')tw3Tick(t,dt);
   mills.forEach((m,i)=>{const k=['c1','c2','c3'][i];const onM=RUN.conc&&RUN[k]&&G.F>0;if(onM)m.rotation.z+=dt*1.2;m.userData.mats[0].color.setHex(RUN[k]?0x4f9aa6:0x9aa3ac);m.userData.mats[1].color.setHex(RUN[k]?0x3c7c87:0x7d868f);});
   sfDrums.forEach((d,i)=>d.color.setHex(RUN[['f1','f2','f3'][i]]?0xffffff:0x8d959c));
   froths.forEach((f,i)=>f.material.color.setHSL(.09,.25,.72+Math.sin(t*2+i)*.04));
@@ -2630,7 +2674,10 @@ const unitSt=k=>RUN[k]?'':'crit';
 const HS={
   mine:[['Escavadeira e caminhões',()=>LP(V3(-88,-6,-32)),'mine'],['Pilha pulmão',()=>LP(V3(-69,6,-19)),'mine'],['Correia de bancada',()=>LP(V3(-75,3,-24)),'mine']],
   tcld:[['Correia TCLD',()=>LP(V3(-74,6,-9)),'tcldLoad']],
-  crush:[['Peneira vibratória',()=>W(CRU,0,6.5,0),'circ'],['Britador cônico',()=>W(CRU,8.5,7.5,1),'circ'],['Produto britado',()=>W(CRU,-4,3,4),'p80']],
+  crush:[...['03PN001','03PN002','03PN003','03PN004'].map((g,i)=>[`Peneira ${g}`,()=>W(CRU,[-3.9,-1.3,1.3,3.9][i],5,-.3),null,null,()=>tw3Short(g),()=>tw3State(g)]),
+    ['Britador secundário 03BR006 (VSI)',()=>W(CRU,8.5,2.6,-.6),null,null,()=>tw3Short('03BR006'),()=>tw3State('03BR006')],
+    ['Britador cônico 03BR007',()=>W(CRU,7,2.8,2.6),null,null,()=>tw3Short('03BR007'),()=>tw3State('03BR007')],['Britador cônico 03BR008',()=>W(CRU,10,2.8,2.6),null,null,()=>tw3Short('03BR008'),()=>tw3State('03BR008')],
+    ['Carga circulante',()=>W(CRU,0,1.2,2.2),'circ'],['Produto britado (P80 da moagem)',()=>W(CRU,-4,1,3.4),'p80']],
   pile:[['Pilha de regularização',()=>W(PILE,0,9,2),'pile'],['Empilhadeira radial',()=>W(PILE,0,12,-8),'feed']],
   conc:[['Moinho C1',()=>W(CON,-8,6.5,-5),null,'c1',()=>RUN.c1?hv('kwht'):'em revitalização'],['Moinho C2',()=>W(CON,0,6.5,-5),'kwht','c2'],['Moinho C3',()=>W(CON,8,6.5,-5),'p80','c3'],
     ['Ciclones de deslamagem',()=>W(CON,-9,9.5,1.2),null,null,()=>'lama '+fmt(CUR.G.slime,0)+' t/h'],['Flotação · SiO₂',()=>W(CON,-2,5,7.3),'siC'],['Flotação · Fe',()=>W(CON,6,5,7.3),'feC'],['Recuperação mássica',()=>W(CON,-10,5,9.6),'mr']],
@@ -2659,11 +2706,49 @@ const SUGG={siC:'Aumente a amina em 5–10 g/t (efeito satura acima de ~70 g/t),
   blaine:'Blaine fora da faixa: ajuste a pressão da prensa de rolos.',g:'Poucas pelotas na faixa 10–15 mm: bentonita em 5–6 kg/t e rotação dos discos perto de 7 rpm.',util:'Usinas no limite: parta outra usina ou aumente a venda direta de pellet feed.',
   cs:'Resistência baixa: temperatura de queima entre 1.300 e 1.350 °C e Blaine perto de 2.000 cm²/g.',temp:'Temperatura fora da faixa: mantenha entre 1.300 e 1.350 °C.',emis:'Emissão alta: aumente a tensão dos precipitadores.',
   yard:'Pátio cheio: aumente a taxa de embarque.',dust:'Emissão difusa alta: reduza o estoque exposto e mantenha a barreira de vento.',rec:'Água recirculada baixa: aumente a capacidade de tratamento.',recMG:'Água recuperada baixa: aumente o floculante.'};
+/* ==== Gêmeo digital do setor 3 (peneiramento e britagem): estado, desgaste e condição de cada equipamento ==== */
+const TW3={eq:{'03PN001':{tipo:'Peneira vibratória primária',k:'pn',w:35},'03PN002':{tipo:'Peneira vibratória primária',k:'pn',w:58},'03PN003':{tipo:'Peneira vibratória primária',k:'pn',w:41},'03PN004':{tipo:'Peneira vibratória primária',k:'pn',w:22},
+  '03BR006':{tipo:'Britador secundário (VSI)',k:'vsi',w:46},'03BR007':{tipo:'Britador cônico',k:'cone',w:63},'03BR008':{tipo:'Britador cônico',k:'cone',w:71}},t:null,v:{},saved:0};
+const TW3_LIFE={pn:2.5e6,vsi:5e5,cone:1.2e6};
+try{const sv=JSON.parse(localStorage.getItem('tw3w')||'{}');for(const k in sv)if(TW3.eq[k]&&isFinite(sv[k]))TW3.eq[k].w=sv[k];}catch(e){}
+function tw3Calc(){const on=!!(RUN.crush&&CUR.mine>0),F=on?CUR.mine:0,circ=on?(CUR.crushCirc||0):0,soak=(typeof RAIN!=='undefined'&&RAIN.soak)||0,amb=(typeof AMB!=='undefined'&&AMB.g&&AMB.g.T)||24;
+  const nz=s=>Math.sin(ST.simT/420+s*1.7)*.25+Math.sin(ST.simT/97+s*3.1)*.12,V={};let i=0;
+  for(const tag in TW3.eq){const e=TW3.eq[tag],o={tag,tipo:e.tipo,k:e.k,w:e.w,on};i++;
+    if(e.k==='pn'){o.flow=F*(1+circ/100)/4;o.load=o.flow/1500;o.eff=on?clamp(94-18*soak-Math.max(0,o.load-.9)*60-e.w*.05,55,97):0;o.blind=on?clamp(soak*38+e.w*.12,0,95):0;
+      o.vib=on?2.6+nz(i)+Math.max(0,o.load-1)*6+e.w/100*1.5:0;o.oil=on?46+12*o.load+(amb-25)*.6:amb;}
+    else if(e.k==='vsi'){o.flow=F*circ/100;o.load=o.flow/1500;o.kw=on?160+430*o.load:0;o.rpm=on?1450:0;o.vib=on?2.4+3.5*Math.max(0,o.load-.85)+e.w/100*3.2+nz(i):0;o.oil=on?36+20*o.load+(amb-25)*.5:amb;}
+    else{o.flow=F*circ/100*.5;o.load=o.flow/900;o.kw=on?200+460*o.load:0;o.css=P.css;o.hyd=on?55+70*o.load+(20-P.css)*1.5:0;o.vib=on?2.2+3*Math.max(0,o.load-.85)+e.w/100*4+nz(i):0;o.oil=on?38+18*o.load+(amb-25)*.5:amb;}
+    o.rate=o.flow>0?o.flow/TW3_LIFE[e.k]*100:0;o.left=o.rate>0?(100-e.w)/o.rate:Infinity;
+    o.st=!on?'off':(e.w>=95||o.vib>=11||o.oil>=75)?'crit':(e.w>=85||o.vib>=7.1||o.oil>=65||(e.k==='pn'&&(o.blind>=40||o.eff<80)))?'warn':'ok';
+    o.why=!on?'parado':[e.w>=85?`desgaste ${fmt(e.w,0)} %`:'',o.vib>=7.1?`vibração ${fmt(o.vib,1)} mm/s`:'',o.oil>=65?`óleo ${fmt(o.oil,0)} °C`:'',e.k==='pn'&&o.blind>=40?`colmatação ${fmt(o.blind,0)} %`:'',e.k==='pn'&&o.eff<80?`eficiência ${fmt(o.eff,0)} %`:''].filter(Boolean).join(', ');
+    V[tag]=o;}
+  TW3.v=V;return V;}
+function tw3Tick(t,dt){const now=ST.simT;const dh=TW3.t==null?0:clamp((now-TW3.t)/3600,0,6);TW3.t=now;const V=tw3Calc();
+  for(const tag in V){const e=TW3.eq[tag],o=V[tag];if(dh>0&&o.rate>0)e.w=Math.min(100,e.w+o.rate*dh);
+    const b=TW3G.beacons[tag];if(b){const c=o.st==='crit'?0xff3b2f:o.st==='warn'?0xffb020:o.st==='off'?0x55606a:0x58e6ff;b.material.color.setHex(c);b.material.emissive.setHex(c);b.material.emissiveIntensity=o.st==='off'?.2:o.st==='crit'?(Math.sin(t*8)>0?2.6:.4):2;}}
+  const on=RUN.crush&&CUR.mine>0;TW3G.screens.forEach((s,i)=>{s.g.position.y=s.y0+(on?Math.sin(t*48+i*1.3)*.022:0);});
+  if(on){TW3G.rotors.forEach(r=>r.rotation.y+=dt*18);TW3G.gears.forEach(g=>g.rotation.y+=dt*.5);}
+  if(performance.now()-TW3.saved>30000){TW3.saved=performance.now();try{const o={};for(const k in TW3.eq)o[k]=+TW3.eq[k].w.toFixed(2);localStorage.setItem('tw3w',JSON.stringify(o));}catch(e){}}}
+const tw3V=tag=>TW3.v[tag]||tw3Calc()[tag];
+function tw3Short(tag){const o=tw3V(tag);if(!o.on)return 'parado';return o.k==='pn'?`efic. ${fmt(o.eff,0)} % · colmat. ${fmt(o.blind,0)} % · desg. ${fmt(o.w,0)} %`:`${fmt(o.kw,0)} kW · ${fmt(o.vib,1)} mm/s · desg. ${fmt(o.w,0)} %`;}
+function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s;}
+function tw3Alarms(add){if(!RUN.crush)return;tw3Calc();for(const tag in TW3.v){const o=TW3.v[tag];if(o.st==='warn'||o.st==='crit')add('crush',o.st==='crit'?'crit':'warn',`${tag} (${o.tipo.toLowerCase()}): ${o.why}`);}}
+const tw3Hrs=h=>!isFinite(h)?'–':h>48?`≈ ${fmt(h/24,0)} dias`:`≈ ${fmt(h,0)} h`;
+function tw3Panel(){const el=$('#tw3');if(!el)return;const V=tw3Calc(),can=!OPER.area||OPER.area==='crush',tag=s=>`<span class="tagp ${s==='crit'?'crit':s==='warn'?'warn':s==='off'?'':'ok'}">${s==='crit'?'crítico':s==='warn'?'alerta':s==='off'?'parado':'normal'}</span>`;
+  el.innerHTML=`<h4>Gêmeo digital · equipamentos do setor 3</h4><p class="hint" style="margin-top:0">Modelado a partir de fotos de campo. Valores calculados pelo simulador a partir da alimentação, carga circulante, APF e clima (ilustrativos). Sinaleiros no 3D: azul normal, âmbar alerta, vermelho piscando crítico. Vibração pela ISO 10816-3: 7,1 mm/s alerta, 11 mm/s crítico.</p>
+   <table class="eqt"><tr><th>Tag</th><th>Equipamento</th><th>Estado</th><th>Carga</th><th>Desempenho</th><th>Vibração</th><th>Óleo/mancal</th><th>Desgaste</th><th>Troca prevista</th><th></th></tr>
+   ${Object.values(V).map(o=>`<tr><td><b>${o.tag}</b></td><td>${o.tipo}</td><td>${tag(o.st)}</td><td>${o.on?fmt(o.flow,0)+' t/h · '+fmt(o.load*100,0)+' %':'–'}</td>
+    <td>${!o.on?'–':o.k==='pn'?`eficiência ${fmt(o.eff,0)} % · colmatação ${fmt(o.blind,0)} %`:o.k==='vsi'?`${fmt(o.kw,0)} kW · rotor ${fmt(o.rpm,0)} rpm`:`${fmt(o.kw,0)} kW · APF ${fmt(o.css,0)} mm · ${fmt(o.hyd,0)} bar`}</td>
+    <td>${o.on?fmt(o.vib,1)+' mm/s':'–'}</td><td>${fmt(o.oil,0)} °C</td><td><b style="color:${o.w>=95?'var(--crit)':o.w>=85?'var(--warn)':'inherit'}">${fmt(o.w,0)} %</b></td><td>${tw3Hrs(o.left)}</td>
+    <td>${can?`<button class="btn" data-tw3="${o.tag}" style="padding:2px 8px">Registrar troca</button>`:''}</td></tr>`).join('')}</table>
+   <p class="hint">Desgaste: ${'deck das peneiras ≈ 2,5 Mt · pontas do rotor do VSI ≈ 0,5 Mt · revestimentos dos cônicos ≈ 1,2 Mt'} de material por troca (ilustrativo). Use "Registrar troca" depois da manutenção para zerar o desgaste.</p>`;
+  el.querySelectorAll('[data-tw3]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.tw3;confirmCmd(`Registrar troca em ${k}?`,'O desgaste do revestimento/deck volta a 0 % no gêmeo digital.',()=>{TW3.eq[k].w=0;TW3.saved=0;logEvent('Manutenção',`${k}: troca de revestimento registrada no gêmeo digital`);tw3Panel();});}));}
+setInterval(()=>{if(AREA==='crush'&&$('#tw3')&&!document.querySelector('#cfm:not([hidden])'))tw3Panel();},2500);
 let AREA=null,AREA_PREV=null,areaEls=[],areaAI={};
 const AREA_VIEW={mine:{el:.7,k:.8},tcld:{el:.6,k:.6},crush:{el:.55,k:1.2},pile:{el:.5,k:1},conc:{el:.62,k:.95,ty:.3},thick6:{el:.65,k:.9},sandf:{el:.8,k:1.1,ty:.2},dry:{el:.6,k:.9},cava:{el:.7,k:.9},
   pump:{el:.75,k:1.3,ty:.2},tower:{el:.25,k:1.4,ty:.6},thick12:{el:.65,k:.9},filter:{el:.8,k:1.1,ty:.2},basin:{el:.7,k:.9},ete:{el:.7,k:1},roller:{el:.8,k:1.4,ty:.25},mix:{el:.85,k:.7,ty:.2},
   pell:{el:.7,k:.9,ty:.2},esp:{el:.75,k:.9,ty:.35},furnace:{dir:[.15,1],el:.9,k:.75,ty:.3},screen:{el:.8,k:1.4,ty:.25},yard:{el:.6,k:.8},fence:{el:.5,k:.8},port:{dir:[-1,.5],el:.45,k:.7}};
-function hsState(h){const [,,key,unit]=h;if(unit&&!RUN[unit])return'crit';if(EQ[AREA]&&EQ[AREA].toggle&&!RUN[AREA])return'crit';if(!key)return'ok';const st=kState(key,hk(key));return st==='warn'?'warn':'ok';}
+function hsState(h){if(h[5])return h[5]();const [,,key,unit]=h;if(unit&&!RUN[unit])return'crit';if(EQ[AREA]&&EQ[AREA].toggle&&!RUN[AREA])return'crit';if(!key)return'ok';const st=kState(key,hk(key));return st==='warn'?'warn':'ok';}
 function hsVal(h){return h[4]?h[4]():h[2]?hv(h[2]):'';}
 function enterArea(id){
   if(!EQ[id])return;if(AREA)restoreShells();AREA=id;areaAI={};
@@ -3565,7 +3650,7 @@ const INSP_LOCAL='inspRegs';const inspLocal=()=>{try{return JSON.parse(localStor
 let INSP_CACHE={};
 function renderAreaExtra(id){const box=$('#arExtra');if(!box)return;const e=EQ[id],mine=!OPER.area||OPER.area===id;const pts=(HS[id]||[]).map(h=>h[0]);
   const qrBlk=ACC.role==='oper'||ACC.role==='pending'||(ACC.role==='admin'&&!QRV);
-  box.innerHTML=`${qrBlk?`<div><h4>QR Code da área</h4><p class="hint">${ACC.role==='admin'?'Carregando o QR Code atual…':'Os QR Codes são gerados e impressos só pela sala de controle.'}</p></div>`:`<div><h4>QR Code da área</h4><div class="qrrow"><div id="arQr">${qrSVG(areaURL(id),128)}</div><div class="hint">${ACC.role==='admin'?`<b style="color:#ffd24a">Válido só nesta sessão:</b> a cada abertura do simulador os QR Codes mudam e os anteriores deixam de funcionar. `:`Área ${e.num}. `}Ao escanear com o celular e ter o acesso autorizado, o operador abre o simulador <b>nesta área</b>, podendo <b>alterar só os parâmetros dela</b>; as demais ficam só para visualização.<br><a href="${esc(areaURL(id))}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir o link</a> · <button class="btn" id="qrPrint" style="padding:2px 8px">Imprimir placa</button> <button class="btn" id="qrAll" style="padding:2px 8px">Imprimir todos</button>${ACC.role==='admin'?' <button class="btn" id="qrNew" style="padding:2px 8px;border-color:#ff6b5b;color:#ffb3a8">Gerar novos QR Codes</button>':''}</div></div></div>`}
+  box.innerHTML=`${id==='crush'?'<div id="tw3" style="grid-column:1/-1"></div>':''}${qrBlk?`<div><h4>QR Code da área</h4><p class="hint">${ACC.role==='admin'?'Carregando o QR Code atual…':'Os QR Codes são gerados e impressos só pela sala de controle.'}</p></div>`:`<div><h4>QR Code da área</h4><div class="qrrow"><div id="arQr">${qrSVG(areaURL(id),128)}</div><div class="hint">${ACC.role==='admin'?`<b style="color:#ffd24a">Válido só nesta sessão:</b> a cada abertura do simulador os QR Codes mudam e os anteriores deixam de funcionar. `:`Área ${e.num}. `}Ao escanear com o celular e ter o acesso autorizado, o operador abre o simulador <b>nesta área</b>, podendo <b>alterar só os parâmetros dela</b>; as demais ficam só para visualização.<br><a href="${esc(areaURL(id))}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir o link</a> · <button class="btn" id="qrPrint" style="padding:2px 8px">Imprimir placa</button> <button class="btn" id="qrAll" style="padding:2px 8px">Imprimir todos</button>${ACC.role==='admin'?' <button class="btn" id="qrNew" style="padding:2px 8px;border-color:#ff6b5b;color:#ffb3a8">Gerar novos QR Codes</button>':''}</div></div></div>`}
    <div><h4>Registro de inspeção</h4>${mine?`<div class="inspf"><div class="airow"><select id="inTipo"><option>Anomalia</option><option>Falha</option><option>Erro operacional</option><option>Condição insegura</option><option>Vazamento</option><option>Ruído/vibração</option><option>Acidente de trabalho</option></select>
      <select id="inSev"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Crítica</option></select><select id="inLocal"><option value="">Local/equipamento…</option>${pts.map(p=>`<option>${esc(p)}</option>`).join('')}<option>Outro</option></select></div>
      <textarea id="inDesc" rows="3" maxlength="1500" placeholder="Descreva o que foi encontrado na inspeção: o quê, onde, desde quando, condições observadas…"></textarea>
@@ -3573,6 +3658,7 @@ function renderAreaExtra(id){const box=$('#arExtra');if(!box)return;const e=EQ[i
      <span class="hint" id="inMsg"></span></div>`:`<p class="hint">Registro disponível para o operador desta área (acesso pelo QR da área ${e.num}).</p>`}
      <div id="inList" style="margin-top:8px"></div><div id="inAiOut" class="aiout" style="margin-top:8px"></div></div>`;
   const pr=(ids)=>{const w=window.open('','_blank');if(!w){toast('Permita pop-ups para imprimir.');return;}w.document.write(`<html><head><title>QR Codes · Germano–Ubu</title><style>body{font-family:Arial,sans-serif;margin:0}.pl{width:9.5cm;height:12.5cm;border:2px solid #111;border-radius:10px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin:.4cm;page-break-inside:avoid;text-align:center;padding:.3cm;box-sizing:border-box}.n{font-size:34px;font-weight:800;background:#0d3b4f;color:#fff;border-radius:50%;width:56px;height:56px;line-height:56px}h2{font-size:17px;margin:.25cm 0}p{font-size:11px;color:#333;margin:.2cm 0 0}</style></head><body>${ids.map(i=>`<div class="pl"><div class="n">${EQ[i].num}</div><h2>${esc(EQ[i].name)}</h2>${qrSVG(areaURL(i),230)}<p>Escaneie com o celular para acessar e operar esta área</p></div>`).join('')}</body></html>`);w.document.close();setTimeout(()=>{try{w.focus();w.print();}catch(x){}},500);};
+  if(id==='crush')tw3Panel();
   if($('#qrPrint')){$('#qrPrint').addEventListener('click',()=>pr([id]));$('#qrAll').addEventListener('click',()=>pr(Object.keys(EQ).sort((a,b)=>EQ[a].num-EQ[b].num)));}
   if($('#qrNew'))$('#qrNew').addEventListener('click',()=>confirmCmd('Gerar novos QR Codes?','Todas as placas impressas até agora deixam de funcionar e todos os celulares conectados perdem o acesso. Depois, imprima as placas novas.',()=>{
     google.script.run.withSuccessHandler(r=>{QRV=r&&r.q;accPulse();renderAreaExtra(id);logEvent('Acesso','Novos QR Codes gerados: placas antigas invalidadas e acessos encerrados');toast('Novos QR Codes gerados. Imprima as placas novas.');}).withFailureHandler(e=>toast(String(e.message||e))).acessoQrNovo(ACC.adm);}));
