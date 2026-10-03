@@ -1178,7 +1178,7 @@ function buildFlows(scene, M, opt = {}) {
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };
 const CAP = { pn: 1500, cone: 1100, vsi: 900 };
 const sim = {
-  feed: 3800, css: 18, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
+  feed: 3800, css: 20, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},
   kpi: {},
 };
@@ -1196,7 +1196,9 @@ function stepSim(dt, speed = 60) {
   const E = sim.eq, on = (k) => Object.values(E).filter((e) => e.k === k && e.on).length;
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
 
-  const r1 = clamp(.16 + (sim.css - 18) * .007, .08, .35), r2 = .2;
+
+
+  const cc = clamp(25 + (20 - sim.css) * 2, 5, 70), rr = cc / (100 + cc), r1 = rr * .45, r2 = rr * .55;
   const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
   const wet = Math.max(0, sim.moist - 9);
 
@@ -3344,7 +3346,7 @@ let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{co
   if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}};}catch(e){S3BC=null;}
 let S3BCt=0;
 function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
-  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage({type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe});}catch(e){}}S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();}
+  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage({type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80});}catch(e){}}S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();}
 const tw3V=tag=>TW3.v[tag]||tw3Calc()[tag]||{on:false,st:'off'};
 function tw3Short(tag){const o=tw3V(tag);if(!o.on)return 'parado';return o.k==='pn'?`efic. ${fmt(o.eff,0)} % · ${fmt(o.load*100,0)} % carga · desg. ${fmt(o.w,0)} %`:`${fmt(o.kw,0)} kW · ${fmt(o.vib,1)} mm/s · desg. ${fmt(o.w,0)} %`;}
 function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s||'ok';}

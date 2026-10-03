@@ -1,12 +1,12 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 8 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261003132710';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261003134415';
 
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };            // t de material por troca de revestimento/deck (ilustrativo)
 const CAP = { pn: 1500, cone: 1100, vsi: 900 };                // t/h nominal por equipamento (ilustrativo)
 export const sim = {
-  feed: 3800, css: 18, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
+  feed: 3800, css: 20, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},                                                      // tag → {k, on, w (desgaste %), ...valores}
   kpi: {},
 };
@@ -24,7 +24,9 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   const E = sim.eq, on = (k) => Object.values(E).filter((e) => e.k === k && e.on).length;
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
   // frações retidas: 1º deck cresce com APF mais aberta (britado mais grosso volta); 2º deck quase fixo
-  const r1 = clamp(.16 + (sim.css - 18) * .007, .08, .35), r2 = .2;
+  // carga circulante pela mesma relação do simulador (APF): c = 25 + (20 − APF)·2 %, limitada a 5–70 %;
+  // fração retida r = c/(100 + c), dividida entre o 1º deck (45 %) e o 2º deck (55 %)
+  const cc = clamp(25 + (20 - sim.css) * 2, 5, 70), rr = cc / (100 + cc), r1 = rr * .45, r2 = rr * .55;
   const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
   const wet = Math.max(0, sim.moist - 9);                       // minério úmido: peneiramento menos eficiente (colmatação)
   // sem britagem disponível o retido não fecha o circuito: alimentação limitada
