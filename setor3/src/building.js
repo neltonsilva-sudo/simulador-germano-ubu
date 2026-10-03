@@ -1,14 +1,14 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS } from './layout.js?v=20261003175555';
-import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003175555';
+import { B, LV, SCREENS } from './layout.js?v=20261003175719';
+import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003175719';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
   const lamps = [];
   // terreno externo e piso
-  const out = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0x8a5a3c, roughness: 1 }));
+  const out = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), M.ground || new THREE.MeshStandardMaterial({ color: 0x8a5a3c, roughness: 1 }));
   out.rotation.x = -Math.PI / 2; out.position.set(B.W / 2, -.02, B.D / 2); out.receiveShadow = true; if (!opt.embed) g.add(out);
   const fl = new THREE.Mesh(new THREE.PlaneGeometry(B.W, B.D), M.floor); fl.rotation.x = -Math.PI / 2; fl.position.set(B.W / 2, .005, B.D / 2); fl.receiveShadow = true; g.add(fl);
   // colunas (perfil I 0,6 m) e vigas por nível
@@ -45,7 +45,7 @@ export function buildBuilding(scene, M, opt = {}) {
 
   // FECHAMENTO: telha verde por fora / marrom empoeirada por dentro, com grandes aberturas (luz do dia como na foto da peneira)
   const walls = [];
-  const wall = (w, h, x, y, z, ry) => { for (const m of [M.cladOut, M.cladIn]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); walls.push(p); p.userData.shell = true; p.position.set(x, y, z); p.rotation.y = ry + (m === M.cladIn ? Math.PI : 0); p.position.x += m === M.cladIn ? Math.sin(ry) * -.05 : 0; p.position.z += m === M.cladIn ? Math.cos(ry) * -.05 : 0; p.receiveShadow = true; g.add(p); } };
+  const wall = (w, h, x, y, z, ry) => { for (const m of [M.cladOut, M.cladIn]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); walls.push(p); p.userData.shell = true; p.position.set(x, y, z); p.rotation.y = ry + (m === M.cladIn ? Math.PI : 0); p.position.x += m === M.cladIn ? Math.sin(ry) * -.05 : 0; p.position.z += m === M.cladIn ? Math.cos(ry) * -.05 : 0; p.receiveShadow = true; p.castShadow = true; g.add(p); } };
   // fundo (z=0) fechado acima de 4 m, abertura baixa
   wall(B.W, B.H - 4, B.W / 2, 4 + (B.H - 4) / 2, -.02, Math.PI);
   // frente (z=D): fechada só acima de L2 (a frente baixa fica aberta como na foto da peneira)
@@ -55,7 +55,7 @@ export function buildBuilding(scene, M, opt = {}) {
   // cobertura: telha + treliças
   const roof = new THREE.Mesh(new THREE.PlaneGeometry(B.W + 1, B.D + 1), M.cladIn); roof.rotation.x = Math.PI / 2; roof.position.set(B.W / 2, B.H + .8, B.D / 2); g.add(roof);
   const roofO = new THREE.Mesh(new THREE.PlaneGeometry(B.W + 1, B.D + 1), M.cladOut); roofO.rotation.x = -Math.PI / 2; roofO.position.set(B.W / 2, B.H + .85, B.D / 2); g.add(roofO);
-  roof.userData.shell = roofO.userData.shell = true;
+  roof.userData.shell = roofO.userData.shell = true; roof.castShadow = roofO.castShadow = true;
   for (const x of B.colX) { beam(g, V(x, B.H, 0), V(x, B.H + .8, 12), .14, M.steel); beam(g, V(x, B.H + .8, 12), V(x, B.H, B.D), .14, M.steel); for (let k = 1; k < 6; k++) beam(g, V(x, B.H, k * 4), V(x, B.H + .8 * (1 - Math.abs(k * 4 - 12) / 12), k * 4), .08, M.steelDk); }
   for (let z = 2; z < B.D; z += 3) beam(g, V(0, B.H + .7 - Math.abs(z - 12) / 12 * .7, z), V(B.W, B.H + .7 - Math.abs(z - 12) / 12 * .7, z), .1, M.steelDk);
   // luminárias de galpão (high-bay) sob a cobertura e sob o piso L2
@@ -67,5 +67,5 @@ export function buildBuilding(scene, M, opt = {}) {
   // tubulação de água/ar ao longo das colunas (detalhe das fotos)
   for (const x of [8, 24, 40, 56]) { beam(g, V(x + .5, 0, 12.4), V(x + .5, LV.L2, 12.4), .05, M.grey, true); }
   // vista em corte: de fora/acima do prédio a cobertura some para mostrar o processo
-  return { group: g, lamps, update(dt, t, S, cam) { if (!cam || opt.embed) return; const p = cam.position, outside = p.y > B.H + 1 || p.x < -1 || p.x > B.W + 1 || p.z < -1 || p.z > B.D + 1; g.traverse((m) => { if (m.userData.shell) m.visible = !outside; }); } };
+  return { group: g, lamps, update(dt, t, S, cam) { if (!cam || opt.embed) return; const p = cam.position, outside = p.y > B.H + 1 || p.x < -1 || p.x > B.W + 1 || p.z < -1 || p.z > B.D + 1; (g.parent || g).traverse((m) => { if (m.userData.shell) m.visible = !outside; }); } };
 }
