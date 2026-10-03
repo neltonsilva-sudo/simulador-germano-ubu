@@ -1,10 +1,11 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261003142747';
-import { buildEqScreen } from './eqscreen.js?v=20261003142747';
-import { buildTour } from './tour.js?v=20261003142747';
-import { logEv } from './sim.js?v=20261003142747';
+import { buildPanels } from './panels.js?v=20261003143008';
+import { buildEqScreen } from './eqscreen.js?v=20261003143008';
+import { buildTour } from './tour.js?v=20261003143008';
+import { logEv } from './sim.js?v=20261003143008';
+import { SIM_URL } from './api.js?v=20261003143008';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -38,13 +39,18 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.getElementById('ui');
   root.innerHTML = `<div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div>
-   <div class="s3bar" id="s3bar">${Object.entries(CAMS).map(([k, c]) => `<button data-cam="${k}">${c.label}</button>`).join('')}<button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button></div>
+   <div class="s3bar" id="s3bar">${Object.entries(CAMS).map(([k, c]) => `<button data-cam="${k}">${c.label}</button>`).join('')}<button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
    <div class="s3lv" id="s3lv" hidden><button data-lv="2">Piso dos alimentadores (+14 m)</button><button data-lv="1">Piso das peneiras (+7,5 m)</button><button data-lv="0">Térreo</button></div>
    <div class="s3help">Arraste para girar · role para aproximar · <b>Caminhar</b>: W A S D ou setas, Shift corre, arraste para olhar. Clique numa etiqueta para ver o equipamento.</div>
    <div class="s3joy" id="s3joy"><i></i></div><div class="s3info" id="s3info" hidden></div>
    `;
   const $ = (s) => root.querySelector(s);
   root.querySelectorAll('[data-cam]').forEach((b) => b.addEventListener('click', () => setCam(b.dataset.cam)));
+  // Sair: avisa o simulador (outra aba) para voltar à visão geral e fecha esta aba; se o navegador não deixar fechar, abre o simulador
+  root.querySelector('#s3exit').addEventListener('click', () => {
+    try { const ch = new BroadcastChannel('setor3-sync'); ch.postMessage({ type: 'exit' }); ch.close(); } catch (e) { /* sem canal */ }
+    setTimeout(() => { window.close(); setTimeout(() => { if (!window.closed) location.href = SIM_URL; }, 300); }, 80);
+  });
   const lvBox = $('#s3lv');
   const refreshWalk = () => { const w = getWalk(); $('#s3walk').setAttribute('aria-pressed', w.walk); lvBox.hidden = !w.walk; lvBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.lv === w.level)); $('#s3joy').style.display = w.walk && matchMedia('(pointer:coarse)').matches ? 'block' : 'none'; };
   $('#s3walk').addEventListener('click', () => { setWalk(!getWalk().walk); refreshWalk(); });
