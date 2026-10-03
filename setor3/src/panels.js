@@ -1,4 +1,4 @@
-import { call, getToken, SIM_URL } from './api.js?v=20261003140136';
+import { call, getToken, SIM_URL } from './api.js?v=20261003141059';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -6,7 +6,7 @@ import { call, getToken, SIM_URL } from './api.js?v=20261003140136';
 
 const CSS = `
 .s3acc{--ok:#4ac68f;--warn:#ff9f1a;--crit:#f0544a;--accent:#5cc6dc;--ink:#e8edf1;--muted:#a2afbb;--card:rgba(10,45,95,.30);--cline:rgba(120,170,235,.25);--disp:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  position:fixed;right:14px;top:96px;z-index:5;width:400px;max-height:calc(100vh - 112px);overflow:auto;border-radius:10px;border:1px solid rgba(120,170,235,.38);
+  position:fixed;left:14px;top:96px;z-index:5;width:400px;max-height:calc(100vh - 112px);overflow:auto;border-radius:10px;border:1px solid rgba(120,170,235,.38);
   background:radial-gradient(ellipse 60% 80% at 18% 20%,rgba(60,130,200,.28),transparent 60%),radial-gradient(ellipse 50% 70% at 85% 75%,rgba(0,10,30,.55),transparent 65%),linear-gradient(135deg,rgba(13,68,120,.94) 0%,rgba(8,48,94,.94) 50%,rgba(5,32,74,.95) 100%);
   backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);box-shadow:0 10px 28px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07);color:var(--ink);font:12.5px/1.4 "IBM Plex Sans",system-ui,sans-serif;scrollbar-width:thin}
 .s3acc .top{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--cline);position:sticky;top:0;z-index:1;background:linear-gradient(135deg,rgba(13,68,120,.98),rgba(8,48,94,.98))}
@@ -40,7 +40,7 @@ const CSS = `
 .s3acc .btn2.ai{background:#5cc6dc;color:#08202a;border-color:#5cc6dc}.s3acc .btn2.red{border-color:#ff6b5b;color:#ffb3a8}.s3acc .hint{color:var(--muted);font-size:11.5px}
 .s3acc .qrrow{display:flex;gap:10px;align-items:flex-start}.s3acc .qrbox{background:#fff;border-radius:6px;padding:6px;flex:none;width:128px;height:128px}.s3acc .qrbox svg,.s3acc .qrbox img{width:100%;height:100%}
 .s3acc .card h6{margin:6px 0 2px;font:600 12px var(--disp);letter-spacing:.08em;color:#ffd24a;text-transform:uppercase}
-@media (max-width:860px){.s3acc{top:auto;bottom:150px;right:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
+@media (max-width:860px){.s3acc{top:auto;bottom:150px;left:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
 const SECS = [['pi', 'Pontos de inspeção'], ['prob', 'Problemas detectados'], ['ind', 'Indicadores em tempo real'], ['tend', 'Tendências'], ['ctl', 'Controles e ajustes'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['insp', 'Registro de inspeção']];

@@ -2,7 +2,7 @@
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
 const CSS = `
-.s3eq{position:fixed;left:14px;top:96px;z-index:7;width:min(440px,calc(100vw - 28px));max-height:calc(100vh - 112px);overflow:auto;border-radius:12px;background:rgba(14,24,38,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.45);color:#dce6ee;font:12.5px/1.45 system-ui}
+.s3eq{position:fixed;right:14px;top:96px;z-index:7;width:min(440px,calc(100vw - 28px));max-height:calc(100vh - 112px);overflow:auto;border-radius:12px;background:rgba(14,24,38,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.45);color:#dce6ee;font:12.5px/1.45 system-ui}
 .s3eq .hd{position:sticky;top:0;background:rgba(14,24,38,.98);padding:12px 14px 8px;border-bottom:1px solid rgba(120,170,235,.25);z-index:1}
 .s3eq .hd h3{margin:0;font-size:17px;color:#fff;display:flex;align-items:center;gap:8px}.s3eq .hd small{color:#9fb0bd}.s3eq .hd .x{margin-left:auto;border:0;background:none;color:#cfd6dc;font-size:22px;cursor:pointer;line-height:1}
 .s3eq .chip{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700}.s3eq .chip.ok{background:#1f8a5b;color:#fff}.s3eq .chip.warn{background:#d98a00;color:#fff}.s3eq .chip.crit{background:#d0362b;color:#fff}.s3eq .chip.off{background:#59636c;color:#fff}

@@ -7,7 +7,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { B } from './layout.js?v=20261003140136';
+import { B } from './layout.js?v=20261003141059';
 
 const Q = new URLSearchParams(location.search);
 export const HIGH = Q.get('q') !== 'low' && !/Mobi|Android/i.test(navigator.userAgent);

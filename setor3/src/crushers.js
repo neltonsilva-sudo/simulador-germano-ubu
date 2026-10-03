@@ -2,8 +2,8 @@
 // acumuladores hidráulicos (fotos noturnas e de detalhe). Britagem secundária: 3 Barmac VSI (tambor bege, base metálica, motores).
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B } from './layout.js?v=20261003140136';
-import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003140136';
+import { CRUSHERS, B } from './layout.js?v=20261003141059';
+import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003141059';
 
 export function buildCrushers(scene, M) {
   const g = new THREE.Group(); scene.add(g);
