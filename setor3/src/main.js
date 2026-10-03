@@ -1,11 +1,11 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261003145318';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261003145318';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261003145318';
-import { buildUI } from './ui.js?v=20261003145318';
-import { gate } from './gate.js?v=20261003145318';
+import { B, LV, CAMS } from './layout.js?v=20261003175555';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261003175555';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261003175555';
+import { buildUI } from './ui.js?v=20261003175555';
+import { gate } from './gate.js?v=20261003175555';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -30,6 +30,8 @@ function setCam(name, instant) {
   tween = { k: 0, p0: camera.position.clone(), t0: controls.target.clone(), f0: camera.fov, to };
 }
 setCam(Q.get('cam') || 'cctv', true);
+// câmera livre pela URL para conferência (?cp=x,y,z&cl=x,y,z&fov=60)
+if (Q.get('cp') && Q.get('cl')) setCam({ pos: Q.get('cp').split(',').map(Number), look: Q.get('cl').split(',').map(Number), fov: +(Q.get('fov') || 60) }, true);
 
 // caminhar: WASD/setas + arrastar para olhar; altura dos olhos 1,65 m sobre o nível escolhido
 addEventListener('keydown', (e) => { keys[e.code] = true; }); addEventListener('keyup', (e) => { keys[e.code] = false; });

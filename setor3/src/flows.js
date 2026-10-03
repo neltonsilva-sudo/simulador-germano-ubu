@@ -3,8 +3,8 @@
 // retido 1º deck → correia → silos dos HP 400; retido 2º deck → correia → silos dos Barmac;
 // britado → correia de retorno → peneiras; SAÍDA passante < 12,5 mm → correia → pilha de regularização.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261003145318';
-import { V, box, beam, cyl } from './util.js?v=20261003145318';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261003175555';
+import { V, box, beam, cyl } from './util.js?v=20261003175555';
 
 export function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -16,6 +16,10 @@ export function buildFlows(scene, M, opt = {}) {
     box(grp, w + .25, .3, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .18, 0);
     for (let s = .6; s < L; s += 1.3) { box(grp, w + .35, .07, .1, M.grey, 0, .09, -L / 2 + s); }
     for (const sx of [-1, 1]) box(grp, .05, .5, L, M.steel, sx * (w / 2 + .25), .3, 0);           // saias/cobertura lateral
+    // tambores de cabeça e de cauda: a correia termina "fechada" nas duas pontas
+    for (const zz of [-L / 2, L / 2]) { const dr = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, w + .3, 16), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, .02, zz); grp.add(dr); }
+    // correia de alta inclinação (> 25°): bordas laterais onduladas e taliscas (sidewall), que seguram o minério na subida
+    if (Math.abs(d.y) / L > .42) { for (const sx of [-1, 1]) box(grp, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(grp, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); }
     const n = Math.floor(L * 4), im = new THREE.InstancedMesh(rockGeo, oreMat, n); im.castShadow = true; grp.add(im);
     const rk = Array.from({ length: n }, (_, k) => ({ z: -L / 2 + (k + Math.random()) * L / n, x: (Math.random() - .5) * w * .55, r: Math.random() * 6, s: .7 + Math.random() * .7 }));
     belts.push({ im, rk, L, key });
@@ -24,20 +28,33 @@ export function buildFlows(scene, M, opt = {}) {
     return grp;
   }
   const E = B.screenEnd, zD1 = 12.8, zD2 = 13.9, yD1 = 6.4, yD2 = 5.5, yTop = 17.4;
+  // ponto de transferência: chute da cabeça de uma correia até a cauda da seguinte (mais baixa)
+  const xfer = (a, b, w = .9) => { beam(g, a, b, w, M.chute); box(g, w + .4, .5, w + .4, M.chute, a.x, a.y + .1, a.z); };
   // ENTRADA: TCLD chegando de fora pelo fundo do prédio até o topo, e tripper sobre os alimentadores
-  if (!opt.embed) belt(V(-26, 2.5, -34), V(-1, yTop, 2.4), 1.4, 'F');
-  belt(V(-1, yTop, 2.4), V(E - 1, yTop, 2.4), 1.4, 'T');
+  // a distribuição corre do fim do prédio (lado dos britadores, x ≈ 48) para o início: ROM novo e retorno caem na cauda
+  if (!opt.embed) { belt(V(E + 20, 2.5, -30), V(E - .6, yTop + 1.6, 1.9), 1.4, 'F'); xfer(V(E - .6, yTop + 1.5, 2.0), V(E - .8, yTop + .4, 2.3)); }
+  belt(V(E + 2.2, yTop, 2.4), V(-.5, yTop, 2.4), 1.4, 'T');
   const trip = new THREE.Group(); g.add(trip); box(trip, 2.4, 1.2, 2.2, M.yellow, 0, yTop + .7, 2.4); box(trip, 1.0, 1.4, 1.0, M.chute, 0, yTop - .4, 2.4);
   // retidos sob as descargas das peneiras
   SCREENS.xs.forEach((x) => { beam(g, V(x - .6, LV.L1 + .9, 11.9), V(x - .6, yD1 + .3, zD1), .5, M.chute); beam(g, V(x + .6, LV.L1 + .5, 11.9), V(x + .6, yD2 + .3, zD2), .5, M.chute); });
+  // retidos sobem por correias de alta inclinação no corredor entre o fim dos pisos (x 46) e as pernas dos silos
+  const zC = CRUSHERS.cones[0].z, zV = CRUSHERS.vsi[0].z, x1 = E + 1.5, x2 = E + .75;
   belt(V(1, yD1, zD1), V(E + 1, yD1, zD1), 1.0, 'R1');
-  belt(V(E + 1, yD1, zD1), V(49, 16.0, CRUSHERS.cones[0].z), 1.0, 'R1');
-  belt(V(49, 16.0, CRUSHERS.cones[0].z), V(62, 16.0, CRUSHERS.cones[0].z), 1.0, 'R1');
-  belt(V(1, yD2, zD2), V(E + 2, yD2, zD2), 1.0, 'R2');
-  belt(V(E + 2, yD2, zD2), V(48, 15.2, CRUSHERS.vsi[0].z), 1.0, 'R2');
-  belt(V(48, 15.2, CRUSHERS.vsi[0].z), V(63, 15.2, CRUSHERS.vsi[0].z), 1.0, 'R2');
+  xfer(V(E + 1.3, yD1 - .1, zD1), V(x1, yD1 - .75, zD1 - .35));
+  belt(V(x1, yD1 - .85, zD1 - .45), V(x1, 16.9, zC + .2), 1.0, 'R1');
+  xfer(V(x1, 16.8, zC + .1), V(x1 + .4, 16.15, zC));
+  belt(V(x1 + .4, 16.0, zC), V(62, 16.0, zC), 1.0, 'R1');
+  belt(V(1, yD2, zD2), V(E + .6, yD2, zD2), 1.0, 'R2');
+  xfer(V(E + .8, yD2 - .1, zD2), V(x2, yD2 - .7, zD2 + .45));
+  belt(V(x2, yD2 - .8, zD2 + .55), V(x2, 16.0, zV - .2), 1.0, 'R2');
+  xfer(V(x2, 15.9, zV - .1), V(x2 + .4, 15.35, zV));
+  belt(V(x2 + .4, 15.2, zV), V(63, 15.2, zV), 1.0, 'R2');
+  // descarga em cada silo: arado/bica sob a correia sobre o centro do silo
+  CRUSHERS.cones.forEach((c) => { box(g, 1.5, .6, 1.5, M.chute, c.x, 15.55, zC); box(g, .4, 1.2, 1.7, M.yellow, c.x, 16.6, zC); });
+  CRUSHERS.vsi.forEach((c) => { box(g, 1.3, .5, 1.3, M.chute, c.x, 14.85, zV); box(g, .4, 1.2, 1.7, M.yellow, c.x, 15.8, zV); });
   // SAÍDA: produto < 12,5 mm saindo pela lateral rumo à pilha
-  belt(V(E + 2, 1.3, 20.5), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 26, 9, 30), 1.2, 'P', M.ore);
+  xfer(V(E + 2.3, 1.25, 20.5), V(E + 2.9, .95, 20.6), .8);
+  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 26, 9, 30), 1.2, 'P', M.ore);
   // etiquetas de vazão (texto atualizado pela interface)
   const fmt = (v) => Math.round(v).toLocaleString('pt-BR');
   labels.push({ pos: V(-12, 10.5, -16), kind: 'in', text: (K) => `ENTRADA · ROM da TCLD · ${fmt(K.F)} t/h` });

@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261003145318';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261003175555';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -193,7 +193,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     try {
       const r = await call('aiAnalyze', [{ modo: 'inspecao', escopo: 'Área 3 · Peneiramento e britagem', pergunta: '', contexto: ctxIA(reg) }]);
       const sv = (x) => (/alta/i.test(x) ? 'crit' : /m[eé]dia/i.test(x) ? 'warn' : '');
-      out.innerHTML = `<div class="card"><h6>Análise da Simulação</h6><b>${esc(r.resumo || '')}</b></div>${(r.achados || []).map((a) => `<div class="card ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><small>${esc(a.evidencia || '')}</small></div>`).join('')}${(r.causas || []).map((c) => `<div class="card"><b>Causa provável:</b> ${esc(c.titulo || c.causa || c)}<small>${esc(c.explicacao || c.evidencia || '')}</small></div>`).join('')}${(r.recomendacoes || []).filter((c) => c && c.titulo).map((c) => `<div class="card"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><small>${esc(c.efeito_esperado || '')}</small></div>`).join('')}<p class="hint">Gerado por ${esc(r.modelo || 'Gemini')}. A decisão final é do operador.</p>`;
+      out.innerHTML = `<div class="card"><h6>Análise da Simulação</h6><b>${esc(r.resumo || '')}</b></div>${(r.achados || []).map((a) => `<div class="card ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><small>${esc(a.evidencia || '')}</small></div>`).join('')}${(r.causas || []).map((c) => `<div class="card"><b>Causa provável:</b> ${esc(c.titulo || c.causa || c)}<small>${esc(c.explicacao || c.evidencia || '')}</small></div>`).join('')}${(r.recomendacoes || []).filter((c) => c && c.titulo).map((c) => `<div class="card"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><small>${esc(c.efeito_esperado || '')}</small></div>`).join('')}<p class="hint">Gerado pela Simulação. A decisão final é do operador.</p>`;
       if (reg.linha) { const txt = [r.resumo].concat((r.recomendacoes || []).map((x) => '• ' + x.titulo)).join('\n'); call('inspSalvarAnalise', [{ linha: reg.linha, texto: txt }]).then(loadList).catch(() => {}); }
       logEv('Simulação', 'Análise de inspeção: ' + String(r.resumo || '').slice(0, 80));
     } catch (e) { out.innerHTML = `<p class="hint" style="color:#ff8a7a">Não foi possível analisar: ${esc(e.message)}</p>`; }

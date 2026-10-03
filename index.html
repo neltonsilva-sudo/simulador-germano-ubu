@@ -193,7 +193,7 @@ table.flows tr.sec td{color:var(--muted);font-family:var(--f-disp);letter-spacin
 @media (max-width:980px){.dbody{grid-template-columns:1fr 1fr}.dbody .dcol:nth-child(3){grid-column:1/-1}}
 @media (max-width:860px){#dash{bottom:calc(98px + env(safe-area-inset-bottom,0px));max-height:62vh}.dbody{grid-template-columns:1fr}}
 
-/* ============ AI assistant (Gemini via Apps Script) ============ */
+/* ============ Assistente de processo (via Apps Script) ============ */
 #aiBtn{background:#15202b;color:var(--ink)}
 .seg button,.btn{transition:background .15s,color .15s,border-color .15s,box-shadow .15s}
 .seg button[aria-pressed="true"],.btn[aria-pressed="true"]{background:var(--accent)!important;color:#07202a!important;border-color:var(--accent)!important;font-weight:600;box-shadow:0 0 0 1px rgba(92,198,220,.35),0 0 12px rgba(92,198,220,.25)}
@@ -490,7 +490,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
       <button class="btn" id="lblBtn" aria-pressed="true">Rótulos</button>
       <div class="seg" id="todSeg" role="group" aria-label="Iluminação"><div class="dd"><button type="button" class="ddbtn" aria-haspopup="true" aria-expanded="false" title="Turno (iluminação)">Turno <b class="ddv"></b> ▾</button><div class="ddmenu" role="menu"><button data-t="day" aria-pressed="false">Dia</button><button data-t="dusk" aria-pressed="false">Entardecer</button><button data-t="night" aria-pressed="false">Noite</button></div></div><button data-t="cycle" aria-pressed="true">Ciclo real</button></div>
       <button class="btn" id="engBtn" title="Gêmeo digital: geometalurgia, previsão, reconciliação, sensores virtuais, modelos avançados, calibração e dados reais">Gêmeo digital</button>
-      <button class="btn" id="aiBtn" title="Análise do processo com Simulação (Gemini)">Assistente de Simulação</button>
+      <button class="btn" id="aiBtn" title="Análise do processo com Simulação">Assistente de Simulação</button>
             <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button>
     </div>
   </header>
@@ -565,7 +565,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
     <div class="dfoot" id="dFlows"></div>
   </section>
   <section id="ai" class="collapsed" aria-label="Assistente de processo com Simulação">
-    <header class="ah" role="button" tabindex="0" aria-expanded="false"><div style="flex:1"><h3>Assistente de processo · Gemini<span class="chev">▾</span></h3><small id="aiSub">Analisa o estado atual do simulador: KPIs, alarmes, tendências de 48 h, unidades e setpoints</small></div></header>
+    <header class="ah" role="button" tabindex="0" aria-expanded="false"><div style="flex:1"><h3>Assistente de processo<span class="chev">▾</span></h3><small id="aiSub">Analisa o estado atual do simulador: KPIs, alarmes, tendências de 48 h, unidades e setpoints</small></div></header>
     <div class="ab">
       <div class="aimodes" id="aiModes">
         <button data-m="diag" aria-pressed="true"><b>Diagnóstico</b><span>Saúde do processo e desvios</span></button>
@@ -578,7 +578,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
         <option value="ubu">Ubu · etapas 11 a 23</option><option value="porto">Porto · etapa 24</option><option value="stage">Etapa selecionada no mapa</option></select>
         <button id="aiGo">Analisar agora</button></div>
       <textarea id="aiQ" placeholder="Pergunta opcional. Ex.: por que o SiO₂ subiu? O que fazer para chegar a 70 % da capacidade sem perder qualidade?"></textarea>
-      <div id="aiOut" class="aiout"><p class="aimsg">Escolha o tipo de análise e a área e clique em <b>Analisar agora</b>. O Gemini recebe apenas os dados do simulador; nenhum dado pessoal é enviado.</p></div>
+      <div id="aiOut" class="aiout"><p class="aimsg">Escolha o tipo de análise e a área e clique em <b>Analisar agora</b>. A Simulação recebe apenas os dados do simulador; nenhum dado pessoal é enviado.</p></div>
     </div>
   </section>
   <div class="modal" id="cfm" hidden role="dialog" aria-modal="true" aria-labelledby="cfmT"><div class="box"><h3 id="cfmT">Confirmar comando</h3><p id="cfmM"></p><div class="row"><button class="btn" id="cfmNo">Cancelar</button><button class="danger" id="cfmYes">Confirmar</button></div></div></div>
@@ -1089,9 +1089,19 @@ function buildCrushers(scene, M) {
     box(grp, w + .2, .25, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .16, 0);
     const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.13), M.ore, Math.floor(L * 3)); const m4 = new THREE.Matrix4();
     const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 3 + Math.random() * .2, x: (Math.random() - .5) * w * .6, r: Math.random() * 6 })); grp.add(oreG); belts.push({ im: oreG, rk, L });
-    for (let s = 0; s < L; s += 1.2) { box(grp, w + .3, .08, .1, M.grey, 0, .08, -L / 2 + s); } return grp; };
-  belt(V(B.W - 1, 1.0, 12), V(B.screenEnd + 1, 1.0, 12));
-  belt(V(B.screenEnd + 1, 1.0, 12), V(B.screenEnd - 3, 15.6, 1.4), 1.0);
+    for (let s = 0; s < L; s += 1.2) { box(grp, w + .3, .08, .1, M.grey, 0, .08, -L / 2 + s); }
+    for (const zz of [-L / 2, L / 2]) { const dr = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, w + .3, 16), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, .02, zz); grp.add(dr); }
+    grp.userData.L = L; return grp; };
+
+
+  const E2 = B.screenEnd, sidewall = (rg, w) => { const L = rg.userData.L; for (const sx of [-1, 1]) box(rg, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(rg, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); };
+  const chute = (a, b) => { beam(g, a, b, .9, M.chute); box(g, 1.3, .5, 1.3, M.chute, a.x, a.y + .1, a.z); };
+  belt(V(E2 + 2.6, 1.4, 12), V(B.W - .9, 1.4, 12));
+  chute(V(B.W - .7, 1.35, 12), V(B.W - .7, .95, 11.6));
+  belt(V(B.W - .7, .85, 11.5), V(B.W - .7, .85, 2.2), 1.0);
+  chute(V(B.W - .7, .8, 1.9), V(B.W - 1.3, .75, 2.0));
+  sidewall(belt(V(B.W - 1.4, .7, 2.0), V(E2 + 2.6, 18.9, 2.0), 1.0), 1.0);
+  chute(V(E2 + 2.4, 18.8, 2.0), V(E2 + 2.0, 17.75, 2.4));
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);
   const COL = { ok: 0x5ff0ff, warn: 0xffb020, crit: 0xff3b2f, off: 0x4a525a };
   const pick = []; g.updateMatrixWorld(true);
@@ -1125,6 +1135,10 @@ function buildFlows(scene, M, opt = {}) {
     box(grp, w + .25, .3, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .18, 0);
     for (let s = .6; s < L; s += 1.3) { box(grp, w + .35, .07, .1, M.grey, 0, .09, -L / 2 + s); }
     for (const sx of [-1, 1]) box(grp, .05, .5, L, M.steel, sx * (w / 2 + .25), .3, 0);
+
+    for (const zz of [-L / 2, L / 2]) { const dr = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, w + .3, 16), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, .02, zz); grp.add(dr); }
+
+    if (Math.abs(d.y) / L > .42) { for (const sx of [-1, 1]) box(grp, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(grp, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); }
     const n = Math.floor(L * 4), im = new THREE.InstancedMesh(rockGeo, oreMat, n); im.castShadow = true; grp.add(im);
     const rk = Array.from({ length: n }, (_, k) => ({ z: -L / 2 + (k + Math.random()) * L / n, x: (Math.random() - .5) * w * .55, r: Math.random() * 6, s: .7 + Math.random() * .7 }));
     belts.push({ im, rk, L, key });
@@ -1134,19 +1148,32 @@ function buildFlows(scene, M, opt = {}) {
   }
   const E = B.screenEnd, zD1 = 12.8, zD2 = 13.9, yD1 = 6.4, yD2 = 5.5, yTop = 17.4;
 
-  if (!opt.embed) belt(V(-26, 2.5, -34), V(-1, yTop, 2.4), 1.4, 'F');
-  belt(V(-1, yTop, 2.4), V(E - 1, yTop, 2.4), 1.4, 'T');
+  const xfer = (a, b, w = .9) => { beam(g, a, b, w, M.chute); box(g, w + .4, .5, w + .4, M.chute, a.x, a.y + .1, a.z); };
+
+
+  if (!opt.embed) { belt(V(E + 20, 2.5, -30), V(E - .6, yTop + 1.6, 1.9), 1.4, 'F'); xfer(V(E - .6, yTop + 1.5, 2.0), V(E - .8, yTop + .4, 2.3)); }
+  belt(V(E + 2.2, yTop, 2.4), V(-.5, yTop, 2.4), 1.4, 'T');
   const trip = new THREE.Group(); g.add(trip); box(trip, 2.4, 1.2, 2.2, M.yellow, 0, yTop + .7, 2.4); box(trip, 1.0, 1.4, 1.0, M.chute, 0, yTop - .4, 2.4);
 
   SCREENS.xs.forEach((x) => { beam(g, V(x - .6, LV.L1 + .9, 11.9), V(x - .6, yD1 + .3, zD1), .5, M.chute); beam(g, V(x + .6, LV.L1 + .5, 11.9), V(x + .6, yD2 + .3, zD2), .5, M.chute); });
-  belt(V(1, yD1, zD1), V(E + 1, yD1, zD1), 1.0, 'R1');
-  belt(V(E + 1, yD1, zD1), V(49, 16.0, CRUSHERS.cones[0].z), 1.0, 'R1');
-  belt(V(49, 16.0, CRUSHERS.cones[0].z), V(62, 16.0, CRUSHERS.cones[0].z), 1.0, 'R1');
-  belt(V(1, yD2, zD2), V(E + 2, yD2, zD2), 1.0, 'R2');
-  belt(V(E + 2, yD2, zD2), V(48, 15.2, CRUSHERS.vsi[0].z), 1.0, 'R2');
-  belt(V(48, 15.2, CRUSHERS.vsi[0].z), V(63, 15.2, CRUSHERS.vsi[0].z), 1.0, 'R2');
 
-  belt(V(E + 2, 1.3, 20.5), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 26, 9, 30), 1.2, 'P', M.ore);
+  const zC = CRUSHERS.cones[0].z, zV = CRUSHERS.vsi[0].z, x1 = E + 1.5, x2 = E + .75;
+  belt(V(1, yD1, zD1), V(E + 1, yD1, zD1), 1.0, 'R1');
+  xfer(V(E + 1.3, yD1 - .1, zD1), V(x1, yD1 - .75, zD1 - .35));
+  belt(V(x1, yD1 - .85, zD1 - .45), V(x1, 16.9, zC + .2), 1.0, 'R1');
+  xfer(V(x1, 16.8, zC + .1), V(x1 + .4, 16.15, zC));
+  belt(V(x1 + .4, 16.0, zC), V(62, 16.0, zC), 1.0, 'R1');
+  belt(V(1, yD2, zD2), V(E + .6, yD2, zD2), 1.0, 'R2');
+  xfer(V(E + .8, yD2 - .1, zD2), V(x2, yD2 - .7, zD2 + .45));
+  belt(V(x2, yD2 - .8, zD2 + .55), V(x2, 16.0, zV - .2), 1.0, 'R2');
+  xfer(V(x2, 15.9, zV - .1), V(x2 + .4, 15.35, zV));
+  belt(V(x2 + .4, 15.2, zV), V(63, 15.2, zV), 1.0, 'R2');
+
+  CRUSHERS.cones.forEach((c) => { box(g, 1.5, .6, 1.5, M.chute, c.x, 15.55, zC); box(g, .4, 1.2, 1.7, M.yellow, c.x, 16.6, zC); });
+  CRUSHERS.vsi.forEach((c) => { box(g, 1.3, .5, 1.3, M.chute, c.x, 14.85, zV); box(g, .4, 1.2, 1.7, M.yellow, c.x, 15.8, zV); });
+
+  xfer(V(E + 2.3, 1.25, 20.5), V(E + 2.9, .95, 20.6), .8);
+  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 26, 9, 30), 1.2, 'P', M.ore);
 
   const fmt = (v) => Math.round(v).toLocaleString('pt-BR');
   labels.push({ pos: V(-12, 10.5, -16), kind: 'in', text: (K) => `ENTRADA · ROM da TCLD · ${fmt(K.F)} t/h` });
@@ -3103,7 +3130,7 @@ for(let i=0;i<60;i++)hist.push(CUR.U.prod*(1+Math.sin(i*.4)*.02));
 scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.isMeshStandardMaterial)o.material.envMapIntensity=.45;});
 applyTOD(0,true);
 
-/* ============ AI ASSISTANT (Gemini via Google Apps Script) ============ */
+/* ============ ASSISTENTE DE PROCESSO (via Google Apps Script) ============ */
 const HAS_GAS=!!(window.google&&google.script&&google.script.run);
 let aiMode='diag',aiLast=null,aiReq=null;
 const AREA_OF=id=>{const n=EQ[id].num;return n<=9?'germano':n===10?'mineroduto':n<=23?'ubu':'porto';};
@@ -3139,7 +3166,7 @@ function renderAI(r){
   if(r.plano&&r.plano.length){h+='<h4>Plano de ação por área</h4><div style="overflow-x:auto"><table class="plan"><thead><tr><th>Área</th><th>Ação (o quê)</th><th>Por quê</th><th>Quem</th><th>Prazo</th><th>Prioridade</th><th>Indicador</th></tr></thead><tbody>'+
     r.plano.map(a=>`<tr><td>${esc(a.area)}</td><td>${esc(a.acao)}</td><td>${esc(a.porque)}</td><td>${esc(a.responsavel)}</td><td>${esc(a.prazo)}</td><td>${esc(a.prioridade)}</td><td>${esc(a.indicador)}</td></tr>`).join('')+'</tbody></table></div>'+
     `<div class="airow" style="margin-top:8px"><button class="btn" id="aiSave">Salvar plano na planilha Google</button><button class="btn" id="aiCopy">Copiar plano</button><span class="aimsg" id="aiSaveMsg"></span></div>`;}
-  if(r.modelo)h+=`<p class="aimsg" style="margin-top:8px">Gerado por ${esc(r.modelo)} a partir dos dados do simulador. Revise antes de aplicar em operação real.</p>`;
+  if(r.modelo)h+=`<p class="aimsg" style="margin-top:8px">Gerado pela Simulação a partir dos dados do simulador. Revise antes de aplicar em operação real.</p>`;
   o.innerHTML=h||'<p class="aimsg">Sem conteúdo na resposta.</p>';
   o.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(typeof canEdit==='function'&&!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}
     if(UKEYS.includes(c.chave)){RUN[c.chave]=c.valor_sugerido?1:0;refreshEq(true);}
@@ -3168,9 +3195,9 @@ function makePdf(r,btn){
 }
 function runAI(){
   const out=$('#aiOut');
-  if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O assistente Gemini funciona na versão publicada no Google Apps Script, onde a chave do serviço de Simulação fica protegida no servidor. Nesta página ele não tem acesso à internet.</p>';return;}
+  if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O assistente de processo funciona na versão publicada no Google Apps Script, onde a chave do serviço de Simulação fica protegida no servidor. Nesta página ele não tem acesso à internet.</p>';return;}
   const scope=$('#aiScope').value;if(scope==='stage'&&!selected){out.innerHTML='<p class="aimsg err">Selecione uma etapa no mapa primeiro.</p>';return;}
-  const go=$('#aiGo');go.disabled=true;out.innerHTML='<p class="aimsg"><span class="spin"></span>O Gemini está analisando o processo… (10 a 40 s)</p>';
+  const go=$('#aiGo');go.disabled=true;out.innerHTML='<p class="aimsg"><span class="spin"></span>A Simulação está analisando o processo… (10 a 40 s)</p>';
   const ctx=buildContext(scope);aiReq={modo:aiMode,escopo:$('#aiScope').selectedOptions[0].textContent,pergunta:$('#aiQ').value.slice(0,800),ctx};
   google.script.run.withSuccessHandler(r=>{go.disabled=false;renderAI(r);}).withFailureHandler(e=>{go.disabled=false;out.innerHTML=`<p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
     .aiAnalyze({modo:aiMode,escopo:scope,pergunta:$('#aiQ').value.slice(0,800),contexto:ctx});
@@ -3419,7 +3446,7 @@ function updateHotspots(){if(!AREA||!showLbl)return;const w=stage.clientWidth,h=
   let ai=el.querySelector('.ai');if(areaAI[i]&&!ai){ai=document.createElement('em');ai.className='ai';el.appendChild(ai);}if(ai){ai.textContent='Simulação';ai.title=areaAI[i]||'';if(!areaAI[i])ai.remove();}
   el.style.transform=`translate(${((tmpV.x*.5+.5)*w-12).toFixed(0)}px,${((-tmpV.y*.5+.5)*h-40).toFixed(0)}px)`;});}
 function runAreaAI(){const out=$('#arAiOut');if(!HAS_GAS){out.innerHTML='<p class="aimsg err">O diagnóstico com Simulação funciona na versão Google Apps Script.</p>';return;}
-  const btn=$('#arAi');btn.disabled=true;out.innerHTML='<p class="aimsg"><span class="spin"></span>O Gemini está inspecionando a área…</p>';
+  const btn=$('#arAi');btn.disabled=true;out.innerHTML='<p class="aimsg"><span class="spin"></span>Processo de inspeção da área…</p>';
   const ctx=buildContext('stage');ctx.pontos=(HS[AREA]||[]).map((h,i)=>({id:'P'+(i+1),nome:h[0],valor:hsVal(h),estado:hsState(h),indicador:h[2]||null}));
   aiReq={modo:'area',escopo:`Área ${EQ[AREA].num} · ${EQ[AREA].name}`,pergunta:'',ctx};
   google.script.run.withSuccessHandler(r=>{btn.disabled=false;areaAI={};(r.achados||[]).forEach(a=>{const m=String(a.ponto||'').match(/P(\d+)/i);if(m){const i=+m[1]-1;if(HS[AREA][i])areaAI[i]=(areaAI[i]?areaAI[i]+' | ':'')+a.titulo;}});
@@ -3427,7 +3454,7 @@ function runAreaAI(){const out=$('#arAiOut');if(!HAS_GAS){out.innerHTML='<p clas
       out.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}if(UKEYS.includes(c.chave)){RUN[c.chave]=c.valor_sugerido?1:0;}else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);inputs[c.chave].sync();}
         logEvent('Simulação',`Ajuste aplicado: ${c.titulo}`);b.textContent='Aplicado ✓';b.disabled=true;renderArea();}));
       const pb=out.querySelector('#aiPdf');if(pb)pb.addEventListener('click',()=>makePdf(r,pb));const sv=out.querySelector('#aiSave');if(sv)sv.remove();
-      renderArea();logEvent('Simulação',`Diagnóstico da área ${EQ[AREA].num} pelo Gemini`);})
+      renderArea();logEvent('Simulação',`Diagnóstico da área ${EQ[AREA].num} pela Simulação`);})
     .withFailureHandler(e=>{btn.disabled=false;out.innerHTML=`<p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
     .aiAnalyze({modo:'area',escopo:'stage',pergunta:'',contexto:ctx});}
 $('#arExit').addEventListener('click',exitArea);$('#arClose').addEventListener('click',exitArea);{const PANS=['#left','#ai','#right'].map(q=>$(q)).filter(Boolean);const mob=()=>matchMedia('(max-width:860px)').matches;
@@ -3661,7 +3688,7 @@ function surgeOpen(){const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent=
    <label class="hint">PMO do tubo <input type="number" id="sgMaop" min="80" max="300" step="5" value="${SURGE.maop}" style="width:60px"> bar</label>
    <label class="hint" id="sgVsL"><input type="checkbox" id="sgVs"${SURGE.vs?' checked':''}> Estações de válvulas (Guaçuí, Alegre) fecham na parada</label>
    <label class="hint"><input type="checkbox" id="sgProt"${SURGE.prot?' checked':''}> Proteção (vaso hidropneumático + válvula de alívio em 95 % da PMO)</label></div>
-   <div class="dtcard" style="margin-top:8px"><canvas id="sgCv" style="width:100%;height:230px"></canvas></div><div id="sgOut"></div><div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da Simulação</h4><p class="hint">Clique em <b>Analisar com Simulação</b>: o Gemini compara os três cenários (com e sem proteção), aponta o pior caso e recomenda ações de operação e de projeto.</p></div>
+   <div class="dtcard" style="margin-top:8px"><canvas id="sgCv" style="width:100%;height:230px"></canvas></div><div id="sgOut"></div><div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da Simulação</h4><p class="hint">Clique em <b>Analisar com Simulação</b>: a Simulação compara os três cenários (com e sem proteção), aponta o pior caso e recomenda ações de operação e de projeto.</p></div>
    <div class="row"><button class="btn" id="sgAi" style="background:var(--accent);color:#08202a;font-weight:600">Analisar com Simulação</button><button class="btn" id="sgAl">Registrar resultado nos alarmes</button><button class="btn" id="wifClose">Fechar</button></div>`;
   $('#sgAi').addEventListener('click',()=>{const r=surgeCalc(SURGE.sc,SURGE.tc,SURGE.prot,SURGE.pshh);studyAI('surge',{cenario_na_tela:SC_TXT[SURGE.sc],tempo_fechamento_s:SURGE.tc,PMO_bar:SURGE.maop,PSHH_EB2_bar:SURGE.pshh,protecao:SURGE.prot,
     tipo_de_bomba:'deslocamento positivo (pistão/diafragma)',tempo_fechamento_necessario_s:r?(r.tcNeed===0?'qualquer (onda já abaixo da PMO)':isFinite(r.tcNeed)?Math.round(r.tcNeed):'não resolve só com o tempo'):null,PSHH_maximo_para_empacotamento_abaixo_da_PMO_bar:r?+r.pshhMax.toFixed(0):null,descarga_EB2_regime_bar:r?+r.P2.toFixed(0):null,estacoes_de_valvulas_fecham:SURGE.vs,
@@ -3721,7 +3748,7 @@ function heatOpen(){const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent='
    <li><b>Umidade −0,5 ponto:</b> ≈ ${fmt(-lev[2].dq,1)} Mcal/t (≈ ${fmt(-lev[2].gas,0)} Nm³/h). ${mBall?'<b>Atenção:</b> ficaria abaixo de ≈ 8,8 %, faixa em que o pelotamento piora (pelotas cruas fracas e mais finos).':'Ainda dentro da faixa boa de pelotamento (≈ 8,8–9,5 %).'} A chuva no pátio faz o contrário.</li>
    <li><b>Gases de chaminé e ar de resfriamento</b> (${fmt((r.out[5][1]+r.out[3][1])/r.tot*100,0)} % do calor) são perdas <b>parcialmente recuperáveis</b>: parte é inevitável (os gases precisam sair acima do ponto de orvalho). Ganhos vêm de vedação dos carros, controle do ar falso e mais recirculação do ar quente do resfriamento para a secagem.</li></ul></div>
    <p class="hint">Modelo didático: calores específicos médios (pelota 0,20 kcal/kg·°C, água 0,62 Mcal/kg evaporada); perdas de parede 8 %. <b>Os gases de chaminé não são calculados: são o fechamento do balanço</b> e acumulam os erros das outras parcelas (a parcela menos confiável). Calibrar com vazões e temperaturas de gás por zona e análise de combustível.</p>
-   <div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da Simulação</h4><p class="hint">Clique em <b>Analisar com Simulação</b>: o Gemini interpreta o balanço, aponta as maiores perdas e recomenda como reduzir o consumo sem perder resistência.</p></div>
+   <div id="stAi" class="aiout" style="margin-top:10px"><h4>Análise da Simulação</h4><p class="hint">Clique em <b>Analisar com Simulação</b>: a Simulação interpreta o balanço, aponta as maiores perdas e recomenda como reduzir o consumo sem perder resistência.</p></div>
    <div class="row"><button class="btn" id="htAi" style="background:var(--accent);color:#08202a;font-weight:600">Analisar com Simulação</button><button class="btn" id="wifClose">Fechar</button></div>`;
   $('#htAi').addEventListener('click',()=>studyAI('heat',{temperatura_queima_C:ST.Tq,umidade_pct:r.m,resistencia_CS_atual_kgf:+(U.CS||0).toFixed(0),producao_t_h:+prod.toFixed(0),chamine_e_fechamento_do_balanco:true,alavancas:lev.map(l=>({mudanca:l.dT?'queima '+l.dT+' °C':'umidade -0,5 ponto',economia_Mcal_t:+(-l.dq).toFixed(1),economia_gas_Nm3_h:+(-l.gas).toFixed(0),variacao_CS_kgf:+l.cs.toFixed(0)})),umidade_minima_pelotamento_pct:8.8,existe_risco:false,fatos_obrigatorios:[`Consumo ${fmt(r.fuel,0)} Mcal/t a ${fmt(ST.Tq,0)} °C; ${fmt(r.gcal,0)} Gcal/h ≈ ${fmt(r.gas,0)} Nm³/h de gás.`,
    ...r.out.map(o=>`${o[0]}: ${fmt(o[1],0)} Mcal/t (${fmt(o[1]/r.tot*100,0)} %).`),
@@ -3734,7 +3761,7 @@ function numsOf(t){return (String(t).replace(/(\d)\.(\d{3})(?!\d)/g,'$1$2').matc
 function studyMissing(F,r){if(!Array.isArray(F)||!F.length)return '';const txt=JSON.stringify([r.resumo,r.achados,r.recomendacoes]),have=new Set(numsOf(txt));
   const miss=F.filter(f=>{const n=[...new Set(numsOf(f))].filter(x=>x!=='200'&&x!=='250');if(!n.length)return false;return n.filter(x=>have.has(x)).length<Math.ceil(n.length/2);});
   if(!miss.length)return '';return `<div class="aicard media" style="border-left-color:#ffd24a"><b style="color:#ffd24a">Complemento do modelo (não citado pela Simulação)</b><ul style="margin:6px 0 0 16px;padding:0">${miss.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;}
-/* Simulação no estudo de engenharia: o Gemini interpreta os resultados do modelo */
+/* Simulação no estudo de engenharia: a Simulação interpreta os resultados do modelo */
 function studyAI(tipo,params,outSel){const box=$('#stAi');if(!box)return;
   if(!HAS_GAS){box.innerHTML='<h4>Análise da Simulação</h4><p class="aimsg err">A análise com Simulação funciona na versão Google Apps Script (a chave do serviço de Simulação fica no servidor).</p>';return;}
   box.innerHTML='<h4>Análise da Simulação</h4><p class="aimsg"><span class="spin"></span>A Simulação está analisando o estudo…</p>';
@@ -3743,7 +3770,7 @@ function studyAI(tipo,params,outSel){const box=$('#stAi');if(!box)return;
   google.script.run.withSuccessHandler(r=>{const sv=c=>/alta/i.test(c)?'alta':/m[eé]dia/i.test(c)?'media':'baixa';const dec=String(r.resumo||'');
       box.innerHTML=`<h4>Análise da Simulação</h4><div class="aicard ${/risco|n[ãa]o|acima|separa/i.test(dec)?'alta':'baixa'}"><b>${esc(dec)}</b></div>${(r.achados||[]).map(a=>`<div class="aicard ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><br>${esc(a.evidencia||'')}</div>`).join('')}
         ${(r.recomendacoes||[]).filter(c=>c&&c.titulo).map(c=>`<div class="aicard"><b><span style="color:#ffd24a">Recomendação:</span> ${esc(c.titulo)}</b><br>${esc(c.efeito_esperado||'')}</div>`).join('')}
-        ${studyMissing(params.fatos_obrigatorios,r)}<p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')} a partir deste estudo. A decisão final é da engenharia e da operação.</p>`;logEvent('Simulação','Análise do estudo: '+dec.slice(0,90));})
+        ${studyMissing(params.fatos_obrigatorios,r)}<p class="aimsg">Gerado pela Simulação a partir deste estudo. A decisão final é da engenharia e da operação.</p>`;logEvent('Simulação','Análise do estudo: '+dec.slice(0,90));})
     .withFailureHandler(e=>{box.innerHTML=`<h4>Análise da Simulação</h4><p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p>`;})
     .aiAnalyze({modo:'estudo',escopo:'stage',pergunta:'',contexto:ctx});}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-study]');if(!b)return;e.preventDefault();b.dataset.study==='surge'?surgeOpen():heatOpen();});
@@ -3928,7 +3955,7 @@ function engClima(){return `<p>Simulação do <b>período chuvoso</b> e dos seus
    <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="rnClock" ${RAIN.clock?'checked':''}> Relógio do simulador = hora real (1×)</label>
    <label class="hint" style="display:flex;gap:6px;align-items:center">Dia 1 = <input type="date" id="rnD0" value="${new Date(SIM_T0).toISOString().slice(0,10)}" style="width:auto"></label>
    <button class="btn" id="rnReload">Atualizar previsão</button><button class="btn" id="rnBolGo" style="background:var(--accent);color:#08202a;font-weight:600">Boletim do dia com Simulação</button></div>
-  <p class="hint">A previsão horária vem da Open-Meteo, que recebe só as coordenadas fixas das plantas e atualiza a cada 30 min. O <b>Boletim do dia</b> usa o Gemini com busca no Google para ler a previsão e os alertas oficiais (INMET, Defesa Civil) e traduzir em impactos por área.</p>
+  <p class="hint">A previsão horária vem da Open-Meteo, que recebe só as coordenadas fixas das plantas e atualiza a cada 30 min. O <b>Boletim do dia</b> usa a Simulação com busca no Google para ler a previsão e os alertas oficiais (INMET, Defesa Civil) e traduzir em impactos por área.</p>
   <div id="rnBol">${bolHTML(WXBOL)}</div>
   <div id="engLive"></div>`;}
 function liveClima(){const st=(v,w,c)=>v>=c?'<span class="tagp crit">crítico</span>':v>=w?'<span class="tagp warn">atenção</span>':'<span class="tagp ok">normal</span>';
@@ -3977,7 +4004,7 @@ function rainFrame(dt){const tg=clamp(RAIN.rate/14,0,1),tu=clamp(RAIN.rateU/14,0
   const inG=controls.target.x<RAIN_REG.split,vc=inG?RAIN_REG.g.v:RAIN_REG.u.v,vo=inG?RAIN_REG.u.v:RAIN_REG.g.v;const far=clamp((Math.hypot(camera.position.x-controls.target.x,camera.position.z-controls.target.z,camera.position.y)-120)/120,0,1);RAIN.vis=far>0?Math.min(RAIN_REG.g.v,RAIN_REG.u.v)+(.45*Math.max(RAIN_REG.g.v,RAIN_REG.u.v)-Math.min(RAIN_REG.g.v,RAIN_REG.u.v))*far*.5+(1-far)*vc:Math.max(vc,.35*vo);
   if(window.__terrWet){const u=window.__terrWet;u.wetG.value+=(clamp(RAIN.wetG||0,0,1)-u.wetG.value)*Math.min(1,dt);u.wetU.value+=(clamp(RAIN.wetU||0,0,1)-u.wetU.value)*Math.min(1,dt);u.split.value=RAIN_REG.split;}}
 function rainVis(){const v=RAIN.vis;if(v<.01)return;sun.intensity*=1-.72*v;hemi.intensity*=1-.25*v;scene.fog.near=320*(1-.75*v);scene.fog.far=2600*(1-.8*v);scene.fog.color.lerp(_c1.setRGB(.55,.6,.64),.7*v);}
-/* ---- Tempo real: previsão horária (Open-Meteo) + boletim do dia pela Simulação (Gemini com busca Google) ---- */
+/* ---- Tempo real: previsão horária (Open-Meteo) + boletim do dia pela Simulação (com busca Google) ---- */
 const WXURL=(la,lo,el)=>'https:'+'/'+'/api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo+'&elevation='+el+'&hourly=precipitation,precipitation_probability,weather_code,wind_speed_10m,cape,temperature_2m,relative_humidity_2m,surface_pressure&wind_speed_unit=ms&past_days=2&forecast_days=7&timezone=America%2FSao_Paulo';
 let WXMSG='',WXBOL=null,wxTimer=null;
 function wxApply(d){const g=d.germano,u=d.ubu;if(!g||!g.time)throw new Error('resposta sem dados horários');const now=d.gerado||new Date().toISOString().slice(0,16);
@@ -4054,7 +4081,7 @@ function bolHTML(r){if(!r)return '';const site=(n,o)=>o?`<div class="aicard"><b>
    ${r.impactos&&r.impactos.length?`<h4>Impactos e ações</h4><table class="eqt"><tr><th>Área</th><th>Risco</th><th>Ação</th></tr>${r.impactos.map(i=>`<tr><td>${esc(i.area)}</td><td><span class="tagp ${/alto/i.test(i.risco)?'crit':/m[eé]dio/i.test(i.risco)?'warn':'ok'}">${esc(i.risco)}</span></td><td>${esc(i.acao)}</td></tr>`).join('')}</table>`:''}
    ${r.fontes&&r.fontes.length?`<p class="hint">Fontes consultadas: ${r.fontes.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(f.titulo||'fonte')}</a>`).join(' · ')}</p>`:''}
    ${!RAIN.real&&isFinite(r.intensidade_sugerida)?`<button class="apply" id="bolApply">Aplicar no modo simulado (intensidade ×${fmt(r.intensidade_sugerida,1)}, ${esc(r.modo_sugerido||'eventos')})</button>`:''}
-   <p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')}. Confirme sempre nos canais oficiais (INMET, Defesa Civil) antes de decisões operacionais.</p>`;}
+   <p class="aimsg">Gerado pela Simulação. Confirme sempre nos canais oficiais (INMET, Defesa Civil) antes de decisões operacionais.</p>`;}
 function runBoletim(){const o=$('#rnBol');if(!HAS_GAS){o.innerHTML='<p class="aimsg err">O boletim com Simulação funciona na versão Google Apps Script (a chave do serviço de Simulação fica no servidor).</p>';return;}
   const b=$('#rnBolGo');b.disabled=true;o.innerHTML='<p class="aimsg"><span class="spin"></span>A Simulação está pesquisando a previsão e os alertas do dia… (20 a 60 s)</p>';
   const numerica=RAIN.wx?wxDaily().slice(0,3).map(d=>({dia:d.d,germano_mm:+d.gmm.toFixed(1),germano_prob:d.gp,germano_pico_mm_h:+d.gmax.toFixed(1),germano_trovoada:d.gt,ubu_mm:+d.umm.toFixed(1),ubu_prob:d.up,ubu_trovoada:d.ut})):'previsão numérica não carregada';
@@ -4365,7 +4392,7 @@ function wifAI(desc,key){const box=$('#wifAi');if(!box)return;
   google.script.run.withSuccessHandler(r=>{const sv=c=>/alta/i.test(c)?'alta':/m[eé]dia/i.test(c)?'media':'baixa';const dec=String(r.resumo||'');const cls=/n[ãa]o aplicar/i.test(dec)?'alta':/cautela/i.test(dec)?'media':'baixa';
       box.innerHTML=`<h4>Avaliação da Simulação</h4><div class="aicard ${cls}"><b>${esc(dec)}</b></div>${(r.achados||[]).map(a=>`<div class="aicard ${sv(a.severidade)}"><b>${esc(a.titulo)}</b><br>${esc(a.evidencia||'')}</div>`).join('')}
         ${(r.recomendacoes||[]).filter(c=>c&&c.titulo).map(c=>`<div class="aicard"><b><span style="color:#ffd24a">Alternativa:</span> ${esc(c.titulo)}</b>${c.chave&&CMETA[c.chave]?`<br><em>${esc(CMETA[c.chave][2])}: ${esc(c.valor_sugerido)} ${esc(CMETA[c.chave][3])}</em>`:''}<br>${esc(c.efeito_esperado||'')}</div>`).join('')}
-        <p class="aimsg">Gerado por ${esc(r.modelo||'Gemini')} a partir desta simulação. A decisão final é do operador.</p>`;logEvent('Simulação','Avaliação do teste: '+dec.slice(0,90));})
+        <p class="aimsg">Gerado pela Simulação a partir desta simulação. A decisão final é do operador.</p>`;logEvent('Simulação','Avaliação do teste: '+dec.slice(0,90));})
     .withFailureHandler(e=>{box.innerHTML=`<h4>Avaliação da Simulação</h4><p class="aimsg err">${esc(String(e.message||e).replace(/^Error:\s*/,''))}</p><button class="btn" id="wifAiRetry">Tentar de novo</button>`;const b=$('#wifAiRetry');if(b)b.addEventListener('click',()=>wifAI(desc,key));})
     .aiAnalyze({modo:'teste',escopo:key&&CTRL_STAGE[key]?'stage':'all',pergunta:'',contexto:ctx});}
 function wifShow(A,B,H,label,nv,unit,dec,ms){const R=[['Produção (pelotas + pellet feed)','tot','t/h',0,1],['Produção no período','mt','mil t',1,1],['Fe no concentrado','fe','%',2,1],['SiO₂ no concentrado','si','%',2,-1],['Resistência da pelota','cs','kgf',0,1],['Energia da moagem','kwh','kWh/t',1,-1],['Emissão na chaminé','em','mg/Nm³',0,-1],['Velocidade no mineroduto','v','m/s',2,0],['Nível dos tanques de Germano','lv6','%',0,0],['Nível dos tanques de Ubu','lvH','%',0,0]];
