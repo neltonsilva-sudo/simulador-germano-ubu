@@ -1173,7 +1173,7 @@ function buildFlows(scene, M, opt = {}) {
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };
 const CAP = { pn: 1500, cone: 1100, vsi: 900 };
 const sim = {
-  feed: 3800, css: 18, running: true, t: 0,
+  feed: 3800, css: 18, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},
   kpi: {},
 };
@@ -1184,6 +1184,7 @@ CRUSHERS.cones.forEach((c) => { sim.eq[c.tag] = { k: 'cone', on: true, w: saved[
 CRUSHERS.vsi.forEach((c) => { sim.eq[c.tag] = { k: 'vsi', on: true, w: saved[c.tag] ?? W0[c.tag] ?? 40 }; });
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function logEv(tipo, txt) { const d = new Date(); sim.log.unshift({ h: d.toLocaleTimeString('pt-BR'), tipo, txt }); if (sim.log.length > 120) sim.log.pop(); }
 let lastSave = 0;
 function stepSim(dt, speed = 60) {
   sim.t += dt;
@@ -1191,7 +1192,8 @@ function stepSim(dt, speed = 60) {
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
 
   const r1 = clamp(.16 + (sim.css - 18) * .007, .08, .35), r2 = .2;
-  const F = sim.running && nPN > 0 ? sim.feed : 0;
+  const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
+  const wet = Math.max(0, sim.moist - 9);
 
   const cap1 = nC * CAP.cone, cap2 = nV * CAP.vsi;
   let T = F / (1 - r1 - r2);
@@ -1207,7 +1209,7 @@ function stepSim(dt, speed = 60) {
     e.kw = !run ? 0 : e.k === 'pn' ? 45 + 20 * e.load : e.k === 'cone' ? 160 + 230 * e.load + (18 - sim.css) * 4 : 180 + 380 * e.load;
     e.vib = !run ? 0 : (e.k === 'pn' ? 2.6 : 2.3) + Math.max(0, e.load - .9) * 7 + e.w / 100 * 3 + hum;
     e.oil = !run ? 26 : 38 + 18 * e.load + e.w * .05;
-    e.eff = e.k === 'pn' && run ? clamp(94 - Math.max(0, e.load - .9) * 55 - e.w * .05, 55, 97) : 0;
+    e.eff = e.k === 'pn' && run ? clamp(94 - Math.max(0, e.load - .9) * 55 - e.w * .05 - wet * 6, 50, 97) : 0;
     if (run) e.w = Math.min(100, e.w + e.flow * dt * speed / 3600 / LIFE[e.k] * 100);
     e.left = run ? (100 - e.w) / (e.flow / LIFE[e.k] * 100) : Infinity;
     e.st = !e.on ? 'off' : (e.w >= 95 || e.vib >= 11 || e.load > 1.25) ? 'crit' : (e.w >= 85 || e.vib >= 7.1 || e.oil >= 65 || e.load > 1.05 || (e.k === 'pn' && e.eff < 80)) ? 'warn' : 'ok';
@@ -1215,7 +1217,14 @@ function stepSim(dt, speed = 60) {
     kw += e.kw;
   }
   if (limited && F > 0) alarms.unshift({ tag: 'Circuito', st: 'crit', why: 'britagem insuficiente para o retido: alimentação limitada' });
-  sim.kpi = { F, T, prod, circ: F > 0 ? (T - prod) / prod * 100 : 0, r1, r2, kw, limited, nPN, nC, nV, alarms };
+  sim.kpi = { F, T, prod, circ: F > 0 ? (T - prod) / prod * 100 : 0, r1, r2, kw, limited, nPN, nC, nV, alarms, spec: prod > 0 ? kw / prod : 0 };
+
+  const now = new Set(alarms.map((a) => a.tag + '|' + a.why.replace(/[\d.,]+/g, '#')));
+  for (const k of now) if (!sim._al || !sim._al.has(k)) logEv('Alarme', k.split('|')[0] + ': ' + alarms.find((a) => a.tag + '|' + a.why.replace(/[\d.,]+/g, '#') === k).why);
+  if (sim._al) for (const k of sim._al) if (!now.has(k)) logEv('Normalizado', k.split('|')[0]);
+  sim._al = now;
+
+  if (!sim._h || sim.t - sim._h >= 1) { sim._h = sim.t; sim.hist.push({ t: sim.t, F, T, prod, circ: sim.kpi.circ, kw }); if (sim.hist.length > 900) sim.hist.shift(); }
   if (sim.t - lastSave > 20) { lastSave = sim.t; try { const o = {}; for (const [k, e] of Object.entries(E)) o[k] = +e.w.toFixed(2); localStorage.setItem('setor3.w', JSON.stringify(o)); } catch (e) { /* sem armazenamento */ } }
   return sim;
 }
@@ -3280,7 +3289,13 @@ const TW3={v:{}};const TW3_TIPO={pn:'Peneira banana 2 decks',cone:'Britador côn
 function tw3Calc(){const V={};if(!S3)return TW3.v=V;const al=(S3.sim.kpi.alarms||[]);
   for(const [tag,e] of Object.entries(S3.sim.eq)){const on=e.on&&e.flow>0;V[tag]={tag,tipo:TW3_TIPO[e.k],k:e.k,w:e.w,on,flow:e.flow||0,load:e.load||0,eff:e.eff||0,blind:0,vib:e.vib||0,oil:e.oil||0,kw:e.kw||0,rpm:on&&e.k==='vsi'?1450:0,css:P.css,hyd:on?55+70*(e.load||0)+(20-P.css)*1.5:0,left:e.left,st:e.st,why:((al.find(a=>a.tag===tag)||{}).why)||(e.on?'':'desligado')};}
   return TW3.v=V;}
-function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();}
+/* sincronização com o gêmeo imersivo aberto em outra aba (mesma origem: site do GitHub) */
+let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{const d=m.data||{};if(d.type!=='set'||!d.set)return;const q=d.set;
+  if(isFinite(q.css)){P.css=clamp(+q.css,10,40);inputs.css&&inputs.css.sync();}if(isFinite(q.tcldSpd)){P.tcldSpd=clamp(+q.tcldSpd,40,110);inputs.tcldSpd&&inputs.tcldSpd.sync();}
+  if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}};}catch(e){S3BC=null;}
+let S3BCt=0;
+function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
+  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage({type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe});}catch(e){}}S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();}
 const tw3V=tag=>TW3.v[tag]||tw3Calc()[tag]||{on:false,st:'off'};
 function tw3Short(tag){const o=tw3V(tag);if(!o.on)return 'parado';return o.k==='pn'?`efic. ${fmt(o.eff,0)} % · ${fmt(o.load*100,0)} % carga · desg. ${fmt(o.w,0)} %`:`${fmt(o.kw,0)} kW · ${fmt(o.vib,1)} mm/s · desg. ${fmt(o.w,0)} %`;}
 function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s||'ok';}
