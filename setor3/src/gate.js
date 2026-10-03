@@ -7,7 +7,8 @@ async function call(fn, args, tries = 4) {
   let last;
   for (let i = 0; i < tries; i++) {
     try {
-      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args }), redirect: 'follow', credentials: 'omit', cache: 'no-store' });
+      const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 25000);
+      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args }), redirect: 'follow', credentials: 'omit', cache: 'no-store', signal: ac.signal }).finally(() => clearTimeout(tm));
       const txt = await r.text(); let j;
       try { j = JSON.parse(txt); } catch (e) { throw new Error('o servidor respondeu com uma página em vez de dados'); }
       if (!j.ok) throw new Error(j.e); return j.r;

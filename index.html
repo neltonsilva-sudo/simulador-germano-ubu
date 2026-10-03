@@ -1273,10 +1273,14 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
 (function(){if(window.google&&window.google.script)return;var Q=location.search;if(!/github\.io$/.test(location.hostname)&&!/[?&]api=1(&|$)/.test(Q))return;
  var API='https:'+'/'+'/script.google.com/macros/s/AKfycbzI3n1FQsK7H1_Guhcwz7dK21wDqK-4aeBLHF4ryNnhWE0eHH0Y7x_W97tP9Gee62Q/exec',P=new URLSearchParams(Q);
  function auth(){var a=window.__ACC||{};return a.adm||a.k||'';}
- function call(fn,args,ok,bad){var body=JSON.stringify({fn:fn,args:args||[],auth:auth()});
+ function call(fn,args,ok,bad,tries){var body=JSON.stringify({fn:fn,args:args||[],auth:auth()});tries=tries==null?4:tries;
   if(fn==='acessoFechar'&&navigator.sendBeacon){try{navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));}catch(e){}return;}
-  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body,redirect:'follow',credentials:'omit',cache:'no-store'}).then(function(r){return r.text();}).then(function(x){try{return JSON.parse(x);}catch(e){throw new Error('o servidor respondeu com uma página em vez de dados; tente de novo');}})
-   .then(function(j){if(j&&j.ok){if(ok)ok(j.r);}else if(bad)bad(new Error(j&&j.e||'Falha na API'));}).catch(function(e){if(bad)bad(e);});}
+  /* o Apps Script às vezes demora ou corta a conexão: limite de 25 s por tentativa e novas tentativas automáticas */
+  var ac=window.AbortController?new AbortController():null,tm=setTimeout(function(){if(ac)ac.abort();},25000);
+  var retry=function(err){clearTimeout(tm);if(tries>1&&!(err&&err.server)){setTimeout(function(){call(fn,args,ok,bad,tries-1);},(5-tries)*1200+600);}else if(bad)bad(err);};
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body,redirect:'follow',credentials:'omit',cache:'no-store',signal:ac?ac.signal:undefined}).then(function(r){return r.text();})
+   .then(function(x){clearTimeout(tm);var j;try{j=JSON.parse(x);}catch(e){throw new Error('o servidor respondeu com uma página em vez de dados');}
+     if(j&&j.ok){if(ok)ok(j.r);}else{var er=new Error(j&&j.e||'Falha na API');er.server=true;throw er;}}).catch(function(e){if(e&&e.name==='AbortError')e=new Error('o servidor demorou a responder');retry(e);});}
  function runner(ok,bad){return new Proxy({},{get:function(t,k){if(k==='withSuccessHandler')return function(f){return runner(f,bad);};if(k==='withFailureHandler')return function(f){return runner(ok,f);};if(k==='withUserObject')return function(){return runner(ok,bad);};return function(){call(k,Array.prototype.slice.call(arguments),ok,bad);};}});}
  window.google={script:{run:runner(null,null),host:{},url:{getLocation:function(cb){var o={};P.forEach(function(v,k){o[k]=v;});cb({parameter:o,parameters:{}});}}}};
  window.__BRIDGE=true;window.__API=call;
@@ -1309,7 +1313,7 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
    var clean=function(){try{history.replaceState(null,'',base+(area&&!as?'?area='+encodeURIComponent(area):''));}catch(x){}};
    if(as)call('acessoAdminAbrir',[as],function(v){if(v){clean();ov();}else showLogin('Sua sessão foi encerrada (o simulador foi fechado ou recarregado). Entre novamente com a senha.');},function(){showLogin('Não foi possível verificar a sessão.');});
    else if(k)call('acessoAbrir',[k],function(v){if(v&&v.ok){clean();ov();}else {showGate(area,'Seu acesso foi encerrado. Leia o QR Code da área novamente para pedir uma nova autorização.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'Não foi possível verificar o acesso.');});
-   else if(area)call('acessoQrOk',[qv],function(v){if(v)showGate(area,'');else{showGate(area,'Este QR Code é antigo ou inválido e não dá mais acesso. Use a placa atualizada da área.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'');});else showLogin('');},function(e){overlay('<p style="color:#ff8a7a">Não foi possível falar com o servidor do simulador ('+esc(e.message)+'). Tente recarregar a página.</p>');});}
+   else if(area)call('acessoQrOk',[qv],function(v){if(v)showGate(area,'');else{showGate(area,'Este QR Code é antigo ou inválido e não dá mais acesso. Use a placa atualizada da área.');var f=document.getElementById('gFm');if(f)f.style.display='none';}},function(){showGate(area,'');});else showLogin('');},function(e){overlay('<p style="color:#ff8a7a;margin-top:0">Não foi possível falar com o servidor do simulador ('+esc(e.message)+').</p><p style="font-size:13px;color:#9fb0bd">Pode ser uma falha momentânea do servidor do Google.</p><button id="gRetry" style="'+BTN+'">Tentar de novo</button>');var b=document.getElementById('gRetry');if(b)b.onclick=start;});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
