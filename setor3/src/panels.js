@@ -1,4 +1,4 @@
-import { call, getToken, SIM_URL } from './api.js?v=20261003141059';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261003141918';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -160,14 +160,14 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const qrSVG = (txt, px) => { try { const q = window.qrcode(0, 'M'); q.addData(txt); q.make(); return q.createSvgTag({ cellSize: Math.max(2, Math.floor(px / (q.getModuleCount() + 8))), margin: 4, scalable: true }); } catch (e) { return ''; } };
   async function drawQR() {
     QB.innerHTML = '<p class="hint">Carregando o QR Code atual…</p>';
-    let info = { admin: false, q: null }; try { info = await call('acessoQrInfo', [getToken()]); } catch (e) { info = { admin: false, q: null, err: e.message }; }
-    if (!info.admin) { QB.innerHTML = `<p class="hint">Os QR Codes são gerados e impressos só pela sala de controle (entre no simulador com a senha).${info.err ? ' · ' + esc(info.err) : ''}</p>`; return; }
+    await ready; let info = { admin: false, q: null }; try { info = await call('acessoQrInfo', [getToken()]); } catch (e) { info = { admin: false, q: null, err: e.message }; }
+    if (!info.admin) { if (info.err) qrDone = false; QB.innerHTML = `<p class="hint">Os QR Codes são gerados e impressos só pela sala de controle (entre no simulador com a senha).${info.err ? ' · ' + esc(info.err) : ''}</p>`; return; }
     QV = info.q; await loadQRLib();
     QB.innerHTML = `<div class="qrrow"><div class="qrbox">${qrSVG(qrURL(), 128)}</div><div class="hint"><b style="color:#ffd24a">Válido só nesta sessão:</b> a cada abertura do simulador os QR Codes mudam e os anteriores deixam de funcionar. Ao escanear com o celular e ter o acesso autorizado, o operador abre o simulador <b>nesta área</b>, podendo <b>alterar só os parâmetros dela</b>.<br>
       <a href="${esc(qrURL())}" target="_blank" rel="noopener" style="color:#5cc6dc">Abrir o link</a></div></div>
       <div class="row2" style="margin-top:8px"><button class="btn2" id="qrPr">Imprimir placa</button><button class="btn2 red" id="qrNew">Gerar novos QR Codes</button></div>`;
     $('#qrPr').onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<html><head><title>QR Code · área 3</title><style>body{font-family:Arial,sans-serif;margin:0}.pl{width:9.5cm;height:12.5cm;border:2px solid #111;border-radius:10px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin:.4cm;text-align:center;padding:.3cm;box-sizing:border-box}.n{font-size:34px;font-weight:800;background:#0d3b4f;color:#fff;border-radius:50%;width:56px;height:56px;line-height:56px}h2{font-size:17px;margin:.25cm 0}p{font-size:11px;color:#333;margin:.2cm 0 0}svg{width:6cm;height:6cm}</style></head><body><div class="pl"><div class="n">3</div><h2>Peneiramento e britagem</h2>${qrSVG(qrURL(), 230)}<p>Escaneie com o celular para acessar e operar esta área</p></div></body></html>`); w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (x) { /* impressão */ } }, 500); };
-    $('#qrNew').onclick = async () => { if (!confirm('Gerar novos QR Codes? Todas as placas impressas deixam de funcionar e todos os celulares conectados perdem o acesso.')) return; try { const r = await call('acessoQrNovo', [getToken()]); QV = r && r.q; logEv('Acesso', 'Novos QR Codes gerados pelo gêmeo digital'); drawQR(); } catch (e) { alert('Não foi possível gerar: ' + e.message); } };
+    $('#qrNew').onclick = async () => { if (!confirm('Gerar novos QR Codes? Todas as placas impressas deixam de funcionar e todos os celulares conectados perdem o acesso.')) return; try { await ready; const r = await call('acessoQrNovo', [getToken()]); QV = r && r.q; logEv('Acesso', 'Novos QR Codes gerados pelo gêmeo digital'); drawQR(); } catch (e) { alert('Não foi possível gerar: ' + e.message); } };
   }
   let qrDone = false;
   // ---- Registro de inspeção (mesma planilha do simulador) + análise pela Simulação

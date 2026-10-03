@@ -2,10 +2,13 @@
 export const API = 'https://script.google.com/macros/s/AKfycbzI3n1FQsK7H1_Guhcwz7dK21wDqK-4aeBLHF4ryNnhWE0eHH0Y7x_W97tP9Gee62Q/exec';
 export const SIM_URL = 'https://neltonsilva-sudo.github.io/simulador-germano-ubu/';
 let TOKEN = '';
-export const setToken = (t) => { TOKEN = t || ''; };
+// as chamadas esperam o gate validar a sessão (antes disso a chave ainda não está disponível)
+let markReady; export const ready = new Promise((r) => { markReady = r; });
+export const setToken = (t) => { TOKEN = t || ''; markReady(); };
 export const getToken = () => TOKEN;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function call(fn, args = [], tries = 4) {
+  if (fn !== 'acessoChecar') await ready;
   let last;
   for (let i = 0; i < tries; i++) {
     try {

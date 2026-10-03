@@ -1,9 +1,9 @@
-import { call, setToken } from './api.js?v=20261003141059';
+import { call, setToken } from './api.js?v=20261003141918';
 // Acesso: o gêmeo abre só pelo simulador, que passa a chave da sessão (?t=). A chave é conferida no servidor
 // (Apps Script) e retirada do endereço. Sem proteção configurada no servidor, abre direto.
 let TOKEN_RETRY = '';
 export async function gate() {
-  if (['localhost', '127.0.0.1'].includes(location.hostname)) return true;
+  if (['localhost', '127.0.0.1'].includes(location.hostname)) { setToken(''); return true; }
   const ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;background:#0b1622;color:#dce6ee;font:15px/1.5 system-ui,sans-serif';
   const msg = (t) => { ov.innerHTML = `<div style="max-width:420px;width:90vw;background:#13233a;border:1px solid #2c4d75;border-left:4px solid #ffd24a;border-radius:10px;padding:20px">${t}</div>`; };
