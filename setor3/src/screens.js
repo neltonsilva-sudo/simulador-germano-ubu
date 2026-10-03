@@ -2,8 +2,8 @@
 // caixa de alimentação, deck superior de painéis de poliuretano com relevo piramidal, deck inferior, vibradores amarelos modulares,
 // molas sobre vigas, calhas de descarga, moegas de passante; alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261003132324';
-import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003132324';
+import { SCREENS, LV } from './layout.js?v=20261003132710';
+import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003132710';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 
@@ -15,7 +15,7 @@ export function buildScreens(scene, M) {
   const boltGeo = new THREE.CylinderGeometry(.025, .025, .04, 6); boltGeo.rotateZ(Math.PI / 2);
   SCREENS.xs.forEach((x, i) => {
     const tag = SCREENS.tags[i], w = SCREENS.w;
-    const base = new THREE.Group(); base.position.set(x, LV.L1, SCREENS.zFeed); g.add(base);
+    const base = new THREE.Group(); base.position.set(x, LV.L1, SCREENS.zFeed); base.userData.pickTag = tag; g.add(base);
     // vigas de apoio e molas
     const Y0 = 3.6;
     const body = new THREE.Group(); body.userData.dyn = true; body.position.set(0, Y0, 0); base.add(body); vib.push({ g: body, y0: Y0, ph: i * 1.7 });
@@ -74,7 +74,7 @@ export function buildScreens(scene, M) {
     plateMesh(base, M.plateY('PENEIRA VIBRATÓRIA PRIMÁRIA', tag), .9, 0, .62, 9.04);
     hot.push({ tag, tipo: 'Peneira vibratória banana · 2 decks', pos: V(x, LV.L1 + 3.6, SCREENS.zFeed + 3.6), info: `${tag} · peneira banana 3,0 × 7,3 m, 2 decks. 1º deck → britagem primária (HP 400); 2º deck → britagem secundária (Barmac); passante < 12,5 mm → pilha.` });
     // alimentador no piso superior (03AL) com placa azul e sinaleiro ciano
-    const al = new THREE.Group(); al.position.set(x, LV.L2, 3.2); g.add(al);
+    const al = new THREE.Group(); al.position.set(x, LV.L2, 3.2); al.userData.pickTag = tag.replace('PN', 'AL'); g.add(al);
     box(al, 2.2, 1.6, 2.6, M.grey, 0, .8, 0); box(al, 2.0, .2, 2.4, M.greyDk, 0, 1.7, 0);
     box(al, .9, .7, .9, M.motor, 1.45, .55, -.4); cyl(al, .28, .28, .9, M.motor, 1.45, .55, .45, 14).rotation.x = Math.PI / 2;
     plateMesh(al, M.plateB('ALIMENTADOR', tag.replace('PN', 'AL')), .8, -.3, 1.15, 1.31);
@@ -83,7 +83,10 @@ export function buildScreens(scene, M) {
     hot.push({ tag: tag.replace('PN', 'AL'), tipo: 'Alimentador da peneira', pos: V(x, LV.L2 + 2.2, 3.2), info: `${tag.replace('PN', 'AL')} · alimentador da peneira ${tag}. Sinaleiro: azul = operando.` });
   });
   const COL = { ok: 0x5ff0ff, warn: 0xffb020, crit: 0xff3b2f, off: 0x4a525a };
-  return { group: g, hotspots: hot, beacons, update(dt, t, S) {
+  // caixas de seleção por equipamento (para o clique no 3D), calculadas antes da fusão das malhas
+  const pick = []; g.updateMatrixWorld(true);
+  g.children.forEach((c) => { if (c.userData.pickTag) pick.push({ tag: c.userData.pickTag, box: new THREE.Box3().setFromObject(c) }); });
+  return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
     const E = S ? S.eq : {};
     vib.forEach((v, i) => { const e = E[SCREENS.tags[i]] || { on: true, load: .8 }; const a = e.on && e.flow > 0 ? .012 + .006 * Math.min(1.3, e.load) : 0; v.g.position.y = v.y0 + Math.sin(t * 47 + v.ph) * a; v.g.position.z = Math.cos(t * 47 + v.ph) * a * .7; });
     for (const f of flows) {

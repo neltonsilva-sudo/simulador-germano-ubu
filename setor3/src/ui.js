@@ -1,8 +1,10 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261003132324';
-import { logEv } from './sim.js?v=20261003132324';
+import { buildPanels } from './panels.js?v=20261003132710';
+import { buildEqScreen } from './eqscreen.js?v=20261003132710';
+import { buildTour } from './tour.js?v=20261003132710';
+import { logEv } from './sim.js?v=20261003132710';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -32,11 +34,11 @@ const CSS = `
 @media (max-width:860px){.s3op{top:auto;bottom:70px;right:8px;width:min(330px,calc(100vw - 16px));max-height:45vh}.s3bar{top:auto;bottom:16px;max-width:calc(100vw - 150px);left:auto;right:14px;transform:none}.s3help{display:none}.s3card{max-width:60vw}.s3joy{bottom:150px}}
 `;
 
-export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [] }) {
+export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [], pick = [], pickRoot = null }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.getElementById('ui');
   root.innerHTML = `<div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div>
-   <div class="s3bar" id="s3bar">${Object.entries(CAMS).map(([k, c]) => `<button data-cam="${k}">${c.label}</button>`).join('')}<button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button></div>
+   <div class="s3bar" id="s3bar">${Object.entries(CAMS).map(([k, c]) => `<button data-cam="${k}">${c.label}</button>`).join('')}<button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button></div>
    <div class="s3lv" id="s3lv" hidden><button data-lv="2">Piso dos alimentadores (+14 m)</button><button data-lv="1">Piso das peneiras (+7,5 m)</button><button data-lv="0">Térreo</button></div>
    <div class="s3help">Arraste para girar · role para aproximar · <b>Caminhar</b>: W A S D ou setas, Shift corre, arraste para olhar. Clique numa etiqueta para ver o equipamento.</div>
    <div class="s3joy" id="s3joy"><i></i></div><div class="s3info" id="s3info" hidden></div>
@@ -53,7 +55,8 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   let infoTag = null;
   const fm = (v, d = 0) => (v == null || !isFinite(v) ? '–' : v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }));
   const stTxt = { ok: 'operando', warn: 'alerta', crit: 'crítico', off: 'desligado' };
-  const info = (h) => { infoTag = h; renderInfo(); };
+  const info = (h) => { if (eqs && eqs.open(h.tag)) { $('#s3info').hidden = true; infoTag = null; return; } infoTag = h; renderInfo(); };
+  let eqs = null;
   function renderInfo() {
     const el = $('#s3info'), h = infoTag; if (!h) return; el.hidden = false; const e = sim.eq[h.tag];
     const live = e ? `<div class="grid"><span>Estado</span><b>${stTxt[e.st]}</b><span>Vazão</span><b>${fm(e.flow)} t/h</b><span>Carga</span><b>${fm(e.load * 100)} %</b><span>Potência</span><b>${fm(e.kw)} kW</b>${e.k === 'pn' ? `<span>Eficiência de peneiramento</span><b>${fm(e.eff)} %</b>` : ''}<span>Vibração</span><b>${fm(e.vib, 1)} mm/s</b><span>Óleo / mancal</span><b>${fm(e.oil)} °C</b><span>Desgaste ${e.k === 'pn' ? 'do deck' : 'dos revestimentos'}</span><b>${fm(e.w)} %</b><span>Troca prevista</span><b>${isFinite(e.left) ? (e.left > 48 ? '≈ ' + fm(e.left / 24) + ' dias' : '≈ ' + fm(e.left) + ' h') : '–'}</b></div>
@@ -64,7 +67,19 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   // painéis do processo em cascata
   const flowEls = flowLabels.map((L) => { const d = document.createElement('div'); d.className = 's3flow ' + L.kind; root.appendChild(d); return { L, d }; });
   let tPanel = 0;
-  const panels = buildPanels(root, sim, { fm, stTxt, logEv, openInfo: (tag) => { const h = hotspots.find((x) => x.tag === tag); if (h) info(h); } });
+  eqs = buildEqScreen(root, sim, { fm, stTxt, logEv });
+  const panels = buildPanels(root, sim, { fm, stTxt, logEv, openInfo: (tag) => eqs.open(tag) });
+  const tour = buildTour(root, sim, { setCamTo: (c) => setCam(c), openEq: (t) => eqs.open(t), closeEq: () => eqs.close(), setWalk: (v) => { if (getWalk().walk !== v) { setWalk(v); refreshWalk(); } } });
+  $('#s3tour').addEventListener('click', () => tour.active() ? tour.stop() : tour.start());
+  // clique direto no equipamento 3D → tela do equipamento (sem arrastar)
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+  const pickAt = (ev) => { const r = canvas.getBoundingClientRect(); ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
+    const hits = pickRoot ? ray.intersectObject(pickRoot, true) : []; for (const h of hits.slice(0, 6)) { const p = h.point; let best = null, bv = Infinity;
+      for (const q of pick) { const b = q.box; if (p.x > b.min.x - .3 && p.x < b.max.x + .3 && p.y > b.min.y - .3 && p.y < b.max.y + .3 && p.z > b.min.z - .3 && p.z < b.max.z + .3) { const v = (b.max.x - b.min.x) * (b.max.y - b.min.y) * (b.max.z - b.min.z); if (v < bv) { bv = v; best = q; } } }
+      if (best) return best.tag; } return null; };
+  canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+  canvas.addEventListener('pointerup', (e) => { if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return; const t = pickAt(e); if (t) eqs.open(t); });
+  let hoverT = 0; canvas.addEventListener('pointermove', (e) => { if (e.buttons || performance.now() - hoverT < 120) return; hoverT = performance.now(); canvas.style.cursor = pickAt(e) ? 'pointer' : ''; });
   function panel() { if (infoTag && !$('#s3info').hidden) renderInfo(); }
   // joystick (celular)
   const joy = { f: 0, s: 0 }; const jz = $('#s3joy'), knob = jz.querySelector('i');
@@ -75,7 +90,7 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   return {
     joy,
     update() {
-      tPanel += 1; if (tPanel % 15 === 0) panel(); panels.update(tPanel);
+      tPanel += 1; if (tPanel % 15 === 0) panel(); panels.update(tPanel); eqs.update(); const nowT = performance.now(); tour.update(Math.min(.1, (nowT - (this._lt || nowT)) / 1000)); this._lt = nowT;
       for (const { L, d } of flowEls) { v.copy(L.pos).project(camera); const vis = showTags && v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1; d.style.display = vis ? 'block' : 'none'; if (vis) { d.style.left = (v.x * .5 + .5) * innerWidth + 'px'; d.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; if (tPanel % 15 === 0) d.textContent = L.text(sim.kpi); } }
       for (const { h, d } of tags) {
         v.copy(h.pos).project(camera);

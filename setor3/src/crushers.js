@@ -2,8 +2,8 @@
 // acumuladores hidráulicos (fotos noturnas e de detalhe). Britagem secundária: 3 Barmac VSI (tambor bege, base metálica, motores).
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B } from './layout.js?v=20261003132324';
-import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003132324';
+import { CRUSHERS, B } from './layout.js?v=20261003132710';
+import { V, box, cyl, beam, railing, plateMesh } from './util.js?v=20261003132710';
 
 export function buildCrushers(scene, M) {
   const g = new THREE.Group(); scene.add(g);
@@ -23,7 +23,7 @@ export function buildCrushers(scene, M) {
   }
   // ---- britagem primária: cônicos HP 400
   CRUSHERS.cones.forEach((c) => {
-    const T = new THREE.Group(); T.position.set(c.x, 0, c.z); g.add(T);
+    const T = new THREE.Group(); T.position.set(c.x, 0, c.z); T.userData.pickTag = c.tag; g.add(T);
     box(T, 4.2, .6, 4.2, M.plinth, 0, .3, 0);                                    // bloco de concreto
     box(T, 3.4, 1.2, 3.4, M.chute, 0, 1.2, 0);                                   // quadro metálico
     for (const [dx, dz, ry] of [[1.71, 0, 0], [-1.71, 0, 0], [0, 1.71, Math.PI / 2], [0, -1.71, Math.PI / 2]]) for (const o of [-.9, .9]) { const h = new THREE.Mesh(new THREE.CircleGeometry(.24, 18), M.black); h.position.set(dx + (ry ? o : 0), 1.2, dz + (ry ? 0 : o)); h.rotation.y = ry ? 0 : Math.PI / 2; if (dx < 0 || dz < 0) h.rotation.y += Math.PI; T.add(h); }
@@ -48,7 +48,7 @@ export function buildCrushers(scene, M) {
   });
   // ---- britagem secundária: Barmac VSI
   CRUSHERS.vsi.forEach((c) => {
-    const T = new THREE.Group(); T.position.set(c.x, 0, c.z); g.add(T);
+    const T = new THREE.Group(); T.position.set(c.x, 0, c.z); T.userData.pickTag = c.tag; g.add(T);
     box(T, 5.2, .5, 3.6, M.plinth, 0, .25, 0);
     const fr = new THREE.Group(); T.add(fr);                                      // base metálica em grelha (foto 03BR006)
     box(fr, 5.0, .25, 3.4, M.chute, 0, 1.55, 0); box(fr, 5.0, .2, 3.4, M.chute, 0, .62, 0);
@@ -79,7 +79,9 @@ export function buildCrushers(scene, M) {
   belt(V(B.screenEnd + 1, 1.0, 12), V(B.screenEnd - 3, 15.6, 1.4), 1.0);
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);                    // correia do passante (< 12,5 mm) → pilha
   const COL = { ok: 0x5ff0ff, warn: 0xffb020, crit: 0xff3b2f, off: 0x4a525a };
-  return { group: g, hotspots: hot, beacons, update(dt, t, S) {
+  const pick = []; g.updateMatrixWorld(true);
+  g.children.forEach((c) => { if (c.userData.pickTag) pick.push({ tag: c.userData.pickTag, box: new THREE.Box3().setFromObject(c) }); });
+  return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
     const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 };
     for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w; }
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); r.teeth.rotation.y = r.ring.rotation.y; }

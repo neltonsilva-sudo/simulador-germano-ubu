@@ -1,11 +1,11 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261003132324';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261003132324';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261003132324';
-import { buildUI } from './ui.js?v=20261003132324';
-import { gate } from './gate.js?v=20261003132324';
+import { B, LV, CAMS } from './layout.js?v=20261003132710';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261003132710';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261003132710';
+import { buildUI } from './ui.js?v=20261003132710';
+import { gate } from './gate.js?v=20261003132710';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -23,7 +23,7 @@ controls.enableDamping = true; controls.dampingFactor = .08; controls.maxDistanc
 let tween = null;
 const keys = {}; let walk = false, level = 0;
 function setCam(name, instant) {
-  const c = CAMS[name]; if (!c) return;
+  const c = typeof name === 'object' ? name : CAMS[name]; if (!c) return;
   const to = { p: new THREE.Vector3(...c.pos), t: new THREE.Vector3(...c.look), fov: c.fov };
   if (walk && name === 'geral') setWalk(false);
   if (instant) { camera.position.copy(to.p); controls.target.copy(to.t); camera.fov = to.fov; camera.updateProjectionMatrix(); return; }
@@ -55,7 +55,7 @@ function setWalk(on, lv) {
 }
 const hotspots = S3.hotspots;
 stepSim(0);
-const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk: () => ({ walk, level }), CAMS, sim, flowLabels: parts.flows.labels || [] });
+const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, pick: S3.pick, pickRoot: S3.group, getWalk: () => ({ walk, level }), CAMS, sim, flowLabels: parts.flows.labels || [] });
 
 function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); composer && composer.setSize(innerWidth, innerHeight); }
 addEventListener('resize', resize); resize();
