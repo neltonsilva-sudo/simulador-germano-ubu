@@ -2133,7 +2133,7 @@ const LBLPOS={mine:V3(-88,6,-30),tcld:V3(-76,8,-12),pile:V3(-80,8,20),dry:V3(-60
 for(const id in EQ){const e=EQ[id];const d=document.createElement('div');d.className='tag';d.dataset.id=id;
   d.innerHTML=`<span class="alb" aria-hidden="true">!</span><span class="n">${e.num}</span><span class="b"><span class="nm">${e.name}</span><span class="vl"></span><span class="dot"></span></span>`;
   d.tabIndex=0;d.setAttribute('role','button');d.setAttribute('aria-label',`Etapa ${e.num}: ${e.name}`);d.addEventListener('keydown',ev=>{if(ev.key==='Enter'){stopTour();select(id,true);}});
-  d.addEventListener('click',ev=>{ev.stopPropagation();stopTour();enterArea(id);});$('#labels').appendChild(d);
+  d.addEventListener('click',ev=>{ev.stopPropagation();stopTour();enterArea(id);if(id==='crush')openTwin3();});$('#labels').appendChild(d);
   d.addEventListener('pointerenter',ev=>showStageTip(id,d));d.addEventListener('pointerleave',hideStageTip);d.addEventListener('focus',()=>showStageTip(id,d));d.addEventListener('blur',hideStageTip);
   labelEls[id]={el:d,pos:LBLPOS[id]||V3(e.center.x,e.box.max.y+2,e.center.z),vl:d.querySelector('.vl')};}
 const regions=[['Germano · MG','Mariana e Ouro Preto',V3(-115,24+ALT(-115),-52)],['Ubu · ES','Anchieta · pelotização e porto',V3(40,30,-60)],['Minerodutos ≈ 400 km','3 linhas · ≈ 3 dias a 6 km/h',V3(-26,18,12)]].map(([a,b,p])=>{const d=document.createElement('div');d.className='region';d.innerHTML=a+(b?`<small>${b}</small>`:'');$('#labels').appendChild(d);return{el:d,pos:p};});
@@ -2734,8 +2734,11 @@ function tw3Short(tag){const o=tw3V(tag);if(!o.on)return 'parado';return o.k==='
 function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s;}
 function tw3Alarms(add){if(!RUN.crush)return;tw3Calc();for(const tag in TW3.v){const o=TW3.v[tag];if(o.st==='warn'||o.st==='crit')add('crush',o.st==='crit'?'crit':'warn',`${tag} (${o.tipo.toLowerCase()}): ${o.why}`);}}
 const tw3Hrs=h=>!isFinite(h)?'–':h>48?`≈ ${fmt(h/24,0)} dias`:`≈ ${fmt(h,0)} h`;
+/* abre o gêmeo digital imersivo do setor 3 (nova aba), levando a sessão para o acesso */
+function twin3URL(){return 'https:'+'/'+'/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/?t='+encodeURIComponent((typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'');}
+function openTwin3(){const w=window.open(twin3URL(),'_blank');if(w)try{w.opener=null;}catch(e){}if(!w)toast('Permita pop-ups para abrir o gêmeo digital do setor 3 (ou use o botão no painel da área).');else logEvent('Navegação','Gêmeo digital imersivo do setor 3 aberto');}
 function tw3Panel(){const el=$('#tw3');if(!el)return;const V=tw3Calc(),can=!OPER.area||OPER.area==='crush',tag=s=>`<span class="tagp ${s==='crit'?'crit':s==='warn'?'warn':s==='off'?'':'ok'}">${s==='crit'?'crítico':s==='warn'?'alerta':s==='off'?'parado':'normal'}</span>`;
-  const imURL='https:'+'/'+'/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/?t='+encodeURIComponent((typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'');
+  const imURL=twin3URL();
   el.innerHTML=`<a href="${imURL}" target="_blank" rel="noopener" class="studyb" style="display:inline-block;text-decoration:none;margin:0 0 8px">Abrir gêmeo digital imersivo do setor 3 (3D em escala real)</a><h4>Gêmeo digital · equipamentos do setor 3</h4><p class="hint" style="margin-top:0">Modelado a partir de fotos de campo. Valores calculados pelo simulador a partir da alimentação, carga circulante, APF e clima (ilustrativos). Sinaleiros no 3D: azul normal, âmbar alerta, vermelho piscando crítico. Vibração pela ISO 10816-3: 7,1 mm/s alerta, 11 mm/s crítico.</p>
    <table class="eqt"><tr><th>Tag</th><th>Equipamento</th><th>Estado</th><th>Carga</th><th>Desempenho</th><th>Vibração</th><th>Óleo/mancal</th><th>Desgaste</th><th>Troca prevista</th><th></th></tr>
    ${Object.values(V).map(o=>`<tr><td><b>${o.tag}</b></td><td>${o.tipo}</td><td>${tag(o.st)}</td><td>${o.on?fmt(o.flow,0)+' t/h · '+fmt(o.load*100,0)+' %':'–'}</td>
