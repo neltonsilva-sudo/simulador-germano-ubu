@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261003141918';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261003142747';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -43,7 +43,7 @@ const CSS = `
 @media (max-width:860px){.s3acc{top:auto;bottom:150px;left:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
-const SECS = [['pi', 'Pontos de inspeção'], ['prob', 'Problemas detectados'], ['ind', 'Indicadores em tempo real'], ['tend', 'Tendências'], ['ctl', 'Controles e ajustes'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['insp', 'Registro de inspeção']];
+const SECS = [['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
 
 export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
