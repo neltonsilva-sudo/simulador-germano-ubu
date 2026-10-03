@@ -26,10 +26,8 @@ export async function gate() {
   const P = new URLSearchParams(location.search), t = P.get('t') || TOKEN_RETRY || '';
   try { history.replaceState(null, '', location.pathname); } catch (e) { /* sem histórico */ }
   try {
-    const c = await call('acessoConfig', []);
-    let ok = !c.protegido;
-    if (!ok && t) ok = (await call('acessoAdminValido', [t])) || !!((await call('acessoValido', [t])) || {}).ok;
-    if (ok) { ov.remove(); return true; }
+    const c = await call('acessoChecar', [t]);
+    if (c.ok) { ov.remove(); return true; }
   } catch (e) {
     msg(`<p style="color:#ff8a7a;margin-top:0">Não foi possível verificar o acesso (${String(e.message || e)}).</p><p style="font-size:13px;color:#9fb0bd">Pode ser uma falha momentânea do servidor do Google. Se continuar, abra de novo pelo número 3 do simulador.</p><button id="gRetry" style="width:100%;padding:10px;border:0;border-radius:8px;background:#5cc6dc;color:#08202a;font-weight:700;cursor:pointer">Tentar de novo</button>`);
     ov.querySelector('#gRetry').onclick = () => { ov.remove(); TOKEN_RETRY = t; gate(); };

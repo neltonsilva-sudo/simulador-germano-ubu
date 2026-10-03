@@ -3,8 +3,8 @@
 // retido 1º deck → correia → silos dos HP 400; retido 2º deck → correia → silos dos Barmac;
 // britado → correia de retorno → peneiras; SAÍDA passante < 12,5 mm → correia → pilha de regularização.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261003130901';
-import { V, box, beam, cyl } from './util.js?v=20261003130901';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261003131054';
+import { V, box, beam, cyl } from './util.js?v=20261003131054';
 
 export function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
