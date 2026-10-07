@@ -1,4 +1,4 @@
-import { call } from './api.js?v=20261007203415';
+import { call } from './api.js?v=20261007203935';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -50,6 +50,13 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
         : `<div><b>${run ? '1.450 rpm' : '0'}</b><span>Rotação do rotor</span></div><div><b>${run ? '≈ 75 m/s' : '–'}</b><span>Velocidade na ponta</span></div>`;
     const K = sim.kpi, share = e.k === 'pn' ? `${fm(e.flow)} de ${fm(K.T)} t/h da alimentação das peneiras` : e.k === 'cone' ? `${fm(e.flow)} de ${fm(K.T * K.r1)} t/h do retido no 1º deck` : `${fm(e.flow)} de ${fm(K.T * K.r2)} t/h do retido no 2º deck`;
     const wcol = e.w >= 95 ? '#ff5a4a' : e.w >= 85 ? '#ffb020' : '#2fbf71';
+    // EFICIÊNCIA do equipamento (mesmo cálculo da seção "Eficiência do processo")
+    const EF = sim.kpi.efic || {}, gC = e.k === 'cone' ? EF.cone : e.k === 'vsi' ? EF.vsi : null;
+    let effBlock = '';
+    if (e.k === 'pn') effBlock = `<h4>Eficiência</h4><div class="g"><div class="${run && e.eff < 80 ? 'warn' : ''}"><b>${run ? fm(e.eff, 1) + ' %' : '–'}</b><span>Recuperação de finos &lt; 12,5 mm (Taggart)</span></div><div><b>${fm(EF.tag || 0, 1)} %</b><span>Média do peneiramento (2 decks)</span></div></div>`;
+    else if (gC && run) { const W = e.kw / Math.max(1, e.flow), den = 10 / Math.sqrt(gC.P80 * 1000) - 10 / Math.sqrt(gC.F80 * 1000), wio = den > 0 ? W / den : Infinity, ee = isFinite(wio) ? Math.min(1, sim.wi / wio) : 0;
+      effBlock = `<h4>Eficiência</h4><div class="g"><div><b>${fm(gC.F80, 1)} → ${fm(gC.P80, 1)} mm</b><span>F80 → P80 · razão de redução ${fm(gC.rr, 2)}</span></div><div><b>${fm(W, 2)} kWh/t</b><span>Energia específica</span></div>
+        <div><b>${isFinite(wio) ? fm(wio, 1) : '–'} kWh/t</b><span>Wio (Bond operacional)</span></div><div class="${ee < .35 ? 'crit' : ee < .6 ? 'warn' : ''}"><b>${fm(ee * 100)} %</b><span>Eficiência energética (Wi ${fm(sim.wi, 1)} ÷ Wio)</span></div></div>`; }
     const H = e.health, hcol = H == null ? '#9fb0bd' : H < 50 ? '#ff5a4a' : H < 75 ? '#ffb020' : '#2fbf71', hcl = H == null ? '' : H < 50 ? 'crit' : H < 75 ? 'warn' : '';
     const hTxt = H == null ? 'desligado' : H < 50 ? 'crítico' : H < 75 ? 'atenção' : 'bom';
     const rslTxt = !isFinite(e.rsl) ? '–' : e.rsl <= 0 ? 'trocar já' : e.rsl > 48 ? '≈ ' + fm(e.rsl / 24) + ' dias' : '≈ ' + fm(e.rsl) + ' h';
@@ -63,6 +70,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
         <div><b>${fm(e.flow)} t/h</b><span>Vazão atual</span></div><div class="${cls(e.load * 100, 105, 125)}"><b>${fm(e.load * 100)} %</b><span>Carga (capacidade do modelo)</span></div>
         <div><b>${fm(e.tons || 0)} t</b><span>Processado nesta sessão</span></div><div><b>${fm(e.hrs || 0, 1)} h</b><span>Horas operando (tempo simulado)</span></div></div>
       <p class="n">${share}. Partidas na sessão: ${e.starts || 0}.</p>
+      ${effBlock}
       <h4>Tendência</h4><canvas id="eqC"></canvas><p class="n">Linha tracejada: alerta de vibração (7,1 mm/s).</p>
       <h4>Manutenção</h4><div class="g"><div><b style="color:${wcol}">${fm(e.w)} %</b><span>Desgaste ${e.k === 'pn' ? 'do deck' : e.k === 'vsi' ? 'das pontas do rotor' : 'dos revestimentos'}</span></div><div><b>${isFinite(e.left) ? (e.left > 48 ? '≈ ' + fm(e.left / 24) + ' dias' : '≈ ' + fm(e.left) + ' h') : '–'}</b><span>Troca prevista</span></div>
         <div class="${hcl}"><b style="color:${hcol}">${e.health == null ? '–' : e.health + ' / 100'}</b><span>Saúde do ativo · ${hTxt}</span></div><div class="${isFinite(e.rsl) && e.rsl < 24 * 7 ? 'warn' : ''}"><b>${rslTxt}</b><span>Vida útil restante (RSL, até 95 % de desgaste)</span></div></div>

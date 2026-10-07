@@ -2196,7 +2196,7 @@ function buildFlows(scene, M, opt = {}) {
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };
 const CAP = { pn: 1500, cone: 1100, vsi: 900 };
 const sim = {
-  feed: 3800, css: 20, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
+  feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .8, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},
   kpi: {},
 };
@@ -2207,6 +2207,30 @@ CRUSHERS.cones.forEach((c) => { sim.eq[c.tag] = { k: 'cone', on: true, w: saved[
 CRUSHERS.vsi.forEach((c) => { sim.eq[c.tag] = { k: 'vsi', on: true, w: saved[c.tag] ?? W0[c.tag] ?? 40 }; });
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+
+
+const rrSim = (p80, n) => ({ p80, n, x63: p80 / Math.pow(Math.log(5), 1 / n) });
+const pasSim = (c, x) => 1 - Math.exp(-Math.pow(Math.max(1e-6, x) / c.x63, c.n));
+const bisSim = (f, t, lo, hi) => { for (let i = 0; i < 46; i++) { const m = Math.sqrt(lo * hi); if (f(m) < t) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
+function circSolve(css, f12, e2, e1) {
+  const nR = .8, rom = { n: nR, x63: 12.5 / Math.pow(-Math.log(1 - clamp(f12, .3, .97)), 1 / nR) }; rom.p80 = rom.x63 * Math.pow(Math.log(5), 1 / nR);
+  const hp = rrSim(1.45 * css, 1.3); let vsi = rrSim(13, 1.1), r1 = .06, r2 = .18, prod = .76, F80v = 27;
+  let mix = (x) => prod * pasSim(rom, x) + r1 * pasSim(hp, x) + r2 * pasSim(vsi, x);
+  for (let it = 0; it < 60; it++) {
+    mix = (x) => prod * pasSim(rom, x) + r1 * pasSim(hp, x) + r2 * pasSim(vsi, x);
+    const p32 = mix(32), p12 = mix(12.5), r1n = 1 - e1 * p32, pn = e2 * e1 * p12, r2n = Math.max(0, 1 - r1n - pn);
+    r1 += .5 * (r1n - r1); r2 += .5 * (r2n - r2); prod = 1 - r1 - r2;
+
+    const R2 = (x) => (x <= 12.5 ? e1 * (1 - e2) * mix(x) : x <= 32 ? e1 * ((1 - e2) * p12 + mix(x) - p12) : e1 * ((1 - e2) * p12 + p32 - p12)) / Math.max(1e-6, e1 * ((1 - e2) * p12 + p32 - p12));
+    F80v = bisSim(R2, .8, .5, 32); vsi = rrSim(F80v / 2.1, 1.1);
+  }
+  const p32 = mix(32), p12 = mix(12.5);
+  const R1 = (x) => (x <= 32 ? (1 - e1) * mix(x) : (1 - e1) * p32 + mix(x) - p32) / Math.max(1e-6, 1 - e1 * p32);
+  return { rom, hp, vsi, mix, r1, r2, prod, p12, p32, F80hp: bisSim(R1, .8, 1, 2000), F80v, P80hp: hp.p80, P80v: vsi.p80,
+    feedP80: bisSim(mix, .8, .1, 2000), prodP80: bisSim((x) => mix(x) / p12, .8, .05, 12.5) };
+}
+let REF = null;
 function logEv(tipo, txt) { const d = new Date(); sim.log.unshift({ h: d.toLocaleTimeString('pt-BR'), tipo, txt }); if (sim.log.length > 120) sim.log.pop(); }
 let lastSave = 0;
 function stepSim(dt, speed = 60) {
@@ -2214,9 +2238,8 @@ function stepSim(dt, speed = 60) {
   const E = sim.eq, on = (k) => Object.values(E).filter((e) => e.k === k && e.on).length;
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
 
-
-
-  const cc = clamp(25 + (20 - sim.css) * 2, 5, 70), rr = cc / (100 + cc), r1 = rr * .45, r2 = rr * .55;
+  const e2 = clamp((sim._effM || 92) / 100, .4, .99), e1 = Math.min(.99, e2 + .04);
+  const CS = circSolve(sim.css, sim.f12, e2, e1), r1 = CS.r1, r2 = CS.r2;
   const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
   const wet = Math.max(0, sim.moist - 9);
 
@@ -2257,24 +2280,19 @@ function stepSim(dt, speed = 60) {
   const um = { m: sim.moist, rise: mRise, st: sim.moist >= 9.5 ? 'crit' : (sim.moist >= 8.5 || (sim.moist >= 8 && mRise > .15)) ? 'warn' : 'ok' };
   if (um.st !== 'ok' && F > 0) alarms.unshift({ tag: 'Umidade do ROM', st: um.st, why: um.st === 'crit' ? `${um.m.toFixed(1).replace('.', ',')} %: colmatação nas peneiras, eficiência e capacidade em queda` : `${um.m.toFixed(1).replace('.', ',')} %${mRise > .15 ? ' e subindo' : ''}: risco amarelo de colmatação nas peneiras` });
 
-  const effs = Object.values(E).filter((e) => e.k === 'pn' && e.on && e.flow > 0).map((e) => e.eff), effM = effs.length ? effs.reduce((a, b) => a + b, 0) / effs.length : 92;
-  const rrD = (p80, n) => ({ p80, n, x63: p80 / Math.pow(Math.log(5), 1 / n) });
-  const ST = {
-    rom: rrD(140, .9),
-    r1: rrD(95, 1.6),
-    r2: rrD(27, 3.2),
-    hp: rrD(1.45 * sim.css, 1.3),
-    vsi: rrD(13, 1.1),
-    prod: rrD(8.2 + (1 - effM / 100) * 30 + (sim.css - 20) * .05, 1.0),
-  };
-  const pas = (c, x) => 1 - Math.exp(-Math.pow(x / c.x63, c.n));
-  const wF = T > 0 ? F / T : 1, wH = T > 0 ? (T * r1) / T : 0, wV = T > 0 ? (T * r2) / T : 0;
-  const mix = (x) => (wF * pas(ST.rom, x) + wH * pas(ST.hp, x) + wV * pas(ST.vsi, x)) / Math.max(1e-6, wF + wH + wV);
-  let lo = .1, hi = 400; for (let i = 0; i < 40; i++) { const m = Math.sqrt(lo * hi); if (mix(m) < .8) lo = m; else hi = m; }
-  const p80ref = 8.2 + (1 - .92) * 30;
-  const gran = { st: ST, feedP80: Math.sqrt(lo * hi), effM, pas, mix, p80prod: ST.prod.p80, f80moagem: ST.prod.p80, ratio: ST.prod.p80 / p80ref };
+  const effs = Object.values(E).filter((e) => e.k === 'pn' && e.on && e.flow > 0).map((e) => e.eff), effM = effs.length ? effs.reduce((a, b) => a + b, 0) / effs.length : 92; sim._effM = effM;
+  if (!REF) REF = circSolve(20, .8, .92, .96);
+  const ST = { rom: CS.rom, hp: CS.hp, vsi: CS.vsi, r1: { p80: CS.F80hp }, r2: { p80: CS.F80v }, prod: { p80: CS.prodP80 } };
+  const gran = { st: ST, feedP80: CS.feedP80, effM, pas: pasSim, mix: CS.mix, p12: CS.p12, p80prod: CS.prodP80, f80moagem: CS.prodP80, ratio: CS.prodP80 / REF.prodP80 };
+  const grp = (k) => Object.values(E).filter((e) => e.k === k && e.on && e.flow > 0), sum = (a, f) => a.reduce((s2, e) => s2 + f(e), 0);
+  const crush = (k, F80, P80) => { const g2 = grp(k), fl = sum(g2, (e) => e.flow), kwg = sum(g2, (e) => e.kw); if (!fl) return null; const W = kwg / fl, den = 10 / Math.sqrt(P80 * 1000) - 10 / Math.sqrt(F80 * 1000), wio = den > 0 ? W / den : Infinity;
+    return { n: g2.length, flow: fl, kw: kwg, W, F80, P80, rr: F80 / P80, wio, effE: isFinite(wio) ? clamp(sim.wi / wio, 0, 1.5) : 0, load: sum(g2, (e) => e.load) / g2.length }; };
+  const pns = Object.values(E).filter((e) => e.k === 'pn'), nOn = Object.values(E).filter((e) => e.on).length;
+  const disp = nOn / Object.keys(E).length, desemp = F > 0 ? clamp(prod / sim.capNom, 0, 1) : 0;
+  const qual = clamp(1 - .15 * (1 - e2) - .5 * sum(pns, (e) => Math.max(0, e.w - 85)) / 100 / Math.max(1, pns.length), .7, 1);
+  const efic = { tag: e1 * e2 * 100, e1: e1 * 100, e2: e2 * 100, cone: crush('cone', CS.F80hp, CS.P80hp), vsi: crush('vsi', CS.F80v, CS.P80v), spec: prod > 0 ? kw / prod : 0, disp, desemp, qual, oee: disp * desemp * qual, wi: sim.wi };
   if (limited && F > 0) alarms.unshift({ tag: 'Circuito', st: 'crit', why: 'britagem insuficiente para o retido: alimentação limitada' });
-  sim.kpi = { gran, umid: um, F, T, prod, circ: F > 0 ? (T - prod) / prod * 100 : 0, r1, r2, kw, limited, nPN, nC, nV, alarms, spec: prod > 0 ? kw / prod : 0 };
+  sim.kpi = { efic, gran, umid: um, F, T, prod, circ: F > 0 ? (T - prod) / prod * 100 : 0, r1, r2, kw, limited, nPN, nC, nV, alarms, spec: prod > 0 ? kw / prod : 0 };
 
   const now = new Set(alarms.map((a) => a.tag + '|' + a.why.replace(/[\d.,]+/g, '#')));
   for (const k of now) if (!sim._al || !sim._al.has(k)) logEv('Alarme', k.split('|')[0] + ': ' + alarms.find((a) => a.tag + '|' + a.why.replace(/[\d.,]+/g, '#') === k).why);
@@ -3041,7 +3059,7 @@ const P=Object.assign({},DEF);
 const CTRL=[
   ['ctlMG','feedC','Alimentação por concentrador','t/h',1200,2600,20,0,'Concentradores ativos na etapa 5'],
   ['ctlMG','tcldSpd','Velocidade da TCLD','%',40,110,1,0,'Capacidade nominal 6.000 t/h a 100 %'],
-  ['ctlMG','css','Abertura do britador (APF)','mm',10,40,1,0,'Menor abertura = produto mais fino e mais carga circulante'],
+  ['ctlMG','css','Abertura do britador (APF)','mm',10,40,1,0,'Menor abertura = britado mais fino, menos carga circulante e mais energia por tonelada britada'],
   ['ctlMG','fe','Teor de Fe do minério','% Fe',34,52,.5,1,'Minério de Alegria ≈ 40 % Fe'],
   ['ctlMG','mill','Potência da moagem','%',60,110,1,0,'P80 alvo ≈ 45 µm'],
   ['ctlMG','cut','Corte da deslamagem','µm',4,20,.5,1,'Ótimo 8–12 µm'],
@@ -3543,7 +3561,7 @@ function step(sdt){
   if(sdt>0){mpcRun();expertRun();perfAdd(sdt);if(ST.ct-(ST.ctH||0)>=120){ST.ctH=ST.ct;for(const k in LOOPS){const L=LOOPS[k];L.hist.push([ST.simT,L.pv,L.sp,L.mv]);if(L.hist.length>360)L.hist.shift();}}}
   CUR={arrP80:arr.p80,solidsEff,HY,vdep:HY.vdep,arrAl:arr.al,arrP:arr.p,G,U,mine,mineReq,pumpRate,pumpFe,pumpSi,v,transit,arrived,arrFe:arr.fe,arrSi:arr.si,toThick,toBasin,dredge,filterRate,pfPel,pfSold,load,inYard:inP+inF,Qm3,water,A,nL,capPipe,pBar,pumpMW,
     total:U.prod+pfSold,TH,solidsEff,recWater:RUN.ete?clamp(80+12*P.eteCap/100+(P.floc-20)*.15,0,97):40,recWaterMG:RUN.thick6?clamp(78+(P.floc-10)*.5,70,95):0,
-    tcldCap,crushCirc:RUN.crush&&mine>0?clamp(25+(20-P.css)*2,5,70):0,ovf:RUN.thick6&&G.C>0?TH.ovf:0,
+    tcldCap,crushCirc:RUN.crush&&mine>0?(typeof S3!=='undefined'&&S3&&S3.sim.kpi&&isFinite(S3.sim.kpi.circ)?S3.sim.kpi.circ:clamp(25+(20-P.css)*2,5,70)):0,ovf:RUN.thick6&&G.C>0?TH.ovf:0,
     dust:RUN.yard?(1-.85*Math.min(1,RAIN.rateU/2))*Math.pow(P.wind,2)*(RUN.fence?.35:1)*clamp(ST.yard/500000,.2,2)/36*60:0,
     kWhT:G.F>50?G.kW/G.F:0};
   return CUR;
@@ -3608,7 +3626,7 @@ let selected=null,lastEqHTML='';
 function eqParams(id){const c=CUR,G=c.G,U=c.U;switch(id){
   case 'mine':return[['Lavra',fmt(c.mine,0)+' t/h'],['Teor de Fe',fmt(P.fe,1)+' %'],['Caminhões em operação',RUN.mine?'5':'0']];
   case 'tcld':return[['Vazão',fmt(c.mine,0)+' t/h'],['Capacidade',fmt(c.tcldCap,0)+' t/h'],['Velocidade',RUN.tcld?fmt(4.5*P.tcldSpd/100,1)+' m/s':'0'],['TCLD','transportador de correia de longa distância']];
-  case 'crush':return[['Vazão',fmt(c.mine,0)+' t/h'],['Produto','< 40 mm'],['Carga circulante',fmt(c.crushCirc,0)+' %'],['APF','abertura na posição fechada: '+fmt(P.css,0)+' mm']];
+  case 'crush':{const EF=S3&&S3.sim.kpi&&S3.sim.kpi.efic,G3=S3&&S3.sim.kpi&&S3.sim.kpi.gran;return[['Vazão',fmt(c.mine,0)+' t/h'],['Produto','< 12,5 mm'+(G3?' · P80 '+fmt(G3.p80prod,1)+' mm (F80 da moagem)':'')],['Carga circulante',fmt(c.crushCirc,0)+' %'],['APF','abertura na posição fechada: '+fmt(P.css,0)+' mm']].concat(EF?[['Eficiência de peneiramento',fmt(EF.tag,1)+' % (Taggart)'],['Eficiência energética',(EF.cone?'HP 400 '+fmt(Math.min(1,EF.cone.effE)*100,0)+' %':'HP 400 parado')+' · '+(EF.vsi?'Barmac '+fmt(Math.min(1,EF.vsi.effE)*100,0)+' %':'Barmac parado')],['Energia específica',fmt(EF.spec,2)+' kWh/t'],['OEE do setor',fmt(EF.oee*100,0)+' %']]:[]);}
   case 'pile':return[['Estoque',fmtT(ST.stockPile)],['Autonomia',G.F>0?fmt(ST.stockPile/G.F,0)+' h':'–'],['Retomada',fmt(G.F,0)+' t/h']];
   case 'conc':return[['Concentradores ativos',G.nC+' de 3'+(G.limited?' · limitado pela filtragem':'')],['Energia específica',fmt(c.kWhT,1)+' kWh/t'],['P80 da moagem',fmt(G.P80,0)+' µm'],['Potência de moagem',fmt(G.kW/1000,1)+' MW'],['Lama retirada',fmt(G.slime,0)+' t/h'],['Recuperação mássica',fmt(G.massRec,1)+' %'],['Recuperação de Fe',fmt(G.feRec,1)+' %'],['Fe / SiO₂ concentrado',fmt(G.feC,2)+' / '+fmt(G.siC,2)+' %']];
   case 'thick6':return[['Estoque nos tanques',fmtT(ST.tank6)],['Sólidos no underflow',fmt(P.solids,1)+' %'],['Água recuperada',fmt(c.recWaterMG,0)+' %']];
@@ -4303,7 +4321,7 @@ function drawCurves(){const G=CUR.G;if(!G.bySize)return;const b=G.bySize.slice()
   plot($('#cv0'),[[q=>q.lib,'#5cc6dc','liberação',0],[q=>q.desl,'#ffb070','para flotação',1]],'Liberação e partição da deslamagem');
   plot($('#cv1'),[[q=>q.recQ,'#e9d3a8','quartzo → espuma',0],[q=>q.recH,'#ff6b5b','hematita → espuma',1]],'Recuperação na flotação (N células em série)');}
 const INVENTORY=[
- ['1–3 Mina, TCLD, britagem','Taxa de lavra = demanda; carga circulante linear na APF','<code>Q = min(F·n, 6000·v%)</code>','Sem granulometria do ROM, sem desgaste do britador','Médio','<span class="tagp ok">GEOMETALURGIA</span> blocos do plano de lavra com tipologia, Fe, SiO₂, Al₂O₃, P, Wi'],
+ ['1–3 Mina, TCLD, britagem','Taxa de lavra = demanda; circuito fechado com balanço granulométrico (Rosin–Rammler), eficiência de Taggart, Bond operacional (Wio) e OEE','<code>Q = min(F·n, 6000·v%)</code>','Curvas e Wi ilustrativos (calibrar com dados da usina)','Médio','<span class="tagp ok">GEOMETALURGIA</span> blocos do plano de lavra com tipologia, Fe, SiO₂, Al₂O₃, P, Wi'],
  ['4 Pilha de regularização','Inventário único, mistura perfeita','<code>dM/dt = Q_in − Q_out</code>','Sem blendagem por camadas nem modelo de homogeneização (Chevron/Windrow)','Médio','Fase 3'],
  ['5 Moagem','Lei de Bond (energia específica → P80)','<code>W = 10·Wi·(1/√P80 − 1/√F80)</code>','Wi fixo; F80 acompanha o produto do setor 3 (APF dos HP 400 e eficiência das peneiras); sem modelo populacional de moagem (seleção/quebra)','Alto','<span class="tagp ok">AVANÇADO</span> Austin disponível · calibrar com ensaios de batelada'],
  ['5 Distribuição granulométrica','<span class="tagp ok">PILOTO</span> Rosin-Rammler a partir do P80','<code>F(x)=1−exp(−(x/x63)ⁿ)</code>','Distribuição única por fluxo; ideal usar análises granulométricas reais','Médio','Calibrar n com granulometria'],

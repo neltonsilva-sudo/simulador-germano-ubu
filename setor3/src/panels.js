@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261007203415';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261007203935';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -43,7 +43,7 @@ const CSS = `
 @media (max-width:860px){.s3acc{top:auto;bottom:150px;left:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
-const SECS = [['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
+const SECS = [['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['efic', 'Eficiência do processo'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
 
 export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -74,8 +74,12 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     <div class="ctl"><div class="r"><span>Abertura dos HP 400 (APF)</span><b id="cCv"></b></div><input type="range" id="cC" min="12" max="30" step="1"><small>Menor abertura = produto mais fino e mais carga circulante; mais potência nos cônicos.</small></div>
     <div class="ctl"><div class="r"><span>Velocidade da TCLD</span><b id="cTv"></b></div><input type="range" id="cT" min="40" max="110" step="1"><small>Capacidade nominal 6.000 t/h a 100 %.</small></div>
     <div class="ctl"><div class="r"><span>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai. Alerta amarelo a partir de 8,5 % (ou quando sobe rápido) e vermelho a partir de 9,5 %.</small></div>
+    <div class="ctl"><div class="r"><span>Finos do ROM (&lt; 12,5 mm)</span><b id="cRv"></b></div><input type="range" id="cR" min="60" max="92" step="1"><small>Itabirito friável: quanto mais fino o ROM, menor a carga circulante e a energia de britagem.</small></div>
+    <div class="ctl"><div class="r"><span>Wi do minério (Bond)</span><b id="cWv"></b></div><input type="range" id="cW" min="6" max="20" step=".5"><small>Índice de trabalho de laboratório; referência para a eficiência energética dos britadores (Wi ÷ Wio).</small></div>
     <button class="go" id="cRun"></button>`;
-  const cF = $('#cF'), cC = $('#cC'), cT = $('#cT'), cM = $('#cM');
+  const cF = $('#cF'), cC = $('#cC'), cT = $('#cT'), cM = $('#cM'), cR = $('#cR'), cW = $('#cW');
+  cR.oninput = () => { sim.f12 = +cR.value / 100; }; cR.onchange = () => logEv('Ajuste', `Finos do ROM < 12,5 mm = ${fm(sim.f12 * 100)} %`);
+  cW.oninput = () => { sim.wi = +cW.value; }; cW.onchange = () => logEv('Ajuste', `Wi do minério = ${fm(sim.wi, 1)} kWh/t`);
   cF.oninput = () => { sim.feed = +cF.value; }; cF.onchange = () => logEv('Ajuste', `Alimentação nova ${fm(sim.feed)} t/h`);
   cC.oninput = () => { sim.css = +cC.value; send({ css: sim.css }); }; cC.onchange = () => logEv('Ajuste', `APF dos HP 400 = ${sim.css} mm`);
   cT.oninput = () => { sim.tcld = +cT.value; send({ tcldSpd: sim.tcld }); }; cT.onchange = () => logEv('Ajuste', `Velocidade da TCLD = ${sim.tcld} %`);
@@ -98,7 +102,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   }
   $('#pB_tend').innerHTML = '<canvas id="g1"></canvas><canvas id="g2"></canvas><canvas id="g3"></canvas>';
   // ---- curva granulométrica: % passante acumulado × tamanho (escala log), por etapa
-  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px"></canvas><div id="gT"></div><p class="hint">Curvas ilustrativas (Rosin–Rammler). Mude a APF em <b>Controles e ajustes</b>: o britado do HP 400 e o produto se deslocam, e o P80 do produto é o F80 de alimentação da moagem. Finos mal classificados (peneira com baixa eficiência) engrossam o produto.</p>';
+  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px"></canvas><div id="gT"></div><p class="hint">Curvas Rosin–Rammler fechadas com o balanço de massa do circuito. A APF muda o britado do HP 400 e a carga circulante; o produto é definido pela tela de 12,5 mm e pelos finos do ROM — o P80 do produto é o F80 de alimentação da moagem. Ajuste os finos do ROM e a APF em <b>Controles e ajustes</b>.</p>';
   const GC = [['rom', 'ROM (TCLD)', '#9aa7b3'], ['mix', 'Alimentação das peneiras', '#5cc6dc'], ['hp', 'Britado HP 400', '#ff9a4a'], ['vsi', 'Britado Barmac', '#c58cff'], ['prod', 'Produto → moagem', '#2fbf71']];
   function granChart(cv) {
     const G = sim.kpi.gran; if (!G) return; const r = cv.getBoundingClientRect(); if (!r.width) return; const dpr = Math.min(2, devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr;
@@ -112,7 +116,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     x.fillStyle = '#ffd24a'; x.fillText('12,5 mm', sx(12.5) + 3 * dpr, pt + 9 * dpr); x.fillStyle = '#ff9a4a'; x.fillText(`APF ${sim.css} mm`, sx(sim.css) + 3 * dpr, pt + 19 * dpr);
     let lx = pl, ly = 10 * dpr; x.font = `600 ${9.5 * dpr}px system-ui`;
     for (const [k, n, c] of GC) { const tw = x.measureText(n).width + 16 * dpr; if (lx + tw > W) { lx = pl; ly += 11 * dpr; } x.fillStyle = c; x.fillRect(lx, ly - 5 * dpr, 9 * dpr, 3 * dpr); x.fillText(n, lx + 11 * dpr, ly); lx += tw; }
-    for (const [k, , c] of GC) { const f = k === 'mix' ? G.mix : (v) => G.pas(G.st[k], v); x.strokeStyle = c; x.lineWidth = (k === 'prod' ? 2.4 : 1.6) * dpr; x.beginPath();
+    for (const [k, , c] of GC) { const f = k === 'mix' ? G.mix : k === 'prod' ? (v) => Math.min(1, G.mix(Math.min(v, 12.5)) / G.p12) : (v) => G.pas(G.st[k], v); x.strokeStyle = c; x.lineWidth = (k === 'prod' ? 2.4 : 1.6) * dpr; x.beginPath();
       for (let i = 0; i <= 80; i++) { const v = Math.pow(10, X0 + (X1 - X0) * i / 80), X = sx(v), Y = sy(f(v)); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); }
   }
   function granTable() {
@@ -150,6 +154,21 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       <div class="${K.prod < K.F * .95 ? 'warn' : ''}"><b>${fm(K.prod)}</b><span>Produto &lt; 12,5 mm (t/h)</span></div><div class="${K.circ > 70 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div>
       <div><b>${fm(K.kw)}</b><span>Potência total (kW)</span></div><div><b>${fm(K.spec, 2)}</b><span>Energia específica (kWh/t)</span></div>
       <div class="${(K.umid || {}).st === 'crit' ? 'crit' : (K.umid || {}).st === 'warn' ? 'warn' : ''}"><b>${fm(sim.moist, 1)} %${(K.umid || {}).rise > .15 ? ' ↑' : ''}</b><span>Umidade do ROM${(K.umid || {}).st === 'crit' ? ' · colmatação' : (K.umid || {}).st === 'warn' ? ' · risco de colmatação' : ''}</span></div><div class="${effM < 80 ? 'warn' : ''}"><b>${fm(effM)} %</b><span>Eficiência média das peneiras</span></div></div>`;
+    const EF = K.efic; if (EF) $('#pS_efic').textContent = `OEE ${fm(EF.oee * 100)} %`;
+    if (on('efic') && EF) {
+      const pc = (v) => fm(v * 100) + ' %', cls = (v, w, c) => (v < c ? 'crit' : v < w ? 'warn' : '');
+      const row = (nm, c) => !c ? `<tr><td>${nm}</td><td colspan="6" class="n">parado</td></tr>` : `<tr><td>${nm} <small>(${c.n} em operação · carga ${pc(c.load)})</small></td><td class="n">${fm(c.F80, 1)}</td><td class="n">${fm(c.P80, 1)}</td><td class="n">${fm(c.rr, 2)}</td><td class="n">${fm(c.W, 2)}</td><td class="n">${isFinite(c.wio) ? fm(c.wio, 1) : '–'}</td><td class="n" style="color:${c.effE < .35 ? '#ff6b5b' : c.effE < .6 ? '#ffb020' : '#2fbf71'}"><b>${pc(Math.min(1, c.effE))}</b></td></tr>`;
+      const low = [EF.cone, EF.vsi].filter((c) => c && c.effE < .35);
+      const dica = low.length ? `<div class="card warn"><b>Eficiência energética baixa</b><small>${low.map((c) => (c === EF.cone ? 'HP 400' : 'Barmac') + ` com carga de ${pc(c.load)}`).join(' e ')}: boa parte da potência é consumida em vazio. ${EF.cone && EF.cone.effE < .35 && EF.cone.rr < 1.8 ? `Com APF ${sim.css} mm o HP 400 reduz pouco (razão ${fm(EF.cone.rr, 2)}): fechar a APF aumenta a redução. ` : ''}${EF.vsi && EF.vsi.load < .35 && EF.vsi.n > 1 ? 'Concentrar a carga (desligar um Barmac) melhora a eficiência sem perder produção. ' : ''}</small></div>` : '';
+      $('#pB_efic').innerHTML = `<div class="s3k">
+        <div class="${cls(EF.tag / 100, .85, .75)}"><b>${fm(EF.tag, 1)} %</b><span>Peneiramento (Taggart) · finos &lt; 12,5 mm recuperados</span></div>
+        <div><b>${fm(EF.spec, 2)} kWh/t</b><span>Energia específica do setor</span></div>
+        <div class="${cls(EF.oee, .85, .65)}"><b>${pc(EF.oee)}</b><span>OEE do setor</span></div>
+        <div><b>${pc(EF.disp)} · ${pc(EF.desemp)} · ${pc(EF.qual)}</b><span>Disponibilidade · desempenho · qualidade</span></div></div>
+        <table><tr><th>Britagem</th><th class="n">F80 mm</th><th class="n">P80 mm</th><th class="n">Razão</th><th class="n">kWh/t</th><th class="n">Wio</th><th class="n">Efic. energ.</th></tr>${row('HP 400 (primária)', EF.cone)}${row('Barmac (secundária)', EF.vsi)}</table>
+        ${dica}
+        <p class="hint"><b>Como é calculado.</b> Peneiramento: recuperação dos finos do 1º deck (${fm(EF.e1, 1)} %) × 2º deck (${fm(EF.e2, 1)} %). Britagem: Wio = W ÷ (10/√P80 − 10/√F80), em µm, e eficiência energética = Wi do minério (${fm(EF.wi, 1)} kWh/t) ÷ Wio. OEE = disponibilidade (equipamentos ligados) × desempenho (produção ÷ capacidade nominal de ${fm(sim.capNom)} t/h) × qualidade (produto dentro de 12,5 mm). Valores do modelo didático; calibrar com dados da usina.</p>`;
+    }
     if (on('gran')) { granChart($('#gG')); $('#gT').innerHTML = granTable(); }
     if (sim.kpi.gran) $('#pS_gran').textContent = `P80 produto ${fm(sim.kpi.gran.p80prod, 1)} mm`;
     if (on('tend')) { const cv = el.querySelectorAll('#pB_tend canvas');
@@ -157,8 +176,8 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       chart(cv[1], [{ n: 'carga circulante', c: '#ffd24a', f: (h) => h.circ }], 'Carga circulante', '%');
       chart(cv[2], [{ n: 'potência', c: '#c792ea', f: (h) => h.kw }], 'Potência total', 'kW'); }
     if (on('ctl') || force) {
-      if (document.activeElement !== cF) cF.value = sim.feed; if (document.activeElement !== cC) cC.value = sim.css; if (document.activeElement !== cT) cT.value = sim.tcld; if (document.activeElement !== cM) cM.value = sim.moist;
-      $('#cFv').textContent = fm(sim.feed) + ' t/h'; $('#cCv').textContent = sim.css + ' mm'; $('#cTv').textContent = fm(sim.tcld) + ' %'; $('#cMv').textContent = fm(sim.moist, 1) + ' %';
+      if (document.activeElement !== cF) cF.value = sim.feed; if (document.activeElement !== cC) cC.value = sim.css; if (document.activeElement !== cT) cT.value = sim.tcld; if (document.activeElement !== cM) cM.value = sim.moist; if (document.activeElement !== cR) cR.value = Math.round(sim.f12 * 100); if (document.activeElement !== cW) cW.value = sim.wi;
+      $('#cFv').textContent = fm(sim.feed) + ' t/h'; $('#cCv').textContent = sim.css + ' mm'; $('#cTv').textContent = fm(sim.tcld) + ' %'; $('#cMv').textContent = fm(sim.moist, 1) + ' %'; $('#cRv').textContent = fm(sim.f12 * 100) + ' %'; $('#cWv').textContent = fm(sim.wi, 1) + ' kWh/t';
       cF.disabled = cM.disabled = sync; $('#cFn').textContent = sync ? 'Vem da lavra no simulador (sincronizado). APF, TCLD e partir/parar daqui comandam o simulador.' : 'Vazão de ROM que a TCLD entrega ao setor. Limitada pela velocidade da TCLD.';
       $('#cRun').textContent = sim.running ? 'Parar o circuito' : 'Partir o circuito'; $('#cRun').style.background = sim.running ? '#c0392b' : '#1f8a5b'; }
     if (on('flu') || force) { const fe = sim.fe, si = sim.si;
