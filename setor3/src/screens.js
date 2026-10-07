@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261007203935';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261007203935';
+import { SCREENS, LV } from './layout.js?v=20261007204435';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261007204435';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral

@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261007203935';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007203935';
-import { PhoneShader } from './render_post.js?v=20261007203935';
-import { UpscaleShader } from './render_upscale.js?v=20261007203935';
+import { B, LV } from './layout.js?v=20261007204435';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007204435';
+import { PhoneShader } from './render_post.js?v=20261007204435';
+import { UpscaleShader } from './render_upscale.js?v=20261007204435';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -171,25 +171,29 @@ export function createComposer(renderer, scene, camera) {
     if (forced != null || document.hidden || dt > 250) return;          // ignora pausas e o modo sem GPU
     fps.n++; fps.t += dt; if (now < fps.next) return;
     const avg = 1000 / (fps.t / fps.n); fps.n = 0; fps.t = 0; fps.next = now + 2000;
-    let nr = rs; if (avg < 42) nr = Math.max(RS_MIN, rs - .1); else if (avg > 57 && rs < 1) nr = Math.min(1, rs + .05);
-    if (Math.abs(nr - rs) > .001) { rs = nr; apply(); }
+    // histerese: só reduz após 2 janelas seguidas abaixo de 36 fps e só aumenta após 4 janelas acima de 58 fps,
+    // com no mínimo 8 s entre mudanças — evita a resolução "pulsar" (imagem tremendo)
+    fps.lo = avg < 36 ? (fps.lo || 0) + 1 : 0; fps.hi = avg > 58 ? (fps.hi || 0) + 1 : 0;
+    let nr = rs; if (fps.lo >= 2) nr = Math.max(RS_MIN, rs - .1); else if (fps.hi >= 4 && rs < 1) nr = Math.min(1, rs + .05);
+    if (Math.abs(nr - rs) > .001 && now - (fps.chg || 0) > 8000) { rs = nr; fps.chg = now; fps.lo = fps.hi = 0; apply(); }
     window.__rs = { scale: +rs.toFixed(2), fps: Math.round(avg) };
   }
-  const clock = new THREE.Clock(), lastM = new THREE.Matrix4(); let lastFov = 0, lastAsp = 0;
+  const clock = new THREE.Clock(), lastM = new THREE.Matrix4(); let lastFov = 0, lastAsp = 0, still = 0;
   apply();
   return {
     composer, passes: { gtao, bloom, phone, up, accum },
     setSize(w, h) { size.set(w, h); apply(); },
     render() {
-      phone.uniforms.time.value = clock.getElapsedTime();
+      phone.uniforms.time.value = 0;   // granulado fixo: ruído animado cintilava (efeito de imagem tremendo)
       // câmera parada → jitter subpixel e acúmulo; mexeu → recomeça (quadro normal, sem rastro)
       let jit = false;
       if (accum) {
         camera.updateMatrixWorld();
-        const moved = !camera.matrixWorld.equals(lastM) || camera.fov !== lastFov || camera.aspect !== lastAsp;
+        const a = camera.matrixWorld.elements, b = lastM.elements; let dm = 0; for (let i = 0; i < 16; i++) dm = Math.max(dm, Math.abs(a[i] - b[i]));
+        const moved = dm > 2e-5 || Math.abs(camera.fov - lastFov) > 1e-4 || Math.abs(camera.aspect - lastAsp) > 1e-4;
         lastM.copy(camera.matrixWorld); lastFov = camera.fov; lastAsp = camera.aspect;
-        if (moved) accum.reset();
-        else { const k = (accum.n % 32) + 1, sw = Math.round(size.x * dpr * rs), sh = Math.round(size.y * dpr * rs); camera.setViewOffset(sw, sh, halton(k, 2) - .5, halton(k, 3) - .5, sw, sh); jit = true; }
+        if (moved) { accum.reset(); still = 0; }
+        else if (++still > 8) { const k = (accum.n % 32) + 1, sw = Math.round(size.x * dpr * rs), sh = Math.round(size.y * dpr * rs); camera.setViewOffset(sw, sh, halton(k, 2) - .5, halton(k, 3) - .5, sw, sh); jit = true; }
       }
       composer.render();
       if (jit) camera.clearViewOffset();
