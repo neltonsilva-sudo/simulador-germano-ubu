@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261007205259';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007205259';
-import { PhoneShader } from './render_post.js?v=20261007205259';
-import { UpscaleShader } from './render_upscale.js?v=20261007205259';
+import { B, LV } from './layout.js?v=20261007205817';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007205817';
+import { PhoneShader } from './render_post.js?v=20261007205817';
+import { UpscaleShader } from './render_upscale.js?v=20261007205817';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -154,7 +154,7 @@ export function createComposer(renderer, scene, camera) {
   const bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), ...LOOK.bloom); composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const phone = new ShaderPass(PhoneShader);
-  phone.uniforms.sharpen.value = .32; phone.uniforms.vignette.value = .3; phone.uniforms.grain.value = .014; phone.uniforms.chroma.value = .0007;
+  phone.uniforms.sharpen.value = .14; phone.uniforms.vignette.value = .3; phone.uniforms.grain.value = 0; /* sem granulado (aparecia como pontilhado fixo) */ phone.uniforms.chroma.value = .0007;
   phone.uniforms.wb.value.set(1.03, 1.0, .95); phone.uniforms.contrast.value = 1.05; phone.uniforms.saturation.value = .92; phone.uniforms.distortion.value = .03;
   composer.addPass(phone);
   const up = new ShaderPass(UpscaleShader); up.uniforms.srcSize.value = new THREE.Vector2(size.x * dpr, size.y * dpr); composer.addPass(up);
@@ -164,7 +164,7 @@ export function createComposer(renderer, scene, camera) {
   function apply() {
     composer.setPixelRatio(dpr * rs); composer.setSize(size.x, size.y);
     const sw = Math.round(size.x * dpr * rs), sh = Math.round(size.y * dpr * rs);
-    phone.uniforms.resolution.value.set(sw, sh); up.uniforms.srcSize.value.set(sw, sh); up.uniforms.sharp.value = .18 + (1 - rs) * .9;
+    phone.uniforms.resolution.value.set(sw, sh); up.uniforms.srcSize.value.set(sw, sh); up.uniforms.sharp.value = .08 + (1 - rs) * .6;
   }
   function adapt() {
     const now = performance.now(), dt = now - fps.last; fps.last = now;

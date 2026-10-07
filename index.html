@@ -1302,10 +1302,10 @@ function buildBuilding(scene, M, opt = {}) {
   box(g, B.screenEnd - x0, t, B.D, M.concrete, (B.screenEnd + x0) / 2, y1 - t / 2, B.D / 2);
   for (const [a, b] of holes) { box(g, b - a, t, 3.4, M.concrete, (a + b) / 2, y1 - t / 2, 1.7); box(g, b - a, t, 5.6, M.concrete, (a + b) / 2, y1 - t / 2, B.D - 2.8); }
 
-  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(205,190,150,1)'; x.lineWidth = 3;
+  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(205,190,150,1)'; x.lineWidth = 2.5;
     for (let i = 0; i <= 128; i += 16) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 128); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(128, i); x.stroke(); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
-  const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .5, 1.8); return new THREE.MeshStandardMaterial({ color: 0xb8a878, map: t, alphaMap: t, alphaTest: .45, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };
+  const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .6, 1.6); t.anisotropy = 8; return new THREE.MeshStandardMaterial({ color: 0x9c9a8c, map: t, alphaMap: t, alphaToCoverage: true, transparent: false, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };
   const tela = (a, b) => { railing(g, a, b, M.yellow); const L = a.distanceTo(b); const m = new THREE.Mesh(new THREE.PlaneGeometry(L, .9), telaMat(L)); m.position.set((a.x + b.x) / 2, a.y + .58, (a.z + b.z) / 2); m.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x); g.add(m); };
   for (const [a, b] of holes) { tela(V(a, y1, 3.4), V(a, y1, B.D - 5.6)); tela(V(b, y1, 3.4), V(b, y1, B.D - 5.6)); }
   holes.forEach(([a, b], i) => tela(V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6)));
