@@ -3,8 +3,8 @@
 // retomada → concentradores (5) → espessadores (6) → estação de bombas e minerodutos (10); filtragem de rejeito arenoso (7).
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261007204435';
-import { V, box, beam, cyl } from './util.js?v=20261007204435';
+import { B } from './layout.js?v=20261007205259';
+import { V, box, beam, cyl } from './util.js?v=20261007205259';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
@@ -15,9 +15,43 @@ const AREAS = {
   bombas: { n: 10, nome: 'Estação de Bombas 1 e minerodutos', x: 190, z: -20 },
 };
 
+// Pilha cônica modelada (o ConeGeometry do three r169 gera só 1 triângulo por face → buracos "serrilhados"):
+// ângulo de repouso, topo arredondado, pé espraiado, sulcos de escorregamento, camadas claras/escuras e topo úmido escuro
+function pileGeo(R, H, seed = 1, tons = { base: [.15, .085, .058], dark: [.075, .046, .034], wet: [.045, .032, .028] }) {
+  const SEG = 128, RINGS = 44, pos = [], col = [], uv = [], idx = [];
+  const hsh = (a) => { const x = Math.sin(a * 127.1 + seed * 311.7) * 43758.5453; return x - Math.floor(x); };
+  for (let i = 0; i <= RINGS; i++) {
+    const s = i / RINGS;                                    // 0 = topo, 1 = pé
+    for (let j = 0; j <= SEG; j++) {
+      const th = j / SEG * Math.PI * 2;
+      const lobe = 1 + .05 * Math.sin(th * 3 + seed) + .03 * Math.sin(th * 7 + seed * 2);              // lóbulos da empilhadeira
+      const r = s * R * lobe;
+      let y = H * (1 - Math.pow(s, 1.0));
+      y -= H * .07 * Math.exp(-s * s / .006);                // topo arredondado (cratera rasa do impacto)
+      if (s > .86) y *= 1 - .5 * Math.pow((s - .86) / .14, 2);                                        // pé espraiado
+      const gul = Math.sin(th * 41 + Math.sin(th * 5 + seed) * 2) * .22 * Math.sin(Math.PI * s) * (.6 + .4 * hsh(Math.floor(th * 41 / 6.283)));
+      y += gul + (hsh(i * 131 + j) - .5) * .12 * Math.sin(Math.PI * s);
+      pos.push(Math.cos(th) * r, Math.max(0, y), Math.sin(th) * r); uv.push(th / 6.283 * 8, s * 4);
+      // cor: camadas por altura + sulcos mais escuros + topo úmido (recém-empilhado) + variação
+      const band = .5 + .5 * Math.sin(y * 2.3 + Math.sin(th * 2 + seed) * 1.5), wet = Math.exp(-s * s / .05), n = (hsh(i * 7 + j * 13) - .5) * .06;
+      const c = tons.base.map((b, k) => b * (1 - .35 * band) + tons.dark[k] * .35 * band);
+      const g2 = gul < 0 ? .85 : 1;
+      col.push(...c.map((v, k) => (v * (1 - wet) + tons.wet[k] * wet) * g2 + n));
+    }
+  }
+  for (let i = 0; i < RINGS; i++) for (let j = 0; j < SEG; j++) { const a = i * (SEG + 1) + j, b = a + SEG + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+
 export function buildContext(scene, M, root) {
   const g = new THREE.Group(); g.name = 'entorno'; scene.add(g);
   const labels = [], anim = [], occ = [];
+  const grain = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#c8c8c8'; x.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 9000; i++) { const v = 175 + Math.random() * 80 | 0; x.fillStyle = `rgb(${v},${v},${v})`; const r = Math.random() < .1 ? 2.5 : 1.2; x.fillRect(Math.random() * 256, Math.random() * 256, r, r); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; })();
+  const pileMat = () => new THREE.MeshStandardMaterial({ vertexColors: true, map: grain, roughness: 1, metalness: 0 });
+  function pileTexMat() { return pileMat(); }
   const addOcc = (x, y, z, w, h, d) => occ.push(new THREE.Box3(new THREE.Vector3(x - w / 2, y - h / 2, z - d / 2), new THREE.Vector3(x + w / 2, y + h / 2, z + d / 2)));
   const mat = (c, r = .85, m = .1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
   const C = { laterita: mat(0x8a5236, 1, 0), banco: mat(0x6e4430, 1, 0), agua: mat(0x3d5a5c, .2, .1), predio: mat(0x9a9488, .8, .3), predioEsc: mat(0x6f6a62, .8, .35), telhado: mat(0x5f6b70, .6, .5),
@@ -46,10 +80,9 @@ export function buildContext(scene, M, root) {
     g.add(t); anim.push({ t, k: i % (NB - 1), a: i * 1.7, v: .05 + i * .012 });
   }
   // pilha pulmão de ROM junto à cava e britagem primária (moega)
-  const pul = new THREE.Mesh(new THREE.ConeGeometry(14, 9, 40), pileTexMat()); pul.position.set(A.x + 52, 4.5, A.z + 8); addOcc(A.x + 52, 2.5, A.z + 8, 16, 5, 16); pul.castShadow = pul.receiveShadow = true; g.add(pul);
+  const pul = new THREE.Mesh(pileGeo(14, 9, 3), pileTexMat()); pul.position.set(A.x + 52, 0, A.z + 8); pul.castShadow = pul.receiveShadow = true; addOcc(A.x + 52, 2.5, A.z + 8, 16, 5, 16); pul.castShadow = pul.receiveShadow = true; g.add(pul);
   box(g, 12, 9, 10, C.predioEsc, A.x + 38, 4.5, A.z + 28); box(g, 13, .6, 11, C.telhado, A.x + 38, 9.3, A.z + 28);
 
-  function pileTexMat() { return new THREE.MeshStandardMaterial({ color: 0x5a3526, roughness: 1, metalness: 0 }); }
   // ---- correias simples (estáticas) com apoios
   function belt(a, b, w = 1.4) {
     const d = new THREE.Vector3().subVectors(b, a), L = d.length(), grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
@@ -65,11 +98,7 @@ export function buildContext(scene, M, root) {
 
   // ---- 4 · pilha de regularização: cone de minério com empilhadeira e retomada em túnel
   const P = AREAS.pilha;
-  const pileTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#4b2c1f'; x.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 26; i++) { x.fillStyle = i % 2 ? 'rgba(120,70,45,.35)' : 'rgba(30,18,12,.35)'; x.fillRect(0, i * 10 + Math.sin(i) * 3, 256, 5 + (i % 3) * 2); }
-    for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '20,12,8' : '140,90,60'},.35)`; x.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5); }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1); return t; })();
-  const pile = new THREE.Mesh(new THREE.ConeGeometry(28, 21, 64, 6), new THREE.MeshStandardMaterial({ map: pileTex, roughness: 1, metalness: 0 })); pile.position.set(P.x, 10.5, P.z); addOcc(P.x, 6, P.z, 34, 12, 34); pile.castShadow = pile.receiveShadow = true; g.add(pile);
+  const pile = new THREE.Mesh(pileGeo(28, 21, 7), pileMat()); pile.position.set(P.x, 0, P.z); addOcc(P.x, 6, P.z, 34, 12, 34); pile.castShadow = pile.receiveShadow = true; g.add(pile);
   box(g, 1.4, 1.2, 1.4, M.chute || C.predioEsc, B.W + 6.1, 7.4, 32.1);
   belt(V(B.W + 6.3, 6.6, 32.4), V(P.x + 4, 23.5, P.z - 4), 1.2);           // correia do produto do setor 3 até a cabeça da empilhadeira
   beam(g, V(P.x + 4, 0, P.z - 4), V(P.x + 4, 23, P.z - 4), .7, M.steelDk || C.predioEsc);
@@ -96,7 +125,7 @@ export function buildContext(scene, M, root) {
   for (let i = 0; i < 4; i++) { cyl(g, 7, 7, 16, C.tanque, Es.x - 14 + i * 18, 8, Es.z + 40, 32); addOcc(Es.x - 14 + i * 18, 8, Es.z + 40, 10, 16, 10); }          // tanques de estocagem
   const Bo = AREAS.bombas; predio(Bo, 34, 12, 20, C.predioEsc);
   for (const dz of [-3, 0, 3]) beam(g, V(Bo.x + 17, 1, Bo.z + dz), V(Bo.x + 230, 1, Bo.z + dz - 40), .5, mat(0x3a3f44, .5, .6), true);   // minerodutos saindo
-  const Sf = AREAS.sf; predio(Sf, 30, 16, 22); const ar = new THREE.Mesh(new THREE.ConeGeometry(16, 9, 40), C.areia); ar.position.set(Sf.x + 30, 4.5, Sf.z + 4); g.add(ar);
+  const Sf = AREAS.sf; predio(Sf, 30, 16, 22); const ar = new THREE.Mesh(pileGeo(16, 9, 11, { base: [.36, .28, .18], dark: [.27, .2, .13], wet: [.22, .17, .11] }), pileMat()); ar.position.set(Sf.x + 30, 0, Sf.z + 4); g.add(ar);
   // estradas
   for (const [a, b] of [[[-20, -30], [B.W + 30, -12]], [[B.W + 30, -12], [Cc.x, -16]], [[Cc.x, -16], [Bo.x, -40]], [[B.W + 30, -12], [B.W + 34, 100]]]) {
     const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz), r = new THREE.Mesh(new THREE.PlaneGeometry(9, L), C.estrada); r.rotation.x = -Math.PI / 2; r.rotation.z = -Math.atan2(dx, dz); r.position.set((a[0] + b[0]) / 2, .02, (a[1] + b[1]) / 2); r.receiveShadow = true; g.add(r);
