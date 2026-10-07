@@ -1,15 +1,17 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261007202109';
-import { buildEqScreen } from './eqscreen.js?v=20261007202109';
-import { buildTour } from './tour.js?v=20261007202109';
-import { logEv } from './sim.js?v=20261007202109';
-import { SIM_URL } from './api.js?v=20261007202109';
-import { buildRiskMap } from './riskmap.js?v=20261007202109';
+import { buildPanels } from './panels.js?v=20261007202849';
+import { buildEqScreen } from './eqscreen.js?v=20261007202849';
+import { buildTour } from './tour.js?v=20261007202849';
+import { logEv } from './sim.js?v=20261007202849';
+import { SIM_URL } from './api.js?v=20261007202849';
+import { buildRiskMap } from './riskmap.js?v=20261007202849';
 
 const CSS = `
 #ui [hidden]{display:none!important}
+/* arrastar sobre a régua ou o 3D não deve selecionar texto (fica a seleção azul) */
+.s3bar,.s3bar *,.s3tag,.s3flow,.s3help,canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .s3card{flex:none;display:flex;flex-direction:column;justify-content:center;padding:0 12px 0 6px;margin-right:4px;border-right:1px solid rgba(29,39,51,.15);color:#1d2733}
 .s3card b{display:block;font-size:13.5px;white-space:nowrap}.s3card small{color:#4a5866;font-size:11px;white-space:nowrap}
 .s3bar{position:fixed;top:14px;left:14px;right:14px;z-index:5;display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding:6px;border-radius:14px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 6px 22px rgba(0,0,0,.18)}
@@ -125,16 +127,22 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   const jend = () => { knob.style.transform = ''; joy.f = joy.s = 0; };
   jz.addEventListener('touchstart', jmove, { passive: false }); jz.addEventListener('touchmove', jmove, { passive: false }); jz.addEventListener('touchend', jend);
   const v = new THREE.Vector3();
+  // OCLUSÃO das etiquetas: raio da câmera até a etiqueta contra caixas simples (equipamentos + prédios do entorno);
+  // a etiqueta some quando há algo na frente (barato: só testes raio × caixa)
+  const occBoxes = pick.map((q) => ({ box: q.box, tag: q.tag })).concat((window.__ctxOcc || []).map((b) => ({ box: b, tag: null })));
+  const oRay = new THREE.Ray(), hitP = new THREE.Vector3();
+  const hidden = (pos, ownTag) => { const d = camera.position.distanceTo(pos); oRay.origin.copy(camera.position); oRay.direction.subVectors(pos, camera.position).normalize();
+    for (const o of occBoxes) { if (o.tag && o.tag === ownTag) continue; if (o.box.containsPoint(pos)) continue; if (oRay.intersectBox(o.box, hitP) && camera.position.distanceTo(hitP) < d - .6) return true; } return false; };
   return {
     joy,
     update() {
       if (hl && performance.now() - hlT > 5000) { scene3.remove(hl); hl = null; } else if (hl) hl.material.opacity = .55 + .45 * Math.sin(performance.now() / 160);
       tPanel += 1; if (tPanel % 15 === 0) panel(); risk.update(); panels.update(tPanel); eqs.update(); const nowT = performance.now(); tour.update(Math.min(.1, (nowT - (this._lt || nowT)) / 1000)); this._lt = nowT;
-      for (const { L, d } of flowEls) { v.copy(L.pos).project(camera); const vis = showTags && v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1; d.style.display = vis ? 'block' : 'none'; if (vis) { d.style.left = (v.x * .5 + .5) * innerWidth + 'px'; d.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; if (tPanel % 15 === 0) d.textContent = L.text(sim.kpi); } }
+      for (const { L, d } of flowEls) { v.copy(L.pos).project(camera); const fd = camera.position.distanceTo(L.pos); const vis = showTags && v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && (L.kind === 'area' || fd < 110) && !hidden(L.pos, null); d.style.display = vis ? 'block' : 'none'; if (vis) { d.style.left = (v.x * .5 + .5) * innerWidth + 'px'; d.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; if (tPanel % 15 === 0) d.textContent = L.text(sim.kpi); } }
       for (const { h, d } of tags) {
         v.copy(h.pos).project(camera);
         const dist = camera.position.distanceTo(h.pos);
-        const vis = showTags && v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05 && dist < 70;
+        const vis = showTags && v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05 && dist < 70 && !hidden(h.pos, h.tag);
         d.style.display = vis ? 'block' : 'none';
         if (vis) { d.style.left = (v.x * .5 + .5) * innerWidth + 'px'; d.style.top = (-v.y * .5 + .5) * innerHeight - 14 + 'px'; d.style.opacity = Math.max(.35, 1 - dist / 80); }
       }

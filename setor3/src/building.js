@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261007202109';
-import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261007202109';
+import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261007202849';
+import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261007202849';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -12,7 +12,15 @@ export function buildBuilding(scene, M, opt = {}) {
   out.rotation.x = -Math.PI / 2; out.position.set(B.W / 2, -.02, B.D / 2); out.receiveShadow = true; out.name = 'terreno'; out.userData.keep = true; if (!opt.embed) g.add(out);
   const fl = new THREE.Mesh(new THREE.PlaneGeometry(B.W, B.D), M.floor); fl.rotation.x = -Math.PI / 2; fl.position.set(B.W / 2, .005, B.D / 2); fl.receiveShadow = true; g.add(fl);
   // colunas (perfil I 0,6 m) e vigas por nível
-  for (const x of B.colX) for (const z of B.colZ) { ibeam(g, V(x, 0, z), V(x, B.H, z), .6, .4, M.steel); box(g, 1, .25, 1, M.concrete, x, .12, z); }
+  // colunas: perfil I sobre bloco de concreto, chapa de base com 4 chumbadores (porca + arruela) e enrijecedores
+  const bolt = new THREE.CylinderGeometry(.035, .035, .16, 8), nut = new THREE.CylinderGeometry(.06, .06, .05, 6);
+  for (const x of B.colX) for (const z of B.colZ) {
+    ibeam(g, V(x, 0, z), V(x, B.H, z), .6, .4, M.steel); box(g, 1.1, .35, 1.1, M.concrete, x, .17, z);
+    box(g, .8, .04, .9, M.steelDk, x, .37, z);
+    for (const sx of [-.3, .3]) for (const sz of [-.34, .34]) { const b1 = new THREE.Mesh(bolt, M.greyDk); b1.position.set(x + sx, .45, z + sz); g.add(b1); const n1 = new THREE.Mesh(nut, M.greyDk); n1.position.set(x + sx, .41, z + sz); g.add(n1); }
+    for (const sz of [-1, 1]) box(g, .02, .35, .22, M.steel, x, .56, z + sz * .31);
+    for (const y of [LV.L1, LV.L2]) box(g, .5, .3, .5, M.steelDk, x, y - .45, z);    // consoles de apoio das vigas
+  }
   for (const y of [LV.L1, LV.L2, B.H]) {
     for (const z of B.colZ) ibeam(g, V(0, y, z), V(B.W, y, z), .55, .3, M.steel).rotation.z = Math.PI / 2;
     for (const x of B.colX) { const b = ibeam(g, V(x, y, 0), V(x, y, B.D), .55, .3, M.steel); b.rotation.x = Math.PI / 2; b.rotation.z = 0; }
@@ -26,16 +34,22 @@ export function buildBuilding(scene, M, opt = {}) {
   let x0 = 0; for (const [a, b] of holes) { box(g, a - x0, t, B.D, M.concrete, (a + x0) / 2, y1 - t / 2, B.D / 2); x0 = b; }
   box(g, B.screenEnd - x0, t, B.D, M.concrete, (B.screenEnd + x0) / 2, y1 - t / 2, B.D / 2);
   for (const [a, b] of holes) { box(g, b - a, t, 3.4, M.concrete, (a + b) / 2, y1 - t / 2, 1.7); box(g, b - a, t, 5.6, M.concrete, (a + b) / 2, y1 - t / 2, B.D - 2.8); }
-  for (const [a, b] of holes) { railing(g, V(a, y1, 3.4), V(a, y1, B.D - 5.6), M.yellow); railing(g, V(b, y1, 3.4), V(b, y1, B.D - 5.6), M.yellow); }
-  holes.forEach(([a, b], i) => railing(g, V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6), M.yellow));   // no 1º vão fica a chegada da escada   // frente de cada vão (lado da circulação)
+  // tela de arame preenchendo o guarda-corpo (foto da 03PN002)
+  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(205,190,150,1)'; x.lineWidth = 3;
+    for (let i = 0; i <= 128; i += 16) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 128); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(128, i); x.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
+  const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .5, 1.8); return new THREE.MeshStandardMaterial({ color: 0xb8a878, map: t, alphaMap: t, alphaTest: .45, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };
+  const tela = (a, b) => { railing(g, a, b, M.yellow); const L = a.distanceTo(b); const m = new THREE.Mesh(new THREE.PlaneGeometry(L, .9), telaMat(L)); m.position.set((a.x + b.x) / 2, a.y + .58, (a.z + b.z) / 2); m.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x); g.add(m); };
+  for (const [a, b] of holes) { tela(V(a, y1, 3.4), V(a, y1, B.D - 5.6)); tela(V(b, y1, 3.4), V(b, y1, B.D - 5.6)); }
+  holes.forEach(([a, b], i) => tela(V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6)));   // no 1º vão fica a chegada da escada   // frente de cada vão (lado da circulação)
   railing(g, V(B.screenEnd, y1, 0.3), V(B.screenEnd, y1, B.D - .3), M.yellow);
   // PISO DOS ALIMENTADORES (L2): faixa sobre a alimentação das peneiras, com grade e guarda-corpo voltado ao vão
   const E = B.screenEnd;
   box(g, E, t, 6.5, M.concrete, E / 2, LV.L2 - t / 2, 3.25);
   const gr = new THREE.Mesh(new THREE.PlaneGeometry(E, 2.2), M.grate); gr.rotation.x = -Math.PI / 2; gr.position.set(E / 2, LV.L2 + .01, 7.6); g.add(gr);
   beam(g, V(0, LV.L2 - .1, 8.7), V(E, LV.L2 - .1, 8.7), .18, M.steel);
-  railing(g, V(.3, LV.L2, 8.6), V(E - 1.85, LV.L2, 8.6), M.yellow);   // abertura para a chegada da escada (x 44,2–45,4)
-  railing(g, V(E - .6, LV.L2, 8.6), V(E - .3, LV.L2, 8.6), M.yellow);
+  railing(g, V(.3, LV.L2, 8.6), V(E - 1.85, LV.L2, 8.6), M.orange || M.yellow);   // abertura para a chegada da escada (x 44,2–45,4)
+  railing(g, V(E - .6, LV.L2, 8.6), V(E - .3, LV.L2, 8.6), M.orange || M.yellow);
   // torre dos britadores (x 34–48): piso intermediário em grade a 5,5 m para inspeção da alimentação
   const gt = new THREE.Mesh(new THREE.PlaneGeometry(B.W - E, 4), M.grate); gt.rotation.x = -Math.PI / 2; gt.position.set((B.W + E) / 2, 5.5, 12); g.add(gt);
   railing(g, V(E + .2, 5.5, 10), V(B.W - .2, 5.5, 10), M.yellow);

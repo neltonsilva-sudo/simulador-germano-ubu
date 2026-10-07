@@ -3,8 +3,8 @@
 // retomada → concentradores (5) → espessadores (6) → estação de bombas e minerodutos (10); filtragem de rejeito arenoso (7).
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261007202109';
-import { V, box, beam, cyl } from './util.js?v=20261007202109';
+import { B } from './layout.js?v=20261007202849';
+import { V, box, beam, cyl } from './util.js?v=20261007202849';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
@@ -17,7 +17,8 @@ const AREAS = {
 
 export function buildContext(scene, M, root) {
   const g = new THREE.Group(); g.name = 'entorno'; scene.add(g);
-  const labels = [], anim = [];
+  const labels = [], anim = [], occ = [];
+  const addOcc = (x, y, z, w, h, d) => occ.push(new THREE.Box3(new THREE.Vector3(x - w / 2, y - h / 2, z - d / 2), new THREE.Vector3(x + w / 2, y + h / 2, z + d / 2)));
   const mat = (c, r = .85, m = .1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
   const C = { laterita: mat(0x8a5236, 1, 0), banco: mat(0x6e4430, 1, 0), agua: mat(0x3d5a5c, .2, .1), predio: mat(0x9a9488, .8, .3), predioEsc: mat(0x6f6a62, .8, .35), telhado: mat(0x5f6b70, .6, .5),
     tanque: mat(0xb9b6ad, .5, .5), verde: mat(0x2f7d5b, .7, .3), estrada: mat(0x7a6a5c, 1, 0), minerio: M.ore || mat(0x5a3324, 1, 0), areia: mat(0xb39a74, 1, 0), amarelo: M.yellow || mat(0xe8b416), correia: M.belt || mat(0x1f1d1b) };
@@ -45,7 +46,7 @@ export function buildContext(scene, M, root) {
     g.add(t); anim.push({ t, k: i % (NB - 1), a: i * 1.7, v: .05 + i * .012 });
   }
   // pilha pulmão de ROM junto à cava e britagem primária (moega)
-  const pul = new THREE.Mesh(new THREE.ConeGeometry(14, 9, 40), pileTexMat()); pul.position.set(A.x + 52, 4.5, A.z + 8); pul.castShadow = pul.receiveShadow = true; g.add(pul);
+  const pul = new THREE.Mesh(new THREE.ConeGeometry(14, 9, 40), pileTexMat()); pul.position.set(A.x + 52, 4.5, A.z + 8); addOcc(A.x + 52, 2.5, A.z + 8, 16, 5, 16); pul.castShadow = pul.receiveShadow = true; g.add(pul);
   box(g, 12, 9, 10, C.predioEsc, A.x + 38, 4.5, A.z + 28); box(g, 13, .6, 11, C.telhado, A.x + 38, 9.3, A.z + 28);
 
   function pileTexMat() { return new THREE.MeshStandardMaterial({ color: 0x5a3526, roughness: 1, metalness: 0 }); }
@@ -68,7 +69,7 @@ export function buildContext(scene, M, root) {
     for (let i = 0; i < 26; i++) { x.fillStyle = i % 2 ? 'rgba(120,70,45,.35)' : 'rgba(30,18,12,.35)'; x.fillRect(0, i * 10 + Math.sin(i) * 3, 256, 5 + (i % 3) * 2); }
     for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '20,12,8' : '140,90,60'},.35)`; x.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5); }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1); return t; })();
-  const pile = new THREE.Mesh(new THREE.ConeGeometry(28, 21, 64, 6), new THREE.MeshStandardMaterial({ map: pileTex, roughness: 1, metalness: 0 })); pile.position.set(P.x, 10.5, P.z); pile.castShadow = pile.receiveShadow = true; g.add(pile);
+  const pile = new THREE.Mesh(new THREE.ConeGeometry(28, 21, 64, 6), new THREE.MeshStandardMaterial({ map: pileTex, roughness: 1, metalness: 0 })); pile.position.set(P.x, 10.5, P.z); addOcc(P.x, 6, P.z, 34, 12, 34); pile.castShadow = pile.receiveShadow = true; g.add(pile);
   box(g, 1.4, 1.2, 1.4, M.chute || C.predioEsc, B.W + 6.1, 7.4, 32.1);
   belt(V(B.W + 6.3, 6.6, 32.4), V(P.x + 4, 23.5, P.z - 4), 1.2);           // correia do produto do setor 3 até a cabeça da empilhadeira
   beam(g, V(P.x + 4, 0, P.z - 4), V(P.x + 4, 23, P.z - 4), .7, M.steelDk || C.predioEsc);
@@ -77,13 +78,22 @@ export function buildContext(scene, M, root) {
   belt(V(P.x, .8, P.z + 44), V(AREAS.conc.x - 30, 14, AREAS.conc.z + 10), 1.2);   // retomada → concentradores
 
   // ---- prédios das demais áreas (volumes simples, cores do simulador)
-  function predio(a, w, h, d, cor) { box(g, w, h, d, cor || C.predio, a.x, h / 2, a.z); box(g, w + 1, .8, d + 1, C.telhado, a.x, h + .4, a.z); }
+  // fechamento: telha ondulada cinza com faixa de janelas, montantes e sujeira de minério subindo do chão
+  const fachada = (base, w, h) => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const x = c.getContext('2d'); x.fillStyle = base; x.fillRect(0, 0, 512, 256);
+    for (let i = 0; i < 512; i += 6) { x.fillStyle = i % 12 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.07)'; x.fillRect(i, 0, 3, 256); }
+    x.fillStyle = 'rgba(40,52,60,.9)'; x.fillRect(0, 40, 512, 26); for (let i = 0; i < 512; i += 32) { x.fillStyle = 'rgba(160,170,175,.6)'; x.fillRect(i, 40, 3, 26); }
+    for (let i = 0; i < 512; i += 64) { x.fillStyle = 'rgba(70,64,58,.35)'; x.fillRect(i, 0, 6, 256); }
+    const gr = x.createLinearGradient(0, 256, 0, 150); gr.addColorStop(0, 'rgba(110,58,34,.7)'); gr.addColorStop(1, 'rgba(110,58,34,0)'); x.fillStyle = gr; x.fillRect(0, 150, 512, 106);
+    for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(110,60,36,.18)'; x.fillRect(Math.random() * 512, 60 + Math.random() * 60, 2 + Math.random() * 3, 60 + Math.random() * 90); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.set(Math.max(1, Math.round(w / 24)), 1); t.anisotropy = 8;
+    return new THREE.MeshStandardMaterial({ map: t, roughness: .75, metalness: .35 }); };
+  function predio(a, w, h, d, cor) { addOcc(a.x, h / 2, a.z, w, h, d); box(g, w, h, d, fachada(cor === C.predioEsc ? '#7a7570' : '#a39d92', w, h), a.x, h / 2, a.z); box(g, w + 1, .8, d + 1, C.telhado, a.x, h + .4, a.z); }
   const Cc = AREAS.conc; predio(Cc, 60, 30, 36); predio({ x: Cc.x + 6, z: Cc.z - 30 }, 30, 18, 16, C.predioEsc);
   for (let i = 0; i < 6; i++) cyl(g, 3.2, 3.2, 8, C.tanque, Cc.x - 22 + i * 9, 4, Cc.z + 26, 24);             // células de flotação
   for (const dz of [-8, 8]) { const m = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 12, 24), C.verde); m.rotation.z = Math.PI / 2; m.position.set(Cc.x - 34, 5, Cc.z + dz); g.add(m); }  // moinhos
   const Es = AREAS.esp; for (const [dx, dz, r] of [[0, 0, 22], [52, 6, 18]]) { cyl(g, r, r, 5, C.tanque, Es.x + dx, 2.5, Es.z + dz, 48); const w = new THREE.Mesh(new THREE.CircleGeometry(r - .6, 48), C.agua); w.rotation.x = -Math.PI / 2; w.position.set(Es.x + dx, 5.05, Es.z + dz); g.add(w);
     const ponte = box(g, r * 2, .6, 1.4, C.amarelo, Es.x + dx, 6, Es.z + dz); anim.push({ rake: ponte, v: .03 }); }
-  for (let i = 0; i < 4; i++) cyl(g, 7, 7, 16, C.tanque, Es.x - 14 + i * 18, 8, Es.z + 40, 32);          // tanques de estocagem
+  for (let i = 0; i < 4; i++) { cyl(g, 7, 7, 16, C.tanque, Es.x - 14 + i * 18, 8, Es.z + 40, 32); addOcc(Es.x - 14 + i * 18, 8, Es.z + 40, 10, 16, 10); }          // tanques de estocagem
   const Bo = AREAS.bombas; predio(Bo, 34, 12, 20, C.predioEsc);
   for (const dz of [-3, 0, 3]) beam(g, V(Bo.x + 17, 1, Bo.z + dz), V(Bo.x + 230, 1, Bo.z + dz - 40), .5, mat(0x3a3f44, .5, .6), true);   // minerodutos saindo
   const Sf = AREAS.sf; predio(Sf, 30, 16, 22); const ar = new THREE.Mesh(new THREE.ConeGeometry(16, 9, 40), C.areia); ar.position.set(Sf.x + 30, 4.5, Sf.z + 4); g.add(ar);
@@ -102,7 +112,7 @@ export function buildContext(scene, M, root) {
   g.traverse((o) => { if (o.isMesh) { o.castShadow = o.castShadow || false; o.receiveShadow = true; } });
   let t = 0; const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s1 = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
   return {
-    group: g, labels,
+    group: g, labels, occ,
     update(dt) {
       t += dt;
       for (const a of anim) {

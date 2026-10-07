@@ -1,12 +1,12 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261007202109';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261007202109';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261007202109';
-import { buildUI } from './ui.js?v=20261007202109';
-import { gate } from './gate.js?v=20261007202109';
-import { buildContext } from './context.js?v=20261007202109';
+import { B, LV, CAMS } from './layout.js?v=20261007202849';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261007202849';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261007202849';
+import { buildUI } from './ui.js?v=20261007202849';
+import { gate } from './gate.js?v=20261007202849';
+import { buildContext } from './context.js?v=20261007202849';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -16,7 +16,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .05, 600);
 const S3 = buildSetor3(); scene.add(S3.group); const parts = S3.parts;
 // entorno: restante do processo de Germano ao redor do setor 3 (como na página principal)
-let CTX = null; try { CTX = buildContext(scene, S3.M, S3.group); (parts.flows.labels || (parts.flows.labels = [])).push(...CTX.labels); } catch (e) { console.error('entorno', e); } console.log('setor3: malhas fundidas', S3.stats);
+let CTX = null; try { CTX = buildContext(scene, S3.M, S3.group); window.__ctxOcc = CTX.occ; (parts.flows.labels || (parts.flows.labels = [])).push(...CTX.labels); } catch (e) { console.error('entorno', e); } console.log('setor3: malhas fundidas', S3.stats);
 buildLighting(scene, renderer, S3.lamps);
 const composer = createComposer(renderer, scene, camera);
 
