@@ -1,15 +1,15 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS } from './layout.js?v=20261003175719';
-import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261003175719';
+import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261007202109';
+import { V, box, beam, ibeam, railing, stairs, cyl } from './util.js?v=20261007202109';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
   const lamps = [];
   // terreno externo e piso
   const out = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), M.ground || new THREE.MeshStandardMaterial({ color: 0x8a5a3c, roughness: 1 }));
-  out.rotation.x = -Math.PI / 2; out.position.set(B.W / 2, -.02, B.D / 2); out.receiveShadow = true; if (!opt.embed) g.add(out);
+  out.rotation.x = -Math.PI / 2; out.position.set(B.W / 2, -.02, B.D / 2); out.receiveShadow = true; out.name = 'terreno'; out.userData.keep = true; if (!opt.embed) g.add(out);
   const fl = new THREE.Mesh(new THREE.PlaneGeometry(B.W, B.D), M.floor); fl.rotation.x = -Math.PI / 2; fl.position.set(B.W / 2, .005, B.D / 2); fl.receiveShadow = true; g.add(fl);
   // colunas (perfil I 0,6 m) e vigas por nível
   for (const x of B.colX) for (const z of B.colZ) { ibeam(g, V(x, 0, z), V(x, B.H, z), .6, .4, M.steel); box(g, 1, .25, 1, M.concrete, x, .12, z); }
@@ -27,21 +27,42 @@ export function buildBuilding(scene, M, opt = {}) {
   box(g, B.screenEnd - x0, t, B.D, M.concrete, (B.screenEnd + x0) / 2, y1 - t / 2, B.D / 2);
   for (const [a, b] of holes) { box(g, b - a, t, 3.4, M.concrete, (a + b) / 2, y1 - t / 2, 1.7); box(g, b - a, t, 5.6, M.concrete, (a + b) / 2, y1 - t / 2, B.D - 2.8); }
   for (const [a, b] of holes) { railing(g, V(a, y1, 3.4), V(a, y1, B.D - 5.6), M.yellow); railing(g, V(b, y1, 3.4), V(b, y1, B.D - 5.6), M.yellow); }
-  for (const [a, b] of holes) railing(g, V(a, y1, B.D - 5.6), V(b, y1, B.D - 5.6), M.yellow);   // frente de cada vão (lado da circulação)
+  holes.forEach(([a, b], i) => railing(g, V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6), M.yellow));   // no 1º vão fica a chegada da escada   // frente de cada vão (lado da circulação)
   railing(g, V(B.screenEnd, y1, 0.3), V(B.screenEnd, y1, B.D - .3), M.yellow);
   // PISO DOS ALIMENTADORES (L2): faixa sobre a alimentação das peneiras, com grade e guarda-corpo voltado ao vão
   const E = B.screenEnd;
   box(g, E, t, 6.5, M.concrete, E / 2, LV.L2 - t / 2, 3.25);
   const gr = new THREE.Mesh(new THREE.PlaneGeometry(E, 2.2), M.grate); gr.rotation.x = -Math.PI / 2; gr.position.set(E / 2, LV.L2 + .01, 7.6); g.add(gr);
   beam(g, V(0, LV.L2 - .1, 8.7), V(E, LV.L2 - .1, 8.7), .18, M.steel);
-  railing(g, V(.3, LV.L2, 8.6), V(E - .3, LV.L2, 8.6), M.yellow);
+  railing(g, V(.3, LV.L2, 8.6), V(E - 1.85, LV.L2, 8.6), M.yellow);   // abertura para a chegada da escada (x 44,2–45,4)
+  railing(g, V(E - .6, LV.L2, 8.6), V(E - .3, LV.L2, 8.6), M.yellow);
   // torre dos britadores (x 34–48): piso intermediário em grade a 5,5 m para inspeção da alimentação
   const gt = new THREE.Mesh(new THREE.PlaneGeometry(B.W - E, 4), M.grate); gt.rotation.x = -Math.PI / 2; gt.position.set((B.W + E) / 2, 5.5, 12); g.add(gt);
-  railing(g, V(E + .2, 5.5, 10), V(B.W - .2, 5.5, 10), M.yellow); railing(g, V(E + .2, 5.5, 14), V(B.W - .2, 5.5, 14), M.yellow);
+  railing(g, V(E + .2, 5.5, 10), V(B.W - .2, 5.5, 10), M.yellow);
+  // borda z = 14 com abertura para o patamar da escada (x 48,6–49,6)
+  railing(g, V(E + .2, 5.5, 14), V(48.6, 5.5, 14), M.yellow); railing(g, V(49.6, 5.5, 14), V(B.W - .2, 5.5, 14), M.yellow);
+  { const lp = new THREE.Mesh(new THREE.PlaneGeometry(1.0, .95), M.grate); lp.rotation.x = -Math.PI / 2; lp.position.set(49.1, 5.51, 14.47); g.add(lp);
+    beam(g, V(48.6, 5.4, 14.95), V(49.6, 5.4, 14.95), .12, M.steel); beam(g, V(48.6, 0, 14.9), V(48.6, 5.4, 14.9), .12, M.steel);
+    railing(g, V(48.6, 5.5, 14), V(48.6, 5.5, 14.95), M.yellow); railing(g, V(48.6, 5.5, 14.95), V(49.5, 5.5, 14.95), M.yellow); }
   // escadas
-  stairs(g, 1.6, 0, 10, LV.L1, 10, 1.1, 0, M.yellow, M.yellow);
-  stairs(g, E - 1.2, LV.L1, 21, LV.L2 - LV.L1, 8, 1.1, Math.PI, M.yellow, M.yellow);
-  stairs(g, E + 1.2, 0, 23, 5.5, 6.5, 1.0, Math.PI, M.yellow, M.yellow);
+  stairs(g, 1.9, 0, B.D - 5.6 - 10, LV.L1, 10, 1.1, 0, M.yellow, M.yellow);   // sobe pelo vão da 1ª peneira e chega à borda da laje (z 18,4)
+  stairs(g, E - 1.2, LV.L1, 8.7 + 8, LV.L2 - LV.L1, 8, 1.1, Math.PI, M.yellow, M.yellow);   // do piso +7,5 (z 16,7) até a borda do piso +14 (z 8,7)
+  stairs(g, 56.1, 0, 14.5, 5.5, 6.5, .7, -Math.PI / 2, M.yellow, M.yellow);   // sobe ao lado da plataforma (sentido −x) e chega ao patamar
+  // escadas de inspeção ENTRE as peneiras (foto do peneiramento): sobem do piso L1 a uma plataforma junto aos vibradores
+  for (let i = 0; i < SCREENS.xs.length - 1; i += 2) {
+    const xm = (SCREENS.xs[i] + SCREENS.xs[i + 1]) / 2, yP = y1 + 2.4, z0 = 15.2, run = 3.2, zP = z0 - run;
+    stairs(g, xm, y1, z0, 2.4, run, .75, Math.PI, M.yellow, M.yellow);
+    box(g, .8, .06, 2.4, M.grate, xm, yP, zP - 1.2);
+    for (const sx of [-1, 1]) { railing(g, V(xm + sx * .42, yP, zP), V(xm + sx * .42, yP, zP - 2.4), M.yellow); beam(g, V(xm + sx * .36, y1, zP - 2.3), V(xm + sx * .36, yP, zP - 2.3), .06, M.yellow); }
+    railing(g, V(xm - .42, yP, zP - 2.4), V(xm + .42, yP, zP - 2.4), M.yellow);
+  }
+  // passarela de inspeção ao longo da correia de distribuição (y ≈ 17 m) com guarda-corpo e tirantes à cobertura
+  { const yW = 17.05, zW = 3.75;
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(E, .9), M.grate); w.rotation.x = -Math.PI / 2; w.position.set(E / 2, yW, zW); g.add(w);
+    for (const zz of [zW - .45, zW + .45]) beam(g, V(0, yW - .08, zz), V(E, yW - .08, zz), .12, M.steelDk);
+    railing(g, V(.2, yW, zW + .45), V(E - .2, yW, zW + .45), M.yellow);
+    for (let x = 4; x < E; x += 4) { beam(g, V(x, yW - .1, zW + .45), V(x, B.H, zW + .45), .03, M.steelDk, true); beam(g, V(x, yW - .14, zW - .5), V(x, yW - .14, zW + .5), .1, M.steelDk); }
+  }
 
   // FECHAMENTO: telha verde por fora / marrom empoeirada por dentro, com grandes aberturas (luz do dia como na foto da peneira)
   const walls = [];
@@ -63,7 +84,25 @@ export function buildBuilding(scene, M, opt = {}) {
   const addLamp = (x, y, z) => { const sh = new THREE.Mesh(lampGeo, M.greyDk); sh.position.set(x, y, z); g.add(sh); const d = new THREE.Mesh(new THREE.CircleGeometry(.42, 18), M.glass); d.rotation.x = Math.PI / 2; d.position.set(x, y - .17, z); g.add(d); lamps.push(V(x, y - .3, z)); };
   for (let x = 4; x < B.W; x += 8) for (const z of [6, 18]) addLamp(x, B.H - .8, z);
   for (let x = 4; x < E; x += 8) addLamp(x, LV.L2 - .7, 14);
-  for (const x of [51, 59]) for (const z of [4, 20]) addLamp(x, 10.5, z);
+  // SALA DOS BRITADORES: forro baixo e escuro (piso de chapa xadrez sobre vigas a 5,5 m, fotos dos HP 400 e do Barmac)
+  // com vãos para as bicas dos silos; luminárias pontuais logo abaixo do forro.
+  const yD = 5.5, holes2 = [...CRUSHERS.cones.map((c) => [c.x - 1.3, c.x + 1.3, c.z - 1.3, c.z + 1.3]), ...CRUSHERS.vsi.map((c) => [c.x - 1.2, c.x + 1.2, c.z - 1.2, c.z + 1.2])];
+  const deck = (x0, x1, z0, z1) => {
+    const hs = holes2.filter((h) => h[0] < x1 && h[1] > x0 && h[2] < z1 && h[3] > z0);
+    const xs = [...new Set([x0, x1, ...hs.flatMap((h) => [Math.max(x0, h[0]), Math.min(x1, h[1])])])].sort((a, b) => a - b);
+    for (let i = 0; i < xs.length - 1; i++) {
+      const a = xs[i], b = xs[i + 1], gaps = hs.filter((h) => h[0] < b - 1e-3 && h[1] > a + 1e-3).map((h) => [Math.max(z0, h[2]), Math.min(z1, h[3])]).sort((p, q) => p[0] - q[0]);
+      let z = z0; for (const [g0, g1] of [...gaps, [z1, z1]]) { if (g0 - z > .05) box(g, b - a, .08, g0 - z, M.steelDk, (a + b) / 2, yD, (z + g0) / 2); z = Math.max(z, g1); }
+    }
+    for (let x = x0 + .9; x < x1 - .3; x += 2.1) {                       // vigas I sob a chapa (pulam os vãos)
+      if (hs.some((h) => x > h[0] - .25 && x < h[1] + .25)) continue;
+      const b = ibeam(g, V(x, yD - .26, z0), V(x, yD - .26, z1), .42, .2, M.steel); b.rotation.x = Math.PI / 2;
+    }
+    for (const z of [z0, z1]) ibeam(g, V(x0, yD - .3, z), V(x1, yD - .3, z), .5, .25, M.steel).rotation.z = Math.PI / 2;
+  };
+  deck(48.6, B.W - .3, 3.2, 10); deck(48.6, B.W - .3, 14, B.D - .3);
+  for (const x of [51, 59]) for (const z of [4.3, 9.6]) addLamp(x, yD - .6, z);
+  for (const x of [52.75, 58.25]) for (const z of [15, 21]) addLamp(x, yD - .6, z);
   // tubulação de água/ar ao longo das colunas (detalhe das fotos)
   for (const x of [8, 24, 40, 56]) { beam(g, V(x + .5, 0, 12.4), V(x + .5, LV.L2, 12.4), .05, M.grey, true); }
   // vista em corte: de fora/acima do prédio a cobertura some para mostrar o processo

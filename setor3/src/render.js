@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261003175719';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261003175719';
-import { PhoneShader } from './render_post.js?v=20261003175719';
-import { UpscaleShader } from './render_upscale.js?v=20261003175719';
+import { B, LV } from './layout.js?v=20261007202109';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007202109';
+import { PhoneShader } from './render_post.js?v=20261007202109';
+import { UpscaleShader } from './render_upscale.js?v=20261007202109';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -63,7 +63,9 @@ function skyDome() {
   for (let i = 0; i < 70; i++) { const cx = r() * 2048, cy = 60 + r() * 150, rr = 20 + r() * 70; const gr = x.createRadialGradient(cx, cy, 0, cx, cy, rr); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(cx - rr, cy - rr, rr * 2, rr * 2); }
   // morros distantes (azulados) e próximos (verde-escuro com copas)
   const hills = (base, amp, col, bump) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, 260); let h = 0; for (let px = 0; px <= 2048; px += 4) { h = base - amp * (.5 + .5 * Math.sin(px / 2048 * Math.PI * 6 + base) * Math.sin(px / 2048 * Math.PI * 2.6 + 1.3)) - (bump ? r() * bump : 0); x.lineTo(px, h); } x.lineTo(2048, 262); x.closePath(); x.fill(); };
-  hills(250, 46, '#7f949c', 0); hills(256, 30, '#4f6b3c', 7); hills(258, 12, '#3f5a30', 10);
+  // morros com perspectiva aérea (névoa azulada, desfocados — sem recorte de "desenho")
+  x.filter = 'blur(3px)'; hills(250, 46, '#9aa9ae', 0); x.filter = 'blur(1.5px)'; hills(256, 30, '#6f7f62', 5); x.filter = 'blur(.8px)'; hills(258, 12, '#58684a', 6); x.filter = 'none';
+  const hz = x.createLinearGradient(0, 200, 0, 262); hz.addColorStop(0, 'rgba(225,232,236,0)'); hz.addColorStop(1, 'rgba(225,232,236,.35)'); x.fillStyle = hz; x.fillRect(0, 200, 2048, 62);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const m = new THREE.Mesh(new THREE.SphereGeometry(380, 48, 24), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, fog: false, depthWrite: false }));
   m.position.set(B.W / 2, -20, B.D / 2); m.renderOrder = -10; m.frustumCulled = false; m.name = 'sky';
@@ -117,7 +119,7 @@ const VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMat
 class AccumPass extends Pass {
   constructor() {
     super(); const o = { type: THREE.HalfFloatType, depthBuffer: false };
-    this.a = new THREE.WebGLRenderTarget(1, 1, o); this.b = new THREE.WebGLRenderTarget(1, 1, o); this.n = 0; this.minAlpha = .08;
+    this.a = new THREE.WebGLRenderTarget(1, 1, o); this.b = new THREE.WebGLRenderTarget(1, 1, o); this.n = 0; this.minAlpha = .12;
     this.blend = new THREE.ShaderMaterial({ uniforms: { tNew: { value: null }, tHist: { value: null }, alpha: { value: 1 } }, vertexShader: VS, depthTest: false, depthWrite: false,
       fragmentShader: 'uniform sampler2D tNew; uniform sampler2D tHist; uniform float alpha; varying vec2 vUv; void main(){ gl_FragColor = mix(texture2D(tHist, vUv), texture2D(tNew, vUv), alpha); }' });
     this.copy = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: VS, depthTest: false, depthWrite: false,

@@ -3,8 +3,8 @@
 // retido 1º deck → correia → silos dos HP 400; retido 2º deck → correia → silos dos Barmac;
 // britado → correia de retorno → peneiras; SAÍDA passante < 12,5 mm → correia → pilha de regularização.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261003175719';
-import { V, box, beam, cyl } from './util.js?v=20261003175719';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261007202109';
+import { V, box, beam, cyl } from './util.js?v=20261007202109';
 
 export function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -39,12 +39,12 @@ export function buildFlows(scene, M, opt = {}) {
   SCREENS.xs.forEach((x) => { beam(g, V(x - .6, LV.L1 + .9, 11.9), V(x - .6, yD1 + .3, zD1), .5, M.chute); beam(g, V(x + .6, LV.L1 + .5, 11.9), V(x + .6, yD2 + .3, zD2), .5, M.chute); });
   // retidos sobem por correias de alta inclinação no corredor entre o fim dos pisos (x 46) e as pernas dos silos
   const zC = CRUSHERS.cones[0].z, zV = CRUSHERS.vsi[0].z, x1 = E + 1.5, x2 = E + .75;
-  belt(V(1, yD1, zD1), V(E + 1, yD1, zD1), 1.0, 'R1');
+  belt(V(2.8, yD1, zD1), V(E + 1, yD1, zD1), 1.0, 'R1');
   xfer(V(E + 1.3, yD1 - .1, zD1), V(x1, yD1 - .75, zD1 - .35));
   belt(V(x1, yD1 - .85, zD1 - .45), V(x1, 16.9, zC + .2), 1.0, 'R1');
   xfer(V(x1, 16.8, zC + .1), V(x1 + .4, 16.15, zC));
   belt(V(x1 + .4, 16.0, zC), V(62, 16.0, zC), 1.0, 'R1');
-  belt(V(1, yD2, zD2), V(E + .6, yD2, zD2), 1.0, 'R2');
+  belt(V(2.8, yD2, zD2), V(E + .6, yD2, zD2), 1.0, 'R2');
   xfer(V(E + .8, yD2 - .1, zD2), V(x2, yD2 - .7, zD2 + .45));
   belt(V(x2, yD2 - .8, zD2 + .55), V(x2, 16.0, zV - .2), 1.0, 'R2');
   xfer(V(x2, 15.9, zV - .1), V(x2 + .4, 15.35, zV));
@@ -54,7 +54,7 @@ export function buildFlows(scene, M, opt = {}) {
   CRUSHERS.vsi.forEach((c) => { box(g, 1.3, .5, 1.3, M.chute, c.x, 14.85, zV); box(g, .4, 1.2, 1.7, M.yellow, c.x, 15.8, zV); });
   // SAÍDA: produto < 12,5 mm saindo pela lateral rumo à pilha
   xfer(V(E + 2.3, 1.25, 20.5), V(E + 2.9, .95, 20.6), .8);
-  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 26, 9, 30), 1.2, 'P', M.ore);
+  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 6, 7.6, 32), 1.2, 'P', M.ore);
   // etiquetas de vazão (texto atualizado pela interface)
   const fmt = (v) => Math.round(v).toLocaleString('pt-BR');
   labels.push({ pos: V(-12, 10.5, -16), kind: 'in', text: (K) => `ENTRADA · ROM da TCLD · ${fmt(K.F)} t/h` });

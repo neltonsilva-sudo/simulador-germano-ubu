@@ -16,4 +16,8 @@ export const CAMS = {
   britadores: { pos: [47.5, 1.55, 1.6], look: [59, 1.6, 8.5], fov: 68, label: 'Britagem primária (HP 400)' },
   vsi: { pos: [56.8, 2.2, 23.2], look: [61, 2.0, 17.5], fov: 62, label: 'Barmac 03BR006' },
   geral: { pos: [-10, 40, 72], look: [32, 3, 10], fov: 50, label: 'Vista geral (corte)' },
+  // câmeras calibradas pelas fotos de campo (mesmo enquadramento; capturar no formato da foto: 4:3 / 1052×780 / 1024×657)
+  foto1: { pos: [61.5, 2.3, 10.0], look: [59.3, 3.35, 5.5], fov: 52, label: 'Foto 1 · HP 400' },
+  foto2: { pos: [60.5, 1.6, 23.4], look: [61.0, 2.2, 17.5], fov: 58, label: 'Foto 2 · Barmac 03BR006' },
+  foto3: { pos: [12.0, 15.4, 16.0], look: [12.0, 10.8, 6.0], fov: 56, label: 'Foto 3 · Peneiras' },
 };

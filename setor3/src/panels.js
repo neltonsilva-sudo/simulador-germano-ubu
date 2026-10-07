@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261003175719';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261007202109';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -43,7 +43,7 @@ const CSS = `
 @media (max-width:860px){.s3acc{top:auto;bottom:150px;left:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
-const SECS = [['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
+const SECS = [['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
 
 export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -73,7 +73,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   C.innerHTML = `<div class="ctl"><div class="r"><span>Alimentação nova (ROM da lavra)</span><b id="cFv"></b></div><input type="range" id="cF" min="0" max="5200" step="50"><small id="cFn">Vazão de ROM que a TCLD entrega ao setor.</small></div>
     <div class="ctl"><div class="r"><span>Abertura dos HP 400 (APF)</span><b id="cCv"></b></div><input type="range" id="cC" min="12" max="30" step="1"><small>Menor abertura = produto mais fino e mais carga circulante; mais potência nos cônicos.</small></div>
     <div class="ctl"><div class="r"><span>Velocidade da TCLD</span><b id="cTv"></b></div><input type="range" id="cT" min="40" max="110" step="1"><small>Capacidade nominal 6.000 t/h a 100 %.</small></div>
-    <div class="ctl"><div class="r"><span>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai.</small></div>
+    <div class="ctl"><div class="r"><span>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai. Alerta amarelo a partir de 8,5 % (ou quando sobe rápido) e vermelho a partir de 9,5 %.</small></div>
     <button class="go" id="cRun"></button>`;
   const cF = $('#cF'), cC = $('#cC'), cT = $('#cT'), cM = $('#cM');
   cF.oninput = () => { sim.feed = +cF.value; }; cF.onchange = () => logEv('Ajuste', `Alimentação nova ${fm(sim.feed)} t/h`);
@@ -97,6 +97,28 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     x.fillStyle = '#7b8a97'; x.font = `${9.5 * dpr}px system-ui`; x.fillText(`últimos ${fm((t1 - t0) / 60, 0)} min`, pl, H - 3 * dpr);
   }
   $('#pB_tend').innerHTML = '<canvas id="g1"></canvas><canvas id="g2"></canvas><canvas id="g3"></canvas>';
+  // ---- curva granulométrica: % passante acumulado × tamanho (escala log), por etapa
+  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px"></canvas><div id="gT"></div><p class="hint">Curvas ilustrativas (Rosin–Rammler). Mude a APF em <b>Controles e ajustes</b>: o britado do HP 400 e o produto se deslocam, e o P80 do produto é o F80 de alimentação da moagem. Finos mal classificados (peneira com baixa eficiência) engrossam o produto.</p>';
+  const GC = [['rom', 'ROM (TCLD)', '#9aa7b3'], ['mix', 'Alimentação das peneiras', '#5cc6dc'], ['hp', 'Britado HP 400', '#ff9a4a'], ['vsi', 'Britado Barmac', '#c58cff'], ['prod', 'Produto → moagem', '#2fbf71']];
+  function granChart(cv) {
+    const G = sim.kpi.gran; if (!G) return; const r = cv.getBoundingClientRect(); if (!r.width) return; const dpr = Math.min(2, devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr;
+    const x = cv.getContext('2d'), W = cv.width, H = cv.height, pl = 30 * dpr, pr = 8 * dpr, pt = 30 * dpr, pb = 16 * dpr, X0 = Math.log10(.5), X1 = Math.log10(300);
+    const sx = (v) => pl + (W - pl - pr) * (Math.log10(v) - X0) / (X1 - X0), sy = (p) => pt + (H - pt - pb) * (1 - p);
+    x.clearRect(0, 0, W, H); x.font = `${9.5 * dpr}px system-ui`; x.strokeStyle = 'rgba(255,255,255,.08)'; x.fillStyle = '#7b8a97';
+    for (const v of [1, 2, 5, 10, 20, 50, 100, 200]) { x.beginPath(); x.moveTo(sx(v), pt); x.lineTo(sx(v), H - pb); x.stroke(); x.fillText(String(v), sx(v) - 4 * dpr, H - 4 * dpr); }
+    for (const p of [0, .5, .8, 1]) { x.beginPath(); x.moveTo(pl, sy(p)); x.lineTo(W - pr, sy(p)); x.stroke(); x.fillText(Math.round(p * 100) + '%', 2 * dpr, sy(p) + 3 * dpr); }
+    x.setLineDash([4 * dpr, 3 * dpr]); x.strokeStyle = 'rgba(255,210,74,.7)'; x.beginPath(); x.moveTo(sx(12.5), pt); x.lineTo(sx(12.5), H - pb); x.stroke();
+    x.strokeStyle = 'rgba(255,154,74,.6)'; x.beginPath(); x.moveTo(sx(sim.css), pt); x.lineTo(sx(sim.css), H - pb); x.stroke(); x.setLineDash([]);
+    x.fillStyle = '#ffd24a'; x.fillText('12,5 mm', sx(12.5) + 3 * dpr, pt + 9 * dpr); x.fillStyle = '#ff9a4a'; x.fillText(`APF ${sim.css} mm`, sx(sim.css) + 3 * dpr, pt + 19 * dpr);
+    let lx = pl, ly = 10 * dpr; x.font = `600 ${9.5 * dpr}px system-ui`;
+    for (const [k, n, c] of GC) { const tw = x.measureText(n).width + 16 * dpr; if (lx + tw > W) { lx = pl; ly += 11 * dpr; } x.fillStyle = c; x.fillRect(lx, ly - 5 * dpr, 9 * dpr, 3 * dpr); x.fillText(n, lx + 11 * dpr, ly); lx += tw; }
+    for (const [k, , c] of GC) { const f = k === 'mix' ? G.mix : (v) => G.pas(G.st[k], v); x.strokeStyle = c; x.lineWidth = (k === 'prod' ? 2.4 : 1.6) * dpr; x.beginPath();
+      for (let i = 0; i <= 80; i++) { const v = Math.pow(10, X0 + (X1 - X0) * i / 80), X = sx(v), Y = sy(f(v)); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); }
+  }
+  function granTable() {
+    const G = sim.kpi.gran; if (!G) return ''; const f1 = (v) => fm(v, 1);
+    return `<table><tr><th>Etapa</th><th class="n">P80 (mm)</th></tr><tr><td>ROM (TCLD) · F80 do setor</td><td class="n">${f1(G.st.rom.p80)}</td></tr><tr><td>Alimentação das peneiras (nova + retorno)</td><td class="n">${f1(G.feedP80)}</td></tr><tr><td>Retido 1º deck → HP 400</td><td class="n">${f1(G.st.r1.p80)}</td></tr><tr><td>Retido 2º deck → Barmac</td><td class="n">${f1(G.st.r2.p80)}</td></tr><tr><td>Britado HP 400 (APF ${sim.css} mm)</td><td class="n">${f1(G.st.hp.p80)}</td></tr><tr><td>Britado Barmac</td><td class="n">${f1(G.st.vsi.p80)}</td></tr><tr><td><b>Produto &lt; 12,5 mm = F80 da moagem</b></td><td class="n"><b>${f1(G.p80prod)}</b></td></tr></table><p class="hint">Eficiência média das peneiras: ${fm(G.effM)} %. Referência (APF 20 mm, eficiência 92 %): ${f1(G.p80prod / G.ratio)} mm → agora ${G.ratio >= 1 ? '+' : ''}${fm((G.ratio - 1) * 100)} %.</p>`;
+  }
 
   // ---- renderização periódica
   function render(force) {
@@ -107,7 +129,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     $('#pS_ind').textContent = `${fm(K.F)} → ${fm(K.prod)} t/h`; $('#pS_al').textContent = K.alarms.length ? `${K.alarms.length} alarme(s)` : 'normal';
     $('#pS_eq').textContent = `${K.nPN}/8 PN · ${K.nC}/2 HP · ${K.nV}/3 Barmac`; $('#pS_ctl').textContent = sim.running ? 'operando' : 'parado';
     const nm = (t, e) => (e.k === 'pn' ? 'Peneira ' : e.k === 'cone' ? 'HP 400 ' : 'Barmac ') + t;
-    const val = (e) => !(e.on && e.flow > 0) ? (e.on ? 'sem carga' : 'desligado') : e.k === 'pn' ? `efic. ${fm(e.eff)} % · ${fm(e.load * 100)} % carga · desg. ${fm(e.w)} %` : `${fm(e.kw)} kW · ${fm(e.vib, 1)} mm/s · desg. ${fm(e.w)} %`;
+    const val = (e) => (!(e.on && e.flow > 0) ? (e.on ? 'sem carga' : 'desligado') : e.k === 'pn' ? `efic. ${fm(e.eff)} % · ${fm(e.load * 100)} % carga · desg. ${fm(e.w)} %` : `${fm(e.kw)} kW · ${fm(e.vib, 1)} mm/s · desg. ${fm(e.w)} %`) + (e.health != null ? ` · saúde ${e.health}` : '');
     const dot = (e) => (e.st === 'off' ? 'crit' : e.st === 'ok' ? '' : e.st);
     const probs = [];
     for (const [t, e] of Object.entries(E)) if (e.st !== 'ok') {
@@ -120,14 +142,16 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     $('#pS_pi').textContent = `${Object.values(E).filter((e) => e.st !== 'ok').length} fora da faixa`; $('#pS_prob').textContent = probs.length ? `${probs.length}` : 'nenhum';
     if (on('pi') || force) {
       $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
-        `<div class="hs ${K.circ > 70 ? 'warn' : ''}"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs"><i></i><div>Produto britado (P80 da moagem)</div><span>${sim.p80 ? fm(sim.p80) + ' µm' : 'sem simulador'}</span></div>`;
+        `<div class="hs ${K.circ > 70 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
       el.querySelectorAll('#pB_pi [data-i]').forEach((d) => d.onclick = () => openInfo(d.dataset.i)); }
     if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || '<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>';
     if (on('ind') || force) $('#pB_ind').innerHTML = `<div class="s3k">
       <div><b>${fm(K.F)}</b><span>Lavra · ROM da TCLD (t/h)</span></div><div><b>${fm(K.T)}</b><span>Alimentação das peneiras (t/h)</span></div>
       <div class="${K.prod < K.F * .95 ? 'warn' : ''}"><b>${fm(K.prod)}</b><span>Produto &lt; 12,5 mm (t/h)</span></div><div class="${K.circ > 70 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div>
       <div><b>${fm(K.kw)}</b><span>Potência total (kW)</span></div><div><b>${fm(K.spec, 2)}</b><span>Energia específica (kWh/t)</span></div>
-      <div class="${sim.moist > 10 ? 'crit' : sim.moist > 9 ? 'warn' : ''}"><b>${fm(sim.moist, 1)} %</b><span>Umidade do ROM</span></div><div class="${effM < 80 ? 'warn' : ''}"><b>${fm(effM)} %</b><span>Eficiência média das peneiras</span></div></div>`;
+      <div class="${(K.umid || {}).st === 'crit' ? 'crit' : (K.umid || {}).st === 'warn' ? 'warn' : ''}"><b>${fm(sim.moist, 1)} %${(K.umid || {}).rise > .15 ? ' ↑' : ''}</b><span>Umidade do ROM${(K.umid || {}).st === 'crit' ? ' · colmatação' : (K.umid || {}).st === 'warn' ? ' · risco de colmatação' : ''}</span></div><div class="${effM < 80 ? 'warn' : ''}"><b>${fm(effM)} %</b><span>Eficiência média das peneiras</span></div></div>`;
+    if (on('gran')) { granChart($('#gG')); $('#gT').innerHTML = granTable(); }
+    if (sim.kpi.gran) $('#pS_gran').textContent = `P80 produto ${fm(sim.kpi.gran.p80prod, 1)} mm`;
     if (on('tend')) { const cv = el.querySelectorAll('#pB_tend canvas');
       chart(cv[0], [{ n: 'ROM', c: '#2fbf71', f: (h) => h.F }, { n: 'peneiras', c: '#5cc6dc', f: (h) => h.T }, { n: 'produto', c: '#ff9a4a', f: (h) => h.prod }], 'Vazões', 't/h');
       chart(cv[1], [{ n: 'carga circulante', c: '#ffd24a', f: (h) => h.circ }], 'Carga circulante', '%');
@@ -146,7 +170,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
         <tr class="grp"><td colspan="4">Saídas</td></tr><tr><td>Produto &lt; 12,5 mm → pilha de regularização</td><td class="n">${fm(K.prod)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr></table>
         <p style="color:#9fb0bd;margin:6px 0 0">A britagem só reduz o tamanho: os teores entram e saem iguais. Balanço: entra ${fm(K.F)} t/h = sai ${fm(K.prod)} t/h${K.limited ? ' (alimentação limitada pela britagem)' : ''}.</p>`; }
     if (on('eq') || force) {
-      $('#pB_eq').innerHTML = `<table><tr><th>Tag</th><th>Estado</th><th class="n">Carga</th><th class="n">Vibr.</th><th class="n">Desg.</th><th></th></tr>${Object.entries(E).map(([tag, e]) => `<tr><td><a data-i="${tag}">${tag}</a></td><td><span class="st ${e.st}"></span>${stTxt[e.st]}</td><td class="n">${e.on ? fm(e.load * 100) + ' %' : '–'}</td><td class="n">${e.on && e.flow > 0 ? fm(e.vib, 1) : '–'}</td><td class="n">${fm(e.w)} %</td><td><button data-t="${tag}">${e.on ? 'Desligar' : 'Ligar'}</button></td></tr>`).join('')}</table>`;
+      $('#pB_eq').innerHTML = `<table><tr><th>Tag</th><th>Estado</th><th class="n">Carga</th><th class="n">Vibr.</th><th class="n">Desg.</th><th class="n">Saúde</th><th></th></tr>${Object.entries(E).map(([tag, e]) => `<tr><td><a data-i="${tag}">${tag}</a></td><td><span class="st ${e.st}"></span>${stTxt[e.st]}</td><td class="n">${e.on ? fm(e.load * 100) + ' %' : '–'}</td><td class="n">${e.on && e.flow > 0 ? fm(e.vib, 1) : '–'}</td><td class="n">${fm(e.w)} %</td><td class="n" style="color:${e.health == null ? '#9fb0bd' : e.health < 50 ? '#ff6b5b' : e.health < 75 ? '#ffb020' : '#2fbf71'}">${e.health == null ? '–' : e.health}</td><td><button data-t="${tag}">${e.on ? 'Desligar' : 'Ligar'}</button></td></tr>`).join('')}</table>`;
       el.querySelectorAll('#pB_eq [data-t]').forEach((b) => b.onclick = () => { const e = E[b.dataset.t]; e.on = !e.on; logEv('Comando', `${b.dataset.t} ${e.on ? 'ligado' : 'desligado'}`); render(true); });
       el.querySelectorAll('#pB_eq [data-i]').forEach((a) => a.onclick = () => openInfo(a.dataset.i)); }
     if (on('al') || force) $('#pB_al').innerHTML = (K.alarms.length ? K.alarms.map((a) => `<div class="al ${a.st}"><b>${a.tag}</b> · ${a.why}</div>`).join('') : '<div style="color:#2fbf71">Sem alarmes ativos.</div>') +
