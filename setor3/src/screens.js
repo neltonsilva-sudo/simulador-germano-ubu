@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261008064359';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261008064359';
+import { SCREENS, LV } from './layout.js?v=20261008065407';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261008065407';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral
@@ -56,13 +56,13 @@ function dusty(mat, col, amt) {
 // ---------- minério de ferro (itabirito/hematita) ----------
 const hS = (a, b, s) => { let h = (Math.imul(a, 374761393) + Math.imul(b, 668265263) + Math.imul(s, 1442695041)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
 // paleta sRGB: hematita cinza-chumbo (com e sem brilho), itabirito marrom-avermelhado, goethita marrom, finos escuros
-const ORE_PAL_S = [[78, 74, 76, .45, .55], [64, 60, 62, .5, .5], [96, 90, 90, .4, .6], [86, 62, 56, .55, .35], [104, 62, 46, .75, .15], [88, 52, 40, .78, .12], [118, 76, 54, .8, .1], [98, 72, 50, .82, .08], [54, 47, 45, .85, .15], [44, 38, 37, .9, .1]];
+const ORE_PAL_S = [[76, 72, 74, .45, .55], [62, 59, 61, .5, .5], [90, 86, 86, .4, .6], [70, 66, 66, .5, .45], [84, 64, 58, .6, .3], [92, 62, 50, .75, .15], [80, 56, 46, .78, .12], [94, 74, 58, .82, .08], [54, 48, 46, .85, .15], [44, 39, 38, .9, .1]];
 // relevo grosso do leito (montículos ~10–20 cm), periódico no quadro [0,1)² — usado no deslocamento e no normalMap
 const lumpS = (u, v) => { const T = 6.2832; return .5 * Math.sin(T * (6 * u + 2 * v) + 1.3) * Math.sin(T * (3 * v - u) + .4) + .3 * Math.sin(T * (11 * u - 4 * v) + 2.1) * Math.cos(T * (7 * v + 3 * u)) + .2 * Math.sin(T * (17 * v + 5 * u) + .7); };
 // leito granulado: 3 camadas de grãos de Voronoi facetados (≈ 3,5 cm / 1,5 cm / 0,6 cm num quadro de 1,25 m),
 // juntas escuras entre os grãos, cor/rugosidade/metalicidade por grão; normal calculada da altura em metros
 function oreTexS(O = 1024) {
-  const LAY = [{ N: 36, p: .42, h0: .0045, hk: .0095, sd: 11 }, { N: 84, p: .55, h0: .0018, hk: .005, sd: 23 }, { N: 200, p: 1, h0: 0, hk: .0026, sd: 37 }];
+  const LAY = [{ N: 36, p: .36, h0: .0045, hk: .0095, sd: 11 }, { N: 84, p: .6, h0: .0018, hk: .005, sd: 23 }, { N: 200, p: 1, h0: 0, hk: .0026, sd: 37 }];
   for (const L of LAY) { L.cs = O / L.N; L.jx = new Float32Array(L.N * L.N); L.jy = new Float32Array(L.N * L.N); for (let k = 0; k < L.N * L.N; k++) { L.jx[k] = .12 + .76 * hS(k, 1, L.sd); L.jy[k] = .12 + .76 * hS(k, 2, L.sd); } }
   const H = new Float32Array(O * O), [oc, ox] = cnv(O), [rc, rx] = cnv(O), ci = ox.createImageData(O, O), ri = rx.createImageData(O, O), C = ci.data, R = ri.data;
   const px = 1.25 / O;
@@ -129,7 +129,7 @@ function rockGeoS(seed, detail = 1, cuts = 5) {
   return g;
 }
 // cor por pedra (sRGB → linear): hematita cinza-chumbo e itabirito marrom-avermelhado, nada claro
-const ROCK_PAL_S = [[84, 80, 82], [68, 64, 66], [100, 94, 94], [92, 66, 58], [112, 68, 50], [96, 58, 44], [122, 82, 58], [60, 53, 50]];
+const ROCK_PAL_S = [[100, 97, 99], [84, 81, 83], [116, 110, 108], [96, 78, 72], [112, 76, 60], [94, 66, 54], [72, 66, 64], [104, 92, 84]];
 function tintS(im, seed) { const c = new THREE.Color(); for (let i = 0; i < im.count; i++) { const P = ROCK_PAL_S[hS(i, seed, 5) * ROCK_PAL_S.length | 0], j = .8 + .35 * hS(i, seed, 6); c.setRGB(P[0] * j / 255, P[1] * j / 255, P[2] * j / 255, THREE.SRGBColorSpace); im.setColorAt(i, c); } im.instanceColor.needsUpdate = true; return im; }
 function makeTextures() {
   // painéis de poliuretano 305 × 610 mm (4 × 2 painéis num quadro de 1,22 m), furos quadrados ~32 mm, juntas e finos
@@ -248,7 +248,7 @@ export function buildScreens(scene, M) {
   TX.gT.repeat.set(1 / .3, 1 / .3); TX.gN.repeat.set(1 / .3, 1 / .3);
   const guardMat = dusty(new THREE.MeshStandardMaterial({ map: TX.gT, normalMap: TX.gN, normalScale: new THREE.Vector2(1.2, 1.2), roughness: .55, metalness: .1 }), '#8f5a3a', .7);
   const houseMat = dusty(new THREE.MeshStandardMaterial({ map: TX.hT, normalMap: TX.hN, normalScale: new THREE.Vector2(1.1, 1.1), roughness: .6, metalness: .08 }), '#7e6450', .5);
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .78, metalness: .18, flatShading: true });   // pedras das peneiras (cor por instância; escurece com umidade)
+  const rockMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .5, metalness: .25, flatShading: true });   // pedras das peneiras: cor por instância (hematita/itabirito), brilho metálico nas faces; escurece com umidade
   const btnMat = new THREE.MeshStandardMaterial({ color: 0xa8180e, roughness: .4 });
   const feedMat = dusty(new THREE.MeshStandardMaterial({ map: TX.fT, color: 0xcdb8a0, roughness: .82, metalness: .12 }), '#7c5e48', .6);
   const Mot = M.motorBlue || M.motor, Yel = M.yellow, Rub = M.rubber || M.black, Lin = M.chute, StD = M.steelDk || M.greyDk;
@@ -257,7 +257,7 @@ export function buildScreens(scene, M) {
   const sideGeo = plateGeo([[-.08, Bt(-.08)], ...PTS.slice(1, 3).map(([z]) => [z, Bt(z)]), [ZE + .04, Bt(ZE + .04)], ...TOP.slice().reverse()], TP);
   const linerGeo = (() => { const N = 24, top = [], bot = []; for (let k = 0; k <= N; k++) { const z = .02 + (ZE - .06) * k / N; bot.push([z, D(z) + .07]); top.push([z, T(z) - .06]); } return plateGeo([...bot, ...top.reverse()], .02, .003); })();
   const guardGeo = roundGeo(.8, .64, .64, .22), cguardGeo = roundGeo(.44, .4, .36, .14), spGeo = springGeo();
-  const rockA = rockGeometry(1, 1), rockB = rockGeometry(1, 2.3), rockC = rockGeometry(1, 3.7);
+  const rockBig = [rockGeoS(3, 1, 6), rockGeoS(8, 1, 5), rockGeoS(15, 1, 7)], rockMed = [rockGeoS(21, 0, 4), rockGeoS(27, 1, 5)], rockFin = rockGeoS(33, 0, 3);
   const springs = new Inst(), sBolts = new Inst();
   const uvm = (geo, su, sv) => { const u = geo.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * su, u.getY(i) * sv); return geo; };
   const planeY = (w, L) => uvm(new THREE.PlaneGeometry(w, L).rotateX(-Math.PI / 2), w / 1.22, L / 1.22);
@@ -335,37 +335,40 @@ export function buildScreens(scene, M) {
     box(body, W - .06, 1.45, .05, Rub, 0, .75, -.055);
     for (let k = 0; k < 9; k++) for (const yy of [-.4, .5, 1.2]) bb.add(body, -HW + .2 + k * (W - .4) / 8, yy, -.17, 0, 0, -1);
 
-    // ---- LEITO CONTÍNUO DE MINÉRIO (malha deformada, cor por vértice, textura escoando) + pedras
-    const bedT = TX.oT.clone(), bedN = TX.oN.clone(); bedT.needsUpdate = bedN.needsUpdate = true;
-    const bedMat = new THREE.MeshStandardMaterial({ map: bedT, normalMap: bedN, normalScale: new THREE.Vector2(1.4, 1.4), vertexColors: true, roughness: .93, metalness: .12 });
-    const NS = 72, NX = 18, hw = HW - .04, pos = [], col = [], uv = [], idx = [];
+    // ---- LEITO CONTÍNUO DE MINÉRIO: malha densa deformada (mais grossa na alimentação, afinando na descarga), textura
+    //      granulada facetada + normal + rugosidade/metalicidade por grão + deslocamento de montículos, tudo escoando junto
+    const bedT = TX.oT.clone(), bedN = TX.oN.clone(), bedR = TX.oR.clone(), bedD = TX.oD.clone(); for (const t of [bedT, bedN, bedR, bedD]) t.needsUpdate = true;
+    const bedMat = new THREE.MeshStandardMaterial({ map: bedT, normalMap: bedN, normalScale: new THREE.Vector2(1, 1), roughnessMap: bedR, metalnessMap: bedR, roughness: 1, metalness: 1, displacementMap: bedD, displacementScale: TX.LA, displacementBias: -TX.LA * .5, vertexColors: true });
+    const NS = 130, NX = 46, hw = HW - .04, pos = [], col = [], uv = [], idx = [];
     const nz = (a, b) => .5 * Math.sin(a * 7.1 + b * 3.3) + .3 * Math.sin(a * 13.7 - b * 9.1 + 1.3) + .2 * Math.sin(b * 17.3 + a * 3.1 + i);
     let tau = 0, sPrev = .05;
     for (let a = 0; a <= NS; a++) {
       const sS = .05 + (TOT - .07) * a / NS, f = sS / TOT; onDeck(sS, Q); tau += (sS - sPrev) / vDeck((sS + sPrev) / 2); sPrev = sS;
       for (let b = 0; b <= NX; b++) {
-        const xx = -hw + 2 * hw * b / NX, ex = 1 - .45 * Math.pow(Math.abs(xx) / hw, 4), n = nz(xx, sS);
-        let h = thick(f) * ex * (1 + .3 * n) + .008 * nz(xx * 3.1, sS * 2.7);
-        h = Math.max(.012, h); const yy = .045 + h;
+        const xx = -hw + 2 * hw * b / NX, ex = 1 - .45 * Math.pow(Math.abs(xx) / hw, 4), n = nz(xx, sS), edge = b === 0 || b === NX ? .5 : 1;
+        let h = thick(f) * ex * (1 + .25 * n) + .006 * nz(xx * 3.1, sS * 2.7);
+        h = Math.max(.012, h) * edge; const yy = .045 + h;
         pos.push(xx, Q.y + Q.ny * yy, Q.z + Q.nz * yy); uv.push(xx * .8, tau * .8);                  // v = tempo de trânsito → textura escoa com a velocidade local
-        const dk = .84 + .1 * (1 - Math.min(1, h / .12)) + .04 * n - .08 * f; col.push(dk, dk * .97, dk * .95);
+        const dk = .9 + .06 * n - .06 * f; col.push(dk, dk * .98, dk * .97);
       }
     }
     for (let a = 0; a < NS; a++) for (let b = 0; b < NX; b++) { const p = a * (NX + 1) + b; idx.push(p, p + NX + 1, p + 1, p + 1, p + NX + 1, p + NX + 2); }
     const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); bg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); bg.setIndex(idx); bg.computeVertexNormals();
     const bed = new THREE.Mesh(bg, bedMat); bed.receiveShadow = true; bed.castShadow = true; bed.userData.keep = true; body.add(bed);
-    // pedras: retidos (grossos, percorrem o deck todo e caem na calha de descarga do 1º deck), médios (passam pela tela ao
-    // longo do caminho, mais no início) e cortina de finos sob o deck (1º → 2º deck → moega do passante)
-    const NB = 44, NM = 120, NU = 130;
-    const big = oreColors(new THREE.InstancedMesh(i % 2 ? rockA : rockC, rockMat, NB), i * 3 + 1), med = oreColors(new THREE.InstancedMesh(rockB, rockMat, NM), i * 3 + 2), und = oreColors(new THREE.InstancedMesh(rockB, rockMat, NU), i * 3 + 3);
+    // pedras: retidos graúdos 5–15 cm (percorrem o deck todo e caem na calha de descarga do 1º deck), médios 2–5 cm
+    // (passam pela tela ao longo do caminho, mais no início), grânulos de finos 1–2 cm saltitando no leito e cortina de
+    // finos sob o deck (1º → 2º deck → moega do passante)
+    const NB = 54, NM = 150, NG = 200, NU = 140;
+    const big = tintS(new THREE.InstancedMesh(rockBig[i % 3], rockMat, NB), i * 5 + 1), med = tintS(new THREE.InstancedMesh(rockMed[i % 2], rockMat, NM), i * 5 + 2);
+    const grit = tintS(new THREE.InstancedMesh(rockFin, rockMat, NG), i * 5 + 3), und = tintS(new THREE.InstancedMesh(rockFin, rockMat, NU), i * 5 + 4);
     for (const im of [big, med]) { im.castShadow = im.receiveShadow = true; im.frustumCulled = false; body.add(im); }
-    und.frustumCulled = false; body.add(und);
-    const mk = (r0, r1) => { const r = r0 + Math.pow(Math.random(), 2) * (r1 - r0); return { s: 0, x: 0, r, sc: V(r * (.8 + Math.random() * .5), r * (.6 + Math.random() * .4), r * (.8 + Math.random() * .5)), a: Math.random() * 6.3, b: Math.random() * 6.3, v: .85 + Math.random() * .3, ph: Math.random() * 6.3, pass: TOT }; };
-    const bigP = Array.from({ length: NB }, () => mk(.045, .11)), medP = Array.from({ length: NM }, () => mk(.016, .038));
-    const xLim = (p) => hw - .1 - p.r;
+    for (const im of [grit, und]) { im.receiveShadow = true; im.frustumCulled = false; body.add(im); }
+    const mk = (r0, r1) => { const r = r0 + Math.pow(Math.random(), 1.6) * (r1 - r0); return { s: 0, x: 0, r, sc: V(r * (.85 + Math.random() * .35), r * (.8 + Math.random() * .3), r * (.85 + Math.random() * .35)), a: Math.random() * 6.3, b: Math.random() * 6.3, v: .85 + Math.random() * .3, ph: Math.random() * 6.3, hj: .5 + Math.random() * .8, pass: TOT }; };
+    const bigP = Array.from({ length: NB }, () => mk(.028, .075)), medP = Array.from({ length: NM }, () => mk(.011, .026)), gritP = Array.from({ length: NG }, () => mk(.005, .011));
+    const xLim = (p) => hw - .06 - p.r * 1.2;
     bigP.forEach((p) => { p.s = S0 + Math.random() * (TOT + .5 - S0); p.x = (Math.random() * 2 - 1) * xLim(p); });
-    medP.forEach((p) => { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4); p.s = S0 + Math.random() * (p.pass - S0); p.x = (Math.random() * 2 - 1) * xLim(p); });
-    const undP = Array.from({ length: NU }, (_, k) => ({ s: S0 + Math.random() * (TOT - S0 - .3), x: (Math.random() * 2 - 1) * (hw - .15), u: Math.random(), lo: k % 3 === 0, r: .01 + Math.random() * .014, v: .8 + Math.random() * .5 }));
+    for (const P of [medP, gritP]) P.forEach((p) => { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4); p.s = S0 + Math.random() * (p.pass - S0); p.x = (Math.random() * 2 - 1) * xLim(p); });
+    const undP = Array.from({ length: NU }, (_, k) => ({ s: S0 + Math.random() * (TOT - S0 - .3), x: (Math.random() * 2 - 1) * (hw - .15), u: Math.random(), lo: k % 3 === 0, r: .006 + Math.random() * .01, v: .8 + Math.random() * .5 }));
 
     // ---- CONJUNTO VIBRADOR: viga-caixão, 4 excitadores com proteções perfuradas, eixo e acoplamentos
     const ex = new THREE.Group(); ex.position.set(0, 0, 3.1); body.add(ex);
@@ -447,13 +450,13 @@ export function buildScreens(scene, M) {
     for (let k = 0; k < 10; k++) { const strip = box(ch, cw / 10 - .008, .28, .015, Rub, -cw / 2 + (k + .5) * cw / 10, -cL - .12, cdp / 2 - .02); strip.rotation.x = .05; }
     // jato de alimentação (cortina de minério escoando da bica sobre o deck)
     const jt = new THREE.Vector3(x, LV.L1 + Y0 + D(.75) + .2, SCREENS.zFeed + .75), jA = cB.clone().add(V(0, -.05, 0)), jd = jt.clone().sub(jA), jL = jd.length();
-    const jetT = TX.oT.clone(); jetT.needsUpdate = true; const jetMat = new THREE.MeshStandardMaterial({ map: jetT, color: 0xb0a49a, roughness: .93, metalness: .1 });
+    const jetT = TX.oT.clone(), jetN = TX.oN.clone(); jetT.needsUpdate = jetN.needsUpdate = true; jetN.offset = jetT.offset; const jetMat = new THREE.MeshStandardMaterial({ map: jetT, normalMap: jetN, color: 0xffffff, roughness: .82, metalness: .2 });
     const jet = new THREE.Mesh(uvm(new THREE.BoxGeometry(.78, jL, .12), .62, jL * .8), jetMat); jet.position.copy(jA).addScaledVector(jd, .5); jet.quaternion.setFromUnitVectors(V(0, 1, 0), jd.normalize()); jet.userData.keep = true; jet.castShadow = true; g.add(jet);
-    const N2 = 44, fall = oreColors(new THREE.InstancedMesh(rockA, rockMat, N2), i + 40); fall.frustumCulled = false; fall.castShadow = true; g.add(fall);
+    const N2 = 64, fall = tintS(new THREE.InstancedMesh(rockBig[(i + 1) % 3], rockMat, N2), i * 5 + 40); fall.frustumCulled = false; fall.castShadow = true; g.add(fall);
     const fall0 = jA.clone(), fall1 = jt.clone();
-    const drops = Array.from({ length: N2 }, () => ({ u: Math.random(), x: (Math.random() - .5) * .68, z: (Math.random() - .5) * .16, r: .03 + Math.random() * .065 }));
+    const drops = Array.from({ length: N2 }, () => ({ u: Math.random(), x: (Math.random() - .5) * .68, z: (Math.random() - .5) * .2, r: .022 + Math.pow(Math.random(), 1.5) * .05, sp: .9 + Math.random() * .25 }));
 
-    flows.push({ tag, big, med, und, bigP, medP, undP, xLim, bedT, bedN, bedMat, jetT, jet, fall, drops, fall0, fall1, hw });
+    flows.push({ tag, big, med, grit, und, bigP, medP, gritP, undP, xLim, bedT, bedN, bedR, bedD, bedMat, jetT, jet, fall, drops, fall0, fall1, hw });
 
     // ---- guarda-corpo frontal com a placa da peneira (foto 03PN002)
     railing(base, V(-W / 2 - .7, 0, 9.0), V(W / 2 + .7, 0, 9.0), Yel);
@@ -531,49 +534,54 @@ export function buildScreens(scene, M) {
   // posição de uma pedra no deck (ou em queda livre após o bico de descarga): apoiada no leito, meio enterrada, com os
   // "pulos" da vibração (16 Hz) e rolando conforme anda; nunca além das laterais nem flutuando
   const G2 = SG[2], vEnd = VSEG[2];
+  // pedra no deck: apoiada no leito (parcialmente enterrada), com os saltos da vibração (16 Hz ≈ 100 rad/s, maiores no
+  // trecho íngreme da alimentação) e tombando devagar; após o bico de descarga, queda livre balística até a calha
   const place = (im, i, p, t, k, sink, hw) => {
+    let roll = p.s / (p.r * 7);
     if (p.s <= TOT) {
       onDeck(p.s, Q); const f = p.s / TOT, ex = 1 - .45 * Math.pow(Math.min(1, Math.abs(p.x) / hw), 4);
-      const hop = k > 0 ? (.006 + .01 * (1 - f)) * Math.max(0, Math.sin(t * 100.5 + p.ph)) : 0;
-      const hh = .045 + Math.max(.012, thick(f) * ex * .9) + p.r * .35 + hop - sink;
+      const hop = k > 0 ? (.003 + .011 * (1 - f)) * p.hj * Math.max(0, Math.sin(t * 100.5 + p.ph)) : 0;
+      const hh = .045 + Math.max(.012, thick(f) * ex * .92) + p.r * .3 + hop - sink;
       p4.set(p.x, Q.y + Q.ny * hh, Q.z + Q.nz * hh);
-    } else { const tau = (p.s - TOT) / (vEnd * p.v), v0 = vEnd * p.v; p4.set(p.x, YE + .06 + p.r * .5 + G2.dy * v0 * tau - 4.9 * tau * tau, ZE + .05 + G2.dz * v0 * tau); }
-    e4.set(p.a + p.s / (p.r * 2.2), p.b, p.a * .5 + p.s / (p.r * 4)); q4.setFromEuler(e4); m4.compose(p4, q4, p.sc); im.setMatrixAt(i, m4);
+    } else { const tau = (p.s - TOT) / (vEnd * p.v), v0 = vEnd * p.v; roll += tau * 9; p4.set(p.x, YE + .06 + p.r * .5 + G2.dy * v0 * tau - 4.9 * tau * tau, ZE + .05 + G2.dz * v0 * tau); }
+    e4.set(p.a + roll, p.b, p.a * .5 + roll * .4); q4.setFromEuler(e4); m4.compose(p4, q4, p.sc); im.setMatrixAt(i, m4);
   };
   const adv = (p, dt, k) => { p.s += dt * k * p.v * (p.s < TOT ? vDeck(p.s) : vEnd); };
   const rnd = (n) => Math.random() * n;
+  // grãos que passam pela tela: andam, afundam no leito perto do ponto de passagem e renascem na alimentação
+  const passing = (f, im, P, n, dt, t, k, sk) => { for (let i = 0; i < n; i++) { const p = P[i]; adv(p, dt, k); if (p.s > p.pass) { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4) + .2; p.s = S0 + rnd(.3); p.x = (rnd(2) - 1) * f.xLim(p); } const sink = Math.min(1, Math.max(0, (p.s - (p.pass - .3)) / .3)) * (p.r * 1.6 + .02) + p.r * sk; place(im, i, p, t, k, sink, f.hw); } im.count = n; im.instanceMatrix.needsUpdate = true; };
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
     const E = S ? S.eq : {}; dt = Math.min(dt, .1);
     // umidade alta (> 9 %): minério mais escuro, mais brilhante (molhado) e escoando mais devagar
-    const wf = S && S.moist != null ? Math.min(1, Math.max(0, (S.moist - 9) / 2.5)) : 0, wetK = 1 - .4 * wf;
-    { const w = 1 - .5 * wf; rockMat.color.setRGB(.44 * w, .37 * w, .33 * w); }   // cor por instância é linear: escala para albedo de minério (~120/255) rockMat.roughness = .78 - .33 * wf;
+    const wf = S && S.moist != null ? Math.min(1, Math.max(0, (S.moist - 9) / 2.5)) : 0, wetK = 1 - .4 * wf, wd = 1 - .42 * wf;
+    rockMat.color.setRGB(0, 4, 0); rockMat.roughness = .5 - .22 * wf;
     // vibração do corpo: 16 Hz (≈ 100 rad/s), curso de ~10 mm em elipse
     vib.forEach((v, i) => { const e = E[SCREENS.tags[i]] || { on: true, flow: 800, load: .55 }; const a = e.on && e.flow > 0 ? .0045 + .0015 * Math.min(1.3, e.load) : 0; v.g.position.y = v.y0 + Math.sin(t * 100.5 + v.ph) * a; v.g.position.z = Math.cos(t * 100.5 + v.ph) * a * .7; });
     for (const f of flows) {
       const e = E[f.tag] || { on: true, flow: 800, load: .55 }, run = !!(e.on && e.flow > 0);
       f.jet.visible = f.fall.visible = f.und.visible = run;
-      f.bedMat.color.setScalar(1 - .38 * wf); f.jet.material.color.setRGB(.69 * (1 - .38 * wf), .64 * (1 - .38 * wf), .6 * (1 - .38 * wf));
+      f.bedMat.color.setScalar(wd); f.jet.material.color.setScalar(wd);
       if (!run && f.init) continue;                                  // peneira parada: o material fica parado no deck
       f.init = true;
       const L = run ? Math.min(1, Math.max(.2, .25 + e.flow / 1200)) : .5;   // vazão → quantidade de material
       const k = run ? (.85 + .25 * Math.min(1.3, e.load)) * wetK : 0;        // carga/umidade → velocidade de escoamento
-      f.bedT.offset.y -= dt * k * .8; f.bedN.offset.y = f.bedT.offset.y; f.jetT.offset.y -= dt * (run ? 2.6 : 0);
+      f.bedT.offset.y -= dt * k * .8; f.bedN.offset.y = f.bedR.offset.y = f.bedD.offset.y = f.bedT.offset.y; f.jetT.offset.y -= dt * (run ? 2.6 : 0);
       f.jet.scale.x = .45 + .55 * L;
       const nb = Math.max(4, Math.round(f.bigP.length * L)); f.big.count = nb;
       for (let i = 0; i < nb; i++) { const p = f.bigP[i]; adv(p, dt, k); if (p.s > TOT + vEnd * p.v * .55) { p.s = S0 + rnd(.3); p.x = (rnd(2) - 1) * f.xLim(p); } place(f.big, i, p, t, k, 0, f.hw); }
-      const nm = Math.round(f.medP.length * L); f.med.count = nm;
-      for (let i = 0; i < nm; i++) { const p = f.medP[i]; adv(p, dt, k); if (p.s > p.pass) { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4) + .2; p.s = S0 + rnd(.3); p.x = (rnd(2) - 1) * f.xLim(p); } const sink = Math.min(1, Math.max(0, (p.s - (p.pass - .3)) / .3)) * (p.r * 1.6 + .03); place(f.med, i, p, t, k, sink, f.hw); }
-      f.big.instanceMatrix.needsUpdate = f.med.instanceMatrix.needsUpdate = true;
+      f.big.instanceMatrix.needsUpdate = true;
+      passing(f, f.med, f.medP, Math.round(f.medP.length * L), dt, t, k, .2);
+      passing(f, f.grit, f.gritP, Math.round(f.gritP.length * (.4 + .6 * L)), dt, t, k, .45);
       // cortina de finos sob o deck: 1º deck → 2º deck (curta) e 2º deck → moega do passante (longa)
       const nu = Math.round(f.undP.length * L); f.und.count = nu;
       for (let i = 0; i < nu; i++) { const d = f.undP[i]; d.u += dt * (d.lo ? 1.1 : 2.4) * d.v * (run ? 1 : 0);
         if (d.u > 1) { d.u -= 1; d.s = S0 + (TOT - S0 - .3) * Math.pow(Math.random(), 1.5); d.x = (rnd(2) - 1) * (f.hw - .15); }
         onDeck(d.s, Q); const y0 = d.lo ? -.6 : -.05, y1 = d.lo ? -3.3 - Q.y : -.48, yy = y0 + (y1 - y0) * d.u * d.u;
-        p4.set(d.x, Q.y + Q.ny * Math.min(y0, -.05) + (yy - y0), Q.z + Q.nz * y0); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.set(d.r, d.r * 1.6, d.r); m4.compose(p4, q4, s4); f.und.setMatrixAt(i, m4); }
+        p4.set(d.x, Q.y + Q.ny * Math.min(y0, -.05) + (yy - y0), Q.z + Q.nz * y0); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.set(d.r, d.r * 1.4, d.r); m4.compose(p4, q4, s4); f.und.setMatrixAt(i, m4); }
       f.und.instanceMatrix.needsUpdate = true;
       // cortina de alimentação: pedras acelerando da bica até o deck
       const nd = Math.round(f.drops.length * L); f.fall.count = nd;
-      for (let i = 0; i < nd; i++) { const d = f.drops[i]; d.u += dt * 1.7 * (run ? 1 : 0); if (d.u > 1) { d.u -= 1; d.x = (Math.random() - .5) * .68; } p4.lerpVectors(f.fall0, f.fall1, d.u * d.u); p4.x += d.x * (.55 + .45 * d.u); p4.z += d.z; e4.set(t * 4 + i, i, 0); q4.setFromEuler(e4); s4.set(d.r, d.r * .75, d.r * 1.1); m4.compose(p4, q4, s4); f.fall.setMatrixAt(i, m4); }
+      for (let i = 0; i < nd; i++) { const d = f.drops[i]; d.u += dt * 1.7 * d.sp * (run ? 1 : 0); if (d.u > 1) { d.u -= 1; d.x = (Math.random() - .5) * .68; } p4.lerpVectors(f.fall0, f.fall1, d.u * d.u); p4.x += d.x * (.55 + .45 * d.u); p4.z += d.z; e4.set(t * 4 + i, i, t * 2.5); q4.setFromEuler(e4); s4.set(d.r, d.r * .8, d.r * 1.1); m4.compose(p4, q4, s4); f.fall.setMatrixAt(i, m4); }
       f.fall.instanceMatrix.needsUpdate = true;
     }
     for (const [tag, b] of Object.entries(beacons)) { const e = E[tag] || { st: 'ok' }; const c = COL[e.st] || COL.ok; b.material.color.setHex(c); b.material.emissive.setHex(c); b.material.emissiveIntensity = e.st === 'off' ? .15 : e.st === 'crit' ? (Math.sin(t * 9) > 0 ? 6 : .5) : 2.5 + Math.max(0, Math.sin(t * 6 + tag.length)) * 3; }
