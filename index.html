@@ -4675,7 +4675,7 @@ function frame(){
   sfDrums.forEach((d,i)=>d.color.setHex(RUN[['f1','f2','f3'][i]]?0xffffff:0x8d959c));
   froths.forEach((f,i)=>f.material.color.setHSL(.09,.25,.72+Math.sin(t*2+i)*.04));
   [th6,th12,ete1,ete2].forEach(th=>th.rake.rotation.y+=dt*.1);
-  {const ly=.12+clamp(ST.slime/2.5e6,0,1)*.4;slimeSurf.position.y=ly;slimeSurf.scale.setScalar(1.1);}/* cava quase cheia: espelho de lama até perto da borda (borda +0,8 m em r≈10) *//* cava mais cheia (rejeito de lama) e espelho acompanhando a abertura da cava */
+  {const ly=-.8+(clamp(ST.slime/2.5e6,0,1)-.5)*.1;slimeSurf.position.y=ly;slimeSurf.scale.setScalar(1.1);}/* cava 70 % cheia em VOLUME (cava cônica: volume ∝ h³ → nível a ~88 % da profundidade de 6 m) *//* cava quase cheia: espelho de lama até perto da borda (borda +0,8 m em r≈10) *//* cava mais cheia (rejeito de lama) e espelho acompanhando a abertura da cava */
   if(RUN.roller&&c.filterRate>0)rolls.forEach((r,i)=>r.rotation.y+=dt*(i?1:-1)*2);
   if(RUN.pell&&U.green>0)discs.forEach(d=>d.rotateY(dt*1.4));
   const glow=RUN.furnace&&U.fired>0?clamp((ST.Tq-1150)/220,0,1):0;glowRows.forEach((row,r)=>{const on=RUN[['u1','u2','u3','u4'][r]]&&glow>0;row.forEach((m,i)=>on?m.color.setHSL(.06+glow*.04,1,.15+glow*.45+Math.sin(t*3+i+r)*.03).multiplyScalar(1+glow*2.4):m.color.setHex(0x2a2f36));});
