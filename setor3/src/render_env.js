@@ -3,7 +3,7 @@
 // B.W × B.H × B.D (64 × 24 × 24 m) com telhas escuras por dentro, piso empoeirado, luminárias de galpão e as
 // grandes ABERTURAS laterais por onde entra a luz do dia (céu claro, vegetação e terreno lá fora).
 import * as THREE from 'three';
-import { B, LV } from './layout.js?v=20261008184715';
+import { B, LV } from './layout.js?v=20261008185522';
 
 let patched = false;
 export const BOX = {

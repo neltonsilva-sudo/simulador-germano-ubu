@@ -2656,10 +2656,10 @@ function buildCrushers(scene, M) {
 
   const E2 = B.screenEnd, sidewall = (rg, w) => { const L = rg.userData.L; for (const sx of [-1, 1]) box(rg, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(rg, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); };
   const chute = (a, b) => { beam(g, a, b, .9, M.chute); box(g, 1.3, .5, 1.3, M.chute, a.x, a.y + .1, a.z); };
-  belt(V(E2 + 2.6, 1.4, 12), V(B.W - .9, 1.4, 12));
-  chute(V(B.W - .7, 1.35, 12), V(B.W - .7, .95, 11.6));
-  belt(V(B.W - .7, .85, 11.5), V(B.W - .7, .85, 2.2), 1.0);
-  chute(V(B.W - .7, .8, 1.9), V(B.W - 1.3, .75, 2.0));
+  belt(V(E2 + 2.6, 1.4, 13.2), V(B.W - .9, 1.4, 13.2));
+  chute(V(B.W - 1.1, 1.35, 13.2), V(B.W - 1.1, .95, 12.9));
+  belt(V(B.W - 1.1, .85, 12.8), V(B.W - 1.1, .85, 2.2), 1.0);
+  chute(V(B.W - 1.1, .8, 1.9), V(B.W - 1.5, .75, 2.0));
   sidewall(belt(V(B.W - 1.4, .7, 2.0), V(E2 + 2.6, 18.9, 2.0), 1.0), 1.0);
   chute(V(E2 + 2.4, 18.8, 2.0), V(E2 + 2.0, 17.75, 2.4));
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);
@@ -2742,7 +2742,7 @@ function buildFlows(scene, M, opt = {}) {
   labels.push({ pos: V(20, yTop + 2.2, 2.4), kind: 'mid', text: (K) => `Alimentação das peneiras (nova + retorno) · ${fmt(K.T)} t/h` });
   labels.push({ pos: V(30, yD1 + 1.2, zD1), kind: 'mid', text: (K) => `Retido 1º deck → britagem primária HP 400 · ${fmt(K.T * K.r1)} t/h` });
   labels.push({ pos: V(30, yD2 + 1.0, zD2 + .4), kind: 'mid', text: (K) => `Retido 2º deck → britagem secundária Barmac · ${fmt(K.T * K.r2)} t/h` });
-  labels.push({ pos: V(56, 2.2, 12), kind: 'mid', text: (K) => `Britado → retorno às peneiras · ${fmt(K.T - K.prod)} t/h (carga circulante ${Math.round(K.circ)} %)` });
+  labels.push({ pos: V(56, 2.2, 13.2), kind: 'mid', text: (K) => `Britado → retorno às peneiras · ${fmt(K.T - K.prod)} t/h (carga circulante ${Math.round(K.circ)} %)` });
   labels.push({ pos: V(B.W + 8, 6, 24), kind: 'out', text: (K) => `SAÍDA · produto < 12,5 mm → pilha de regularização · ${fmt(K.prod)} t/h` });
   const p4 = new THREE.Vector3(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3(1, 1, 1), m4 = new THREE.Matrix4();
   return {

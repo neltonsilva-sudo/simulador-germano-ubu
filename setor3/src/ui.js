@@ -1,12 +1,12 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261008184715';
-import { buildEqScreen } from './eqscreen.js?v=20261008184715';
-import { buildTour } from './tour.js?v=20261008184715';
-import { logEv } from './sim.js?v=20261008184715';
-import { SIM_URL } from './api.js?v=20261008184715';
-import { buildRiskMap } from './riskmap.js?v=20261008184715';
+import { buildPanels } from './panels.js?v=20261008185522';
+import { buildEqScreen } from './eqscreen.js?v=20261008185522';
+import { buildTour } from './tour.js?v=20261008185522';
+import { logEv } from './sim.js?v=20261008185522';
+import { SIM_URL } from './api.js?v=20261008185522';
+import { buildRiskMap } from './riskmap.js?v=20261008185522';
 
 const CSS = `
 #ui [hidden]{display:none!important}

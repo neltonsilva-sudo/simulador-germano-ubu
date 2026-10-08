@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261008184715';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261008184715';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261008185522';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261008185522';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -550,10 +550,10 @@ export function buildCrushers(scene, M) {
   // inclinação (sidewall) encostada na parede z ≈ 2, por fora dos silos → cauda da correia de distribuição (y 17,4 m)
   const E2 = B.screenEnd, sidewall = (rg, w) => { const L = rg.userData.L; for (const sx of [-1, 1]) box(rg, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(rg, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); };
   const chute = (a, b) => { beam(g, a, b, .9, M.chute); box(g, 1.3, .5, 1.3, M.chute, a.x, a.y + .1, a.z); };
-  belt(V(E2 + 2.6, 1.4, 12), V(B.W - .9, 1.4, 12));
-  chute(V(B.W - .7, 1.35, 12), V(B.W - .7, .95, 11.6));
-  belt(V(B.W - .7, .85, 11.5), V(B.W - .7, .85, 2.2), 1.0);
-  chute(V(B.W - .7, .8, 1.9), V(B.W - 1.3, .75, 2.0));
+  belt(V(E2 + 2.6, 1.4, 13.2), V(B.W - .9, 1.4, 13.2));   // fora da linha de colunas z = 12
+  chute(V(B.W - 1.1, 1.35, 13.2), V(B.W - 1.1, .95, 12.9));
+  belt(V(B.W - 1.1, .85, 12.8), V(B.W - 1.1, .85, 2.2), 1.0);   // afastada das colunas x = 64
+  chute(V(B.W - 1.1, .8, 1.9), V(B.W - 1.5, .75, 2.0));
   sidewall(belt(V(B.W - 1.4, .7, 2.0), V(E2 + 2.6, 18.9, 2.0), 1.0), 1.0);
   chute(V(E2 + 2.4, 18.8, 2.0), V(E2 + 2.0, 17.75, 2.4));
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);                    // correia do passante (< 12,5 mm) → pilha

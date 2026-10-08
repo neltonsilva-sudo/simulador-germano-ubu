@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261008184715';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261008184715';
-import { PhoneShader } from './render_post.js?v=20261008184715';
-import { UpscaleShader } from './render_upscale.js?v=20261008184715';
+import { B, LV } from './layout.js?v=20261008185522';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261008185522';
+import { PhoneShader } from './render_post.js?v=20261008185522';
+import { UpscaleShader } from './render_upscale.js?v=20261008185522';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
