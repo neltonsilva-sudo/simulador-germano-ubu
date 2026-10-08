@@ -3313,7 +3313,8 @@ const PILEFALL=(()=>{const n=140,geo=new THREE.DodecahedronGeometry(.13),im=new 
   PILE.userData.tunnel=tun;
 }
 const B34=conveyor(S3?s3T(67.5,2.6,22):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
-const B45=conveyor(V3(-68,.8,24),V3(-62,6,-5),1.2,{yellow:true});
+/* retomada da pilha (4) → concentradores (5): parte da saída do túnel junto à pilha (não acompanha o ajuste da área 7) e sobe em treliça */
+const B45=conveyor(PILE.position.clone().add(V3(12,2.4,4)),LP(V3(-62,6,-5)),1.2,{yellow:true,raw:true});
 /* ---------- 5 Concentrator: grinding, desliming, flotation ---------- */
 const CON=grp(-50,4);
 const mills=[],froths=[];
