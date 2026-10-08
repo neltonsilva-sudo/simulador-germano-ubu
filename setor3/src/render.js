@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261007205817';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007205817';
-import { PhoneShader } from './render_post.js?v=20261007205817';
-import { UpscaleShader } from './render_upscale.js?v=20261007205817';
+import { B, LV } from './layout.js?v=20261007210101';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007210101';
+import { PhoneShader } from './render_post.js?v=20261007210101';
+import { UpscaleShader } from './render_upscale.js?v=20261007210101';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -159,7 +159,7 @@ export function createComposer(renderer, scene, camera) {
   composer.addPass(phone);
   const up = new ShaderPass(UpscaleShader); up.uniforms.srcSize.value = new THREE.Vector2(size.x * dpr, size.y * dpr); composer.addPass(up);
   const forced = Q.has('rs') ? Math.min(1, Math.max(.4, +Q.get('rs') || 1)) : null;
-  let rs = forced ?? 1.0; const RS_MIN = .5;
+  let rs = forced ?? 1.0; const RS_MIN = .75;   // abaixo disso a ampliação deixa a imagem granulada/pixelada
   const fps = { n: 0, t: 0, last: performance.now(), next: performance.now() + 2500 };
   function apply() {
     composer.setPixelRatio(dpr * rs); composer.setSize(size.x, size.y);
@@ -173,7 +173,7 @@ export function createComposer(renderer, scene, camera) {
     const avg = 1000 / (fps.t / fps.n); fps.n = 0; fps.t = 0; fps.next = now + 2000;
     // histerese: só reduz após 2 janelas seguidas abaixo de 36 fps e só aumenta após 4 janelas acima de 58 fps,
     // com no mínimo 8 s entre mudanças — evita a resolução "pulsar" (imagem tremendo)
-    fps.lo = avg < 36 ? (fps.lo || 0) + 1 : 0; fps.hi = avg > 58 ? (fps.hi || 0) + 1 : 0;
+    fps.lo = avg < 30 ? (fps.lo || 0) + 1 : 0; fps.hi = avg > 58 ? (fps.hi || 0) + 1 : 0;
     let nr = rs; if (fps.lo >= 2) nr = Math.max(RS_MIN, rs - .1); else if (fps.hi >= 4 && rs < 1) nr = Math.min(1, rs + .05);
     if (Math.abs(nr - rs) > .001 && now - (fps.chg || 0) > 8000) { rs = nr; fps.chg = now; fps.lo = fps.hi = 0; apply(); }
     window.__rs = { scale: +rs.toFixed(2), fps: Math.round(avg) };

@@ -3,8 +3,8 @@
 // retomada → concentradores (5) → espessadores (6) → estação de bombas e minerodutos (10); filtragem de rejeito arenoso (7).
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261007205817';
-import { V, box, beam, cyl } from './util.js?v=20261007205817';
+import { B } from './layout.js?v=20261007210101';
+import { V, box, beam, cyl } from './util.js?v=20261007210101';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
