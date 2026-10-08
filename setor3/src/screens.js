@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261008063521';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261008063521';
+import { SCREENS, LV } from './layout.js?v=20261008064359';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261008064359';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral
@@ -53,6 +53,84 @@ function dusty(mat, col, amt) {
   mat.onBeforeCompile = (s) => { Object.assign(s.uniforms, U); s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uDC; uniform float uDA;').replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n{ vec3 wN = inverseTransformDirection( normal, viewMatrix ); float up = smoothstep( .15, .95, wN.y ) * uDA; diffuseColor.rgb = mix( diffuseColor.rgb, uDC * ( .85 + .3 * diffuseColor.g ), clamp( up, 0., 1. ) ); roughnessFactor = mix( roughnessFactor, .95, up ); }'); };
   mat.customProgramCacheKey = () => 'pnDusty'; return mat;
 }
+// ---------- minério de ferro (itabirito/hematita) ----------
+const hS = (a, b, s) => { let h = (Math.imul(a, 374761393) + Math.imul(b, 668265263) + Math.imul(s, 1442695041)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+// paleta sRGB: hematita cinza-chumbo (com e sem brilho), itabirito marrom-avermelhado, goethita marrom, finos escuros
+const ORE_PAL_S = [[78, 74, 76, .45, .55], [64, 60, 62, .5, .5], [96, 90, 90, .4, .6], [86, 62, 56, .55, .35], [104, 62, 46, .75, .15], [88, 52, 40, .78, .12], [118, 76, 54, .8, .1], [98, 72, 50, .82, .08], [54, 47, 45, .85, .15], [44, 38, 37, .9, .1]];
+// relevo grosso do leito (montículos ~10–20 cm), periódico no quadro [0,1)² — usado no deslocamento e no normalMap
+const lumpS = (u, v) => { const T = 6.2832; return .5 * Math.sin(T * (6 * u + 2 * v) + 1.3) * Math.sin(T * (3 * v - u) + .4) + .3 * Math.sin(T * (11 * u - 4 * v) + 2.1) * Math.cos(T * (7 * v + 3 * u)) + .2 * Math.sin(T * (17 * v + 5 * u) + .7); };
+// leito granulado: 3 camadas de grãos de Voronoi facetados (≈ 3,5 cm / 1,5 cm / 0,6 cm num quadro de 1,25 m),
+// juntas escuras entre os grãos, cor/rugosidade/metalicidade por grão; normal calculada da altura em metros
+function oreTexS(O = 1024) {
+  const LAY = [{ N: 36, p: .42, h0: .0045, hk: .0095, sd: 11 }, { N: 84, p: .55, h0: .0018, hk: .005, sd: 23 }, { N: 200, p: 1, h0: 0, hk: .0026, sd: 37 }];
+  for (const L of LAY) { L.cs = O / L.N; L.jx = new Float32Array(L.N * L.N); L.jy = new Float32Array(L.N * L.N); for (let k = 0; k < L.N * L.N; k++) { L.jx[k] = .12 + .76 * hS(k, 1, L.sd); L.jy[k] = .12 + .76 * hS(k, 2, L.sd); } }
+  const H = new Float32Array(O * O), [oc, ox] = cnv(O), [rc, rx] = cnv(O), ci = ox.createImageData(O, O), ri = rx.createImageData(O, O), C = ci.data, R = ri.data;
+  const px = 1.25 / O;
+  for (let y = 0; y < O; y++) for (let x = 0; x < O; x++) {
+    const q = (y * O + x) * 4, u = x / O, v = y / O, patch = .5 + .5 * Math.sin(6.2832 * (2 * u + v) + .5) * Math.cos(6.2832 * (u - 2 * v));
+    let hit = null;
+    for (let li = 0; li < 3 && !hit; li++) {
+      const L = LAY[li], fx = x / L.cs, fy = y / L.cs, ix = Math.floor(fx), iy = Math.floor(fy);
+      let f1 = 1e9, f2 = 1e9, id = 0, dx1 = 0, dy1 = 0;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+        const cx = ix + di, cy = iy + dj, k = (((cy % L.N) + L.N) % L.N) * L.N + (((cx % L.N) + L.N) % L.N);
+        const ddx = cx + L.jx[k] - fx, ddy = cy + L.jy[k] - fy, d = ddx * ddx + ddy * ddy;
+        if (d < f1) { f2 = f1; f1 = d; id = k; dx1 = ddx; dy1 = ddy; } else if (d < f2) f2 = d;
+      }
+      const e = Math.sqrt(f2) - Math.sqrt(f1);                       // distância (em células) até a junta com o vizinho
+      if (li < 2 && hS(id, 7, L.sd) > L.p) continue;                 // célula sem grão desta camada → camada de baixo
+      if (li < 2 && e < .07) continue;
+      hit = { L, li, id, e, dx1, dy1 };
+    }
+    let h, r0, g0, b0, rough, met;
+    if (!hit) { h = 0; r0 = 26; g0 = 21; b0 = 19; rough = 1; met = 0; }
+    else {
+      const { L, li, id, e, dx1, dy1 } = hit, gap = li === 2 ? .06 : .07;
+      if (li === 2 && e < gap) { h = 0; r0 = 30; g0 = 25; b0 = 23; rough = 1; met = 0; }
+      else {
+        // pirâmide convexa de 5 facetas → grão britado facetado
+        let m = -1e9, fk = 0; for (let k = 0; k < 5; k++) { const a = 6.2832 * (k / 5 + hS(id, 30 + k, L.sd) * .15), s = .7 + .8 * hS(id, 40 + k, L.sd), t = -(dx1 * Math.cos(a) + dy1 * Math.sin(a)) * s; if (t > m) { m = t; fk = k; } }
+        const bev = Math.min(1, (e - gap) / .1);
+        h = L.h0 + L.hk * Math.max(0, (.75 - m * .9)) * (.4 + .6 * bev);
+        const pi = (hS(id, 5, L.sd) * ORE_PAL_S.length + (li === 2 ? 5 * hS(id, 9, 3) : 0) + patch * 1.5) % ORE_PAL_S.length | 0, P = ORE_PAL_S[li === 2 && hS(id, 6, 1) < .45 ? 8 + (id & 1) : pi];
+        const j = (.82 + .3 * hS(id, 8, L.sd)) * (.9 + .2 * hS(id, 50 + fk, L.sd)) * (li === 2 ? .82 : 1) * (.8 + .2 * bev);
+        r0 = P[0] * j; g0 = P[1] * j; b0 = P[2] * j; rough = P[3]; met = P[4] * (li === 2 ? .5 : 1);
+      }
+    }
+    const n = (hS(x, y, 99) - .5) * 8; H[y * O + x] = h;
+    C[q] = Math.max(0, r0 + n); C[q + 1] = Math.max(0, g0 + n); C[q + 2] = Math.max(0, b0 + n); C[q + 3] = 255;
+    R[q] = 255; R[q + 1] = rough * 255; R[q + 2] = met * 255; R[q + 3] = 255;
+  }
+  ox.putImageData(ci, 0, 0); rx.putImageData(ri, 0, 0);
+  // normal: grãos + montículos (mesma periodicidade do mapa de deslocamento → alinhados quando escoam juntos)
+  const [nc, nx] = cnv(O), ni = nx.createImageData(O, O), Nd = ni.data, LA = .022;
+  const HH = (i, j) => { i = (i + O) % O; j = (j + O) % O; return H[j * O + i] + LA * .5 * (lumpS(i / O, j / O) + 1); };
+  for (let j = 0; j < O; j++) for (let i = 0; i < O; i++) { const dx = (HH(i + 1, j) - HH(i - 1, j)) / (2 * px), dy = (HH(i, j + 1) - HH(i, j - 1)) / (2 * px), l = Math.hypot(dx, dy, 1), q = (j * O + i) * 4; Nd[q] = (-dx / l * .5 + .5) * 255; Nd[q + 1] = (dy / l * .5 + .5) * 255; Nd[q + 2] = (1 / l * .5 + .5) * 255; Nd[q + 3] = 255; }
+  nx.putImageData(ni, 0, 0);
+  const DS = 256, [dc, dx2] = cnv(DS), di = dx2.createImageData(DS, DS), Dd = di.data;
+  for (let j = 0; j < DS; j++) for (let i = 0; i < DS; i++) { const q = (j * DS + i) * 4, val = (lumpS(i / DS, j / DS) * .5 + .5) * 255; Dd[q] = Dd[q + 1] = Dd[q + 2] = val; Dd[q + 3] = 255; }
+  dx2.putImageData(di, 0, 0);
+  return { oT: tex(oc), oN: tex(nc, false), oR: tex(rc, false), oD: tex(dc, false), LA };
+}
+// pedra britada: icosaedro com deslocamento coerente + cortes planos (faces de fratura) e eixos desiguais
+function rockGeoS(seed, detail = 1, cuts = 5) {
+  const g = new THREE.IcosahedronGeometry(1, detail), P = g.attributes.position, v = new THREE.Vector3();
+  let s = seed * 7919 + 13; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const hv = (x, y, z) => { const t = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719 + seed * 3.7) * 43758.5453; return t - Math.floor(t); };
+  const pl = Array.from({ length: cuts }, () => ({ n: V(r() * 2 - 1, r() * 2 - 1, r() * 2 - 1).normalize(), d: .5 + r() * .32 }));
+  const ax = V(.85 + r() * .4, .62 + r() * .22, .8 + r() * .45);
+  for (let i = 0; i < P.count; i++) {
+    v.fromBufferAttribute(P, i); v.multiplyScalar(.8 + .38 * hv(Math.round(v.x * 100), Math.round(v.y * 100), Math.round(v.z * 100)));
+    for (const p of pl) { const e = v.dot(p.n) - p.d; if (e > 0) v.addScaledVector(p.n, -e * .96); }
+    v.multiply(ax); P.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals(); const Nn = g.attributes.normal;
+  for (let i = 0; i < Nn.count; i++) if (!(Math.hypot(Nn.getX(i), Nn.getY(i), Nn.getZ(i)) > .5)) { v.fromBufferAttribute(P, i).normalize(); Nn.setXYZ(i, v.x, v.y, v.z); }
+  return g;
+}
+// cor por pedra (sRGB → linear): hematita cinza-chumbo e itabirito marrom-avermelhado, nada claro
+const ROCK_PAL_S = [[84, 80, 82], [68, 64, 66], [100, 94, 94], [92, 66, 58], [112, 68, 50], [96, 58, 44], [122, 82, 58], [60, 53, 50]];
+function tintS(im, seed) { const c = new THREE.Color(); for (let i = 0; i < im.count; i++) { const P = ROCK_PAL_S[hS(i, seed, 5) * ROCK_PAL_S.length | 0], j = .8 + .35 * hS(i, seed, 6); c.setRGB(P[0] * j / 255, P[1] * j / 255, P[2] * j / 255, THREE.SRGBColorSpace); im.setColorAt(i, c); } im.instanceColor.needsUpdate = true; return im; }
 function makeTextures() {
   // painéis de poliuretano 305 × 610 mm (4 × 2 painéis num quadro de 1,22 m), furos quadrados ~32 mm, juntas e finos
   const S = 512, [pc, px] = cnv(S), [ph, hx] = cnv(S);
@@ -112,15 +190,8 @@ function makeTextures() {
   { const gg = fx.createLinearGradient(0, FS * .6, 0, FS); gg.addColorStop(0, 'rgba(96,52,32,0)'); gg.addColorStop(1, 'rgba(96,52,32,.6)'); fx.fillStyle = gg; fx.fillRect(0, 0, FS, FS); }
   speck(fx, FS, 6000, .35, '80,46,28'); speck(fx, FS, 1500, .3, '220,205,180');
   const fT = tex(fc);
-  // leito de minério: finos cinza-escuros/marrons com grânulos de hematita/itabirito (quadro de 1,25 m), altura → normal
-  const O = 512, [oc, ox] = cnv(O), [oh, ohx] = cnv(O);
-  ox.fillStyle = '#37302c'; ox.fillRect(0, 0, O, O); ohx.fillStyle = '#606060'; ohx.fillRect(0, 0, O, O);
-  const PAL = [[78, 64, 56], [66, 58, 54], [88, 70, 58], [54, 48, 46], [82, 80, 80], [96, 74, 60], [60, 46, 40]];
-  const grain = (n, r0, r1) => { for (let i = 0; i < n; i++) { const r = r0 + rrS() * rrS() * (r1 - r0), cx0 = rrS() * O, cy0 = rrS() * O, c = PAL[rrS() * PAL.length | 0], j = .75 + rrS() * .5; for (const dx of [0, O, -O]) for (const dy of [0, O, -O]) { const cx = cx0 + dx, cy = cy0 + dy; if (cx < -r1 || cx > O + r1 || cy < -r1 || cy > O + r1) continue; ox.fillStyle = 'rgba(20,12,9,.55)'; ox.beginPath(); ox.ellipse(cx + r * .25, cy + r * .3, r * 1.05, r * .95, 0, 0, 6.3); ox.fill(); ox.fillStyle = `rgb(${c[0] * j | 0},${c[1] * j | 0},${c[2] * j | 0})`; ox.beginPath(); ox.ellipse(cx, cy, r, r * (.7 + rrS() * .3), rrS() * 3, 0, 6.3); ox.fill(); ox.fillStyle = 'rgba(230,210,195,.22)'; ox.beginPath(); ox.ellipse(cx - r * .3, cy - r * .3, r * .4, r * .3, 0, 0, 6.3); ox.fill(); const g = ohx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, '#f0f0f0'); g.addColorStop(1, 'rgba(96,96,96,0)'); ohx.fillStyle = g; ohx.beginPath(); ohx.arc(cx, cy, r, 0, 6.3); ohx.fill(); } } };
-  grain(16000, 1, 3.2); grain(700, 3, 7); grain(30, 6, 11);
-  blotS(ox, O, 24, 30, 110, () => `rgba(${rrS() < .5 ? '96,66,48' : '34,28,26'},${.08 + rrS() * .12})`); speck(ox, O, 9000, .45, '24,18,14');
-  const oT = tex(oc), oN = nrm(oh, 4);
-  return { puT, puN, gT, gN, hT, hN, fT, oT, oN };
+  const OR = oreTexS(1024);
+  return { puT, puN, gT, gN, hT, hN, fT, oT: OR.oT, oN: OR.oN, oR: OR.oR, oD: OR.oD, LA: OR.LA };
 }
 // ---------- geometria auxiliar ----------
 function normUV(g) { const u = g.attributes.uv; let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (let i = 0; i < u.count; i++) { a = Math.min(a, u.getX(i)); b = Math.max(b, u.getX(i)); c = Math.min(c, u.getY(i)); d = Math.max(d, u.getY(i)); } for (let i = 0; i < u.count; i++) u.setXY(i, .002 + (u.getX(i) - a) / (b - a) * .996, .002 + (u.getY(i) - c) / (d - c) * .996); return g; }
