@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261008065407';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261008065407';
+import { SCREENS, LV } from './layout.js?v=20261008155125';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261008155125';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral
@@ -554,7 +554,7 @@ export function buildScreens(scene, M) {
     const E = S ? S.eq : {}; dt = Math.min(dt, .1);
     // umidade alta (> 9 %): minério mais escuro, mais brilhante (molhado) e escoando mais devagar
     const wf = S && S.moist != null ? Math.min(1, Math.max(0, (S.moist - 9) / 2.5)) : 0, wetK = 1 - .4 * wf, wd = 1 - .42 * wf;
-    rockMat.color.setRGB(0, 4, 0); rockMat.roughness = .5 - .22 * wf;
+    rockMat.color.setScalar(wd); rockMat.roughness = .5 - .22 * wf;
     // vibração do corpo: 16 Hz (≈ 100 rad/s), curso de ~10 mm em elipse
     vib.forEach((v, i) => { const e = E[SCREENS.tags[i]] || { on: true, flow: 800, load: .55 }; const a = e.on && e.flow > 0 ? .0045 + .0015 * Math.min(1.3, e.load) : 0; v.g.position.y = v.y0 + Math.sin(t * 100.5 + v.ph) * a; v.g.position.z = Math.cos(t * 100.5 + v.ph) * a * .7; });
     for (const f of flows) {

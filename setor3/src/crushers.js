@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261008065407';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261008065407';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261008155125';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261008155125';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -541,8 +541,8 @@ export function buildCrushers(scene, M) {
   // correias: produto dos britadores → retorno às peneiras (circuito fechado)
   const belt = (a, b, w = 1.2) => { const d = new THREE.Vector3().subVectors(b, a), L = d.length(); const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
     box(grp, w + .2, .25, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .16, 0);
-    const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.13), M.ore, Math.floor(L * 3)); const m4 = new THREE.Matrix4();
-    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 3 + Math.random() * .2, x: (Math.random() - .5) * w * .6, r: Math.random() * 6 })); grp.add(oreG); belts.push({ im: oreG, rk, L });
+    const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.065), M.ore, Math.floor(L * 12)); const m4 = new THREE.Matrix4();
+    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 12 + Math.random() * .08, x: (Math.random() - .5) * w * .7, r: Math.random() * 6 })); grp.add(oreG); belts.push({ im: oreG, rk, L });
     for (let s = 0; s < L; s += 1.2) { box(grp, w + .3, .08, .1, M.grey, 0, .08, -L / 2 + s); }
     for (const zz of [-L / 2, L / 2]) { const dr = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, w + .3, 16), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, .02, zz); grp.add(dr); }
     grp.userData.L = L; return grp; };
