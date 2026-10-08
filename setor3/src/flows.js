@@ -3,8 +3,8 @@
 // retido 1º deck → correia → silos dos HP 400; retido 2º deck → correia → silos dos Barmac;
 // britado → correia de retorno → peneiras; SAÍDA passante < 12,5 mm → correia → pilha de regularização.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261008155125';
-import { V, box, beam, cyl } from './util.js?v=20261008155125';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261008184715';
+import { V, box, beam, cyl } from './util.js?v=20261008184715';
 
 export function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -22,6 +22,8 @@ export function buildFlows(scene, M, opt = {}) {
     if (Math.abs(d.y) / L > .42) { for (const sx of [-1, 1]) box(grp, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(grp, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); }
     const n = Math.floor(L * 14), im = new THREE.InstancedMesh(rockGeo, oreMat, n); im.castShadow = true; grp.add(im);
     const rk = Array.from({ length: n }, (_, k) => ({ z: -L / 2 + (k + Math.random()) * L / n, x: (Math.random() - .5) * w * .7, r: Math.random() * 6, s: .6 + Math.random() * .9 }));
+    // embaralha a ordem: quando a vazão mostra só parte das pedras, elas ficam espalhadas por toda a correia (sem trechos vazios)
+    for (let i = rk.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rk[i], rk[j]] = [rk[j], rk[i]]; }
     belts.push({ im, rk, L, key, w });
     // apoios até o chão quando a correia está alta
     for (let s = 3; s < L - 1; s += 8) { const p = a.clone().addScaledVector(d, s / L); if (p.y > 1.5) beam(g, V(p.x, 0, p.z), V(p.x, p.y - .15, p.z), .18, M.steelDk); }
@@ -71,7 +73,7 @@ export function buildFlows(scene, M, opt = {}) {
       for (const b of belts) {
         const q = b.key === 'F' ? K.F : b.key === 'T' ? K.T : b.key === 'R1' ? K.T * K.r1 : b.key === 'R2' ? K.T * K.r2 : K.prod;
         const run = q > 1; b.im.visible = run; if (!run) continue;
-        const dens = Math.min(1, .25 + q / 6000); b.im.count = Math.max(1, Math.round(b.rk.length * dens));
+        const dens = Math.min(1, .6 + q / 6000);   // camada contínua; a vazão só muda a espessura b.im.count = Math.max(1, Math.round(b.rk.length * dens));
         for (let i = 0; i < b.im.count; i++) { const r = b.rk[i]; r.z += dt * 2.6; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .24 + (1 - Math.abs(r.x) / (b.w || 1)) * .06, r.z); e4.set(r.r, r.r * 1.7, 0); q4.setFromEuler(e4); s4.setScalar(r.s); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); }
         b.im.instanceMatrix.needsUpdate = true;
       }
