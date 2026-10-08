@@ -224,7 +224,7 @@ const VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMat
 class AccumPass extends Pass {
   constructor() {
     super(); const o = { type: THREE.HalfFloatType, depthBuffer: false };
-    this.a = new THREE.WebGLRenderTarget(1, 1, o); this.b = new THREE.WebGLRenderTarget(1, 1, o); this.n = 0; this.minAlpha = .12;
+    this.a = new THREE.WebGLRenderTarget(1, 1, o); this.b = new THREE.WebGLRenderTarget(1, 1, o); this.n = 0; this.minAlpha = .45;   // peso alto do quadro novo: objetos em movimento (minério, correias) não deixam rastro
     this.blend = new THREE.ShaderMaterial({ uniforms: { tNew: { value: null }, tHist: { value: null }, alpha: { value: 1 } }, vertexShader: VS, depthTest: false, depthWrite: false,
       fragmentShader: 'uniform sampler2D tNew; uniform sampler2D tHist; uniform float alpha; varying vec2 vUv; void main(){ gl_FragColor = mix(texture2D(tHist, vUv), texture2D(tNew, vUv), alpha); }' });
     this.copy = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: VS, depthTest: false, depthWrite: false,
@@ -256,7 +256,8 @@ export function createComposer(renderer, scene, camera) {
   gtao.blendIntensity = 1.0; gtao.normalMaterial.side = THREE.DoubleSide;
   { const r0 = gtao.render.bind(gtao); gtao.render = (...a) => { const g = FX.group, v = g && g.visible; if (g) g.visible = false; r0(...a); if (g) g.visible = v; }; }   // feixes/halos fora da oclusão
   composer.addPass(gtao);
-  const TAA = Q.get('taa') !== '0', accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum);
+  const TAA = Q.get('taa') === '1',   // desligado por padrão: o acúmulo deixava rastro no minério e nas correias em movimento (MSAA 4x já suaviza as bordas)
+   accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum);
   const bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), ...LOOK.bloom); composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const phone = new ShaderPass(PhoneShader);
