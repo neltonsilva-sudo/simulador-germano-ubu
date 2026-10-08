@@ -3,7 +3,7 @@
 // B.W × B.H × B.D (64 × 24 × 24 m) com telhas escuras por dentro, piso empoeirado, luminárias de galpão e as
 // grandes ABERTURAS laterais por onde entra a luz do dia (céu claro, vegetação e terreno lá fora).
 import * as THREE from 'three';
-import { B, LV } from './layout.js?v=20261007210101';
+import { B, LV } from './layout.js?v=20261008063521';
 
 let patched = false;
 export const BOX = {
@@ -68,9 +68,9 @@ export function buildEnvironment(renderer, lamps = [], opt = {}) {
   const plane = (w, h, m, pos, rot) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); p.position.set(...pos); p.rotation.set(...rot); g.add(p); return p; };
   const k = opt.bounce ?? 1, sky = opt.sky ?? 3.2;
   // superfícies principais (radiância média, linear): piso de concreto com pó de minério, telha marrom-ferrugem escura
-  plane(W, D, mat(.085 * k, .055 * k, .038 * k), [W / 2, 0, D / 2], [-Math.PI / 2, 0, 0]);
-  plane(W, D, mat(.028 * k, .02 * k, .016 * k), [W / 2, H, D / 2], [Math.PI / 2, 0, 0]);
-  const wallM = mat(.05 * k, .034 * k, .025 * k);
+  plane(W, D, mat(.085 * k, .062 * k, .05 * k), [W / 2, 0, D / 2], [-Math.PI / 2, 0, 0]);
+  plane(W, D, mat(.04 * k, .031 * k, .026 * k), [W / 2, H, D / 2], [Math.PI / 2, 0, 0]);
+  const wallM = mat(.05 * k, .037 * k, .03 * k);
   plane(D, H, wallM, [0, H / 2, D / 2], [0, Math.PI / 2, 0]);
   plane(D, H, wallM, [W, H / 2, D / 2], [0, -Math.PI / 2, 0]);
   plane(W, H, wallM, [W / 2, H / 2, 0], [0, 0, 0]);
@@ -84,6 +84,14 @@ export function buildEnvironment(renderer, lamps = [], opt = {}) {
   plane(W, 4, om, [W / 2, 2, .05], [0, 0, 0]);
   plane(D, 6, om, [.05, 3, D / 2], [0, Math.PI / 2, 0]);
   plane(D, 6, om, [W - .05, 3, D / 2], [0, -Math.PI / 2, 0]);
+  // claraboias (telhas translúcidas) e as manchas de sol que elas fazem no piso +14 e na parede do fundo
+  const skM = mat(sky * .55, sky * .57, sky * .58), spotM = mat(.55, .48, .4);
+  for (const r of opt.skylights || []) {
+    const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, w = Math.abs(r.x1 - r.x0), d = Math.abs(r.z1 - r.z0);
+    plane(w, d, skM, [cx, H - .02, cz], [Math.PI / 2, 0, 0]);
+    if (cz > D / 2) plane(w * 1.2, d * .9, spotM, [cx + 5.5, LV.L2 + .02, Math.max(.5, cz - 15)], [-Math.PI / 2, 0, 0]);
+    else plane(w * 1.2, d * 1.3, spotM, [cx + 2.5, H - 4, .04], [0, 0, 0]);
+  }
   // luminárias de galpão: discos muito brilhantes (alimentam reflexos alongados em chapas e poças)
   const lm = mat(opt.lamp ?? 40, (opt.lamp ?? 40) * .95, (opt.lamp ?? 40) * .85);
   for (const p of lamps) { const d = new THREE.Mesh(new THREE.CircleGeometry(.5, 12), lm); d.position.set(p.x, p.y + .25, p.z); d.rotation.x = Math.PI / 2; g.add(d); }

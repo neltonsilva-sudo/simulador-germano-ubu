@@ -1,12 +1,12 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261007210101';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261007210101';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261007210101';
-import { buildUI } from './ui.js?v=20261007210101';
-import { gate } from './gate.js?v=20261007210101';
-import { buildContext } from './context.js?v=20261007210101';
+import { B, LV, CAMS } from './layout.js?v=20261008063521';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261008063521';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261008063521';
+import { buildUI } from './ui.js?v=20261008063521';
+import { gate } from './gate.js?v=20261008063521';
+import { buildContext } from './context.js?v=20261008063521';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -82,3 +82,9 @@ function frame() {
 requestAnimationFrame(frame);
 window.__twin = { scene, camera, controls, renderer, composer, parts, setCam, setWalk, sim };
 window.__ready = true;
+// captura para conferência (só em localhost): ?shot=NOME → após carregar, acumula 24 quadros parados e envia o JPEG
+// ao receptor local (porta 8793), que salva em scratchpad/shots/NOME.jpg
+if (Q.get('shot') && /^(localhost|127\.)/.test(location.hostname)) setTimeout(() => {
+  for (let i = 0; i < 24; i++) { controls.update(); if (composer) composer.render(.016); else renderer.render(scene, camera); }
+  fetch('http://127.0.0.1:8793/?name=' + encodeURIComponent(Q.get('shot')), { method: 'POST', body: renderer.domElement.toDataURL('image/jpeg', .9) }).catch(() => {});
+}, +(Q.get('wait') || 9000));

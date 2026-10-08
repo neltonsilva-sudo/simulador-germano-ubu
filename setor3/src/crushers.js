@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261007210101';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261007210101';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261008063521';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261008063521';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -94,6 +94,12 @@ export function buildCrushers(scene, M) {
   // ---- materiais locais (clonam o shader de sujeira do material base)
   const tint = (base, rgb, o = {}) => { const m = base.clone(); m.onBeforeCompile = base.onBeforeCompile; if (Object.prototype.hasOwnProperty.call(base, 'customProgramCacheKey')) m.customProgramCacheKey = base.customProgramCacheKey; if (rgb) m.color.setRGB(...rgb); Object.assign(m, o); return m; };
   const std = (o) => new THREE.MeshStandardMaterial(o);
+  // como tint, mas com parâmetros próprios do shader de sujeira (uDust, uGrime, uEdge, uMacro, uDustCol)
+  const gUni = (s, gp) => { for (const [k, v] of Object.entries(gp)) s.uniforms[k] = { value: k === 'uDustCol' ? new THREE.Color(v) : v }; };
+  const tintG = (base, rgb, gp = {}, o = {}) => { const m = tint(base, rgb, o); const ob = base.onBeforeCompile; if (base.userData && base.userData.grime) m.onBeforeCompile = (s, r) => { ob(s, r); gUni(s, gp); }; return m; };
+  // sujeira em modo UV (sem triplanar) para materiais com textura própria mapeada no UV
+  const uvBase = [M.cladIn, M.cladOut, M.floor].find((m) => m && m.userData && m.userData.grime && !(m.userData.grime.uTri.value > 0));
+  const grimeUV = (mat, gp = {}) => { if (!uvBase) return mat; const ob = uvBase.onBeforeCompile; mat.onBeforeCompile = (s, r) => { ob(s, r); gUni(s, gp); }; mat.customProgramCacheKey = uvBase.customProgramCacheKey; return mat; };
   const mBeige = tint(M.beige, [.97, 1, .93]);                                       // bege-esverdeado claro (HP 400)
   const mMud = tint(M.chute, [1.05, 1, .98]);                                        // flange/orelhas cobertas de lama de minério
   const mBase = tint(M.orange, [.98, .78, .66]);                                     // base soldada laranja-ferrugem (foto 103)
@@ -105,10 +111,6 @@ export function buildCrushers(scene, M) {
   const mShell = std({ map: dirtyPaint(2048, 384, { base: '#c6c7ad', dirt: '120,70,45', mud: '86,50,34', topBand: .22, runs: 260, runY: .1, bottom: .25, chips: 70 }), roughness: .62, metalness: .12 });
   const mRing = std({ map: dirtyPaint(2048, 256, { base: '#cdcdb4', dirt: '110,66,44', mud: '96,58,40', runs: 120, runY: .05, bottom: .12, chips: 50 }), roughness: .6, metalness: .12 });
   const mDrum = std({ map: dirtyPaint(2048, 512, { base: '#d9cfbb', dirt: '140,90,66', mud: '120,74,52', topBand: .06, runs: 70, runY: .04, bottom: .18, chips: 30, scratch: '120,100,90' }), roughness: .55, metalness: .1 });
-  const mFriso = tint(M.beige, [.82, .6, .5]);                                       // friso/tampa marrom-rosado (foto2)
-  const mLid = tint(M.beige, [.95, .82, .72]);
-  const mVsiBase = tint(M.orange, [1.02, .86, .78]);                                 // base metálica marrom-ferrugem (foto2)
-  const mPed = tint(M.beige, [1.04, 1.0, .9]);                                        // bases trapezoidais bege
   const mMotDk = tint(M.greyDk || M.motor, [.8, .8, .8]);
   const bandTex = cvs(1024, 176, (x, w, h) => {
     x.fillStyle = '#cc5a1d'; x.fillRect(0, 0, w, h); blotC(x, w, h, 26, 20, 120, () => `rgba(90,40,20,${.08 + rrC() * .2})`);
@@ -127,18 +129,66 @@ export function buildCrushers(scene, M) {
   const bolt = (par, x, y, z, nx, ny, nz, s = .028, mat = mBolt, root = g) => { const k = root.uuid + mat.uuid; if (!BL.has(k)) BL.set(k, { root, mat, list: [] }); qq.setFromUnitVectors(UP, nv.set(nx, ny, nz).normalize()); BL.get(k).list.push({ par, m: new THREE.Matrix4().compose(V(x, y, z), qq.clone(), V(s, s * .9, s)) }); };
   const boltRing = (par, r, y, n, s, mat, a0 = 0, root = g, up = 1) => { for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU; bolt(par, Math.cos(a) * r, y, Math.sin(a) * r, 0, up, 0, s, mat, root); } };
 
-  function silo(x, z, r, yb, h) {
-    const s = new THREE.Group(); s.position.set(x, yb, z); g.add(s);
-    cyl(s, r, r, h, M.steel, 0, h / 2 + 2.2, 0, 28); cyl(s, r, .5, 2.2, M.steel, 0, 1.1, 0, 28);
-    const lr = r + 1.6;                                   // pernas fora da área do britador abaixo
-    for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + .78, lx = Math.cos(a) * lr, lz = Math.sin(a) * lr; beam(s, V(lx, -yb, lz), V(lx, h + 2.2, lz), .26, M.steelDk); beam(s, V(lx, 2.4, lz), V(Math.cos(a) * r, 2.4, Math.sin(a) * r), .18, M.steelDk); }
-    for (let k = 0; k < 4; k++) { const a0 = k * Math.PI / 2 + .78, a1 = a0 + Math.PI / 2; beam(s, V(Math.cos(a0) * lr, 2.4, Math.sin(a0) * lr), V(Math.cos(a1) * lr, 2.4, Math.sin(a1) * lr), .2, M.steelDk); }
-    for (let k = 0; k < 5; k++) cyl(s, r + .03, r + .03, .08, M.steelDk, 0, 2.6 + k * h / 5, 0, 28);
-    railing(s, V(-r, h + 2.2, -r), V(r, h + 2.2, -r), M.yellow); railing(s, V(-r, h + 2.2, r), V(r, h + 2.2, r), M.yellow);
-    return s;
-  }
   // grupo orientado: x local = direção radial do ângulo a (a medido de +x para +z), z local = tangente
   const radial = (par, a) => { const G = new THREE.Group(); G.rotation.y = -a; par.add(G); return G; };
+
+  // ---- silos de alimentação: chapas calandradas com costuras e ferrugem escorrida (UV), cantoneiras de reforço,
+  // nervuras verticais, cobertura cônica coberta de pó de minério, guarda-corpo circular e escada de marinheiro com gaiola
+  const siloTex = cvs(1024, 512, (x, w, h) => {
+    x.fillStyle = '#857264'; x.fillRect(0, 0, w, h);
+    blotC(x, w, h, 80, 20, 170, () => `rgba(${118 + rrC() * 40 | 0},${64 + rrC() * 22 | 0},${40 + rrC() * 14 | 0},${.08 + rrC() * .2})`);    // manchas de ferrugem
+    blotC(x, w, h, 40, 20, 120, () => `rgba(175,165,152,${.05 + rrC() * .1})`);                                                         // tinta desbotada
+    for (let i = 0; i < 8; i++) { const px = (i + .5) / 8 * w; x.fillStyle = 'rgba(38,24,18,.6)'; x.fillRect(px - 1.5, 0, 3, h); x.fillStyle = 'rgba(214,196,176,.28)'; x.fillRect(px + 1.5, 0, 1.5, h); }   // costuras verticais
+    for (let j = 1; j < 4; j++) { const py = j / 4 * h; x.fillStyle = 'rgba(38,24,18,.6)'; x.fillRect(0, py - 1.5, w, 3); x.fillStyle = 'rgba(214,196,176,.25)'; x.fillRect(0, py + 1.5, w, 1.5); }
+    runs(x, w, h, 120, '104,50,26', 0, 1, .05, .45, .75, 1.5, 6);                 // ferrugem escorrida das costuras
+    runs(x, w, h, 60, '70,40,28', 0, .3, .2, .8, .55, 2, 8);                       // lama de minério que transbordou
+    { const gd = x.createLinearGradient(0, 0, 0, h * .18); gd.addColorStop(0, 'rgba(128,70,44,.7)'); gd.addColorStop(1, 'rgba(128,70,44,0)'); x.fillStyle = gd; x.fillRect(0, 0, w, h * .18); }
+    { const gd = x.createLinearGradient(0, h, 0, h * .8); gd.addColorStop(0, 'rgba(96,52,34,.6)'); gd.addColorStop(1, 'rgba(96,52,34,0)'); x.fillStyle = gd; x.fillRect(0, h * .8, w, h * .2); }
+    scr(x, w, h, 200, '200,185,165'); spk(x, w, h, 7000, '50,30,20', .35); spk(x, w, h, 2000, '220,200,180', .2); grn(x, w, h, 12);
+  });
+  siloTex.repeat.set(2, 1);
+  const mSilo = grimeUV(std({ map: siloTex, roughness: .72, metalness: .3 }), { uDust: .9, uGrime: .6, uDustCol: '#6c3a26', uEdge: 0, uMacro: .16 });
+  const mSiloRib = tintG(M.steelDk, null, { uDust: 1.3, uDustCol: '#74402a' });
+  const mSiloRoof = tintG(M.steel, [.9, .82, .78], { uDust: 1.7, uGrime: .9, uDustCol: '#7a4430' });
+  // escada de marinheiro com gaiola, encostada no costado (raio rr) do ângulo a, de y0 a y1 (coordenadas do pai)
+  function ladderC(par, a, rS, y0, y1, yShell) {
+    const L = radial(par, a), rr = rS + .3, hw = .22;
+    for (const sz of [-hw, hw]) beam(L, V(rr, y0, sz), V(rr, y1, sz), .022, M.yellow, true);
+    for (let y = y0 + .3; y < y1 - .05; y += .3) beam(L, V(rr, y, -hw), V(rr, y, hw), .013, M.steel, true);
+    for (let y = Math.max(y0 + .8, yShell + .3); y < y1 - .5; y += 1.5) for (const sz of [-hw, hw]) beam(L, V(rr, y, sz), V(rS + .02, y, sz), .022, M.steelDk);
+    const hoop = new THREE.TorusGeometry(.38, .013, 5, 18, Math.PI), hs = [];
+    for (let y = y0 + 2.2; y <= y1 + .01; y += .75) { if (Math.abs(y - 2.4) < .25) continue; const m = sh(new THREE.Mesh(hoop, M.yellow)); m.rotation.order = 'YXZ'; m.rotation.set(Math.PI / 2, Math.PI / 2, 0); m.position.set(rr + .04, y, 0); L.add(m); hs.push(y); }
+    if (hs.length > 1) for (const ang of [-1.2, -.6, 0, .6, 1.2]) beam(L, V(rr + .04 + Math.cos(ang) * .38, hs[0], Math.sin(ang) * .38), V(rr + .04 + Math.cos(ang) * .38, hs[hs.length - 1], Math.sin(ang) * .38), .012, M.yellow);
+    return L;
+  }
+  function silo(x, z, r, yb, h, o = {}) {
+    const s = new THREE.Group(); s.position.set(x, yb, z); g.add(s);
+    const y0 = 2.2, yT = y0 + h;
+    { const m = sh(new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 48, 1, true), mSilo)); m.position.y = y0 + h / 2; s.add(m); }
+    { const m = sh(new THREE.Mesh(new THREE.CylinderGeometry(r, .5, y0, 48, 1, true), mSilo)); m.position.y = y0 / 2; s.add(m); }
+    cyl(s, .58, .58, .1, mSiloRib, 0, .05, 0, 24);                                      // flange de descarga
+    for (let j = 0; j <= 4; j++) cyl(s, r + .05, r + .05, j ? .08 : .14, mSiloRib, 0, y0 + j * h / 4 + (j === 4 ? -.04 : 0), 0, 48);   // cantoneiras
+    for (let k = 0; k < 16; k++) { const a = (k + .5) / 16 * TAU; box(s, .1, h, .07, mSiloRib, Math.sin(a) * (r + .035), y0 + h / 2, Math.cos(a) * (r + .035), a); }   // nervuras
+    for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + .4; const R = radial(s, a); const gs = sh(new THREE.Mesh(extr(new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0, .9), new THREE.Vector2(.55, .9)]), .03), mSiloRib)); gs.position.set(r - .55 + .02, y0 - .9, 0); R.add(gs); }
+    // cobertura cônica com pó, boca de carga, boca de visita e respiro
+    lathe(s, [[r + .07, yT - .02], [r + .07, yT + .05], [.62, yT + .5], [.62, yT + .53]], mSiloRoof, 48);
+    cyl(s, .62, .62, .55, mSiloRib, 0, yT + .8, 0, 24); cyl(s, .7, .7, .05, mSiloRib, 0, yT + 1.07, 0, 24);
+    { const R = radial(s, 2.4); cyl(R, .3, .3, .1, mSiloRib, r * .55, yT + .05 + (r + .07 - r * .55) / (r + .07 - .62) * .45, 0, 20); }
+    { const R = radial(s, -.9); cyl(R, .1, .1, .5, mSiloRib, r * .6, yT + .6, 0, 12); cyl(R, .2, .1, .14, mSiloRib, r * .6, yT + .9, 0, 14); }
+    for (let k = 0; k < 14; k++) { const a0 = k / 14 * TAU, a1 = (k + 1) / 14 * TAU, rr = r + .1; railing(s, V(Math.cos(a0) * rr, yT + .05, Math.sin(a0) * rr), V(Math.cos(a1) * rr, yT + .05, Math.sin(a1) * rr), M.yellow, 1.0); }
+    // pernas (do piso ou do deck da sala dos britadores), mãos-francesas até o anel de apoio, travessas
+    const legA = o.legA || [0, 1, 2, 3].map((k) => k * Math.PI / 2 + .78), lr = o.lr || r + 1.6, yL = (o.legY ?? 0) - yb;
+    const LP = legA.map((a) => [Math.cos(a) * lr, Math.sin(a) * lr]);
+    for (const [i, a] of legA.entries()) {
+      const [lx, lz] = LP[i]; beam(s, V(lx, yL, lz), V(lx, yT, lz), .26, M.steelDk); beam(s, V(lx, 2.4, lz), V(Math.cos(a) * r, 2.4, Math.sin(a) * r), .18, M.steelDk);
+      beam(s, V(lx, 1.2, lz), V(Math.cos(a) * (r - .1), 2.3, Math.sin(a) * (r - .1)), .1, M.steelDk);
+      cbox(s, .5, .04, .5, M.steelDk, lx, yL + .02, lz, .008);
+      for (const [ox, oz] of [[-.17, -.17], [.17, .17], [-.17, .17], [.17, -.17]]) bolt(s, lx + ox, yL + .04, lz + oz, 0, 1, 0, .022, M.steelDk);
+    }
+    for (let i = 0; i < LP.length; i++) { const p = LP[i], q = LP[(i + 1) % LP.length]; beam(s, V(p[0], 2.4, p[1]), V(q[0], 2.4, q[1]), .2, M.steelDk); }
+    ladderC(s, o.ladA ?? Math.PI / 2, r + .05, o.ladY0 ?? yL, yT + 1.05, y0);
+    return s;
+  }
   const camA = (c, cam) => Math.atan2(cam.pos[2] - c.z, cam.pos[0] - c.x);
 
   // =====================================================================================================
@@ -223,10 +273,12 @@ export function buildCrushers(scene, M) {
     cyl(MG, .2, .2, .05, mHmot, 1.98, 2.3, 0, 24); cyl(MG, .16, .16, .3, mHmot, 1.98, 2.12, 0, 24); cyl(MG, .19, .19, .05, mHmot, 1.98, 1.96, 0, 24); cyl(MG, .12, .14, .14, mHmot, 1.98, 1.87, 0, 24);
     for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; bolt(MG, 1.98 + Math.cos(a) * .17, 2.325, Math.sin(a) * .17, 0, 1, 0, .016, mBoltDk); }
     for (const [oz, ex] of [[-.06, 0], [.06, .25]]) {
-      const pts = [V(1.98, 1.8, oz), V(2.02, 1.55, oz * 2), V(2.2, 1.3, oz * 3 + .1), V(2.35, 1.02, .3 + ex), V(2.45, .55, .5 + ex), V(2.75, .08, .9 + ex), V(3.6, .04, 1.3 + ex)];
+      // mangueiras curtas do motor de ajuste até o bloco de válvulas preso na base (antes caíam soltas no piso)
+      const pts = [V(1.98, 1.8, oz), V(2.03, 1.58, oz * 1.5), V(2.14, 1.38, oz + .12), V(2.22, 1.2, .3 + ex * .4)];
       const hm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, .024, 8), M.hose); sh(hm); MG.add(hm);
       cyl(MG, .035, .035, .06, mChrome, 1.98, 1.79, oz, 6);
     }
+    cbox(MG, .26, .22, .56, mHmot, 2.24, 1.08, .4, .02);   // bloco de válvulas hidráulicas
     // tubo vertical (lubrificação) com abraçadeiras
     beam(MG, V(2.3, PT, -.62), V(2.3, 6.8, -.62), .045, M.steel, true);
     for (const y of [1.4, 2.7, 4.0, 5.3]) { box(MG, .12, .05, .14, M.steelDk, 2.3, y, -.62); }
@@ -264,7 +316,7 @@ export function buildCrushers(scene, M) {
     // alimentação: tubo do silo até o funil; sinalizador
     const b = bc(); const R0 = radial(T, aF + Math.PI / 2); beam(R0, V(1.45, 2.7, 0), V(1.88, 2.7, 0), .035, M.steelDk, true); beam(R0, V(1.85, 2.7, 0), V(1.85, 3.95, 0), .035, M.steelDk, true); b.position.set(1.85, 4.05, 0); R0.add(b); beacons[c.tag] = b;
     stream(c.tag, c.x, c.z, 9.4, 3.6);
-    silo(c.x, c.z, 2.2, 7.5, 5.5);
+    silo(c.x, c.z, 2.2, 7.5, 5.5, { ladY0: 5.5 - 7.5 });                             // escada de marinheiro a partir do deck (+5,5 m)
     beam(g, V(c.x, 7.7, c.z), V(c.x, 4.05, c.z), .33, M.chute, true); cyl(g, .45, .45, .08, M.chute, c.x, 4.08, c.z, 24); cyl(g, .45, .45, .08, M.chute, c.x, 7.5, c.z, 24);
     hot.push({ tag: c.tag, tipo: 'Britador cônico HP 400 · britagem primária', pos: V(c.x, 4.0, c.z), info: `${c.tag} · britador cônico HP 400 (compressão). Recebe o retido no 1º deck das peneiras pelo silo; o produto volta às peneiras (circuito fechado).` });
   });
@@ -273,14 +325,45 @@ export function buildCrushers(scene, M) {
   // ---- britagem secundária: Barmac VSI (frente +z, foto 03BR006)
   // =====================================================================================================
   const bh2 = .78, gT = 2.0;                                                         // topo do concreto e topo da base metálica
+  // materiais do Barmac (foto2): menos "pintas" de pó que o HP 400 — bege-claro limpo, base marrom-ferrugem empoeirada
+  // (sem o mapa de tinta do bege: as manchas de ferrugem dele viram "pintas"; a variação vem do pó, escorridos e ruído macro)
+  const flat = (base, hex, gp) => { const m = tintG(base, null, gp, { map: null }); m.color.set(hex); return m; };
+  const mF = flat(M.beige, '#9c6a54', { uDust: .7, uGrime: .8, uDustCol: '#b08a72', uMacro: .22 });             // base metálica marrom-ferrugem
+  const mFin = std({ color: 0x2a1a13, roughness: .92 });                                                    // fundo escuro da base
+  const mPlV = tintG(M.plinth, [.95, .68, .58], { uDust: .75, uGrime: 1, uDustCol: '#5a3024' });            // concreto manchado de lama
+  const mCream = flat(M.beige, '#d6ccb9', { uDust: .35, uGrime: .45, uDustCol: '#9a7462', uMacro: .12 });       // bege-claro
+  const mFrisoV = flat(M.beige, '#8e5e4d', { uDust: .35, uGrime: .45, uDustCol: '#a48270' });                  // friso marrom-rosado
+  const mMotG = flat(M.motor, '#5c625f', { uDust: .35, uGrime: .3, uDustCol: '#7a5a4a' });                    // carcaça aletada cinza-escura
+  const mDome = flat(M.beige, '#c9c9c1', { uDust: .25, uGrime: .25, uDustCol: '#8a7468', uMacro: .08 });       // cúpula cinza-clara
+  const wetA = cvs(256, 256, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); for (let i = 0; i < 14; i++) { const cx = w * (.3 + rrC() * .4), cy = h * (.3 + rrC() * .4), r = w * (.12 + rrC() * .18); const gd = x.createRadialGradient(cx, cy, 0, cx, cy, r); gd.addColorStop(0, 'rgba(255,255,255,.55)'); gd.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gd; x.fillRect(0, 0, w, h); } }, false);
+  const mWet = std({ color: 0x3a2116, roughness: .1, metalness: 0, alphaMap: wetA, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const frisoTex = cvs(2048, 128, (x, w, h) => {
+    x.fillStyle = '#8f5e4c'; x.fillRect(0, 0, w, h);
+    blotC(x, w, h, 90, 10, 60, () => `rgba(205,172,152,${.05 + rrC() * .12})`); blotC(x, w, h, 40, 10, 50, () => `rgba(70,40,30,${.05 + rrC() * .12})`);
+    x.fillStyle = 'rgba(232,220,204,.62)'; x.font = '600 28px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText('Barmac B9100SE VSI', w * .935, h * .5, 210);                       // escrita discreta, à esquerda da frente (u ≈ 0,93)
+    runs(x, w, h, 40, '70,40,28', 0, .3, .2, .9, .5, 1, 3); scr(x, w, h, 140, '215,195,178'); spk(x, w, h, 3000, '50,30,20', .3); grn(x, w, h, 8);
+  });
+  const mFrisoT = grimeUV(std({ map: frisoTex, roughness: .6, metalness: .12 }), { uDust: .3, uGrime: .3, uEdge: 0, uDustCol: '#a48270', uMacro: .08 });
+  const mLblW = std({ roughness: .5, map: cvs(192, 128, (x, w, h) => { x.fillStyle = '#f1efe8'; x.fillRect(0, 0, w, h); x.fillStyle = '#c8102e'; x.fillRect(0, 0, w, 30); x.fillStyle = '#fff'; x.font = 'bold 20px Arial'; x.textAlign = 'center'; x.fillText('BLOQUEIO', w / 2, 22); x.fillStyle = '#222'; x.font = '15px Arial'; ['Ponto de bloqueio', 'elétrico — NR-10', 'M2 · 440 V'].forEach((l, i) => x.fillText(l, w / 2, 56 + i * 22, w - 16)); spk(x, w, h, 900, '60,40,30', .3); }) });
+  // tronco de pirâmide (faces planas) — bases trapezoidais dos motores
+  const frustGeo = (wb, db, wt, dt, hh) => { const gm = new THREE.BoxGeometry(wb, hh, db); const P = gm.attributes.position; for (let i = 0; i < P.count; i++) if (P.getY(i) > 0) P.setXYZ(i, P.getX(i) * wt / wb, P.getY(i), P.getZ(i) * dt / db); gm.computeVertexNormals(); return flatUV(gm); };
+  const pedGeo = frustGeo(1.25, .9, .42, .36, .62), pedT = Math.atan(((.9 - .36) / 2) / .62);
+  const gusV = extr(new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(.42, 0), new THREE.Vector2(0, .64)]), .025);   // mão-francesa: larga embaixo
+  const finGeo = new THREE.BoxGeometry(.05, .62, .016);
   CRUSHERS.vsi.forEach((c) => {
     const T = new THREE.Group(); T.position.set(c.x, 0, c.z); T.userData.pickTag = c.tag; g.add(T);
-    cbox(T, 5.25, bh2, 3.8, M.plinth, 0, bh2 / 2, 0, .05);
-    const fr = new THREE.Group(); T.add(fr); const mF = mVsiBase;
+    // bloco de concreto manchado de lama, com poças sobre o topo e no piso à frente
+    cbox(T, 5.25, bh2, 4.2, mPlV, 0, bh2 / 2, 0, .05);
+    for (const [px, pz, sx, sz, y] of [[-1.6, 1.9, .55, .14, bh2], [.9, 1.92, .8, .12, bh2], [2.2, 1.85, .3, .16, bh2], [-.6, 2.55, 1.1, .32, .008], [1.7, 2.45, .6, .22, .008]]) {
+      const pd = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mWet); pd.rotation.x = -Math.PI / 2; pd.scale.set(sx, sz, 1); pd.position.set(px, y + .004, pz); pd.receiveShadow = true; T.add(pd);
+    }
+    const fr = new THREE.Group(); T.add(fr);
     cbox(fr, 5.0, .04, 3.36, mF, 0, bh2 + .02, 0, .01);                               // chapa de fundo
     for (const s of [-1, 1]) {                                                       // vigas-caixão longitudinais (frente/fundo)
       cbox(fr, 5.5, .56, .03, mF, 0, 1.72, s * 1.63, .008); cbox(fr, 5.5, .56, .03, mF, 0, 1.72, s * 1.33, .008);
       cbox(fr, 5.52, .035, .38, mF, 0, gT - .0175, s * 1.48, .01); cbox(fr, 5.5, .03, .36, mF, 0, 1.455, s * 1.48, .008);
+      cbox(fr, 5.4, .025, .08, mF, 0, 1.43, s * 1.69, .006);                         // aba inferior saliente
       for (let k = 0; k < 7; k++) { const xx = -2.55 + k * .85; cbox(fr, .02, .5, .1, mF, xx, 1.72, s * 1.68, .005); }
       for (const xx of [-2.73, 2.73]) cbox(fr, .03, .56, .33, mF, xx, 1.72, s * 1.48, .008);
       // furos/pequenos detalhes da viga e "M2"
@@ -288,50 +371,163 @@ export function buildCrushers(scene, M) {
       for (let k = 0; k < 14; k++) bolt(fr, -2.6 + k * .4, gT, s * 1.6, 0, 1, 0, .022, M.steelDk);
     }
     for (const xx of [-2.2, -1.1, 0, 1.1, 2.2]) cbox(fr, .26, .56, 2.66, mF, xx, 1.72, 0, .01);        // transversinas
-    for (const xx of [-2.45, -1.55, -.45, .6, 1.6, 2.45]) cbox(fr, .03, .66, 3.2, mF, xx, bh2 + .37, 0, .006);   // montantes
-    for (const [x0, x1] of [[-1.55, -.45], [.6, 1.6]]) cbox(fr, x1 - x0, .03, 3.2, mF, (x0 + x1) / 2, 1.1, 0, .006);   // prateleiras
-    box(fr, 4.6, .6, 2.4, M.black, 0, 1.1, 0);                                        // fundo escuro entre montantes
-    // mãos-francesas nas extremidades
-    const gus = extr(new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0, .66), new THREE.Vector2(-.42, .66)]), .025);
-    for (const sx of [-1, 1]) for (const zz of [-1.45, -.5, .5, 1.45]) { const gm = sh(new THREE.Mesh(gus, mF)); gm.position.set(sx * 2.5, bh2 + .02, zz); gm.scale.x = sx; fr.add(gm); }
-    // assento do tambor sobre coxins
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const cx = sx * 1.15, cz = sz * 1.45; cbox(T, .4, .025, .32, M.steelDk, cx, gT + .012, cz, .006); cbox(T, .3, .05, .24, M.rubber, cx, gT + .05, cz, .012); cbox(T, .34, .02, .28, M.steelDk, cx, gT + .085, cz, .005); cbox(T, .3, .05, .24, M.rubber, cx, gT + .12, cz, .012); cbox(T, .4, .025, .32, M.steelDk, cx, gT + .157, cz, .006); bolt(T, cx - .15, gT + .025, cz, 0, 1, 0, .02, M.steelDk); bolt(T, cx + .15, gT + .025, cz, 0, 1, 0, .02, M.steelDk); }
-    cbox(T, 2.8, .08, 3.2, mPed, 0, gT + .21, 0, .02);
-    for (let k = 0; k < 4; k++) { const R = radial(T, k * Math.PI / 2 + Math.PI / 4); cbox(R, .55, .22, .14, mPed, 1.05, gT + .36, 0, .02); }
-    cyl(T, 1.1, 1.1, .2, M.black, 0, gT + .35, 0, 40);
-    // tambor, friso, tampa cônica e tubo de alimentação
-    { const m = sh(new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.32, 1.08, 80, 1, true), mDrum)); m.position.y = 3.01; T.add(m); }
-    cyl(T, 1.36, 1.36, .06, mPed, 0, 2.5, 0, 80);
-    cyl(T, 1.37, 1.37, .28, mFriso, 0, 3.69, 0, 80); cyl(T, 1.43, 1.43, .04, mFriso, 0, 3.57, 0, 80); cyl(T, 1.43, 1.43, .04, mFriso, 0, 3.83, 0, 80);
+    for (const xx of [-2.2, -1.55, -.45, .6, 1.6, 2.2]) cbox(fr, .03, .66, 3.2, mF, xx, bh2 + .37, 0, .006);   // montantes
+    for (const [x0, x1] of [[-1.55, -.45], [.6, 1.6]]) { cbox(fr, x1 - x0, .03, 3.2, mF, (x0 + x1) / 2, 1.1, 0, .006); cbox(fr, x1 - x0, .1, .03, mF, (x0 + x1) / 2, 1.06, 1.58, .006); }   // prateleiras com aba
+    box(fr, 4.3, .6, 2.4, mFin, 0, 1.1, 0);                                           // fundo escuro entre montantes
+    for (const xx of [-1.0, .05, 2.0]) cbox(fr, .025, .64, .5, mF, xx, bh2 + .36, 1.35, .005);   // chapas de reforço visíveis na frente
+    // mãos-francesas: as vigas-caixão em balanço nas extremidades apoiadas por chapas triangulares sobre o bloco
+    for (const sx of [-1, 1]) for (const zz of [-1.45, -.75, 0, .75, 1.45]) { const gm = sh(new THREE.Mesh(gusV, mF)); gm.position.set(sx * 2.2, bh2 + .04, zz); gm.rotation.y = sx > 0 ? 0 : Math.PI; fr.add(gm); }
+    for (const sx of [-1, 1]) cbox(fr, .4, .03, 3.2, mF, sx * 2.4, bh2 + .055, 0, .006);
+    // assento do tambor: coxins (borracha empilhada com chapas), placa bege, suportes e vão escuro de descarga
+    const yC = gT + .02;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const cx = sx * 1.05, cz = sz * 1.15; cbox(T, .42, .02, .36, M.steelDk, cx, yC, cz, .005);
+      for (let i = 0; i < 3; i++) { cyl(T, .13, .14, .042, M.rubber, cx, yC + .031 + i * .054, cz, 20); if (i < 2) cyl(T, .145, .145, .012, M.steelDk, cx, yC + .058 + i * .054, cz, 20); }
+      cbox(T, .42, .02, .36, M.steelDk, cx, yC + .17, cz, .005);
+      for (const [ox, oz] of [[-.17, -.14], [.17, .14], [-.17, .14], [.17, -.14]]) bolt(T, cx + ox, yC + .01, cz + oz, 0, 1, 0, .018, M.steelDk);
+    }
+    const yB = yC + .23;                                                             // placa de assento (bege)
+    cbox(T, 2.9, .1, 3.0, mCream, 0, yB, 0, .02);
+    for (let k = 0; k < 4; k++) { const R = radial(T, k * Math.PI / 2 + Math.PI / 4); cbox(R, .6, .24, .18, mCream, 1.0, yB + .17, 0, .02); cbox(R, .03, .2, .3, mCream, .78, yB + .15, 0, .005); bolt(R, 1.2, yB + .29, -.05, 0, 1, 0, .02, M.steelDk); bolt(R, 1.2, yB + .29, .05, 0, 1, 0, .02, M.steelDk); }
+    cyl(T, 1.1, 1.1, .24, mFin, 0, yB + .17, 0, 40);
+    cyl(T, 1.37, 1.37, .07, mFrisoV, 0, yB + .32, 0, 80);                            // flange inferior marrom
+    // tambor bege-claro, friso marrom com a escrita, faixa superior, tampa cônica e tubo de alimentação
+    { const y0 = yB + .355, y1 = 3.55; const m = sh(new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.32, y1 - y0, 80, 1, true), mDrum)); m.position.y = (y0 + y1) / 2; T.add(m); }
+    { const m = sh(new THREE.Mesh(new THREE.CylinderGeometry(1.37, 1.37, .24, 96, 1, true), mFrisoT)); m.position.y = 3.69; T.add(m); }
+    cyl(T, 1.43, 1.43, .04, mFrisoV, 0, 3.57, 0, 80); cyl(T, 1.43, 1.43, .04, mFrisoV, 0, 3.83, 0, 80);
     boltRing(T, 1.4, 3.85, 48, .022, M.steelDk); boltRing(T, 1.4, 3.55, 48, .022, M.steelDk, 0, g, -1);
-    lathe(T, [[1.34, 3.85], [1.34, 3.9], [1.22, 4.06], [1.0, 4.36], [.86, 4.44], [.6, 4.48], [.6, 4.5]], mLid, 72);
-    for (let k = 0; k < 3; k++) { const R = radial(T, k * TAU / 3 + .5); cbox(R, .25, .2, .04, mLid, 1.05, 4.32, 0, .01).rotation.z = .6; }
-    cyl(T, .46, .46, .55, mLid, 0, 4.76, 0, 32); cyl(T, .54, .54, .05, mLid, 0, 4.5, 0, 32); cyl(T, .54, .54, .05, mLid, 0, 5.02, 0, 32); boltRing(T, .5, 5.045, 12, .018, M.steelDk);
+    { const m = sh(new THREE.Mesh(flatU(new THREE.CylinderGeometry(1.36, 1.36, .12, 80, 1, true)), mCream)); m.position.y = 3.91; T.add(m); }
+    lathe(T, [[1.36, 3.97], [1.3, 3.99], [1.24, 4.03], [.66, 4.5], [.6, 4.52], [.6, 4.54]], mCream, 72);
+    for (let k = 0; k < 4; k++) { const R = radial(T, k * Math.PI / 2 + Math.PI / 4); const lg = cbox(R, .22, .16, .04, mCream, 1.02, 4.31, 0, .01); lg.rotation.z = .68; cyl(R, .03, .03, .06, M.steelDk, 1.04, 4.36, 0, 10).rotation.x = Math.PI / 2; }
+    cyl(T, .46, .46, .5, mCream, 0, 4.78, 0, 32); cyl(T, .54, .54, .05, mCream, 0, 4.55, 0, 32); cyl(T, .54, .54, .05, mCream, 0, 5.02, 0, 32); boltRing(T, .5, 5.045, 12, .018, M.steelDk);
+    for (let k = 0; k < 6; k++) { const R = radial(T, k / 6 * TAU); cbox(R, .1, .4, .025, mCream, .52, 4.78, 0, .005); }    // nervuras do tubo
     const rot = cyl(T, .9, .9, .08, M.greyDk, 0, 3.42, 0, 6); rot.userData.keep = true; spin.push({ tag: c.tag, o: rot, ax: 'y', w: 14 });
-    // motores verticais aletados com cúpula, sobre bases trapezoidais com etiquetas amarelas
+    // braço de içamento da tampa (atrás): coluna, lança, cilindro hidráulico e gancho
+    { const DV = radial(T, -Math.PI / 2); cbox(DV, .16, 2.95, .16, mCream, 1.64, gT + 1.475, 0, .015); cbox(DV, .3, .03, .3, mCream, 1.64, gT + .015, 0, .005);
+      cbox(DV, 1.05, .12, .1, mCream, 1.2, 4.9, 0, .01); beam(DV, V(1.58, 3.9, 0), V(1.12, 4.84, 0), .035, M.steel, true); beam(DV, V(1.58, 3.9, 0), V(1.42, 4.23, 0), .05, mCream, true);
+      beam(DV, V(.75, 4.84, 0), V(.75, 4.45, 0), .012, M.steelDk, true); }
+    // motores verticais (corpo aletado pendurado na placa articulada, cúpula cinza-clara em cima), bases trapezoidais
     for (const s of [-1, 1]) {
-      const mx = s * 2.12;
-      const ped = cyl(T, .5, .88, .78, mPed, mx, gT + .39, 0, 4); ped.rotation.y = Math.PI / 4;
-      cbox(T, .8, .05, .8, mPed, mx, gT + .8, 0, .01);
-      for (const [lm, ox] of [[mLblA, -.14], [mLblB, .16]]) { const lb = new THREE.Mesh(new THREE.PlaneGeometry(.26, .2), lm); lb.position.set(mx + ox, gT + .38, .497); lb.rotation.x = -.331; T.add(lb); }
-      cbox(T, .5, .1, .5, M.rubber, mx, gT + .88, 0, .02);                            // coxim do motor
-      cbox(T, 1.05, .14, .95, mFriso, mx - s * .1, gT + 1.0, 0, .02);               // placa de montagem (articulada)
-      cbox(T, .55, .12, .3, mFriso, s * 1.45, gT + 1.0, 0, .02);                       // braço até o tambor
-      for (let k = 0; k < 4; k++) bolt(T, mx - s * .1 + (k % 2 - .5) * .8, gT + 1.07, (k < 2 ? -.36 : .36), 0, 1, 0, .024, M.steelDk);
-      cyl(T, .44, .44, .78, mMotDk, mx, gT + 1.47, 0, 40);
-      for (let k = 0; k < 28; k++) { const a = k / 28 * TAU; box(T, .06, .72, .018, mMotDk, mx + Math.cos(a) * .47, gT + 1.47, Math.sin(a) * .47, -a); }
-      cyl(T, .5, .5, .06, mMotDk, mx, gT + 1.88, 0, 40);
-      lathe(T, [[.52, gT + 1.9], [.53, gT + 1.95], [.5, gT + 2.15], [.4, gT + 2.32], [.22, gT + 2.4], [0, gT + 2.42]], mPed, 48).position.x = mx;
-      cbox(T, .26, .3, .2, mMotDk, mx - s * .2, gT + 1.5, .5, .02);                    // caixa de ligação
-      beam(T, V(mx - s * .2, gT + 1.35, .58), V(mx - s * .2, gT + .9, .9), .025, M.hose, true);
+      const px = s * 1.95, pz = .42, mx = s * 2.3, mz = -.46, yP = gT + .62;
+      const ped = sh(new THREE.Mesh(pedGeo, mCream)); ped.position.set(px, gT + .31, pz); T.add(ped);
+      cbox(T, 1.35, .03, 1.0, mCream, px, gT + .015, pz, .006);
+      for (const [lm, ox, oy, w, hh] of [[mLblA, -.08, .11, .2, .15], [mLblB, -.08, -.08, .2, .15], [mLblW, s * .24, .0, .15, .1]]) {
+        const lb = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), lm); lb.rotation.x = -pedT; lb.position.set(px + ox, gT + .31 + oy, pz + (.9 + .36) / 4 - oy * Math.tan(pedT) + .006); T.add(lb);
+      }
+      for (let i = 0; i < 3; i++) cyl(T, .15, .16, .04, M.rubber, px, yP + .025 + i * .05, pz, 20);   // coxim do motor
+      cbox(T, 1.45, .1, 1.5, mF, s * 2.05, yP + .2, -.15, .02);                       // placa de montagem (articulada)
+      cbox(T, .26, .5, .36, mFrisoV, s * 1.45, 2.95, -.2, .02);                       // orelha do tambor
+      { const pn = cyl(T, .05, .05, .5, mChrome, s * 1.5, yP + .26, -.2, 12); pn.rotation.x = Math.PI / 2; }
+      for (const [ox, oz] of [[-.6, .45], [-.2, .5], [.2, .5], [.6, .45], [-.6, -.82], [.6, -.82]]) bolt(T, s * 2.05 + ox, yP + .25, oz, 0, 1, 0, .024, M.steelDk);
+      cyl(T, .4, .4, .66, mMotG, mx, gT + .44, mz, 40);
+      for (let k = 0; k < 24; k++) { const a = k / 24 * TAU; const f = sh(new THREE.Mesh(finGeo, mMotG)); f.position.set(mx + Math.cos(a) * .425, gT + .45, mz + Math.sin(a) * .425); f.rotation.y = -a; T.add(f); }
+      lathe(T, [[0, gT + .06], [.3, gT + .06], [.38, gT + .1], [.41, gT + .12]], mMotG, 32).position.set(mx, 0, mz);
+      cyl(T, .5, .5, .05, mMotG, mx, yP + .275, mz, 40);                                // flange
+      cyl(T, .44, .44, .1, mMotG, mx, yP + .35, mz, 40);
+      lathe(T, [[.48, yP + .4], [.49, yP + .46], [.48, yP + .66], [.43, yP + .8], [.32, yP + .9], [.16, yP + .95], [0, yP + .96]], mDome, 48).position.set(mx, 0, mz);
+      cbox(T, .22, .28, .22, mMotG, mx + s * .5, gT + .5, mz, .02);                    // caixa de ligação
+      beam(T, V(mx + s * .5, gT + .36, mz), V(mx + s * .62, gT + .02, mz + .3), .025, M.hose, true);
     }
     plateMesh(T, M.plateW('BRITADOR SECUNDÁRIO', c.tag), .78, -.425, 1.72, 1.65);
     const b = bc(); b.position.set(.62, 5.0, .2); T.add(b); beacons[c.tag] = b; beam(T, V(.46, 4.8, .2), V(.6, 4.8, .2), .03, M.steelDk, true);
     stream(c.tag, c.x, c.z, 9.4, 5.0);
-    silo(c.x, c.z, 1.9, 7.5, 5);
+    silo(c.x, c.z, 1.9, 7.5, 5, { legY: 5.5, legA: [1, 2, 4, 5].map((k) => k * Math.PI / 3), lr: 2.6, ladA: 0 });   // apoiado no deck (+5,5 m)
     beam(g, V(c.x, 7.7, c.z), V(c.x, 5.05, c.z), .3, M.chute, true); cyl(g, .42, .42, .08, M.chute, c.x, 7.5, c.z, 24);
     hot.push({ tag: c.tag, tipo: 'Britador de impacto Barmac (VSI) · britagem secundária', pos: V(c.x, 4.5, c.z), info: `${c.tag} · britador de impacto vertical Barmac (rotor). Recebe o retido no 2º deck das peneiras; o produto volta às peneiras.` });
   });
+
+  // =====================================================================================================
+  // ---- sala dos britadores: prateleiras de peças, unidade hidráulica, tubulações, mangueiras e refletores
+  // =====================================================================================================
+  {
+    const RM = new THREE.Group(); g.add(RM);
+    const mRackU = tintG(M.grey, [.35, .5, 1.1], { uDust: .7 });                    // montantes azuis
+    const mRackB = tintG(M.orange, [1.1, .85, .7], { uDust: .7 });                   // longarinas laranja
+    const mWood = tintG(M.beige, [.85, .6, .36], { uDust: .9, uGrime: .5 });
+    const mBinB = tintG(M.grey, [.3, .45, 1.15], { uDust: .6 }), mBinY = tintG(M.yellow, [1, .95, .9], { uDust: .6 }), mRed = tintG(M.grey, [1.4, .35, .25], { uDust: .6 });
+    const mMn = tintG(M.greyDk, [.9, .85, .82], { uDust: .8 });                       // aço-manganês (revestimentos)
+    const mWhite = tintG(M.beige, [1.15, 1.15, 1.15], { uDust: .6 });
+    const mPipeG = tintG(M.grey, [.55, .9, .6], { uDust: .9 }), mPipeB = tintG(M.grey, [.45, .6, 1.1], { uDust: .9 }), mPipeY = tintG(M.yellow, [1, 1, 1], { uDust: .9 });
+    const torus = (p, r, t, mat, x, y, z) => { const m = sh(new THREE.Mesh(new THREE.TorusGeometry(r, t, 8, 24), mat)); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); p.add(m); return m; };
+    const item = (P, x, y, z, room) => {                                              // um item de prateleira; devolve a largura usada
+      const t = rrC(), hMax = Math.min(room, .46);
+      if (t < .22) { const w = .4 + rrC() * .2, h = Math.min(hMax, .28 + rrC() * .16); cbox(P, w, h, .5, mWood, x + w / 2, y + h / 2, z, .01); return w; }
+      if (t < .4) { const w = .36, h = Math.min(hMax, .24); const mb = rrC() < .6 ? mBinB : mBinY; cbox(P, w, h, .5, mb, x + w / 2, y + h / 2, z, .015); cbox(P, w - .04, .02, .46, mFin, x + w / 2, y + h - .005, z, .002); return w; }
+      if (t < .55) { const n = 1 + (rrC() * 3 | 0); for (let i = 0; i < n; i++) { torus(P, .14, .05, M.steelDk, x + .19, y + .05 + i * .1, z); cyl(P, .1, .1, .09, M.steel, x + .19, y + .05 + i * .1, z, 18); } return .38; }
+      if (t < .68) { const n = 1 + (rrC() * 2 | 0); for (let i = 0; i < n; i++) cyl(P, .13, .12, Math.min(hMax, .32), rrC() < .5 ? mBinY : mRed, x + .14 + i * .28, y + Math.min(hMax, .32) / 2, z + (rrC() - .5) * .1, 18); return n * .28; }
+      if (t < .8) { const n = 1 + (rrC() * 2 | 0); for (let i = 0; i < n; i++) torus(P, .2, .045, M.hose, x + .25, y + .05 + i * .09, z); return .5; }
+      if (t < .92) { const n = 2 + (rrC() * 3 | 0); for (let i = 0; i < n; i++) cbox(P, .5, .045, .34, mMn, x + .26, y + .025 + i * .05, z + (rrC() - .5) * .04, .006); return .52; }
+      for (let i = 0; i < 3; i++) cyl(P, .07, .07, .28, mWhite, x + .08 + i * .16, y + .14, z, 14); return .48;
+    };
+    function rack(x, z, len, ry) {
+      const P = new THREE.Group(); P.position.set(x, 0, z); P.rotation.y = ry; RM.add(P);
+      const d = .6, lv = [.12, .8, 1.48, 2.16], nb = Math.max(1, Math.round(len / 1.3)), bw = len / nb;
+      for (let i = 0; i <= nb; i++) { const xx = -len / 2 + i * bw; for (const sz of [-d / 2, d / 2]) { box(P, .07, 2.45, .06, mRackU, xx, 1.225, sz); cbox(P, .14, .01, .12, M.steelDk, xx, .005, sz, .002); }
+        for (let k = 0; k < 4; k++) beam(P, V(xx, .25 + k * .55, -d / 2), V(xx, .25 + (k + 1) * .55, d / 2), .022, mRackU); }
+      for (const y of lv) { for (const sz of [-d / 2, d / 2]) box(P, len, .09, .045, mRackB, 0, y, sz); box(P, len, .02, d, M.steelDk, 0, y + .055, 0); }
+      for (const [j, y] of lv.entries()) for (let i = 0; i < nb; i++) { let px = -len / 2 + i * bw + .08; const end = -len / 2 + (i + 1) * bw - .08, room = (j < 3 ? lv[j + 1] - y - .16 : .5); while (px < end - .5) { if (rrC() < .12) { px += .3; continue; } px += item(P, px, y + .065, (rrC() - .5) * .06, room) + .04; } }
+      return P;
+    }
+    rack(51.3, .65, 4.6, 0); rack(58.0, .65, 2.4, 0); rack(63.33, 14.0, 2.3, Math.PI / 2);
+    // palete com manto de reposição do HP 400 e caixas de pontas de rotor do Barmac
+    { const PL = new THREE.Group(); PL.position.set(55, 0, 10.5); PL.rotation.y = .12; RM.add(PL);
+      for (const zz of [-.5, 0, .5]) cbox(PL, 1.5, .1, .12, mWood, 0, .05, zz, .01); for (let k = 0; k < 7; k++) cbox(PL, .14, .025, 1.2, mWood, -.66 + k * .22, .115, 0, .004);
+      lathe(PL, [[0, .13], [.74, .13], [.74, .18], [.62, .55], [.42, .95], [.36, .99], [0, .99]], mMn, 48).position.x = -.1;
+      cbox(PL, .4, .3, .35, mWood, .55, .28, .3, .01); cbox(PL, .4, .3, .35, mWood, .55, .28, -.15, .01); cbox(PL, .38, .25, .33, mWood, .55, .555, .1, .01); }
+    // unidade hidráulica (HPU) do ajuste/alívio dos HP 400: tanque, motobomba, filtros, acumuladores e manômetros
+    const HP = new THREE.Group(); HP.position.set(55.2, 0, 3.3); RM.add(HP);
+    { const mTank = tintG(M.grey, [.42, .56, .9], { uDust: .9 });
+      cbox(HP, 1.7, .1, .95, M.steelDk, 0, .05, 0, .01); cbox(HP, 1.5, .75, .8, mTank, 0, .5, 0, .03);
+      cbox(HP, .04, .3, .06, mWhite, -.4, .55, .405, .005); box(HP, .02, .24, .01, M.black, -.4, .55, .44);          // visor de nível
+      const mb = cyl(HP, .17, .17, .5, M.motor, -.35, 1.08, 0, 28); mb.rotation.z = Math.PI / 2; cyl(HP, .2, .2, .04, M.motor, -.1, 1.08, 0, 28).rotation.z = Math.PI / 2;
+      cbox(HP, .5, .2, .3, M.steelDk, -.35, .9, 0, .01); const pmp = cyl(HP, .11, .11, .22, mHmot, .08, 1.02, 0, 20); pmp.rotation.z = Math.PI / 2;
+      for (const zz of [-.22, .22]) { cyl(HP, .065, .065, .3, mWhite, .5, 1.03, zz, 14); cyl(HP, .075, .075, .04, M.steelDk, .5, 1.2, zz, 14); }
+      for (const xx of [-.62, .62]) lathe(HP, [[0, .88], [.09, .9], [.12, .96], [.12, 1.42], [.08, 1.5], [.03, 1.53], [0, 1.53]], mHmot, 20).position.set(xx, 0, -.28);
+      for (const xx of [.25, .38]) { const gg = cyl(HP, .045, .045, .025, M.steelDk, xx, 1.2, .2, 16); gg.rotation.x = Math.PI / 2; const fc = new THREE.Mesh(new THREE.CircleGeometry(.038, 16), mWhite); fc.position.set(xx, 1.2, .214); HP.add(fc); beam(HP, V(xx, .88, .2), V(xx, 1.17, .2), .008, mChrome, true); }
+      cbox(HP, .3, .4, .16, M.yellow, .55, .55, .48, .01); const wn = new THREE.Mesh(new THREE.PlaneGeometry(.22, .18), mLblA); wn.position.set(.55, .58, .562); HP.add(wn); }
+    // tubulação: suporte sob o deck (z ≈ 10,4 e 13,9) — hidráulico, lubrificação, água e ar comprimido
+    const pipes = [[.032, M.steel, 4.82, 10.22], [.028, mPipeY, 4.82, 10.38], [.055, mPipeG, 4.74, 10.58], [.04, mPipeB, 4.8, 10.8]];
+    for (const [r, m, y, z] of pipes) beam(RM, V(48.75, y, z), V(63.5, y, z), r, m, true);
+    const pipes2 = [[.028, mPipeY, 4.82, 13.7], [.05, mPipeG, 4.76, 13.88], [.038, mPipeB, 4.82, 14.06]];
+    for (const [r, m, y, z] of pipes2) beam(RM, V(48.3, y, z), V(63.5, y, z), r, m, true);
+    for (let x = 49.3; x < 63.5; x += 2.05) for (const [z0, z1] of [[10.1, 10.92], [13.58, 14.18]]) {    // pendurais em trapézio
+      for (const zz of [z0, z1]) beam(RM, V(x, 4.62, zz), V(x, 5.46, zz), .012, M.steelDk, true);
+      box(RM, .06, .05, z1 - z0 + .06, M.steelDk, x, 4.6, (z0 + z1) / 2);
+      for (const [r, , y, z] of (z0 < 12 ? pipes : pipes2)) { const cl = new THREE.Mesh(new THREE.TorusGeometry(r + .012, .006, 4, 14), M.steelDk); cl.position.set(x, y, z); cl.rotation.y = Math.PI / 2; RM.add(cl); }
+    }
+    // HPU → suporte: subida, travessia sob o deck até z 10,2
+    for (const [i, zz] of [-.12, 0, .12].entries()) { const xx = 55.75 + i * .1; beam(RM, V(xx, .88, 3.3 + zz), V(xx, 4.62 - i * .06, 3.3 + zz), .022, M.steel, true); beam(RM, V(xx, 4.62 - i * .06, 3.3 + zz), V(xx, 4.62 - i * .06, 10.2), .022, M.steel, true); }
+    // descidas para os HP 400 (bloco de válvulas + mangueiras até o anel de ajuste)
+    const hose = (pts, r = .022) => { const m = sh(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, r, 8), M.hose)); RM.add(m); return m; };
+    CRUSHERS.cones.forEach((c) => {
+      const x = c.x + .7; beam(RM, V(x, 4.82, 10.22), V(x, 3.0, 10.22), .032, M.steel, true); beam(RM, V(x, 3.0, 10.22), V(x, 3.0, 9.35), .032, M.steel, true);
+      cbox(RM, .22, .26, .16, mHmot, x, 3.0, 9.3, .01); for (const oy of [-.06, .06]) { const v = cyl(RM, .03, .03, .1, M.yellow, x + .14, 3.0 + oy, 9.3, 10); v.rotation.z = Math.PI / 2; }
+      hose([V(x - .05, 2.88, 9.24), V(x - .1, 2.55, 9.0), V(x - .25, 2.4, 8.75), V(x - .4, 2.62, 8.5)]);
+      hose([V(x + .05, 2.88, 9.24), V(x + .1, 2.45, 9.05), V(x - .05, 2.2, 8.7), V(x - .2, 2.1, 8.45)], .018);
+      beam(RM, V(x - .25, 4.74, 10.58), V(x - .25, 1.2, 10.58), .055, mPipeG, true);      // água de lavagem com mangueira enrolada
+      { const v = cyl(RM, .07, .07, .12, mRed, x - .25, 1.15, 10.58, 12); v.rotation.x = Math.PI / 2; }
+      for (let i = 0; i < 4; i++) torus(RM, .26, .03, M.hose, x - .25, .9 - i * .055, 10.82).rotation.x = Math.PI / 2 + .15;
+    });
+    // descidas para os Barmac (lubrificação dos rolamentos + ar de limpeza), mangueiras até o tambor
+    CRUSHERS.vsi.forEach((c, i) => {
+      const x = [c.x - 1.6, c.x + 1.1, c.x - 1.6][i] ?? c.x - 1.6;
+      beam(RM, V(x, 4.82, 13.7), V(x, 2.35, 13.7), .028, mPipeY, true); beam(RM, V(x, 2.35, 13.7), V(x, 2.35, 15.5), .028, mPipeY, true);
+      beam(RM, V(x + .1, 4.82, 14.06), V(x + .1, 2.5, 14.06), .038, mPipeB, true); beam(RM, V(x + .1, 2.5, 14.06), V(x + .1, 2.5, 15.5), .038, mPipeB, true);
+      cbox(RM, .3, .3, .14, M.steelDk, x + .05, 2.42, 15.55, .01);
+      const dx = c.x - x, sx = Math.sign(dx) || 1, tx = c.x - sx * .85;
+      hose([V(x, 2.36, 15.62), V(x + sx * .15, 2.2, 15.9), V(tx - sx * .2, 2.6, 16.2), V(tx, 3.1, 16.35)]);
+      hose([V(x + .1, 2.5, 15.62), V(x + .1 + sx * .2, 2.4, 15.95), V(tx - sx * .1, 2.9, 16.25), V(tx + sx * .1, 3.35, 16.3)], .018);
+    });
+    // refletores LED nas colunas (luz fria pontual sobre os britadores)
+    for (const [p, t] of [[[56.35, 4.3, 12.4], [61, 2.2, 17.5]], [[48.35, 4.3, 11.62], [51, 2.4, 7]], [[63.62, 4.3, 11.62], [59, 2.4, 7]], [[48.35, 4.3, 12.4], [52.5, 1.8, 17.5]]]) {
+      const F = new THREE.Group(); F.position.set(...p); RM.add(F); F.lookAt(V(...t));
+      cbox(F, .34, .26, .07, M.greyDk, 0, 0, 0, .01); for (let k = 0; k < 6; k++) box(F, .3, .012, .03, M.greyDk, 0, -.1 + k * .04, -.05);
+      const fc = new THREE.Mesh(new THREE.PlaneGeometry(.29, .21), M.glass); fc.position.z = .037; F.add(fc);
+      beam(F, V(0, -.14, -.02), V(0, -.25, -.2), .02, M.steelDk);
+      const L = new THREE.SpotLight(0xeef2ff, 26, 0, .75, .7, 2); L.position.set(...p); L.target.position.set(...t); g.add(L, L.target);
+    }
+  }
+
 
   // ---- instâncias de parafusos (uma chamada de desenho por raiz/material)
   g.updateMatrixWorld(true);

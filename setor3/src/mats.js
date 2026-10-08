@@ -344,10 +344,10 @@ export function buildMaterials(opt = {}) {
   // trincas, pedriscos, montinhos de finos e alguns pontos úmidos (lisos/escuros)
   {
     const s = BIG, L = layers(s, true), { A, H, R } = L;
-    A.fillStyle = '#4c4441'; A.fillRect(0, 0, s, s);
+    A.fillStyle = '#46403e'; A.fillRect(0, 0, s, s);
     R.fillStyle = orm(.9, 0); R.fillRect(0, 0, s, s);
-    blotches(A, s, 90, s * .03, s * .22, () => `rgba(${92 + rnd() * 30 | 0},${56 + rnd() * 14 | 0},${42 + rnd() * 10 | 0},${.1 + rnd() * .22})`);   // finos avermelhados
-    blotches(A, s, 40, s * .05, s * .25, () => `rgba(118,112,108,${.06 + rnd() * .12})`);                                        // cimento aparente
+    blotches(A, s, 90, s * .03, s * .22, () => `rgba(${78 + rnd() * 24 | 0},${56 + rnd() * 12 | 0},${48 + rnd() * 9 | 0},${.1 + rnd() * .22})`);   // finos de minério (grafite amarronzado)
+    blotches(A, s, 40, s * .05, s * .25, () => `rgba(112,108,106,${.05 + rnd() * .1})`);                                        // cimento aparente
     // trilhas de passagem (ao longo de x): faixa compactada mais lisa e um pouco mais clara, com marcas de pneu/bota
     for (let i = 0; i < 9; i++) {
       const y = rnd() * s, w = s * (.025 + rnd() * .04), lite = rnd() < .6;
@@ -362,7 +362,7 @@ export function buildMaterials(opt = {}) {
     // pontos úmidos/lama: escuros e lisos (reflexo fraco do ambiente)
     for (let i = 0; i < 14; i++) { const cx = rnd() * s, cy = rnd() * s; for (let k = 0; k < 6; k++) { const x0 = cx + (rnd() - .5) * s * .05, y0 = cy + (rnd() - .5) * s * .025, r = s * (.006 + rnd() * .018), p = shape(r); poly(A, x0, y0, p, 1, `rgba(34,24,20,${.25 + rnd() * .3})`); poly(R, x0, y0, p, .9, orm(.35 + rnd() * .2, 0, .8)); poly(H, x0, y0, p, 1, 'rgba(110,110,110,.5)'); } }
     // montinhos de finos (pó solto, relevo alto e muito fosco)
-    for (let i = 0; i < 70; i++) { const cx = rnd() * s, cy = rnd() * s, r = s * (.004 + rnd() * .02); const g = H.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(200,200,200,.6)'); g.addColorStop(1, 'rgba(200,200,200,0)'); H.fillStyle = g; H.beginPath(); H.arc(cx, cy, r, 0, 6.3); H.fill(); const ga = A.createRadialGradient(cx, cy, 0, cx, cy, r); ga.addColorStop(0, 'rgba(100,66,52,.35)'); ga.addColorStop(1, 'rgba(100,66,52,0)'); A.fillStyle = ga; A.beginPath(); A.arc(cx, cy, r, 0, 6.3); A.fill(); R.fillStyle = orm(1, 0, .4); R.beginPath(); R.arc(cx, cy, r * .7, 0, 6.3); R.fill(); }
+    for (let i = 0; i < 70; i++) { const cx = rnd() * s, cy = rnd() * s, r = s * (.004 + rnd() * .02); const g = H.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(200,200,200,.6)'); g.addColorStop(1, 'rgba(200,200,200,0)'); H.fillStyle = g; H.beginPath(); H.arc(cx, cy, r, 0, 6.3); H.fill(); const ga = A.createRadialGradient(cx, cy, 0, cx, cy, r); ga.addColorStop(0, 'rgba(88,64,54,.35)'); ga.addColorStop(1, 'rgba(88,64,54,0)'); A.fillStyle = ga; A.beginPath(); A.arc(cx, cy, r, 0, 6.3); A.fill(); R.fillStyle = orm(1, 0, .4); R.beginPath(); R.arc(cx, cy, r * .7, 0, 6.3); R.fill(); }
     // juntas de dilatação (2 por repetição em cada eixo) e trincas
     for (let i = 0; i <= 2; i++) { const p = i * s / 2; A.fillStyle = 'rgba(22,15,12,.6)'; A.fillRect(p - 2, 0, 4, s); A.fillRect(0, p - 2, s, 4); H.fillStyle = '#303030'; H.fillRect(p - 3, 0, 6, s); H.fillRect(0, p - 3, s, 6); R.fillStyle = orm(1, 0); R.fillRect(p - 3, 0, 6, s); R.fillRect(0, p - 3, s, 6); }
     for (let i = 0; i < 46; i++) { let px = rnd() * s, py = rnd() * s; const pts = [[px, py]]; for (let k = 0; k < 9; k++) { px += (rnd() - .5) * s * .03; py += (rnd() - .3) * s * .03; pts.push([px, py]); } const lw = (.7 + rnd()) * s / 1024; for (const [x, c] of [[A, `rgba(22,15,12,${.3 + rnd() * .3})`], [H, 'rgba(50,50,50,.8)']]) { x.strokeStyle = c; x.lineWidth = lw; x.beginPath(); pts.forEach(([a, b], j) => j ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke(); } }
@@ -378,15 +378,17 @@ export function buildMaterials(opt = {}) {
     });
     speckle(A, s, s * 10, .3, '28,20,16'); speckle(A, s, s * 4, .2, '160,150,142');
     const T = finish(L, { repeat: [12, 6], nStr: 2.4 });
-    M.floor = grime(std({ map: T.map, roughnessMap: T.orm, normalMap: T.nrm, normalScale: new THREE.Vector2(.7, .7), roughness: 1, metalness: 0, metalnessMap: T.orm }), { tri: 0, dust: .2, edge: 0, grime: 0, macro: .22, dustCol: '#56423a' });
+    M.floor = grime(std({ map: T.map, roughnessMap: T.orm, normalMap: T.nrm, normalScale: new THREE.Vector2(.7, .7), roughness: 1, metalness: 0, metalnessMap: T.orm }), { tri: 0, dust: .2, edge: 0, grime: 0, macro: .22, dustCol: '#4e423c' });
     M.floor.metalness = 1;   // metalicidade vem do mapa (só os pedriscos de hematita)
+    // lajes dos pisos +7,5 e +14 (face de cima): mesmo concreto escurecido por pó, em coordenadas do mundo (5,3 m por repetição)
+    M.slab = grime(std({ map: T.map, roughnessMap: T.orm, normalMap: T.nrm, normalScale: new THREE.Vector2(.7, .7), roughness: 1, metalness: 1, metalnessMap: T.orm }), { tri: 1 / 5.3, dust: .18, edge: 0, grime: .2, macro: .26, dustCol: '#4e423c' });
   }
 
   // ---- concreto (lajes, bases): cinza manchado de minério, bolhas, escorridos; triplanar 1 repetição / 3 m
   const concT = (() => {
     const s = MID, L = layers(s, HI), { A, H, R } = L;
-    A.fillStyle = '#76706b'; A.fillRect(0, 0, s, s); if (R) { R.fillStyle = orm(.92, 0); R.fillRect(0, 0, s, s); }
-    blotches(A, s, 60, s * .03, s * .25, () => `rgba(${100 + rnd() * 26 | 0},${60 + rnd() * 16 | 0},${44 + rnd() * 10 | 0},${.1 + rnd() * .25})`);
+    A.fillStyle = '#6a6562'; A.fillRect(0, 0, s, s); if (R) { R.fillStyle = orm(.92, 0); R.fillRect(0, 0, s, s); }
+    blotches(A, s, 60, s * .03, s * .25, () => `rgba(${84 + rnd() * 22 | 0},${60 + rnd() * 12 | 0},${50 + rnd() * 8 | 0},${.1 + rnd() * .25})`);
     blotches(A, s, 30, s * .02, s * .1, () => `rgba(48,34,28,${.15 + rnd() * .3})`);
     if (R) blotches(R, s, 30, s * .03, s * .15, () => orm(.75 + rnd() * .25, 0, .4));
     dripsL(L, 120, '74,42,30', .3);
@@ -397,14 +399,16 @@ export function buildMaterials(opt = {}) {
     speckle(A, s, s * 8, .3, '40,30,24'); speckle(A, s, s * 3, .25, '180,172,165');
     return finish(L, { nStr: 2 });
   })();
-  M.concrete = grime(pm(concT, { r: .93, m: 0, ns: .7 }), { tri: 1 / 3, dust: .7, edge: .5, grime: .6, macro: .16, dustCol: '#5c4236' });
+  M.concrete = grime(pm(concT, { r: .93, m: 0, ns: .7 }), { tri: 1 / 3, dust: .7, edge: .5, grime: .6, macro: .16, dustCol: '#54443c' });
   M.plinth = grime(pm(concT, { r: .95, m: 0, ns: .7 }, { color: 0xb09888 }), { tri: 1 / 2.5, dust: .8, edge: .6, grime: .8, dustCol: '#5a3e32' });
 
   // ---- ESTRUTURA METÁLICA: tinta cinza-bege gasta + ferrugem dessaturada + pó de minério (não laranja/madeira)
-  const steelT = paint(MID, { base: '#7a6c62', dust: 1.4, rust: 1.2, drip: 1.2, scratch: 1, chip: 1, r: .7, m: .35, rustRGB: '98,56,38' });
-  M.steel = grime(pm(steelT, steelT.o), { tri: 1 / 2.2, dust: .95, edge: 1, grime: .7, dustCol: '#7a4632' });
-  const steelDkT = paint(TINY, { base: '#5b4a40', dust: 1.2, rust: 1.6, drip: 1, scratch: .7, chip: 1, r: .75, m: .3, rustRGB: '92,52,34' });
-  M.steelDk = grime(pm(steelDkT, steelDkT.o), { tri: 1 / 2, dust: .9, edge: .9, grime: .6, dustCol: '#72402c' });
+  // pintura coerente: demão uniforme levemente empoeirada (pó fino marrom-acinzentado, não manchas laranja), ferrugem
+  // pequena e escura, lascas nas quinas; o shader acumula pó no topo das mesas e clareia as bordas gastas
+  const steelT = paint(MID, { base: '#74645a', dust: .9, rust: .9, drip: 1.4, scratch: 1.1, chip: 1.3, chipR: .008, r: .72, m: .32, dustRGB: '108,84,70', dripRGB: '70,46,34', rustRGB: '86,50,34', grain: 8 });
+  M.steel = grime(pm(steelT, steelT.o), { tri: 1 / 2.2, dust: 1.25, edge: 1.25, grime: .75, macro: .16, dustCol: '#6c4a3a' });
+  const steelDkT = paint(TINY, { base: '#584840', dust: .9, rust: 1.1, drip: 1.2, scratch: .7, chip: 1, r: .76, m: .3, dustRGB: '98,76,64', dripRGB: '60,40,30', rustRGB: '80,46,32' });
+  M.steelDk = grime(pm(steelDkT, steelDkT.o), { tri: 1 / 2, dust: 1.1, edge: 1.1, grime: .65, dustCol: '#664434' });
   // chutes/caixas: aço marrom-ferrugem escuro, muito sujo, borda polida pelo minério
   const chuteT = paint(MID, { base: '#5a3a2a', dust: 1.6, rust: 2.2, drip: 2, scratch: .9, chip: 1.4, bare: .7, chipRust: .35, r: .8, m: .3, rustRGB: '88,48,30' });
   M.chute = grime(pm(chuteT, chuteT.o), { tri: 1 / 2, dust: 1, edge: .9, grime: .8, dustCol: '#6a3a28' });
@@ -468,14 +472,91 @@ export function buildMaterials(opt = {}) {
   M.white = std({ color: 0xe9e7e2, roughness: .6 });
   M.black = std({ color: 0x151312, roughness: .7 });
   M.hose = std({ color: 0x121212, roughness: .45, metalness: 0 });
-  M.glass = std({ color: 0xffffff, emissive: 0xfff4dd, emissiveIntensity: 6, roughness: .2 });
+  M.glass = std({ color: 0xffffff, emissive: 0xfff0d8, emissiveIntensity: 4.5, roughness: .2 });   // núcleo da luminária (o halo vem de render.js)
 
   // ---- TELHAS trapezoidais: marrom-ferrugem escuras por dentro, verdes por fora (normal das nervuras)
   const ribH = canvasTex(SM, (x, s) => { const n = 32, p = s / n; x.fillStyle = '#404040'; x.fillRect(0, 0, s, s); for (let i = 0; i < n; i++) { const g = x.createLinearGradient(i * p, 0, i * p + p, 0); g.addColorStop(0, '#404040'); g.addColorStop(.15, '#d0d0d0'); g.addColorStop(.45, '#d0d0d0'); g.addColorStop(.6, '#404040'); g.addColorStop(1, '#404040'); x.fillStyle = g; x.fillRect(i * p, 0, p, s); } }, { srgb: false });
   const cladN = (rep) => normalFromHeight(ribH.userData.canvas, 6 * SM / 1024, rep);
-  const cladInMap = canvasTex(MID, (x, s) => { x.fillStyle = '#4d3529'; x.fillRect(0, 0, s, s); for (let i = 0; i < 32; i++) { x.fillStyle = i % 2 ? 'rgba(0,0,0,.14)' : 'rgba(255,230,210,.04)'; x.fillRect(i * s / 32, 0, s / 64, s); } blotches(x, s, 50, s * .05, s * .3, () => `rgba(${100 + rnd() * 30 | 0},${50 + rnd() * 15 | 0},${30},${.1 + rnd() * .3})`); drips(x, s, 220, '40,24,16', .35); drips(x, s, 120, '120,64,36', .25); grain(x, s, 10); });
-  cladInMap.repeat.set(6, 1);
-  M.cladIn = grime(std({ map: cladInMap, normalMap: cladN([6, 1]), roughness: .8, metalness: .35, side: THREE.DoubleSide }), { tri: 0, dust: .3, edge: 0, grime: .3 });
+  // face interna: marrom-ferrugem empoeirado (não laranja), 1 repetição = 8 × 8 m em coordenadas do mundo (triplanar):
+  // nervuras trapezoidais a cada 0,25 m, chapas de 1 m com tom próprio, transpasses horizontais a cada 4 m (sombra + pó
+  // acumulado na aba), parafusos com arruela nas terças e escorridos de ferrugem/lama abaixo deles, ferrugem nos transpasses
+  const cladInT = (() => {
+    const s = MID, L = layers(s, HI), { A, H, R } = L, nRb = 32, p = s / nRb, k = s / 1024;
+    A.fillStyle = '#4e3d34'; A.fillRect(0, 0, s, s); if (R) { R.fillStyle = orm(.84, .28); R.fillRect(0, 0, s, s); }
+    // tom de cada chapa (1 m × 4 m): umas mais acinzentadas (pó), outras mais ferruginosas, poucas trocadas (mais escuras)
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 2; j++) {
+      const v = rnd(), col = v < .4 ? `rgba(122,104,92,${.06 + rnd() * .12})` : v < .8 ? `rgba(104,62,42,${.06 + rnd() * .14})` : `rgba(30,22,18,${.1 + rnd() * .15})`;
+      A.fillStyle = col; A.fillRect(i * s / 8, j * s / 2, s / 8, s / 2);
+      if (R) { R.fillStyle = orm(.72 + rnd() * .22, .2 + rnd() * .15, .5); R.fillRect(i * s / 8, j * s / 2, s / 8, s / 2); }
+    }
+    const nD = field(3, 5, .55), nR0 = field(5, 5, .6), nF = field(28, 3, .5), sp = L.sp;
+    const r0 = quant(nR0, .88), r1 = quant(nR0, .97), d0 = quant(nD, .4), d1 = quant(nD, .85);
+    pixels(L, (i, x, y, a, hh, r) => {
+      const q = Math.abs(((x % p) / p) - .5) * 2;                 // 1 = centro do vale, 0 = centro da crista
+      const prof = q < .3 ? 1 : q > .5 ? 0 : 1 - (q - .3) / .2, web = q >= .3 && q <= .5;
+      const t = sp(nD, x, y), f = sp(nF, x, y), rr = sp(nR0, x, y);
+      const ly = (y % (s / 2)) / (s / 2);                           // posição dentro da chapa (0 = topo)
+      let c0 = a[i], c1 = a[i + 1], c2 = a[i + 2];
+      const sh = web ? .86 : prof > .5 ? 1.05 : .97; c0 *= sh; c1 *= sh; c2 *= sh;
+      const dm = sst(d0, d1, t) * .5 * (.7 + .6 * f);               // véu de pó fino
+      c0 += (120 * (.85 + .3 * f) - c0) * dm; c1 += (102 * (.85 + .3 * f) - c1) * dm; c2 += (90 * (.85 + .3 * f) - c2) * dm;
+      const rb = Math.max(sst(r0, r1, rr), sst(.86, 1, ly) * (.35 + .65 * f) * .8);   // ferrugem: manchas + base de cada chapa (água no transpasse)
+      c0 += (98 * (.8 + .4 * f) - c0) * rb * .8; c1 += (56 * (.8 + .4 * f) - c1) * rb * .8; c2 += (36 * (.8 + .4 * f) - c2) * rb * .8;
+      const g = (rnd() - .5) * 9; a[i] = c0 + g; a[i + 1] = c1 + g * .95; a[i + 2] = c2 + g * .9;
+      if (hh) hh[i] = hh[i + 1] = hh[i + 2] = hh[i] + (prof - .5) * 150 + rb * 10 + (f - .5) * 10 + (rnd() - .5) * 6;
+      if (r) { let rg = r[i + 1] / 255, mt = r[i + 2] / 255; rg += (.97 - rg) * Math.max(dm, rb); mt += (.04 - mt) * Math.max(dm, rb * .8); r[i + 1] = rg * 255; r[i + 2] = mt * 255; }
+    });
+    // transpasses verticais (a cada 4 nervuras) e horizontais (a cada 4 m): linha de sombra, aba com pó acumulado por cima
+    for (let i = 0; i < 8; i++) { const px = i * s / 8 + p * .35; A.fillStyle = 'rgba(20,14,11,.55)'; A.fillRect(px, 0, 1.5 * k + .5, s); if (H) { H.fillStyle = 'rgba(40,40,40,.6)'; H.fillRect(px, 0, 2 * k + .5, s); } }
+    for (const py of [0, s / 2]) {
+      A.fillStyle = 'rgba(16,11,9,.7)'; A.fillRect(0, py, s, 2.5 * k + .5);
+      const gd = A.createLinearGradient(0, py - 7 * k, 0, py); gd.addColorStop(0, 'rgba(126,104,90,0)'); gd.addColorStop(1, 'rgba(126,104,90,.55)'); A.fillStyle = gd; A.fillRect(0, py - 7 * k, s, 7 * k);
+      if (H) { H.fillStyle = 'rgba(210,210,210,.5)'; H.fillRect(0, py - 5 * k, s, 5 * k); H.fillStyle = '#303030'; H.fillRect(0, py, s, 2.5 * k + .5); }
+      if (R) { R.fillStyle = orm(1, 0, .8); R.fillRect(0, py - 7 * k, s, 9 * k); }
+    }
+    // parafusos nas terças (6 por repetição = 1,33 m) em cada vale, escorrido de ferrugem/lama abaixo de metade deles
+    for (let j = 0; j < 6; j++) for (let i = 0; i < nRb; i++) {
+      const cx = i * p + (rnd() - .5) * .6, cy = j * s / 6 + 6 * k, rw = 2.4 * k + .4, rust = rnd();
+      A.fillStyle = rust < .5 ? 'rgb(90,56,40)' : 'rgb(128,122,114)'; A.beginPath(); A.arc(cx, cy, rw, 0, 6.3); A.fill();
+      A.fillStyle = 'rgba(20,14,10,.7)'; A.beginPath(); A.arc(cx, cy, rw * .45, 0, 6.3); A.fill();
+      if (H) { H.fillStyle = '#c8c8c8'; H.beginPath(); H.arc(cx, cy, rw, 0, 6.3); H.fill(); }
+      if (R) { R.fillStyle = rust < .5 ? orm(.9, .2) : orm(.45, .8); R.beginPath(); R.arc(cx, cy, rw, 0, 6.3); R.fill(); }
+      if (rnd() < .55) { const len = s * (.02 + rnd() * rnd() * .16), w = (1 + rnd() * 1.6) * k, a0 = .12 + rnd() * .3, col = rnd() < .6 ? '104,58,36' : '38,28,22';
+        const gg = A.createLinearGradient(0, cy, 0, cy + len); gg.addColorStop(0, `rgba(${col},${a0})`); gg.addColorStop(1, `rgba(${col},0)`); A.fillStyle = gg; A.fillRect(cx - w / 2, cy, w, len);
+        if (R) { R.fillStyle = orm(.95, .05, a0); R.fillRect(cx - w / 2, cy, w, len); } }
+    }
+    dripsL(L, 180, '36,26,21', .28); dripsL(L, 70, '112,66,40', .18);
+    speckle(A, s, s * 6, .25, '30,22,18'); speckle(A, s, s * 3, .2, '150,132,118');
+    return finish(L, { repeat: [8, 2.5], nStr: 2.2 });
+  })();
+  M.cladIn = grime(pm(cladInT, { r: .85, m: .3, ns: 1 }, { side: THREE.DoubleSide }), { tri: 1 / 8, dust: .35, edge: 0, grime: .45, macro: .24, dustCol: '#6a5446' });
+  if (!cladInT.nrm) M.cladIn.normalMap = cladN([6, 1]);
+  // telha translúcida (claraboia) vista de dentro: polímero leitoso com nervuras e poeira, iluminada pelo sol
+  const skyMap = canvasTex(256, (x, s) => { x.fillStyle = '#e6e8e6'; x.fillRect(0, 0, s, s); for (let i = 0; i < 8; i++) { const g = x.createLinearGradient(i * s / 8, 0, (i + 1) * s / 8, 0); g.addColorStop(0, 'rgba(90,80,70,.25)'); g.addColorStop(.35, 'rgba(255,255,255,.1)'); g.addColorStop(.65, 'rgba(255,255,255,.1)'); g.addColorStop(1, 'rgba(90,80,70,.25)'); x.fillStyle = g; x.fillRect(i * s / 8, 0, s / 8, s); } blotches(x, s, 30, s * .05, s * .3, () => `rgba(120,96,80,${.1 + rnd() * .25})`); drips(x, s, 60, '110,80,60', .3); grain(x, s, 8); });
+  M.skylight = std({ color: 0x8a8580, map: skyMap, emissive: 0xeef2f4, emissiveMap: skyMap, emissiveIntensity: 2.6, roughness: .9, metalness: 0, side: THREE.DoubleSide });
+  // pó de minério acumulado no piso (decalque translúcido): atlas 2 × 2 com manchas irregulares de bordas suaves
+  {
+    const s = HI ? 1024 : 512, h = s / 2;
+    const cc = document.createElement('canvas'); cc.width = cc.height = s; const C = cc.getContext('2d');
+    const ac = document.createElement('canvas'); ac.width = ac.height = s; const Al = ac.getContext('2d');
+    C.fillStyle = '#5a443a'; C.fillRect(0, 0, s, s); Al.fillStyle = '#000'; Al.fillRect(0, 0, s, s);
+    for (let q = 0; q < 4; q++) {
+      const ox = (q % 2) * h, oy = (q >> 1) * h, n = 14 + (rnd() * 10 | 0);
+      Al.save(); Al.beginPath(); Al.rect(ox, oy, h, h); Al.clip();
+      for (let i = 0; i < n; i++) {
+        const cx = ox + h * (.25 + rnd() * .5), cy = oy + h * (.25 + rnd() * .5), r = h * (.08 + rnd() * .2), gr = Al.createRadialGradient(cx, cy, 0, cx, cy, r);
+        gr.addColorStop(0, `rgba(255,255,255,${.25 + rnd() * .35})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); Al.fillStyle = gr; Al.fillRect(cx - r, cy - r, r * 2, r * 2);
+      }
+      for (let i = 0; i < 400; i++) { const r = h * .35 * Math.sqrt(rnd()), an = rnd() * 6.28, px = ox + h / 2 + Math.cos(an) * r, py = oy + h / 2 + Math.sin(an) * r; Al.fillStyle = `rgba(255,255,255,${.2 + rnd() * .5})`; Al.fillRect(px, py, 1 + rnd() * 2, 1 + rnd() * 2); }
+      Al.restore();
+      C.save(); C.beginPath(); C.rect(ox, oy, h, h); C.clip();
+      blotches(C, s, 30, h * .04, h * .2, () => (rnd() < .5 ? `rgba(104,66,48,${.2 + rnd() * .3})` : `rgba(70,60,56,${.2 + rnd() * .3})`));
+      C.restore();
+    }
+    speckle(C, s, s * 30, .5, '36,26,22'); speckle(C, s, s * 10, .4, '120,96,84');
+    const tc = texOf(cc), ta = texOf(ac, { srgb: false });
+    M.dust = std({ map: tc, alphaMap: ta, transparent: true, depthWrite: false, roughness: 1, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  }
   const cladOutMap = canvasTex(MID, (x, s) => { x.fillStyle = '#3c6a52'; x.fillRect(0, 0, s, s); for (let i = 0; i < 32; i++) { x.fillStyle = i % 2 ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.06)'; x.fillRect(i * s / 32, 0, s / 64, s); } blotches(x, s, 40, s * .05, s * .3, () => `rgba(120,64,36,${rnd() * .35})`); drips(x, s, 200, '110,58,34', .3); grain(x, s, 10); });
   cladOutMap.repeat.set(8, 1);
   M.cladOut = grime(std({ map: cladOutMap, normalMap: cladN([8, 1]), roughness: .6, metalness: .3 }), { tri: 0, dust: .5, edge: 0, grime: .2 });

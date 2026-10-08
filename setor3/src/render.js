@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261007210101';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261007210101';
-import { PhoneShader } from './render_post.js?v=20261007210101';
-import { UpscaleShader } from './render_upscale.js?v=20261007210101';
+import { B, LV } from './layout.js?v=20261008063521';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261008063521';
+import { PhoneShader } from './render_post.js?v=20261008063521';
+import { UpscaleShader } from './render_upscale.js?v=20261008063521';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -31,6 +31,10 @@ export const LOOK = {
   env: 1.0,           // intensidade do ambiente PMREM
   hemi: .18,          // preenchimento muito fraco
   lamp: 55,           // spots das luminárias (cd)
+  lampL2: 11,         // projetores locais do piso +14 (a 2,8 m do piso)
+  shaft: .32,         // feixes de luz do dia (claraboias) — espalhamento no pó do ar
+  motes: .9,          // brilho das partículas de pó dentro dos feixes
+  halo: .22,          // halo das luminárias (sem estourar)
   fogIn: .010,        // névoa de pó dentro do prédio (FogExp2)
   fogOut: .0016,
   aoScale: .6,
@@ -40,6 +44,13 @@ export const LOOK = {
 for (const kv of (Q.get('lk') || '').split(',').filter(Boolean)) { const [k, v] = kv.split(':'); if (k.startsWith('ao.')) LOOK.ao[k.slice(3)] = +v; else if (k in LOOK && typeof LOOK[k] === 'number') LOOK[k] = +v; }
 
 installBoxProjection();
+const _v2 = new THREE.Vector2();
+// claraboias declaradas pelo prédio (building.js → group.userData.skylights), em coordenadas do mundo
+function findSkylights(scene) {
+  const out = []; scene.updateMatrixWorld(true);
+  scene.traverse((o) => { if (o.userData && o.userData.skylights) for (const r of o.userData.skylights) { const a = o.localToWorld(new THREE.Vector3(r.x0, r.y, r.z0)), b = o.localToWorld(new THREE.Vector3(r.x1, r.y, r.z1)); out.push({ x0: a.x, x1: b.x, z0: a.z, z1: b.z, y: a.y }); } });
+  return out;
+}
 
 export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !HIGH, powerPreference: 'high-performance', stencil: false, preserveDrawingBuffer: Q.get('shot') === '1' });
@@ -74,13 +85,101 @@ function skyDome() {
   return m;
 }
 
+// ---- efeitos de luz (feixes, poeira, halos): ficam fora do GTAO (não fazem sombra de oclusão nem escrevem profundidade)
+const FX = { group: null, shafts: null, mat: null, motes: null };
+// primeira superfície atingida por um raio de sol que desce de uma claraboia (pisos, laje +14, deck dos britadores, paredes)
+function shaftEnd(o, d) {
+  let best = 80;
+  const tryY = (y, ok) => { if (d.y >= 0) return; const t = (y - o.y) / d.y; if (t > .5 && t < best) { const x = o.x + d.x * t, z = o.z + d.z * t; if (ok(x, z)) best = t; } };
+  tryY(LV.L2 + .3, (x, z) => x < B.screenEnd && z < 8.7);
+  tryY(LV.L1, (x) => x < B.screenEnd);
+  tryY(5.5, (x, z) => x > 48.6 && ((z > 3.2 && z < 10) || z > 14));
+  tryY(0, () => true);
+  if (d.z < 0) { const t = -o.z / d.z; if (t > .5 && t < best && o.y + d.y * t > 4) best = t; }
+  if (d.z > 0) { const t = (B.D - o.z) / d.z; if (t > .5 && t < best && o.y + d.y * t > LV.L2 + 2) best = t; }
+  if (d.x > 0) { const t = (B.W - o.x) / d.x; if (t > .5 && t < best && o.y + d.y * t > 6) best = t; }
+  if (d.x < 0) { const t = -o.x / d.x; if (t > .5 && t < best && o.y + d.y * t > 6) best = t; }
+  return best;
+}
+const SHAFT_VS = /* glsl */`
+varying float vS; varying vec3 vN; varying vec3 vV; varying vec3 vW;
+void main(){ vS = position.y; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vV = -mv.xyz;
+  vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * mv; }`;
+const SHAFT_FS = /* glsl */`
+uniform vec3 uCol; uniform float uI; uniform float uT;
+varying float vS; varying vec3 vN; varying vec3 vV; varying vec3 vW;
+float h3(vec3 p){ p = fract(p * .3183099 + .1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float n3(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z); }
+void main(){
+  float facing = abs(dot(normalize(vN), normalize(vV)));
+  float core = pow(facing, 1.8);
+  float along = smoothstep(0.0, 0.08, vS) * (1.0 - smoothstep(0.82, 1.0, vS)) * mix(1.0, 0.55, vS);
+  vec3 q = vW * 0.7 + vec3(uT * 0.03, -uT * 0.05, uT * 0.02);
+  float dust = 0.6 + 0.55 * n3(q) + 0.3 * n3(q * 3.3 + 7.1);
+  float dist = length(vV);
+  float near = smoothstep(0.6, 3.0, dist);            // some ao atravessar o feixe (sem "parede" na cara da câmera)
+  gl_FragColor = vec4(uCol * (uI * core * along * dust * near), 1.0);
+}`;
+const MOTE_VS = /* glsl */`
+attribute float aPh; uniform float uT; uniform float uScale; varying float vA;
+void main(){
+  vec3 p = position + vec3(sin(uT * 0.23 + aPh * 6.28), sin(uT * 0.17 + aPh * 11.0) * 0.7, cos(uT * 0.19 + aPh * 8.3)) * 0.18;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+  float d = -mv.z; gl_PointSize = clamp(uScale * 0.018 / d, 1.0, 4.0);
+  vA = (0.45 + 0.55 * sin(uT * 0.7 + aPh * 40.0)) * smoothstep(0.8, 3.0, d) * (1.0 - smoothstep(14.0, 30.0, d));
+}`;
+const MOTE_FS = /* glsl */`
+uniform vec3 uCol; varying float vA;
+void main(){ vec2 c = gl_PointCoord - 0.5; float a = smoothstep(0.5, 0.1, length(c)); gl_FragColor = vec4(uCol * a * vA, 1.0); }`;
+
+function buildLightFX(scene, sun, lamps) {
+  const grp = new THREE.Group(); grp.name = 'luz-fx'; scene.add(grp); FX.group = grp;
+  const d = new THREE.Vector3().subVectors(sun.target.position, sun.position).normalize();
+  const sky = findSkylights(scene).map((r) => ({ a: new THREE.Vector3(r.x0, r.y, r.z0), b: new THREE.Vector3(r.x1, r.y, r.z1) }));
+  // feixes: cilindro de seção elíptica (pegada da claraboia) cisalhado ao longo da direção do sol
+  if (sky.length) {
+    const geo = new THREE.CylinderGeometry(.5, .5, 1, 24, 1, true); geo.translate(0, .5, 0);
+    const mat = new THREE.ShaderMaterial({ uniforms: { uCol: { value: new THREE.Color(0xffe9cf) }, uI: { value: LOOK.shaft }, uT: { value: 0 } }, vertexShader: SHAFT_VS, fragmentShader: SHAFT_FS,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.FrontSide, fog: false });
+    FX.mat = mat; const shafts = new THREE.Group(); grp.add(shafts); FX.shafts = shafts;
+    const mPos = [], mPh = [];
+    for (const { a, b } of sky) {
+      const c = a.clone().add(b).multiplyScalar(.5); c.y -= .1;
+      const L = shaftEnd(c, d), w = Math.abs(b.x - a.x) * .95, dz = Math.abs(b.z - a.z) * .95;
+      const m = new THREE.Mesh(geo, mat); m.matrixAutoUpdate = false; m.frustumCulled = false;
+      m.matrix.makeBasis(new THREE.Vector3(w, 0, 0), d.clone().multiplyScalar(L), new THREE.Vector3(0, 0, dz)).setPosition(c);
+      m.renderOrder = 5; shafts.add(m);
+      // partículas de pó em suspensão dentro do feixe
+      for (let i = 0; i < 70; i++) { const s = .06 + Math.random() * .8, r = Math.sqrt(Math.random()) * .45, an = Math.random() * 6.28;
+        mPos.push(c.x + d.x * L * s + Math.cos(an) * r * w, c.y + d.y * L * s, c.z + d.z * L * s + Math.sin(an) * r * dz); mPh.push(Math.random()); }
+    }
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute(mPos, 3)); pg.setAttribute('aPh', new THREE.Float32BufferAttribute(mPh, 1));
+    const pm = new THREE.ShaderMaterial({ uniforms: { uT: { value: 0 }, uScale: { value: 800 }, uCol: { value: new THREE.Color(0xfff0dc).multiplyScalar(LOOK.motes) } }, vertexShader: MOTE_VS, fragmentShader: MOTE_FS,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+    const motes = new THREE.Points(pg, pm); motes.frustumCulled = false; motes.renderOrder = 6; grp.add(motes); FX.motes = motes;
+  }
+  // halos das luminárias: brilho suave em volta do vidro (aditivo, moderado — o bloom fica só no núcleo)
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.15, 'rgba(255,255,255,.55)'); gr.addColorStop(.45, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const ht = new THREE.CanvasTexture(c);
+  const hm = (k) => new THREE.SpriteMaterial({ map: ht, color: new THREE.Color(0xffdcb0).multiplyScalar(LOOK.halo * k), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true });
+  const hBig = hm(1), hSmall = hm(.8);
+  for (const p of lamps) {
+    const big = p.y > LV.L2 + 4, sp = new THREE.Sprite(big ? hBig : hSmall);
+    sp.position.set(p.x, p.y + .12, p.z); sp.scale.setScalar(big ? 2.4 : p.kind === 'l2' ? 1.0 : 1.4); grp.add(sp);
+  }
+}
+
 export function buildLighting(scene, renderer, lamps = []) {
   scene.background = new THREE.Color(0xa9c9e6);
   scene.add(skyDome());
-  scene.environment = buildEnvironment(renderer, lamps, { sky: LOOK.sky, lamp: 40 });
+  scene.environment = buildEnvironment(renderer, lamps, { sky: LOOK.sky, lamp: 40, skylights: findSkylights(scene) });
   scene.environmentIntensity = HIGH ? LOOK.env : LOOK.env * 1.25;
-  const fog = new THREE.FogExp2(0xa8927e, LOOK.fogIn); scene.fog = fog;
-  const hemi = new THREE.HemisphereLight(0xcfe0f0, 0x5a3a28, HIGH ? LOOK.hemi : LOOK.hemi * 2.5); scene.add(hemi);
+  const fog = new THREE.FogExp2(0xa08c7c, LOOK.fogIn); scene.fog = fog;
+  // meia-luz quente: céu azulado por cima, rebatimento marrom-acinzentado (pó de minério) por baixo
+  const hemi = new THREE.HemisphereLight(0xd6e2ee, 0x56443a, HIGH ? LOOK.hemi : LOOK.hemi * 2.5); scene.add(hemi);
   // sol: alto, vindo da frente aberta (z = D) e um pouco de lado — entra pelas aberturas e faz faixas de luz no piso
   const sun = new THREE.DirectionalLight(0xfff0dc, LOOK.sun);
   sun.position.set(B.W / 2 - 22, 42, B.D + 46); sun.target.position.set(B.W / 2, 0, B.D / 2);
@@ -91,12 +190,13 @@ export function buildLighting(scene, renderer, lamps = []) {
   scene.add(sun, sun.target);
   // luminárias: spots abertos apontando para baixo (não acendem o teto) — britagem, sob o piso L2 e algumas high-bay
   lamps.forEach((p, i) => {
-    const crusher = p.x > B.screenEnd + 2 && p.y < 12, underL2 = p.y < LV.L2;
-    if (!(crusher || underL2 || i % 4 === 0)) return;
-    if (!HIGH && !crusher) return;
-    const l = new THREE.SpotLight(0xffe6c4, LOOK.lamp * (crusher ? 1.3 : 1), 0, 1.25, .9, 2);
+    const crusher = p.x > B.screenEnd + 2 && p.y < 12, underL2 = p.y < LV.L2, l2 = p.kind === 'l2';
+    if (!(crusher || underL2 || l2 || i % 4 === 0)) return;
+    if (!HIGH && !crusher && !l2) return;
+    const l = new THREE.SpotLight(0xffdcb4, l2 ? LOOK.lampL2 : LOOK.lamp * (crusher ? 1.3 : 1), 0, l2 ? 1.05 : 1.25, .9, 2);
     l.position.set(p.x, p.y - .05, p.z); l.target.position.set(p.x, 0, p.z); scene.add(l, l.target);
   });
+  buildLightFX(scene, sun, lamps);
   // anisotropia máxima em todas as texturas (piso/chapas não borram em ângulo rasante)
   const maxA = renderer.capabilities.getMaxAnisotropy();
   scene.traverse((o) => { if (!o.material) return; for (const m of [].concat(o.material)) for (const k of ['map', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'metalnessMap']) if (m[k]) m[k].anisotropy = maxA; });
@@ -104,12 +204,17 @@ export function buildLighting(scene, renderer, lamps = []) {
   scene.traverse((o) => { if (o.isMesh && o.castShadow) for (const m of [].concat(o.material)) if (m && m.shadowSide == null) m.shadowSide = THREE.DoubleSide; });
   // por quadro: névoa mais densa dentro do prédio; sombras atualizadas a cada ~0,4 s (peças móveis são pequenas)
   let lastSh = 0;
+  const t0 = performance.now();
   scene.onBeforeRender = (r, s, cam) => {
     const p = cam.position, inside = p.x > -1 && p.x < B.W + 1 && p.z > -1 && p.z < B.D + 1 && p.y < B.H;
     fog.density = inside ? LOOK.fogIn : LOOK.fogOut;
+    // feixes e poeira só com o prédio fechado (de fora a cobertura some e o feixe ficaria solto no ar)
+    const tt = (performance.now() - t0) / 1000;
+    if (FX.shafts) { FX.shafts.visible = inside; FX.mat.uniforms.uT.value = tt; FX.mat.uniforms.uI.value = LOOK.shaft; }
+    if (FX.motes) { FX.motes.visible = inside; FX.motes.material.uniforms.uT.value = tt; FX.motes.material.uniforms.uScale.value = r.getDrawingBufferSize(_v2).y / (2 * Math.tan(THREE.MathUtils.degToRad((cam.fov || 60) / 2))); }
     const now = performance.now(); if (now - lastSh > 400) { lastSh = now; r.shadowMap.needsUpdate = true; }
   };
-  window.__look = { LOOK, sun, hemi, scene, fog };
+  window.__look = { LOOK, sun, hemi, scene, fog, FX };
   return { sun, hemi };
 }
 
@@ -149,6 +254,7 @@ export function createComposer(renderer, scene, camera) {
   const baseSetSize = gtao.setSize.bind(gtao);
   gtao.setSize = (w, h) => baseSetSize(Math.max(2, Math.round(w * LOOK.aoScale)), Math.max(2, Math.round(h * LOOK.aoScale)));
   gtao.blendIntensity = 1.0; gtao.normalMaterial.side = THREE.DoubleSide;
+  { const r0 = gtao.render.bind(gtao); gtao.render = (...a) => { const g = FX.group, v = g && g.visible; if (g) g.visible = false; r0(...a); if (g) g.visible = v; }; }   // feixes/halos fora da oclusão
   composer.addPass(gtao);
   const TAA = Q.get('taa') !== '0', accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum);
   const bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), ...LOOK.bloom); composer.addPass(bloom);
