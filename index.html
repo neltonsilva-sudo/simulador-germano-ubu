@@ -3314,7 +3314,7 @@ const PILEFALL=(()=>{const n=140,geo=new THREE.DodecahedronGeometry(.13),im=new 
 }
 const B34=conveyor(S3?s3T(67.5,2.6,22):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
 /* retomada da pilha (4) → concentradores (5): parte da saída do túnel junto à pilha (não acompanha o ajuste da área 7) e sobe em treliça */
-const B45=conveyor(PILE.position.clone().add(V3(12,2.4,4)),LP(V3(-62,6,-5)),1.2,{yellow:true,raw:true});
+const B45=conveyor(PILE.position.clone().add(V3(12,2.4,4)),(()=>{const d=layDelta(-50,4),x=-50+d.x;return V3(x,ALT(x),4+d.z).add(V3(-15.5,10.6,-5));})(),1.2,{yellow:true,raw:true});// termina no topo do silo de alimentação da moagem (área 5)
 /* ---------- 5 Concentrator: grinding, desliming, flotation ---------- */
 const CON=grp(-50,4);
 const mills=[],froths=[];
@@ -3332,6 +3332,16 @@ const mills=[],froths=[];
     box(2.6,1,1.2,MAT.concrete,x,.9,-8,CON);box(2.6,1,1.2,MAT.concrete,x,.9,-2,CON);
     const mo=cyl(.9,.9,2.2,MAT.wall2,x+2.8,1.6,-7,CON,16);mo.rotation.z=Math.PI/2;
     mills.push(m);}
+  /* silo de alimentação da moagem (recebe a esteira de retomada da pilha) + correia de distribuição sobre a entrada dos moinhos */
+  {const bx=-15.5,bz=-5;cyl(1.9,1.9,4.2,MAT.wall2,bx,8.3,bz,CON,24);cyl(1.9,.5,1.8,MAT.wall2,bx,5.3,bz,CON,24);cyl(2.05,2.05,.25,MAT.frame,bx,10.45,bz,CON,24);
+    for(const [dx,dz] of [[-1.5,-1.5],[1.5,-1.5],[-1.5,1.5],[1.5,1.5]])box(.3,8.4,.3,MAT.yellow,bx+dx,4.2,bz+dz,CON);
+    box(3.6,.25,3.6,MAT.frame,bx,4.4,bz,CON);
+    // alimentador sob o silo → correia de distribuição a 9 m, entrando pela lateral do galpão e passando sobre a entrada dos moinhos
+    box(1.6,.5,1.2,MAT.tealDk,bx,4.05,bz,CON);
+    const L=26,cx=bx+L/2-.6;box(L,.3,1.4,MAT.frame,cx,9,-2.2,CON);box(L,.08,1.1,MAT.dark,cx,9.2,-2.2,CON);
+    beam(V3(bx,4.05,bz),V3(bx+.4,8.9,-2.2),.7,MAT.tealDk,CON);
+    for(const x of [-8,0,8]){beam(V3(x,8.9,-2.2),V3(x,5.2,-1.7),.55,MAT.tealDk,CON);}// chutes até a entrada de cada moinho
+    for(const x of [-12,-4,4,12])box(.25,.25,1.6,MAT.yellow,x,8.75,-2.2,CON);}
   // desliming cyclone clusters
   for(const x of [-9,9]){box(4,.3,4,MAT.frame,x,7,1.2,CON);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;cyl(.35,.08,1.6,MAT.teal,x+1.2*Math.cos(a),7.95,1.2+1.2*Math.sin(a),CON,10);}
     for(const [dx,dz] of [[-1.8,-1.8],[1.8,-1.8],[-1.8,1.8],[1.8,1.8]])box(.3,7,.3,MAT.frame,x+dx,3.5,1.2+dz,CON);}
