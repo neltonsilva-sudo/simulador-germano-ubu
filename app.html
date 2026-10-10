@@ -2979,7 +2979,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010173327';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010184819';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3447,6 +3447,11 @@ const sfDrums=[];
 {bld(SF,0,0,18,8,7,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});for(let i=0;i<3;i++){const dm=std(0xffffff,.2,.5,{map:ribTex});const drum=mesh(new THREE.CylinderGeometry(3.2,3.2,5.2,24,1,false,0,Math.PI),dm,-6+i*6,7.2,0,SF);drum.rotation.z=Math.PI/2;sfDrums.push(dm);}
   cyl(1.4,1.4,3,MAT.teal,-10.5,1.5,-2,SF,20);box(3,2,3,MAT.wall2,10.5,1,-2,SF);}
 const B78=conveyor(V3(-60,4.5,34.5),V3(-60,8.6,59.5),1,{kind:'sand',nominal:900,yellow:true});
+/* queda do rejeito arenoso da ponta da correia B78 sobre a pilha 8 (jato em parábola + poeira no impacto) */
+const SANDFALL=(()=>{const n=170,im=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.15),new THREE.MeshStandardMaterial({color:0x9c8058,roughness:.95}),n);im.castShadow=true;im.frustumCulled=false;root.add(im);
+  const head=LP(V3(-60,8.6,59.5)).add(V3(0,.1,.5)),lx=head.x,lz=head.z+2.2,land=V3(lx,H(lx,lz)+.15,lz);
+  const dust=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),new THREE.MeshBasicMaterial({color:0xc9b38c,transparent:true,opacity:.2,depthWrite:false}));dust.position.copy(land);root.add(dust);
+  return{im,dust,head,land,d:Array.from({length:n},()=>({u:Math.random(),x:(Math.random()-.5)*.6,z:(Math.random()-.5)*.4,r:Math.random()*6}))};})();
 /* ---------- 8 Dry stack (terrain mound) + dozer ---------- */
 const DS=grp(-60,68,7);
 {box(3,1.3,2,MAT.truck,0,.7,0,DS);box(3.4,.5,.3,MAT.dark,1.8,.4,0,DS);}
@@ -4825,6 +4830,9 @@ function frame(){
     const nv=Math.round(F.d.length*clamp(.35+q*.6,.2,1));F.im.count=nv;
     for(let k=0;k<nv;k++){const d=F.d[k];d.u+=dt*.9;if(d.u>1)d.u-=1;const u=d.u;P4.set(h.x+(ap.x-h.x)*u+d.x*(.25+u*.9),h.y+(ap.y-h.y)*u,h.z+(ap.z-h.z)*u+d.z*(.25+u*.9));E4.set(d.r+t*4,d.r*2,0);Q4.setFromEuler(E4);S4.setScalar(.8+(d.r%1)*.6);M4.compose(P4,Q4,S4);F.im.setMatrixAt(k,M4);}
     F.im.instanceMatrix.needsUpdate=true;const pu=1+Math.sin(t*3.1)*.25;F.dust.position.copy(ap);F.dust.scale.set(1.4*pu,.6*pu,1.4*pu);F.dust.material.opacity=.12+.06*Math.sin(t*2.3);}}
+  {const F=SANDFALL,on=RUN.sandf&&(G.sand||0)>1;F.im.visible=on;F.dust.visible=on;if(on){const q=clamp(G.sand/900,.25,1.3),nv=Math.round(F.d.length*clamp(.35+q*.55,.25,1)),M4=new THREE.Matrix4(),E4=new THREE.Euler(),Q4=new THREE.Quaternion(),S4=new THREE.Vector3(),P4=new THREE.Vector3(),h=F.head,l=F.land;F.im.count=nv;
+    for(let k=0;k<nv;k++){const d=F.d[k];d.u+=dt*1.15;if(d.u>1)d.u-=1;const u=d.u,sp=.15+u*.9;P4.set(h.x+(l.x-h.x)*u+d.x*sp,h.y-(h.y-l.y)*u*u,h.z+(l.z-h.z)*u+d.z*sp);E4.set(d.r+t*3,d.r,0);Q4.setFromEuler(E4);S4.setScalar(.7+(d.r%1)*.6);M4.compose(P4,Q4,S4);F.im.setMatrixAt(k,M4);}
+    F.im.instanceMatrix.needsUpdate=true;const pu=1+Math.sin(t*2.7)*.22;F.dust.scale.set(1.5*pu,.55*pu,1.5*pu);F.dust.material.opacity=.1+.05*Math.sin(t*2.1);}}
   if(typeof tw3Tick==='function')tw3Tick(t,dt);
   mills.forEach((m,i)=>{const k=['c1','c2','c3'][i];const onM=RUN.conc&&RUN[k]&&G.F>0;if(onM)m.rotation.z+=dt*1.2;m.userData.mats[0].color.setHex(RUN[k]?0x4f9aa6:0x9aa3ac);m.userData.mats[1].color.setHex(RUN[k]?0x3c7c87:0x7d868f);});
   sfDrums.forEach((d,i)=>d.color.setHex(RUN[['f1','f2','f3'][i]]?0xffffff:0x8d959c));
