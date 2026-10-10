@@ -473,6 +473,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--ground);z-index:20;font-family:var(--f-disp);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 #loading b{color:var(--accent);font-size:22px;letter-spacing:.06em}
 .brand h1{margin-left:clamp(14px,3.2vw,52px)!important}
+#exitBtn{background:linear-gradient(180deg,#d9534a,#a8261d)!important;border-color:#ffb3a8!important;color:#fff!important}#exitBtn:hover{filter:brightness(1.12)}
 #alm .ah h3{white-space:nowrap}#alm .tagp{white-space:nowrap}
 #alm .ab,#alm .alt td,#alm .alt th,#alm .hint{color:#fff!important;opacity:1!important}#engBody,#engBody td,#engBody th,#engBody .hint,#engBody h4,#engBody p,#engBody label{color:#fff!important;opacity:1!important}
 #alm .tagp,#engBody .tagp{color:#fff!important;font-weight:700;border:0!important;background:#4b5b6b!important;text-shadow:0 1px 1px rgba(0,0,0,.35);padding:2px 8px;border-radius:6px}#alm .tagp.ok,#engBody .tagp.ok{background:#1e9e57!important}#alm .tagp.warn,#engBody .tagp.warn{background:#d9771a!important}#alm .tagp.crit,#engBody .tagp.crit{background:#d23a3a!important}
@@ -510,7 +511,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
       <div class="seg" id="todSeg" role="group" aria-label="Iluminação"><div class="dd"><button type="button" class="ddbtn" aria-haspopup="true" aria-expanded="false" title="Turno (iluminação)">Turno <b class="ddv"></b> ▾</button><div class="ddmenu" role="menu"><button data-t="day" aria-pressed="false">Dia</button><button data-t="dusk" aria-pressed="false">Entardecer</button><button data-t="night" aria-pressed="false">Noite</button></div></div><button data-t="cycle" aria-pressed="true">Ciclo real</button></div>
       <button class="btn" id="engBtn" title="Gêmeo digital: geometalurgia, previsão, reconciliação, sensores virtuais, modelos avançados, calibração e dados reais">Gêmeo digital</button>
       <button class="btn" id="aiBtn" title="Análise do processo com Simulação">Assistente de Simulação</button>
-            <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button>
+            <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button><button class="btn" id="exitBtn" title="Encerrar a sessão e voltar à tela de acesso">⏻ Sair</button>
     </div>
   </header>
 
@@ -2978,7 +2979,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010172453';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010173327';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -6299,6 +6300,13 @@ setInterval(()=>{document.querySelectorAll('.dd').forEach(dd=>{const on=dd.query
 DT_READY=true;
 window.__sim={surgeFacts:()=>surgeFacts(),renderAI:r=>renderAI(r),setCollapsed:(a,b)=>setCollapsed(a,b),AMB,SITE,sunTimes,altFiltF,loadPlan:(a,b)=>loadPlan(a,b),wxApply,wxAt,wxDaily,loadWx,rainFrame,rainVis,applyTOD,RAIN,romM,acc,LOOPS,MPC,EXPERT,DIST,LAG,perfStats,lvl6,lvlH,cw6,buildContext,HIST,ADV,GEO,FAULT,INSTR,VS,get REC(){return REC;},get FC(){return FC;},forecast,recTick,vsTick,pbmRun,pipeHydraulics,furnaceModel,finishTween(){if(tween){camera.position.copy(tween.p1);controls.target.copy(tween.t1);tween=null;controls.update();}},enterArea,exitArea,get AREA(){return AREA;},step,seedPipe,pilotConcentrate,get PCAL(){return PCAL;},calibrate,synthData,setCal(d){CALDATA=d;},get CALRES(){return CALRES;},setTOD(m){todMode=m;applyTOD(0,true);},openDash,camera,controls,EQ,select,P,RUN,ST,get CUR(){return CUR;},scene,H,renderer,setHQ(v){HQ=v;applyQuality();},capture(w=1600,h=1000){renderer.shadowMap.needsUpdate=true;renderer.setPixelRatio(1);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(HQ&&composer){setComposerSize(w,h,1);composer.render(0);}else renderer.render(scene,camera);const u=renderer.domElement.toDataURL('image/jpeg',.88);renderer.setPixelRatio(HQ?Math.min(window.devicePixelRatio||1,1.5):Math.min(window.devicePixelRatio||1,2));resize();return u;},get HQ(){return HQ;},ssao:()=>ssao,outPass:()=>outPass};
 $('#qBtn').addEventListener('click',()=>{HQ=!HQ;fpsLowT=0;applyQuality();});
+/* Sair: encerra a sessão e volta para a tela de acesso (GitHub: mesma página sem a chave; Apps Script: endereço do simulador) */
+$('#exitBtn').addEventListener('click',()=>confirmCmd('Sair do simulador?','A sessão será encerrada e você volta para a tela de acesso (será preciso digitar a senha de novo).',()=>{
+  try{if(typeof ACC!=='undefined'&&ACC.role==='admin'&&ACC.adm)google.script.run.acessoFechar(ACC.adm);}catch(e){}
+  try{logEvent('Acesso','Sessão encerrada pelo botão Sair');}catch(e){}
+  setTimeout(()=>{if(window.__BRIDGE){location.href=location.origin+location.pathname;return;}
+    if(typeof HAS_GAS!=='undefined'&&HAS_GAS){const u='https:'+'/'+'/script.google.com/macros/s/AKfycbzI3n1FQsK7H1_Guhcwz7dK21wDqK-4aeBLHF4ryNnhWE0eHH0Y7x_W97tP9Gee62Q/exec';try{window.open(u,'_top');}catch(e){location.href=u;}return;}
+    location.reload();},250);}));
 applyQuality();
 evalAlarms();refreshEq(true);updateUI();
 $('#loading').remove();
