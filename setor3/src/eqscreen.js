@@ -1,4 +1,4 @@
-import { call } from './api.js?v=20261010083652';
+import { call } from './api.js?v=20261010084418';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -77,23 +77,26 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <div class="bar"><i style="width:${Math.min(100, e.w)}%;background:${wcol}"></i></div>
       <p class="n">${hWhy}</p>
       <h4>Especificação técnica (ilustrativa)</h4><table>${S.itens.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
-      <div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button data-a="wear">Registrar troca</button><button data-a="os">Gerar OS simulada</button></div><p class="n" id="osMsg"></p>`;
+      <div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div><p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
     el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); } render(); });
   }
   // ORDEM DE SERVIÇO SIMULADA: gravada na mesma planilha do registro de inspeção (tipo "OS simulada")
+  const OSST = {};   // situação da OS por equipamento (a tela é redesenhada a cada ~0,3 s)
   async function gerarOS(t, e, btn) {
+    if (OSST[t] && OSST[t].busy) return;
     const H = e.health, sev = H == null ? 'Baixa' : H < 50 ? 'Alta' : H < 75 ? 'Média' : 'Baixa', hp = e.hParts || {};
     const maior = Object.entries(hp).sort((a, b) => b[1] - a[1])[0] || ['desgaste', 0];
     const acao = { desgaste: e.k === 'pn' ? 'programar troca dos painéis do deck' : e.k === 'vsi' ? 'programar troca das pontas do rotor' : 'programar troca do manto e do côncavo', vibracao: 'inspecionar mancais, fixações e balanceamento; análise de vibração', temperatura: 'verificar lubrificação, nível e resfriamento do óleo', sobrecarga: 'redistribuir a carga do grupo e conferir a alimentação' }[maior[0]];
     const rsl = !isFinite(e.rsl) ? 'indeterminada (sem carga)' : e.rsl > 48 ? `≈ ${fm(e.rsl / 24)} dias` : `≈ ${fm(e.rsl)} h`;
     const r = { etapa: 3, area: 'crush', tipo: 'OS simulada', severidade: sev, local: t, operador: 'Gêmeo digital (setor 3)', tempo: new Date().toLocaleString('pt-BR'),
       descricao: `Ordem de serviço simulada · ${t}: saúde do ativo ${H == null ? '–' : H}/100 (desgaste ${fm(e.w)} %, vibração ${fm(e.vib, 1)} mm/s, temperatura ${fm(e.oil)} °C, carga ${fm(e.load * 100)} %). Vida útil restante ${rsl}. Ação sugerida: ${acao}.` };
-    const msg = el.querySelector('#osMsg'); btn.disabled = true; msg.textContent = 'Registrando a OS…';
-    try { const res = await call('inspRegistrar', [r]); logEv('Manutenção', `OS simulada gerada para ${t} (${sev})`); msg.innerHTML = 'OS registrada na planilha de inspeções' + (res && res.url ? ` · <a href="${res.url}" target="_blank" rel="noopener" style="color:#5cc6dc">abrir</a>` : '') + '.'; }
-    catch (err) { msg.textContent = 'Não foi possível registrar a OS: ' + err.message; }
-    btn.disabled = false;
+    OSST[t] = { busy: true, msg: 'Registrando a OS na planilha…' }; render();
+    try { const res = await call('inspRegistrar', [r]); logEv('Manutenção', `OS simulada gerada para ${t} (${sev})`);
+      OSST[t] = { busy: false, msg: `✓ OS registrada (${sev}) na planilha de inspeções` + (res && res.url ? ` · <a href="${res.url}" target="_blank" rel="noopener" style="color:#5cc6dc">abrir</a>` : '') + '.' }; }
+    catch (err) { OSST[t] = { busy: false, msg: 'Não foi possível registrar a OS: ' + String(err.message || err).replace(/</g, '&lt;') }; }
+    render();
   }
   function open(t) { feeder = /AL/.test(t); tag = t.replace('AL', 'PN'); if (!sim.eq[tag]) return false; el.hidden = false; render(); return true; }
   function close() { el.hidden = true; tag = null; }
