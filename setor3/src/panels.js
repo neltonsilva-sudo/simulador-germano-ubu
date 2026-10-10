@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010161650';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010161909';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -19,7 +19,7 @@ const CSS = `
 .s3sec>h5 em{margin-left:auto;font:500 11px var(--mono);letter-spacing:0;text-transform:none;color:var(--accent)}
 .s3sec>div{display:none;padding:0 12px 12px}.s3sec.open>div{display:block}
 .s3acc .hs{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;padding:7px 9px;margin-bottom:5px;background:var(--card);border:1px solid var(--cline);border-radius:6px;cursor:pointer;backdrop-filter:blur(6px)}
-.s3acc .hs:hover{border-color:rgba(92,198,220,.6)}.s3acc .hs.sel{border-color:#ffd24a;background:rgba(255,210,74,.16);box-shadow:0 0 0 1px #ffd24a inset,0 0 14px rgba(255,210,74,.35)}.s3acc .hs.sel div{color:#ffd24a;font-weight:700}.s3acc .hs i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.s3acc .hs.warn i,.s3acc .hs.crit i{background:#ff3b3b;box-shadow:0 0 8px #ff3b3b}.s3acc.s3off .hs.warn i,.s3acc.s3off .hs.crit i{opacity:.15;box-shadow:none}
+.s3acc .hs:hover{border-color:rgba(92,198,220,.6)}.s3acc .hs.sel{border-color:#ffd24a;background:rgba(255,210,74,.16);box-shadow:0 0 0 1px #ffd24a inset,0 0 14px rgba(255,210,74,.35)}.s3acc .hs.sel div{color:#ffd24a;font-weight:700}.s3acc .hs i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.s3acc .hs.warn i,.s3acc .hs.crit i{background:#ff3b3b;box-shadow:0 0 8px #ff3b3b}.s3acc.s3off .hs.warn i,.s3acc.s3off .hs.crit i{opacity:.15;box-shadow:none}.s3acc .hs.mnt i{background:#2c6fd6;box-shadow:0 0 8px #2c6fd6}.s3acc .hs.mnt span{color:#9cc4ff}
 .s3acc .hs span{font:400 12px var(--mono);color:var(--accent);text-align:right}
 .s3acc .card{background:var(--card);border:1px solid var(--cline);border-left:3px solid var(--ok);border-radius:6px;padding:8px 10px;margin-bottom:6px;line-height:1.5}.s3acc .card.warn{border-left-color:var(--warn)}.s3acc .card.crit{border-left-color:var(--crit)}
 .s3acc .card small{color:var(--muted);display:block;margin-top:2px}
@@ -72,7 +72,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const applyState = (d) => { lastSync = performance.now(); sim.sync = true;
     if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
     /* desgaste e liga/desliga de cada equipamento vêm do simulador (fonte única), exceto logo depois de um comando dado aqui */
-    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now) continue; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; }
+    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now) continue; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) e.mnt = { h: q.mh || 0, w0: e.w }; else if (q.mnt === false) e.mnt = null; if (e.mnt && isFinite(q.mh)) e.mnt.h = q.mh; }
     sim.extAl = (Array.isArray(d.alarms) ? d.alarms : []).filter((a) => !Object.keys(lk).some((t) => lk[t] > now && String(a.msg || '').indexOf(t) >= 0)); };
   try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; viaBC = performance.now(); applyState(d); }; } catch (e) { bc = null; }
   // sem canal local recente: busca o estado no servidor a cada 6 s (estado com até 30 s de idade)
@@ -161,8 +161,8 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     $('#pS_ind').textContent = `${fm(K.F)} → ${fm(K.prod)} t/h`; { const nA = K.alarms.length + (((sim.sync && sim.extAl) || []).length); $('#pS_al').textContent = nA ? `${nA} alarme(s)` : 'normal'; }
     $('#pS_eq').textContent = `${K.nPN}/8 PN · ${K.nC}/2 HP · ${K.nV}/3 Barmac`; $('#pS_ctl').textContent = sim.running ? 'operando' : 'parado';
     const nm = (t, e) => (e.k === 'pn' ? 'Peneira ' : e.k === 'cone' ? 'HP 400 ' : 'Barmac ') + t;
-    const val = (e) => (!(e.on && e.flow > 0) ? (e.on ? 'sem carga' : 'desligado') : e.k === 'pn' ? `efic. ${fm(e.eff)} % · ${fm(e.load * 100)} % carga · desg. ${fm(e.w)} %` : `${fm(e.kw)} kW · ${fm(e.vib, 1)} mm/s · desg. ${fm(e.w)} %`) + (e.health != null ? ` · saúde ${e.health}` : '');
-    const dot = (e) => (e.st === 'off' ? 'crit' : e.st === 'ok' ? '' : e.st);
+    const val = (e) => e.mnt ? `🔒 em manutenção · ${fm(e.mnt.h || 0, 1)} h` : (!(e.on && e.flow > 0) ? (e.on ? 'sem carga' : 'desligado') : e.k === 'pn' ? `efic. ${fm(e.eff)} % · ${fm(e.load * 100)} % carga · desg. ${fm(e.w)} %` : `${fm(e.kw)} kW · ${fm(e.vib, 1)} mm/s · desg. ${fm(e.w)} %`) + (e.health != null ? ` · saúde ${e.health}` : '');
+    const dot = (e) => (e.st === 'mnt' ? 'mnt' : e.st === 'off' ? 'crit' : e.st === 'ok' ? '' : e.st);
     const probs = [];
     for (const [t, e] of Object.entries(E)) if (e.st !== 'ok') {
       const why = (K.alarms.find((a) => a.tag === t) || {}).why || (e.on ? '' : 'desligado');

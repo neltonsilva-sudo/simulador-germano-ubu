@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 8 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261010161650';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261010161909';
 
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };            // t de material por troca de revestimento/deck (ilustrativo)
 const CAP = { pn: 1500, cone: 800, vsi: 750 };                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
@@ -101,6 +101,7 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   let kw = 0, alarms = [];
   for (const [tag, e] of Object.entries(E)) {
     const n = e.k === 'pn' ? nPN : e.k === 'cone' ? nC : nV, total = e.k === 'pn' ? T : e.k === 'cone' ? T * r1 : T * r2;
+    if (e.mnt) { e.on = false; e.mnt.h = (e.mnt.h || 0) + dt * speed / 3600; }   // em manutenção: bloqueado (desligado) e contando horas paradas
     e.flow = e.on && n ? total / n : 0; e.load = e.flow / CAP[e.k];
     const run = e.on && e.flow > 0;
     e.kw = !run ? 0 : e.k === 'pn' ? 45 + 20 * e.load : e.k === 'cone' ? 160 + 230 * e.load + (18 - sim.css) * 4 : 180 + 380 * e.load;
@@ -118,7 +119,7 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
     e.hParts = { desgaste: e.w * .5, vibracao: pv * 25, temperatura: po * 10, sobrecarga: pl * 15 };
     // VIDA ÚTIL RESTANTE (RSL, h de operação): até o limite de troca (95 % de desgaste), encurtada por vibração e sobrecarga
     e.rsl = e.w >= 95 ? 0 : run ? (95 - e.w) / (e.flow / LIFE[e.k] * 100) * (1 - .5 * pv) * (1 - .3 * pl) : Infinity;
-    e.st = !e.on ? 'off' : (e.w >= 95 || e.vib >= 11 || e.load > 1.25) ? 'crit' : (e.w >= 85 || e.vib >= 7.1 || e.oil >= 65 || e.load > 1.05 || (e.k === 'pn' && e.eff < 80)) ? 'warn' : 'ok';
+    e.st = e.mnt ? 'mnt' : !e.on ? 'off' : (e.w >= 95 || e.vib >= 11 || e.load > 1.25) ? 'crit' : (e.w >= 85 || e.vib >= 7.1 || e.oil >= 65 || e.load > 1.05 || (e.k === 'pn' && e.eff < 80)) ? 'warn' : 'ok';
     if (e.st === 'warn' || e.st === 'crit') alarms.push({ tag, st: e.st, why: [e.load > 1.05 ? `sobrecarga ${Math.round(e.load * 100)} %` : '', e.vib >= 7.1 ? `vibração ${e.vib.toFixed(1)} mm/s` : '', e.w >= 85 ? `desgaste ${Math.round(e.w)} %` : '', e.k === 'pn' && run && e.eff < 80 ? `eficiência ${Math.round(e.eff)} %` : ''].filter(Boolean).join(', ') });
     kw += e.kw;
   }

@@ -1,4 +1,4 @@
-import { call } from './api.js?v=20261010161650';
+import { call } from './api.js?v=20261010161909';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -14,7 +14,7 @@ const CSS = `
 .s3eq table{width:calc(100% - 28px);margin:0 14px;border-collapse:collapse;font-size:12px}.s3eq td{padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.07)}.s3eq td:last-child{text-align:right;color:#fff}
 .s3eq .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.1);margin:4px 14px 0;overflow:hidden}.s3eq .bar i{display:block;height:100%}
 .s3eq .act{display:flex;gap:8px;padding:12px 14px 14px}.s3eq .act button{flex:1;border:0;border-radius:8px;padding:8px;font:700 12px system-ui;cursor:pointer;color:#fff;background:#1f3a5c}
-.s3eq .act button.on{background:#c0392b}.s3eq .act button.off{background:#1f8a5b}.s3eq p.n{margin:4px 14px 0;color:#9fb0bd;font-size:11.5px}
+.s3eq .act button.on{background:#c0392b}.s3eq .act button.off{background:#1f8a5b}.s3eq .act button.mnt{background:#2c6fd6}.s3eq .act button:disabled{opacity:.45;cursor:not-allowed}.s3eq .chip.mnt{background:#2c6fd6;color:#fff;border-color:#2c6fd6}.s3eq .mntb{margin:10px 14px 0;padding:9px 11px;border-radius:8px;background:rgba(44,111,214,.18);border:1px solid #2c6fd6;color:#dbe8ff;font-size:12px;line-height:1.45}.s3eq p.n{margin:4px 14px 0;color:#9fb0bd;font-size:11.5px}
 @media (max-width:860px){.s3eq{top:70px;max-height:calc(100vh - 240px)}}
 `;
 
@@ -77,10 +77,14 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <div class="bar"><i style="width:${Math.min(100, e.w)}%;background:${wcol}"></i></div>
       <p class="n">${hWhy}</p>
       <h4>Especificação técnica (ilustrativa)</h4><table>${S.itens.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
-      <div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div><p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
+      ${e.mnt ? `<div class="mntb">🔒 <b>Em manutenção · bloqueado</b> há ${fm(e.mnt.h || 0, 1)} h simuladas (desgaste ao entrar: ${fm(e.mnt.w0 != null ? e.mnt.w0 : e.w)} %). Equipamento desligado, partida bloqueada e alarmes fora de serviço (ISA-18.2) até a liberação.</div>
+      <div class="act"><button class="off" disabled title="Partida bloqueada durante a manutenção">Ligar</button><button class="mnt" data-a="rel1">Liberar com troca</button><button data-a="rel0">Liberar sem troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`
+      : `<div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button class="mnt" data-a="mnt" title="Desliga, bloqueia a partida e coloca os alarmes fora de serviço">Manutenção</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`}<p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
-    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
+    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'mnt') { e.mnt = { h: 0, w0: e.w }; e.on = false; logEv('Manutenção', `${tag} em manutenção: desligado e bloqueado`); sim.cmdEq && sim.cmdEq(tag, { mnt: true }); render(); return; }
+      if (b.dataset.a === 'rel1' || b.dataset.a === 'rel0') { const tr = b.dataset.a === 'rel1', hh = e.mnt ? e.mnt.h || 0 : 0; e.mnt = null; if (tr) e.w = 0; logEv('Manutenção', `${tag} liberado após ${fm(hh, 1)} h de manutenção${tr ? ' · troca das peças de desgaste' : ' · sem troca'} (pronto para partir)`); sim.cmdEq && sim.cmdEq(tag, { mnt: false, troca: tr }); render(); return; }
+      if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
   }
   // ORDEM DE SERVIÇO SIMULADA: gravada na mesma planilha do registro de inspeção (tipo "OS simulada")
   const OSST = {};   // situação da OS por equipamento (a tela é redesenhada a cada ~0,3 s)
