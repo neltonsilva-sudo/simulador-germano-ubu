@@ -473,6 +473,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #loading b{color:var(--accent);font-size:22px;letter-spacing:.06em}
 .brand h1{margin-left:clamp(14px,3.2vw,52px)!important}
 #alm .ah h3{white-space:nowrap}#alm .tagp{white-space:nowrap}
+#alm{background:rgba(7,18,32,.95)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;width:min(720px,calc(100% - 32px))!important}#alm .ab,#alm .alt td{color:#eef4f8}#alm .hint{color:#c3d2df!important;opacity:1!important}#alm .alt th{color:#9fc3dc}
 .hxLogo{flex:none;display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.45))}
 .hxW{display:grid}.hxW>span{grid-area:1/1;font:900 30px/.95 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.04em}
 .hxL1{color:rgba(194,84,26,.10);text-shadow:1px 1px 0 rgba(164,66,15,.62),2px 2px 0 rgba(150,60,13,.52),3px 3px 0 rgba(122,47,9,.42),4px 5px 8px rgba(0,0,0,.5),0 0 14px rgba(255,170,60,.45)}
@@ -2965,7 +2966,7 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010114839';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010115248';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4631,6 +4632,7 @@ const ALM_RULES=[
  [/temperatura/i,'TAH','Combustível em excesso ou carga baixa no forno','Reduzir o combustível pela malha TIC-2001.'],
  [/pelota fraca|kgf|formação de pelotas/i,'QAL','Queima insuficiente, umidade ou aglomerante fora do ideal','Ajustar a temperatura de queima, a umidade e o aglomerante.'],
  [/emissão/i,'AAH','Precipitador com baixa eficiência','Verificar os campos do precipitador; reduzir a produção se persistir.'],
+ [/desgaste|troca|revestimento|vida útil/i,'MA','Desgaste do revestimento ou de peças de desgaste','Programar a troca na próxima parada e abrir ordem de serviço.'],
  [/instrumento|suspeito/i,'IA','Medição inconsistente com o balanço de massa','Chamar a instrumentação para aferir o instrumento.'],
  [/chuva|raio|tempestade|descarga/i,'WA','Condição meteorológica adversa','Seguir o procedimento de chuva e raios da área.'],
  [/limite|capacidade|reduzida|esgotada/i,'FAH','Equipamento operando no limite de capacidade','Redistribuir a carga ou colocar outra unidade em operação.'],
@@ -4657,11 +4659,11 @@ function almKpiHTML(){const now=ST.simT,W=Math.min(86400,Math.max(600,now-(ALMAC
   return `<p class="hint">Desempenho do sistema de alarmes nas últimas <b>${fmt(hh,hh<10?1:0)} h simuladas</b> (${ev.length} ativações), comparado às metas da ISA-18.2 / EEMUA 191 para um operador.</p>
   <table class="alt"><thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th><th>Situação</th></tr></thead><tbody>
   ${row('Taxa média de alarmes',fmt(rate,1)+' por 10 min','≤ 1 (aceitável) · ≤ 2 (gerenciável)',st(rate<=1,rate<=2))}
-  ${row('Pico em 10 min',peak+' alarmes','≤ 10',st(peak<=10,false))}
+  ${row('Pico em 10 min',peak+(peak===1?' alarme':' alarmes'),'≤ 10',st(peak<=10,false))}
   ${row('Tempo em inundação (> 10 alarmes / 10 min)',fmt(flood,1)+' %','< 1 %',st(flood<1,false))}
   ${row('Alarmes permanentes (ativos > 24 h)',stand,'0 · máx. 5',st(stand===0,stand<=5))}
   ${row('Alarmes instáveis (≥ 3 vezes em 10 min)',chat,'0',st(chat===0,chat<=2))}
-  ${row('Participação dos 10 mais frequentes',fmt(topShare,0)+' %','< 20 % das ativações',st(topShare<20,topShare<50))}
+  ${row('Participação dos 10 mais frequentes',ev.length>=30?fmt(topShare,0)+' %':'poucos dados','< 20 % das ativações',ev.length>=30?st(topShare<20,topShare<50):'<span class="tagp">aguardando ≥ 30 ativações</span>')}
   ${row('Alarmes de prioridade 1 (P1)',fmt(p1,0)+' %','≈ 5–20 % do total',st(p1<=20,p1<=35))}
   ${row('Alarmes ativos não reconhecidos',unack,'0',st(unack===0,unack<=3))}
   </tbody></table>
