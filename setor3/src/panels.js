@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010011650';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010012139';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -118,7 +118,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     x.fillStyle = '#ffd24a'; x.fillText('12,5 mm', sx(12.5) + 3 * dpr, pt + 9 * dpr); x.fillStyle = '#ff9a4a'; x.fillText(`APF ${sim.css} mm`, sx(sim.css) + 3 * dpr, pt + 19 * dpr);
     let lx = pl, ly = 10 * dpr; x.font = `600 ${9.5 * dpr}px system-ui`;
     for (const [k, n, c] of GC) { const tw = x.measureText(n).width + 16 * dpr; if (lx + tw > W) { lx = pl; ly += 11 * dpr; } x.fillStyle = c; x.fillRect(lx, ly - 5 * dpr, 9 * dpr, 3 * dpr); x.fillText(n, lx + 11 * dpr, ly); lx += tw; }
-    for (const [k, , c] of GC) { const f = k === 'mix' ? G.mix : k === 'prod' ? (v) => Math.min(1, G.mix(Math.min(v, 12.5)) / G.p12) : (v) => G.pas(G.st[k], v); x.strokeStyle = c; x.lineWidth = (k === 'prod' ? 2.4 : 1.6) * dpr; x.beginPath();
+    for (const [k, , c] of GC) { const f = k === 'mix' ? G.mix : k === 'prod' ? (G.prodCum || ((v) => Math.min(1, G.mix(Math.min(v, 12.5)) / G.p12))) : (v) => G.pas(G.st[k], v); x.strokeStyle = c; x.lineWidth = (k === 'prod' ? 2.4 : 1.6) * dpr; x.beginPath();
       for (let i = 0; i <= 80; i++) { const v = Math.pow(10, X0 + (X1 - X0) * i / 80), X = sx(v), Y = sy(f(v)); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); }
   }
   // selo de origem de cada número: real (fonte publicada), ref. (referência ajustável) ou adotado (hipótese do modelo)
@@ -126,15 +126,16 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   function granTable() {
     const G = sim.kpi.gran; if (!G) return ''; const f1 = (v) => fm(v, 1);
     const row = (a, v, o, b) => `<tr><td>${b ? '<b>' + a + '</b>' : a} ${tagO(o)}</td><td class="n">${b ? '<b>' + v + '</b>' : v}</td></tr>`;
-    return `<table><tr><th>Etapa</th><th class="n">P80 (mm)</th></tr>${row('ROM (TCLD), tamanho máx. 150 mm', f1(G.st.rom.p80), 'adot')}${row('Alimentação das peneiras (nova + retorno)', f1(G.feedP80), 'calc')}${row('Retido 1º deck (&gt; 30 mm) → HP 400', f1(G.st.r1.p80), 'calc')}${row('Retido 2º deck (−30 +12,5 mm) → Barmac', f1(G.st.r2.p80), 'calc')}${row(`Britado HP 400 (APF ${sim.css} mm)`, f1(G.st.hp.p80), 'adot')}${row('Britado Barmac', f1(G.st.vsi.p80), 'adot')}${row('Produto &lt; 12,5 mm = F80 da moagem', f1(G.p80prod), 'calc', 1)}</table>
+    return `<table><tr><th>Etapa</th><th class="n">P80 (mm)</th></tr>${row('ROM (TCLD), tamanho máx. 150 mm', f1(G.st.rom.p80), 'adot')}${row('Alimentação somada das peneiras (primárias + britagem + Barmac)', f1(G.feedP80), 'calc')}${row('Retido 1º deck (&gt; 30 mm) → HP 400', f1(G.st.r1.p80), 'calc')}${row('Retido 2º deck (−30 +12,5 mm) → Barmac', f1(G.st.r2.p80), 'calc')}${row(`Britado HP 400 (APF ${sim.css} mm)`, f1(G.st.hp.p80), 'adot')}${row('Britado Barmac', f1(G.st.vsi.p80), 'adot')}${row('Produto &lt; 12,5 mm = F80 da moagem', f1(G.p80prod), 'calc', 1)}</table>
     <p class="hint">Eficiência média das peneiras: ${fm(G.effM)} %. Referência (APF 20 mm, eficiência 92 %): ${f1(G.p80prod / G.ratio)} mm → agora ${G.ratio >= 1 ? '+' : ''}${fm((G.ratio - 1) * 100)} %.</p>
     <details class="src"><summary>Origem dos parâmetros</summary><table>
-      <tr><td>ROM &lt; 150 mm; telas de 30 mm (1º deck) e 12,5 mm (2º deck); produto &lt; 12,5 mm</td><td>${tagO('real')}</td><td>Dissertação Figueiredo (UFMG, 2019), Britagem 01 de Germano</td></tr>
+      <tr><td>ROM &lt; 150 mm; circuito em dois estágios: peneiramento primário (12,5 mm) tira o fino; britagem com telas de 30 / 12,5 mm; Barmac em circuito fechado com peneiras próprias (16 / 12,5 mm); produto &lt; 12,5 mm</td><td>${tagO('real')}</td><td>Dissertação Figueiredo (UFMG, 2019), Britagem 01 de Germano</td></tr>
       <tr><td>8 peneiras banana 2 decks; HP 400 (1ª) e Barmac (2ª), circuito fechado</td><td>${tagO('real')}</td><td>TCC Rodrigues &amp; Silva (2016), Usina II</td></tr>
       <tr><td>Capacidade por britador (HP 400 800 t/h, Barmac 750 t/h)</td><td>${tagO('ref')}</td><td>Faixa de catálogo; Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h</td></tr>
       <tr><td>Finos do ROM &lt; 12,5 mm (${fm(sim.f12 * 100)} %), inclinações das curvas</td><td>${tagO('adot')}</td><td>Hipótese do modelo — calibrar com análise granulométrica</td></tr>
       <tr><td>P80 do HP 400 ≈ 1,45 × APF; Barmac ≈ 2,1:1</td><td>${tagO('adot')}</td><td>Regras práticas de britagem</td></tr>
       <tr><td>Eficiência das peneiras (92 % / 96 %), Wi ${fm(sim.wi, 1)} kWh/t</td><td>${tagO('adot')}</td><td>Faixas usuais; editáveis em Controles</td></tr>
+      <tr><td>Operação atual: Usina de Beneficiamento 2 (esta Usina II) em operação desde dez/2024, ≈ 60 % da capacidade (≈ 15 Mt/ano); Concentrador 1 (Britagem 01 da dissertação) com retorno previsto até 2028</td><td>${tagO('ref')}</td><td>Prévias operacionais Samarco 2024–2025 (imprensa); a estrutura da Britagem 01 é usada como referência de projeto</td></tr>
     </table></details>`;
   }
 
@@ -161,12 +162,12 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     $('#pS_pi').textContent = `${Object.values(E).filter((e) => e.st !== 'ok').length} fora da faixa`; $('#pS_prob').textContent = probs.length ? `${probs.length}` : 'nenhum';
     if (on('pi') || force) {
       $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
-        `<div class="hs ${K.circ > 70 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
+        `<div class="hs ${K.circ > 110 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
       el.querySelectorAll('#pB_pi [data-i]').forEach((d) => d.onclick = () => openInfo(d.dataset.i)); }
     if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || '<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>';
     if (on('ind') || force) $('#pB_ind').innerHTML = `<div class="s3k">
       <div><b>${fm(K.F)}</b><span>Lavra · ROM da TCLD (t/h)</span></div><div><b>${fm(K.T)}</b><span>Alimentação das peneiras (t/h)</span></div>
-      <div class="${K.prod < K.F * .95 ? 'warn' : ''}"><b>${fm(K.prod)}</b><span>Produto &lt; 12,5 mm (t/h)</span></div><div class="${K.circ > 70 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div>
+      <div class="${K.prod < K.F * .95 ? 'warn' : ''}"><b>${fm(K.prod)}</b><span>Produto &lt; 12,5 mm (t/h)</span></div><div class="${K.circ > 110 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div>
       <div><b>${fm(K.kw)}</b><span>Potência total (kW)</span></div><div><b>${fm(K.spec, 2)}</b><span>Energia específica (kWh/t)</span></div>
       <div class="${(K.umid || {}).st === 'crit' ? 'crit' : (K.umid || {}).st === 'warn' ? 'warn' : ''}"><b>${fm(sim.moist, 1)} %${(K.umid || {}).rise > .15 ? ' ↑' : ''}</b><span>Umidade do ROM${(K.umid || {}).st === 'crit' ? ' · colmatação' : (K.umid || {}).st === 'warn' ? ' · risco de colmatação' : ''}</span></div><div class="${effM < 80 ? 'warn' : ''}"><b>${fm(effM)} %</b><span>Eficiência média das peneiras</span></div></div>`;
     const EF = K.efic; if (EF) $('#pS_efic').textContent = `OEE ${fm(EF.oee * 100)} %`;
@@ -200,7 +201,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
         <tr class="grp"><td colspan="4">Entradas</td></tr><tr><td>ROM da TCLD (minério lavrado)</td><td class="n">${fm(K.F)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr>
         <tr class="grp"><td colspan="4">Circuito interno</td></tr><tr><td>Alimentação das 8 peneiras</td><td class="n">${fm(K.T)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr>
         <tr><td>Retido 1º deck → HP 400</td><td class="n">${fm(K.T * K.r1)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr><tr><td>Retido 2º deck → Barmac</td><td class="n">${fm(K.T * K.r2)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr>
-        <tr><td>Britado → retorno às peneiras</td><td class="n">${fm(K.T - K.prod)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr>
+        <tr><td>Britado → retorno às peneiras</td><td class="n">${fm((K.ret ?? (K.T - K.prod)))}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr>
         <tr class="grp"><td colspan="4">Saídas</td></tr><tr><td>Produto &lt; 12,5 mm → pilha de regularização</td><td class="n">${fm(K.prod)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr></table>
         <p style="color:#9fb0bd;margin:6px 0 0">A britagem só reduz o tamanho: os teores entram e saem iguais. Balanço: entra ${fm(K.F)} t/h = sai ${fm(K.prod)} t/h${K.limited ? ' (alimentação limitada pela britagem)' : ''}.</p>`; }
     if (on('eq') || force) {

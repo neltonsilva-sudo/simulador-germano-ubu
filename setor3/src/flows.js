@@ -3,8 +3,8 @@
 // retido 1º deck → correia → silos dos HP 400; retido 2º deck → correia → silos dos Barmac;
 // britado → correia de retorno → peneiras; SAÍDA passante < 12,5 mm → correia → pilha de regularização.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261010011650';
-import { V, box, beam, cyl } from './util.js?v=20261010011650';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261010012139';
+import { V, box, beam, cyl } from './util.js?v=20261010012139';
 
 export function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -61,9 +61,10 @@ export function buildFlows(scene, M, opt = {}) {
   const fmt = (v) => Math.round(v).toLocaleString('pt-BR');
   labels.push({ pos: V(-12, 10.5, -16), kind: 'in', text: (K) => `ENTRADA · ROM da TCLD · ${fmt(K.F)} t/h` });
   labels.push({ pos: V(20, yTop + 2.2, 2.4), kind: 'mid', text: (K) => `Alimentação das peneiras (nova + retorno) · ${fmt(K.T)} t/h` });
+  labels.push({ pos: V(8, LV.L1 + 1.6, 21.5), kind: 'mid', text: (K) => `Peneiramento primário: fino < 12,5 mm direto ao produto · ${fmt(K.fines || 0)} t/h` });
   labels.push({ pos: V(30, yD1 + 1.2, zD1), kind: 'mid', text: (K) => `Retido 1º deck → britagem primária HP 400 · ${fmt(K.T * K.r1)} t/h` });
   labels.push({ pos: V(30, yD2 + 1.0, zD2 + .4), kind: 'mid', text: (K) => `Retido 2º deck → britagem secundária Barmac · ${fmt(K.T * K.r2)} t/h` });
-  labels.push({ pos: V(56, 2.2, 13.2), kind: 'mid', text: (K) => `Britado → retorno às peneiras · ${fmt(K.T - K.prod)} t/h (carga circulante ${Math.round(K.circ)} %)` });
+  labels.push({ pos: V(56, 2.2, 13.2), kind: 'mid', text: (K) => `Britado → retorno às peneiras · ${fmt((K.ret ?? (K.T - K.prod)))} t/h (carga circulante ${Math.round(K.circ)} %)` });
   labels.push({ pos: V(B.W + 8, 6, 24), kind: 'out', text: (K) => `SAÍDA · produto < 12,5 mm → pilha de regularização · ${fmt(K.prod)} t/h` });
   const p4 = new THREE.Vector3(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3(1, 1, 1), m4 = new THREE.Matrix4();
   return {

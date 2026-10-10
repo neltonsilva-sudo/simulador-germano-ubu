@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 8 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261010011650';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261010012139';
 
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };            // t de material por troca de revestimento/deck (ilustrativo)
 const CAP = { pn: 1500, cone: 800, vsi: 750 };                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
@@ -44,6 +44,41 @@ export function circSolve(css, f12, e2, e1) {
   return { rom, hp, vsi, mix, r1, r2, prod, p12: pB, p32: pA, F80hp: bisSim(R1, .8, 1, 2000), F80v, P80hp: hp.p80, P80v: vsi.p80,
     feedP80: bisSim(mix, .8, .1, 2000), prodP80: bisSim((x) => mix(x) / pB, .8, .05, D2) };
 }
+// ---------- CIRCUITO EM DOIS ESTÁGIOS (fluxograma da Britagem 01, dissertação 2019) — balanço por classes de tamanho
+// 1) peneiramento primário do ROM (12,5 mm): fino → pilha/concentrador; retido → pilha de regularização
+// 2) peneiras da britagem primária (30 / 12,5 mm): > 30 → cônicos (circuito fechado); −30 +12,5 → Barmac; < 12,5 → produto
+// 3) Barmac em circuito fechado com peneiras próprias (16 / 12,5 mm): > 12,5 volta ao Barmac; < 12,5 → produto
+const NB = 90, XG = Array.from({ length: NB }, (_, k) => .05 * Math.pow(150 / .05, k / (NB - 1)));   // limites superiores das classes (mm)
+const toBins = (cum) => { const m = new Float64Array(NB); let prev = 0; for (let k = 0; k < NB; k++) { const c = cum(XG[k]); m[k] = Math.max(0, c - prev); prev = c; } return m; };
+const sumB = (m) => m.reduce((a, b) => a + b, 0);
+const cumB = (m) => { const t = sumB(m) || 1; return (x) => { if (x >= XG[NB - 1]) return 1; let c = 0; for (let k = 0; k < NB; k++) { const lo = k ? XG[k - 1] : 0; if (x >= XG[k]) c += m[k]; else { if (x > lo) c += m[k] * Math.log(x / Math.max(lo, 1e-3)) / Math.log(XG[k] / Math.max(lo, 1e-3)); break; } } return c / t; }; };
+const p80B = (m) => bisSim(cumB(m), .8, .05, 150);
+// peneira: classes abaixo da abertura passam com eficiência e; o resto fica retido
+const screenB = (m, a, e) => { const u = new Float64Array(NB), o = new Float64Array(NB); for (let k = 0; k < NB; k++) { const f = XG[k] <= a ? e : 0; u[k] = m[k] * f; o[k] = m[k] * (1 - f); } return [u, o]; };
+const addB = (...ms) => { const r = new Float64Array(NB); for (const m of ms) for (let k = 0; k < NB; k++) r[k] += m[k]; return r; };
+const crushB = (mass, c) => { const b = toBins((x) => pasSim(c, x)), t = sumB(b) || 1; return b.map((v) => v * mass / t); };
+export function circSolve2(css, f12, e2, e1) {
+  const rom = romCurve(clamp(f12, .25, .9)), R = toBins((x) => pasSim(rom, x));
+  const hp = rrSim(1.45 * css, 1.3);
+  const [u0, O] = screenB(R, SRC.d2, e2);                                   // peneiramento primário
+  let coneP = new Float64Array(NB), vsiOver = new Float64Array(NB), vsi = rrSim(10, 1.1), F80v = 20;
+  let S1 = O, toCone = O, mid = O, vsiFeed = O, uS1 = O, uB = O, Bscr = O;
+  for (let it = 0; it < 120; it++) {
+    S1 = addB(O, coneP);                                                      // peneiras da britagem primária
+    const [p1, o1] = screenB(S1, SRC.d1, e1); toCone = o1;
+    const [p2, o2] = screenB(p1, SRC.d2, e2); uS1 = p2; mid = o2;
+    coneP = crushB(sumB(toCone), hp);
+    vsiFeed = addB(mid, vsiOver); F80v = p80B(vsiFeed); vsi = rrSim(F80v / 2.1, 1.1);
+    Bscr = crushB(sumB(vsiFeed), vsi);                                        // peneiras do Barmac
+    const [pb, ob] = screenB(Bscr, SRC.d2, e2); uB = pb; vsiOver = ob;
+  }
+  const prodB = addB(u0, uS1, uB), feedAll = addB(R, S1, Bscr);
+  const tF = sumB(R) + sumB(S1) + sumB(Bscr), coneF = sumB(toCone), vsiF = sumB(vsiFeed);
+  return { two: true, rom, hp, vsi, tF, coneF, vsiF, u0: sumB(u0), oversize: sumB(O),
+    circRet: (sumB(coneP) + sumB(vsiOver)) / Math.max(1e-6, sumB(O)),            // retorno aos britadores ÷ alimentação da britagem
+    mix: cumB(feedAll), prodCum: cumB(prodB), p12: 1, F80hp: p80B(toCone), F80v, P80hp: hp.p80, P80v: vsi.p80,
+    feedP80: p80B(feedAll), prodP80: p80B(prodB), r1: coneF / tF, r2: vsiF / tF };
+}
 let REF = null;   // referência (APF 20 mm, ROM padrão, peneiras 92 %) para o F80 da moagem no simulador
 export function logEv(tipo, txt) { const d = new Date(); sim.log.unshift({ h: d.toLocaleTimeString('pt-BR'), tipo, txt }); if (sim.log.length > 120) sim.log.pop(); }
 let lastSave = 0;
@@ -53,15 +88,15 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
   // frações retidas e carga circulante saem do balanço granulométrico (circSolve) com a eficiência média atual das peneiras
   const e2 = clamp((sim._effM || 92) / 100, .4, .99), e1 = Math.min(.99, e2 + .04);
-  const CS = circSolve(sim.css, sim.f12, e2, e1), r1 = CS.r1, r2 = CS.r2;
+  const CS = circSolve2(sim.css, sim.f12, e2, e1), r1 = CS.r1, r2 = CS.r2;
   const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
   const wet = Math.max(0, sim.moist - 9);                       // minério úmido: peneiramento menos eficiente (colmatação)
   // sem britagem disponível o retido não fecha o circuito: alimentação limitada
   const cap1 = nC * CAP.cone, cap2 = nV * CAP.vsi;
-  let T = F / (1 - r1 - r2);
+  let T = F * CS.tF;                                            // alimentação somada das peneiras (primárias + britagem + Barmac)
   const lim = Math.min(cap1 > 0 ? cap1 / r1 : 0, cap2 > 0 ? cap2 / r2 : 0) * 1.15;
   const limited = T > lim; if (limited) T = lim;
-  const prod = T * (1 - r1 - r2);
+  const prod = T / CS.tF;
   const hum = Math.sin(sim.t * .17) * .25 + Math.sin(sim.t * .041) * .15;
   let kw = 0, alarms = [];
   for (const [tag, e] of Object.entries(E)) {
@@ -95,9 +130,9 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   if (um.st !== 'ok' && F > 0) alarms.unshift({ tag: 'Umidade do ROM', st: um.st, why: um.st === 'crit' ? `${um.m.toFixed(1).replace('.', ',')} %: colmatação nas peneiras, eficiência e capacidade em queda` : `${um.m.toFixed(1).replace('.', ',')} %${mRise > .15 ? ' e subindo' : ''}: risco amarelo de colmatação nas peneiras` });
   // CURVAS GRANULOMÉTRICAS e EFICIÊNCIAS (mesmo circuito do balanço de massa)
   const effs = Object.values(E).filter((e) => e.k === 'pn' && e.on && e.flow > 0).map((e) => e.eff), effM = effs.length ? effs.reduce((a, b) => a + b, 0) / effs.length : 92; sim._effM = effM;
-  if (!REF) REF = circSolve(20, .55, .92, .96);
+  if (!REF) REF = circSolve2(20, .55, .92, .96);
   const ST = { rom: CS.rom, hp: CS.hp, vsi: CS.vsi, r1: { p80: CS.F80hp }, r2: { p80: CS.F80v }, prod: { p80: CS.prodP80 } };
-  const gran = { st: ST, feedP80: CS.feedP80, effM, pas: pasSim, mix: CS.mix, p12: CS.p12, p80prod: CS.prodP80, f80moagem: CS.prodP80, ratio: CS.prodP80 / REF.prodP80 };
+  const gran = { st: ST, feedP80: CS.feedP80, effM, pas: pasSim, mix: CS.mix, prodCum: CS.prodCum, p12: CS.p12, p80prod: CS.prodP80, f80moagem: CS.prodP80, ratio: CS.prodP80 / REF.prodP80 };
   const grp = (k) => Object.values(E).filter((e) => e.k === k && e.on && e.flow > 0), sum = (a, f) => a.reduce((s2, e) => s2 + f(e), 0);
   const crush = (k, F80, P80) => { const g2 = grp(k), fl = sum(g2, (e) => e.flow), kwg = sum(g2, (e) => e.kw); if (!fl) return null; const W = kwg / fl, den = 10 / Math.sqrt(P80 * 1000) - 10 / Math.sqrt(F80 * 1000), wio = den > 0 ? W / den : Infinity;
     return { n: g2.length, flow: fl, kw: kwg, W, F80, P80, rr: F80 / P80, wio, effE: isFinite(wio) ? clamp(sim.wi / wio, 0, 1.5) : 0, load: sum(g2, (e) => e.load) / g2.length }; };
@@ -106,7 +141,7 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   const qual = clamp(1 - .15 * (1 - e2) - .5 * sum(pns, (e) => Math.max(0, e.w - 85)) / 100 / Math.max(1, pns.length), .7, 1);
   const efic = { tag: e1 * e2 * 100, e1: e1 * 100, e2: e2 * 100, cone: crush('cone', CS.F80hp, CS.P80hp), vsi: crush('vsi', CS.F80v, CS.P80v), spec: prod > 0 ? kw / prod : 0, disp, desemp, qual, oee: disp * desemp * qual, wi: sim.wi };
   if (limited && F > 0) alarms.unshift({ tag: 'Circuito', st: 'crit', why: 'britagem insuficiente para o retido: alimentação limitada' });
-  sim.kpi = { efic, gran, umid: um, F, T, prod, circ: F > 0 ? (T - prod) / prod * 100 : 0, r1, r2, kw, limited, nPN, nC, nV, alarms, spec: prod > 0 ? kw / prod : 0 };
+  sim.kpi = { efic, gran, umid: um, F, T, prod, circ: F > 0 ? CS.circRet * 100 : 0, u0: CS.u0, ovr: CS.oversize, ret: prod * CS.oversize * CS.circRet, fines: prod * CS.u0, r1, r2, kw, limited, nPN, nC, nV, alarms, spec: prod > 0 ? kw / prod : 0 };
   // eventos: alarmes que começam/terminam
   const now = new Set(alarms.map((a) => a.tag + '|' + a.why.replace(/[\d.,]+/g, '#')));
   for (const k of now) if (!sim._al || !sim._al.has(k)) logEv('Alarme', k.split('|')[0] + ': ' + alarms.find((a) => a.tag + '|' + a.why.replace(/[\d.,]+/g, '#') === k).why);
