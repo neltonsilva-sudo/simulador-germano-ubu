@@ -2784,6 +2784,15 @@ function buildFlows(scene, M, opt = {}) {
 
 
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };
+
+const MNT = {
+  pn: { h: 8, pecas: 'Telas de poliuretano do 1º e do 2º deck', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Limpeza e inspeção dos decks e da estrutura', 'Troca das telas de poliuretano do 1º e do 2º deck', 'Reaperto dos parafusos e inspeção das molas', 'Vibrador: rolamentos e lubrificação', 'Teste a vazio e liberação para operação'] },
+  cone: { h: 12, pecas: 'Manto e côncavo (revestimento da câmara de britagem)', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Remoção do bojo e inspeção da câmara', 'Troca do manto e do côncavo', 'Sistema hidráulico e óleo de lubrificação', 'Ajuste da APF', 'Teste a vazio e liberação para operação'] },
+  vsi: { h: 6, pecas: 'Pontas do rotor e placas de desgaste', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Abertura da tampa e inspeção do rotor', 'Troca das pontas do rotor e das placas de desgaste', 'Balanceamento do rotor', 'Correias e rolamentos', 'Teste a vazio e liberação para operação'] } };
+function startMnt(e) { e.mnt = { h: 0, dur: MNT[e.k].h, w0: e.w, h0: e.health, f0: e.flow || 0 }; e.on = false; }
+function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null; const M = MNT[e.k];
+  e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false };
+  e.w = 0; e.mnt = null; return e.lastMnt; }
 const CAP = { pn: 1500, cone: 800, vsi: 750 };
 const sim = {
   feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
@@ -2881,7 +2890,7 @@ function stepSim(dt, speed = 60) {
   let kw = 0, alarms = [];
   for (const [tag, e] of Object.entries(E)) {
     const n = e.k === 'pn' ? nPN : e.k === 'cone' ? nC : nV, total = e.k === 'pn' ? T : e.k === 'cone' ? T * r1 : T * r2;
-    if (e.mnt) { e.on = false; e.mnt.h = (e.mnt.h || 0) + dt * speed / 3600; }
+    if (e.mnt) { e.on = false; e.mnt.h = (e.mnt.h || 0) + dt * Math.max(speed, 180) / 3600; if (e.mnt.h >= (e.mnt.dur || MNT[e.k].h)) finishMnt(tag, e); }
     e.flow = e.on && n ? total / n : 0; e.load = e.flow / CAP[e.k];
     const run = e.on && e.flow > 0;
     e.kw = !run ? 0 : e.k === 'pn' ? 45 + 20 * e.load : e.k === 'cone' ? 160 + 230 * e.load + (18 - sim.css) * 4 : 180 + 380 * e.load;
@@ -2964,11 +2973,11 @@ function buildSetor3(opt = {}) {
   };
 }
 
-return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
+return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010161853';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010162446';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5199,7 +5208,7 @@ let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{co
 /* comando vindo do gêmeo (canal local ou servidor): APF, velocidade da TCLD, partir/parar */
 function s3ApplySet(q){if(!q)return;
   /* troca / liga-desliga dado no gêmeo: aplica no setor 3 do simulador (fonte única do desgaste e dos alarmes) */
-  if(q.eqCmd&&S3&&S3.sim.eq[q.eqCmd.tag]){const c=q.eqCmd,e=S3.sim.eq[c.tag];if(c.troca){e.w=0;logEvent('Manutenção',`${c.tag}: troca registrada pelo gêmeo digital`);}if(c.mnt===true&&!e.mnt){e.mnt={h:0,w0:e.w};e.on=false;logEvent('Manutenção',`${c.tag} em manutenção (bloqueado) pelo gêmeo digital`);}if(c.mnt===false&&e.mnt){logEvent('Manutenção',`${c.tag} liberado após ${fmt(e.mnt.h||0,1)} h de manutenção${c.troca?' · com troca':''}`);e.mnt=null;}if(typeof c.on==='boolean'&&e.on!==c.on&&!e.mnt){e.on=c.on;logEvent('Comando',`${c.tag} ${c.on?'ligado':'desligado'} pelo gêmeo digital`);}if(typeof tw3Calc==='function')tw3Calc();}
+  if(q.eqCmd&&S3&&S3.sim.eq[q.eqCmd.tag]){const c=q.eqCmd,e=S3.sim.eq[c.tag];if(c.troca){e.w=0;logEvent('Manutenção',`${c.tag}: troca registrada pelo gêmeo digital`);}if(c.mnt===true&&!e.mnt){Setor3.startMnt(e);logEvent('Manutenção',`${c.tag} em manutenção (bloqueado, plano de ${Setor3.MNT[e.k].h} h) pelo gêmeo digital`);}if(c.mnt===false&&e.mnt)Setor3.finishMnt(c.tag,e,true);if(typeof c.on==='boolean'&&e.on!==c.on&&!e.mnt){e.on=c.on;logEvent('Comando',`${c.tag} ${c.on?'ligado':'desligado'} pelo gêmeo digital`);}if(typeof tw3Calc==='function')tw3Calc();}
   if(isFinite(q.css)){P.css=clamp(+q.css,10,40);inputs.css&&inputs.css.sync();logEvent('Comando',`APF ajustada pelo gêmeo digital: ${fmt(P.css,0)} mm`);}if(isFinite(q.tcldSpd)){P.tcldSpd=clamp(+q.tcldSpd,40,110);inputs.tcldSpd&&inputs.tcldSpd.sync();}
   if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}}
 /* integração pelo servidor (sites diferentes): publica o estado da área 3 e busca comandos do gêmeo, por até 3 h depois de abrir o gêmeo */
@@ -5210,6 +5219,7 @@ function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REM
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
 function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
+  for(const t in s.eq){const r=s.eq[t].lastMnt;if(r&&!r.logged){r.logged=true;logEvent('Manutenção',`${t}: manutenção concluída em ${fmt(r.h,1)} h · ${r.pecas} · desgaste ${fmt(r.w0,0)} % → 0 %`);}}
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
   if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}TW3_ACC.sim+=dt;TW3_ACC.up+=dt;TW3_ACC.calc+=dt;
   if(!TW3_ACC.pos){TW3_ACC.pos=new THREE.Vector3();S3.group.getWorldPosition(TW3_ACC.pos);}

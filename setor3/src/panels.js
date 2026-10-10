@@ -1,4 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010161909';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010162501';
+import { startMnt, finishMnt } from './sim.js?v=20261010162501';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -72,7 +73,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const applyState = (d) => { lastSync = performance.now(); sim.sync = true;
     if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
     /* desgaste e liga/desliga de cada equipamento vêm do simulador (fonte única), exceto logo depois de um comando dado aqui */
-    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now) continue; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) e.mnt = { h: q.mh || 0, w0: e.w }; else if (q.mnt === false) e.mnt = null; if (e.mnt && isFinite(q.mh)) e.mnt.h = q.mh; }
+    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now) continue; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) startMnt(e); else if (q.mnt === false && e.mnt) finishMnt(t, e); if (e.mnt && isFinite(q.mh)) e.mnt.h = Math.max(e.mnt.h || 0, q.mh); }
     sim.extAl = (Array.isArray(d.alarms) ? d.alarms : []).filter((a) => !Object.keys(lk).some((t) => lk[t] > now && String(a.msg || '').indexOf(t) >= 0)); };
   try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; viaBC = performance.now(); applyState(d); }; } catch (e) { bc = null; }
   // sem canal local recente: busca o estado no servidor a cada 6 s (estado com até 30 s de idade)
