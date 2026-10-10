@@ -2956,7 +2956,7 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010101128';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010103430';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4716,7 +4716,7 @@ function applyQuality(){
   scene.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true);}});
   const b=$('#qBtn');b.setAttribute('aria-pressed',HQ);b.textContent=HQ?'Qualidade alta':'Qualidade leve';resize();
 }
-let fpsAcc=0,fpsN=0,fpsLowT=0;
+let fpsAcc=0,fpsN=0,fpsLowT=0,PRLOW=0;
 function renderFrame(dt){
   if(HQ&&composer){composer.render(dt);}else renderer.render(scene,camera);
 }
@@ -4724,7 +4724,10 @@ function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSiz
 window.addEventListener('resize',resize);resize();
 const clock=new THREE.Clock();let t=0,uiT=0,pillState='';const tmpM=new THREE.Matrix4();
 function frame(){
-  requestAnimationFrame(frame);const rawDt=Math.min(clock.getDelta(),1);const dt=Math.min(rawDt,.05);t+=dt;
+  requestAnimationFrame(frame);
+  /* tela de acesso aberta: não desenha o 3D por trás (economiza GPU/CPU até o login) */
+  if(document.getElementById('gateOv')||document.documentElement.classList.contains('gpre')){clock.getDelta();return;}
+  const rawDt=Math.min(clock.getDelta(),1);const dt=Math.min(rawDt,.05);t+=dt;
   let sdt=paused?0:rawDt*speed;ST.simT+=sdt;fpsAcc+=rawDt;fpsN++;
   // integrate in sub-steps for stability at high speed
   const n=Math.min(40,Math.max(1,Math.ceil(sdt/30)));for(let i=0;i<n;i++)step(sdt/n);
@@ -4787,7 +4790,8 @@ function frame(){
 function updateUI(){
   const c=CUR,G=c.G,U=c.U;evalAlarms();renderAlarms();
   const d=Math.floor(ST.simT/86400)+1,hh=Math.floor(ST.simT%86400/3600),mm=Math.floor(ST.simT%3600/60);
-  if(fpsAcc>1){window.__fps=fpsN/fpsAcc;fpsAcc=0;fpsN=0;}
+  if(fpsAcc>1){window.__fps=fpsN/fpsAcc;fpsAcc=0;fpsN=0;
+    if(!HQ){const pr=renderer.getPixelRatio();PRLOW=window.__fps<40?PRLOW+1:0;if(PRLOW>=4&&pr>1.01){renderer.setPixelRatio(Math.max(1,pr-.25));resize();PRLOW=0;}}}
   {const ck=$('#clock'),key=`${d}|${fmtD()}|${hh}:${mm}`;if(ck.dataset.k!==key){ck.dataset.k=key;
     ck.innerHTML=`<span class="ck"><small>Dia</small><b>${d}</b></span><span class="ck"><small>Data</small><b>${DOW[simDate().getUTCDay()]} ${fmtD()}</b></span><span class="ck"><small>Hora</small><b>${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}</b></span>`;}
    ck.title=`Tempo simulado: Dia ${d} = ${fmtD()} (o Dia 1 é ajustável em Gêmeo digital → Clima e chuva)`+(window.__fps?` · ${Math.round(window.__fps)} fps`:'');}
@@ -5128,7 +5132,13 @@ function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REM
 let S3BCt=0;
 function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
-  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();s3Server();}
+  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}TW3_ACC.sim+=dt;TW3_ACC.up+=dt;TW3_ACC.calc+=dt;
+  if(!TW3_ACC.pos){TW3_ACC.pos=new THREE.Vector3();S3.group.getWorldPosition(TW3_ACC.pos);}
+  const near=camera.position.distanceTo(TW3_ACC.pos)<70;/* longe, o setor 3 é pequeno na tela: anima e calcula menos vezes por segundo */
+  if(TW3_ACC.sim>=.2){S3.stepSim(TW3_ACC.sim,Math.max(1,speed||1));TW3_ACC.sim=0;}
+  if(near||TW3_ACC.up>=.12){S3.update(TW3_ACC.up,t,camera);TW3_ACC.up=0;}
+  if(TW3_ACC.calc>=.25){tw3Calc();TW3_ACC.calc=0;}s3Server();}
+var TW3_ACC={sim:0,up:0,calc:0,pos:null};
 const tw3V=tag=>TW3.v[tag]||tw3Calc()[tag]||{on:false,st:'off'};
 function tw3Short(tag){const o=tw3V(tag);if(!o.on)return 'parado';return (o.k==='pn'?`efic. ${fmt(o.eff,0)} % · ${fmt(o.load*100,0)} % carga · desg. ${fmt(o.w,0)} %`:`${fmt(o.kw,0)} kW · ${fmt(o.vib,1)} mm/s · desg. ${fmt(o.w,0)} %`)+(o.health!=null?` · saúde ${o.health}`:'');}
 function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s||'ok';}
