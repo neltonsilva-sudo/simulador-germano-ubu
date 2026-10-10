@@ -392,6 +392,7 @@ body.isa{--navybg:linear-gradient(135deg,rgba(70,76,82,.45),rgba(35,38,41,.55))}
 #foot .al,#almBtn{border-radius:999px!important;padding:6px 14px!important;font-weight:700;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:#fff!important;white-space:nowrap;
   background:linear-gradient(180deg,#2b4f86 0%,#1b3a6b 55%,#132c55 100%)!important;border:1.5px solid #7f9fd6!important;box-shadow:0 3px 6px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.25)!important;text-shadow:0 1px 1px rgba(0,0,0,.5);overflow:hidden;text-overflow:ellipsis;max-width:460px;min-width:0;flex:0 1 auto}
 #foot .al b{margin-right:6px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.25)}
+#alarms{min-width:0;flex:0 1 auto}#foot #alarms .al{white-space:normal!important;max-width:min(62vw,860px);line-height:1.3;text-align:left;border-radius:16px!important}.al .mqw{display:block;min-width:0}.al .mq{display:inline}/* card do alarme cresce com o texto; se for longo, quebra em 2 linhas */
 #foot .al.ok{background:linear-gradient(180deg,#2f8f6a 0%,#1f6b4e 55%,#17553d 100%)!important;border-color:#8fe0bd!important}
 #foot .al.warn{background:linear-gradient(180deg,#d98a2b 0%,#a8601a 55%,#874a12 100%)!important;border-color:#ffd08a!important;animation:almw 1.4s ease-in-out infinite}
 #foot .al.crit{background:linear-gradient(180deg,#e0453a 0%,#a8211a 55%,#861611 100%)!important;border-color:#ffb3a8!important;animation:almc .8s ease-in-out infinite}
@@ -2977,7 +2978,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010164045';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010170357';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4683,12 +4684,14 @@ function almKpiHTML(){const now=ST.simT,W=Math.min(86400,Math.max(600,now-(ALMAC
   <p class="hint" style="margin-top:10px">Os maus atores são os primeiros candidatos à racionalização: revisar o limite, aplicar banda morta ou atraso de ativação, ou rebaixar a prioridade. Metas de referência: ISA-18.2 (ANSI/ISA-18.2-2016) e EEMUA 191 · modelo didático.</p>`;}
 function renderAlarms(){syncAlarms();const el=$('#alarms');const list=[...ALMS.values()];
   const ab=$('#almBtn');ab.classList.remove('warn','crit');
-  if(!list.length){el.innerHTML='<div class="al ok"><b>OK</b>Sem alarmes ativos</div>';ab.textContent='Alarmes e eventos';return;}
+  if(!list.length){el._h='';el.innerHTML='<div class="al ok"><b>OK</b>Sem alarmes ativos</div>';ab.textContent='Alarmes e eventos';return;}
   ab.classList.add(list.some(a=>a.sev==='crit')?'crit':'warn');
   const o={crit:0,warn:1};list.sort((a,b)=>(a.ack-b.ack)||(o[a.sev]-o[b.sev]));
   const p1=list.filter(a=>a.sev==='crit').length,p2=list.length-p1,un=list.filter(a=>!a.ack).length;
   $('#almBtn').textContent=`Alarmes: ${p1} P1 · ${p2} P2${un?` · ${un} não reconhecidos`:''}`;
-  el.innerHTML=list.slice(0,1).map(a=>`<div class="al ${a.sev}${a.ack?'':' unack'}"><b>${a.sev==='crit'?'P1':'P2'}</b>${a.msg}</div>`).join('');
+  /* faixa do rodapé: o card cresce com a mensagem (só redesenha se mudar) */
+  const hh=list.slice(0,1).map(a=>`<div class="al ${a.sev}${a.ack?'':' unack'}" title="${esc(a.msg)}"><b>${a.sev==='crit'?'P1':'P2'}</b><span class="mqw"><span class="mq">${a.msg}</span></span></div>`).join('');
+  if(el._h!==hh){el._h=hh;el.innerHTML=hh;}
   if(!$('#alm').hidden)renderAlmPanel();}
 function renderAlmPanel(){const b=$('#almBody');const pr=a=>`<span class="prio ${a.sev==='crit'?'p1':'p2'}">${a.sev==='crit'?'1':'2'}</span>`;
   if(almTab==='ativos'){const list=[...ALMS.values()].filter(a=>!ALMFILTER||a.sev===ALMFILTER);b.innerHTML=list.length?`<table class="alt"><thead><tr><th>Prio.</th><th>Início</th><th>Tag</th><th>Mensagem · causa provável · ação do operador</th><th></th></tr></thead><tbody>${list.map(a=>{const m=almMeta(a);return `<tr class="${a.ack?'':'unack'}"><td><b>${pr(a)}</b></td><td>${a.t0}</td><td style="white-space:nowrap"><b>${m.tag}</b><br><span class="hint">etapa ${EQ[a.eq]?EQ[a.eq].num:''}</span></td><td>${a.msg}<div class="hint" style="margin-top:3px">Causa provável: ${m.causa}<br><b style="color:var(--accent)">Ação:</b> ${m.acao}</div></td><td><button class="btn" data-go="${a.eq}">Ir</button>${a.ack?'':` <button class="btn" data-ack="${esc(a.k)}">Reconhecer</button>`}</td></tr>`;}).join('')}</tbody></table>`:'<p class="hint">Sem alarmes ativos'+(ALMFILTER?(ALMFILTER==='crit'?' P1':' P2'):'')+'.</p>';if(ALMFILTER)b.insertAdjacentHTML('afterbegin',`<p class="hint">Filtro: <b>${ALMFILTER==='crit'?'P1 · críticos':'P2 · avisos'}</b> · <a href="#" id="almAll" style="color:var(--accent)">mostrar todos</a></p>`);}
