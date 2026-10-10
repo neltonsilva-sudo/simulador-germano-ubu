@@ -1,12 +1,12 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261010165330';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261010165330';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261010165330';
-import { buildUI } from './ui.js?v=20261010165330';
-import { gate } from './gate.js?v=20261010165330';
-import { buildContext } from './context.js?v=20261010165330';
+import { B, LV, CAMS } from './layout.js?v=20261010193412';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261010193412';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261010193412';
+import { buildUI } from './ui.js?v=20261010193412';
+import { gate } from './gate.js?v=20261010193412';
+import { buildContext } from './context.js?v=20261010193412';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -17,7 +17,11 @@ const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .05, 60
 const S3 = buildSetor3(); scene.add(S3.group); const parts = S3.parts;
 // entorno: restante do processo de Germano ao redor do setor 3 (como na página principal)
 let CTX = null; try { CTX = buildContext(scene, S3.M, S3.group); window.__ctxOcc = CTX.occ; (parts.flows.labels || (parts.flows.labels = [])).push(...CTX.labels); } catch (e) { console.error('entorno', e); } console.log('setor3: malhas fundidas', S3.stats);
-buildLighting(scene, renderer, S3.lamps);
+const LIGHT = buildLighting(scene, renderer, S3.lamps);
+// projetores do entorno (acendem à noite): um por área do processo e quatro em volta do prédio do setor 3
+try { (CTX && CTX.labels || []).filter((l) => l.kind === 'area').forEach((l) => LIGHT.addYard(l.pos.x + 30, 16, l.pos.z + 30, 1));   // poste ao lado da área (fora da cava/pilha)
+  const W = S3.LAYOUT ? S3.LAYOUT.B.W : 64, D = S3.LAYOUT ? S3.LAYOUT.B.D : 26; [[-6, -6], [W + 6, -6], [-6, D + 6], [W + 6, D + 6]].forEach(([x, z]) => LIGHT.addYard(x, 12, z, .6)); } catch (e) { console.warn('projetores', e); }
+{ const qn = new URLSearchParams(location.search).get('night'); if (qn != null) LIGHT.setNight(+qn || 1); }   // ?night=1 força a noite (teste)
 const composer = createComposer(renderer, scene, camera);
 
 const controls = new OrbitControls(camera, canvas);

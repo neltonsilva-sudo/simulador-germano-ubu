@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261010165330';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261010165330';
-import { PhoneShader } from './render_post.js?v=20261010165330';
-import { UpscaleShader } from './render_upscale.js?v=20261010165330';
+import { B, LV } from './layout.js?v=20261010193412';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261010193412';
+import { PhoneShader } from './render_post.js?v=20261010193412';
+import { UpscaleShader } from './render_upscale.js?v=20261010193412';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -174,7 +174,7 @@ function buildLightFX(scene, sun, lamps) {
 
 export function buildLighting(scene, renderer, lamps = []) {
   scene.background = new THREE.Color(0xa9c9e6);
-  scene.add(skyDome());
+  const dome = skyDome(); scene.add(dome);
   scene.environment = buildEnvironment(renderer, lamps, { sky: LOOK.sky, lamp: 40, skylights: findSkylights(scene) });
   scene.environmentIntensity = HIGH ? LOOK.env : LOOK.env * 1.25;
   const fog = new THREE.FogExp2(0xa08c7c, LOOK.fogIn); scene.fog = fog;
@@ -215,7 +215,26 @@ export function buildLighting(scene, renderer, lamps = []) {
     const now = performance.now(); if (now - lastSh > 400) { lastSh = now; r.shadowMap.needsUpdate = true; }
   };
   window.__look = { LOOK, sun, hemi, scene, fog, FX };
-  return { sun, hemi };
+  // NOITE: segue o ciclo do simulador (0 = dia, 1 = noite): luz natural cai, céu escurece e o entorno acende os projetores
+  const domeK = dome.material.color.r;
+  const base = { sun: sun.intensity, hemi: hemi.intensity, env: scene.environmentIntensity, bg: scene.background.clone(), fog: fog.color.clone(), sunC: sun.color.clone(), hs: hemi.color.clone() };
+  const nightBg = new THREE.Color(0x0b1424), nightFog = new THREE.Color(0x0b1220), moon = new THREE.Color(0x9fb4ff), nightHs = new THREE.Color(0x34508a), yard = [];
+  // postes de iluminação: coluna metálica, braço e luminária (acende à noite) + a luz pontual logo abaixo
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0x8a9096, roughness: .55, metalness: .6 }), headMat = new THREE.MeshStandardMaterial({ color: 0x2d3136, roughness: .5, emissive: 0xffd9a8, emissiveIntensity: 0 });
+  const poleGeo = new THREE.CylinderGeometry(.13, .2, 1, 10), headGeo = new THREE.BoxGeometry(1.1, .28, .6);
+  const addYard = (x, y, z, k = 1) => { const pg = new THREE.Group(); pg.position.set(x, 0, z);
+    const col = new THREE.Mesh(poleGeo, poleMat); col.scale.y = y; col.position.y = y / 2; col.castShadow = true;
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, .1, .1), poleMat); arm.position.set(.7, y - .1, 0);
+    const head = new THREE.Mesh(headGeo, headMat); head.position.set(1.4, y - .25, 0); pg.add(col, arm, head); scene.add(pg);
+    const l = new THREE.PointLight(0xffd9a8, 0, 70, 1.5); l.position.set(x + 1.4, y - .6, z); l.userData.k = k; scene.add(l); yard.push(l); };
+  let nk = -1;
+  const setNight = (k) => { k = Math.max(0, Math.min(1, +k || 0)); if (Math.abs(k - nk) < .01) return; nk = k;
+    sun.intensity = base.sun * (1 - .93 * k); sun.color.copy(base.sunC).lerp(moon, k); hemi.intensity = base.hemi * (1 - .8 * k); hemi.color.copy(base.hs).lerp(nightHs, k);
+    scene.environmentIntensity = base.env * (1 - .78 * k); scene.background.copy(base.bg).lerp(nightBg, k); fog.color.copy(base.fog).lerp(nightFog, k);
+    dome.material.color.setScalar(domeK * (1 - .86 * k));
+    yard.forEach((l) => { l.intensity = k * l.userData.k * 650; l.visible = k > .02; }); headMat.emissiveIntensity = k * 6; };
+  window.__s3setNight = setNight;
+  return { sun, hemi, addYard, setNight };
 }
 
 

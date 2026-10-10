@@ -4,10 +4,10 @@
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 // Regra de vizinhança: nada do entorno a menos de ~25 m das paredes do setor 3 (x 0–64, z 0–24), exceto correias e estradas.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261010165330';
-import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261010165330';
-import { mergeStatic } from './merge.js?v=20261010165330';
-import { HIGH } from './render.js?v=20261010165330';
+import { B } from './layout.js?v=20261010193412';
+import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261010193412';
+import { mergeStatic } from './merge.js?v=20261010193412';
+import { HIGH } from './render.js?v=20261010193412';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
@@ -485,7 +485,7 @@ export function buildContext(scene, M, root) {
   const Bo = AREAS.bombas; predio(Bo.x, Bo.z, 34, 12, 20, { cor: '#7a7570', gates: [{ f: 'n', u: Bo.x - 6, gw: 6, gh: 6 }], stair: { f: 's', u: Bo.x - 14 } });
   for (const dz of [-3, 0, 3]) beam(g, V(Bo.x + 17, 1, Bo.z + dz), V(Bo.x + 230, 1, Bo.z + dz - 40), .5, C.tubo, true);   // minerodutos saindo
   const Sf = AREAS.sf; predio(Sf.x, Sf.z, 30, 16, 22, { gates: [{ f: 'n', u: Sf.x - 6, gw: 6, gh: 7 }], stair: { f: 'e', u: Sf.z - 8 } });
-  const ar = new THREE.Mesh(pileGeo(16, 9, 11, { base: [.36, .28, .18], dark: [.27, .2, .13], wet: [.22, .17, .11] }), pileMat()); ar.position.set(Sf.x + 30, 0, Sf.z + 4); g.add(ar);
+  const ar = new THREE.Mesh(pileGeo(16, 9, 11, { base: [.36, .28, .18], dark: [.27, .2, .13], wet: [.22, .17, .11] }), pileMat()); ar.position.set(Sf.x + 58, 0, Sf.z + 10); g.add(ar);   // afastada do galpão (≈ 27 m livres até a escada)
   predio(A.x + 38, A.z + 28, 12, 9, 10, { cor: '#7a7570', lantern: false, gates: [{ f: 'w', u: A.z + 28, gw: 5, gh: 5 }] });
 
   // ================= ESTRADAS =================

@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010165330';
-import { startMnt, finishMnt } from './sim.js?v=20261010165330';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010193412';
+import { startMnt, finishMnt } from './sim.js?v=20261010193412';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -70,7 +70,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   let bc = null, lastSync = 0;
   // estado vindo do simulador: canal local (mesmo site) ou servidor (sites diferentes)
   let viaBC = 0, srvBusy = false;
-  const applyState = (d) => { lastSync = performance.now(); const was = sim.sync; sim.sync = true; if (!was && pend.length) { pend.forEach((x) => { const t = x.eqCmd && x.eqCmd.tag; if (t) (sim._lock = sim._lock || {})[t] = performance.now() + 20000; }); setTimeout(flushPend, 0); }
+  const applyState = (d) => { lastSync = performance.now(); if (isFinite(d.night) && window.__s3setNight) window.__s3setNight(d.night); const was = sim.sync; sim.sync = true; if (!was && pend.length) { pend.forEach((x) => { const t = x.eqCmd && x.eqCmd.tag; if (t) (sim._lock = sim._lock || {})[t] = performance.now() + 20000; }); setTimeout(flushPend, 0); }
     if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
     /* desgaste e liga/desliga de cada equipamento vêm do simulador (fonte única), exceto logo depois de um comando dado aqui */
     if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now || (q.rev || 0) < (e.rev || 0)) continue; e.rev = q.rev || 0; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) startMnt(e); else if (q.mnt === false && e.mnt) { const r = finishMnt(t, e); if (r) r.sent = true; } if (e.mnt && isFinite(q.mh)) e.mnt.h = Math.max(e.mnt.h || 0, q.mh); }
