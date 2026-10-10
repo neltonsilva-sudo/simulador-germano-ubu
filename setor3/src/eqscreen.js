@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261010163419';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261010163419';
+import { call } from './api.js?v=20261010163443';
+import { MNT, startMnt, finishMnt } from './sim.js?v=20261010163443';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -80,7 +80,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <p class="n">${hWhy}</p>
       <h4>Especificação técnica (ilustrativa)</h4><table>${S.itens.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
       ${e.mnt ? (() => { const M = MNT[e.k], p = Math.min(1, (e.mnt.h || 0) / (e.mnt.dur || M.h)), i = Math.min(M.at.length - 1, Math.floor(p * M.at.length));
-        return `<div class="act"><button class="off" disabled title="Partida bloqueada durante a manutenção" style="flex:0 0 56px;padding:8px 4px">🔒<br>Ligar</button><button class="mntp" style="--p:${(p * 100).toFixed(1)}%" title="${M.at.map((x, j) => (j < i ? '✓ ' : j === i ? '▶ ' : '· ') + x).join('\n')}"><span class="bar"></span><b>🔧 Manutenção ${fm(p * 100)} %</b><small>Etapa ${i + 1}/${M.at.length} · ${M.at[i]} · ${fm(e.mnt.h || 0, 1)} de ${fm(e.mnt.dur || M.h)} h</small></button><button class="mnt" data-a="mfin" title="Encerra a manutenção agora e mostra o relatório">Concluir</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`; })()
+        return `<div class="act"><button class="off" disabled title="Partida bloqueada durante a manutenção" style="flex:0 0 56px;padding:8px 4px">🔒<br>Ligar</button><button class="mntp" style="--p:${(p * 100).toFixed(1)}%" title="${M.at.map((x, j) => (j < i ? '✓ ' : j === i ? '▶ ' : '· ') + x).join('\n')}"><span class="bar"></span><b>🔧 Manutenção ${fm(p * 100)} %</b><small>Etapa ${i + 1}/${M.at.length} · ${M.at[i]} · ${fm(e.mnt.h || 0, 1)} de ${fm(e.mnt.dur || M.h)} h</small></button><button class="mnt" data-a="mfin" title="Encerra a manutenção agora e mostra o relatório" style="flex:0 0 72px;padding:8px 4px">Concluir</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`; })()
       : `<div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button class="mnt" data-a="mnt" title="Desliga, bloqueia a partida, coloca os alarmes fora de serviço e executa o plano de manutenção">Manutenção</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`}<p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
