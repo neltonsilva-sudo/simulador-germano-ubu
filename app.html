@@ -472,6 +472,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--ground);z-index:20;font-family:var(--f-disp);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 #loading b{color:var(--accent);font-size:22px;letter-spacing:.06em}
 .brand h1{margin-left:clamp(14px,3.2vw,52px)!important}
+#alm .ah h3{white-space:nowrap}#alm .tagp{white-space:nowrap}
 .hxLogo{flex:none;display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.45))}
 .hxW{display:grid}.hxW>span{grid-area:1/1;font:900 30px/.95 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.04em}
 .hxL1{color:rgba(194,84,26,.10);text-shadow:1px 1px 0 rgba(164,66,15,.62),2px 2px 0 rgba(150,60,13,.52),3px 3px 0 rgba(122,47,9,.42),4px 5px 8px rgba(0,0,0,.5),0 0 14px rgba(255,170,60,.45)}
@@ -598,12 +599,12 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
   </section>
   <div class="modal" id="cfm" hidden role="dialog" aria-modal="true" aria-labelledby="cfmT"><div class="box"><h3 id="cfmT">Confirmar comando</h3><p id="cfmM"></p><div class="row"><button class="btn" id="cfmNo">Cancelar</button><button class="danger" id="cfmYes">Confirmar</button></div></div></div>
   <section id="alm" hidden aria-label="Sumário de alarmes e eventos"><header class="ah"><h3>Alarmes e eventos</h3>
-    <div class="seg" id="almTabs"><button data-t="ativos" aria-pressed="true">Ativos</button><button data-t="hist" aria-pressed="false">Histórico</button><button data-t="eventos" aria-pressed="false">Eventos</button></div>
+    <div class="seg" id="almTabs"><button data-t="ativos" aria-pressed="true">Ativos</button><button data-t="hist" aria-pressed="false">Histórico</button><button data-t="eventos" aria-pressed="false">Eventos</button><button data-t="kpi" aria-pressed="false" title="Indicadores de desempenho do sistema de alarmes (ISA-18.2 / EEMUA 191)">ISA-18.2</button></div>
     <button class="btn" id="almAck">Reconhecer todos</button><button class="btn" id="almCsv">Copiar CSV</button><button class="btn" id="almClose">Fechar</button></header><div class="ab" id="almBody"></div></section>
   <section id="pfd" hidden aria-label="Fluxograma do processo"></section>
   <section id="eng" hidden aria-label="Engenharia do modelo">
     <header class="eh"><h3>Gêmeo digital · engenharia do modelo</h3>
-      <div class="seg" id="engTabs"><button data-t="cal" aria-pressed="true">Calibração</button><button data-t="curves" aria-pressed="false">Curvas do piloto</button><button data-t="geo" aria-pressed="false">Geometalurgia</button><button data-t="prev" aria-pressed="false">Previsão 48 h</button><button data-t="rec" aria-pressed="false">Reconciliação</button><button data-t="vs" aria-pressed="false">Sensores virtuais</button><button data-t="adv" aria-pressed="false">Modelos avançados</button><button data-t="clima" aria-pressed="false">Clima e chuva</button><button data-t="ctl" aria-pressed="false">Controle (PID/MPC)</button><button data-t="din" aria-pressed="false">Dinâmica de polpa</button><button data-t="val" aria-pressed="false">Validação</button><button data-t="dados" aria-pressed="false">Dados reais</button><button data-t="doc" aria-pressed="false">Modelo técnico</button></div>
+      <div class="seg" id="engTabs"><button data-t="cal" aria-pressed="true">Calibração</button><button data-t="curves" aria-pressed="false">Curvas do piloto</button><button data-t="geo" aria-pressed="false">Geometalurgia</button><button data-t="prev" aria-pressed="false">Previsão 48 h</button><button data-t="rec" aria-pressed="false">Reconciliação</button><button data-t="vs" aria-pressed="false">Sensores virtuais</button><button data-t="adv" aria-pressed="false">Modelos avançados</button><button data-t="clima" aria-pressed="false">Clima e chuva</button><button data-t="ctl" aria-pressed="false">Controle (PID/MPC)</button><button data-t="din" aria-pressed="false">Dinâmica de polpa</button><button data-t="tags" aria-pressed="false" title="Lista de tags no padrão de campo (PV/SP/OP/modo)">Tags SCADA</button><button data-t="val" aria-pressed="false">Validação</button><button data-t="dados" aria-pressed="false">Dados reais</button><button data-t="doc" aria-pressed="false">Modelo técnico</button></div>
       <label class="hint" style="display:flex;gap:6px;align-items:center">Modelo de concentração <select id="modelSel" style="width:auto"><option value="pilot">Piloto cinético por tamanho</option><option value="simple">Simplificado (original)</option></select></label>
       <button class="btn" id="engPdf">Gerar PDF</button><button class="btn" id="engClose">Fechar</button></header>
     <div class="eb" id="engBody"></div>
@@ -2964,7 +2965,7 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010105848';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010114839';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4611,9 +4612,62 @@ const fmtD=(t=ST.simT,y=true)=>{const d=simDate(t);return `${String(d.getUTCDate
 const simStamp=()=>{const d=Math.floor(ST.simT/86400)+1,hh=Math.floor(ST.simT%86400/3600),mm=Math.floor(ST.simT%3600/60);return `D${d} ${fmtD(ST.simT,false)} ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;};
 function logEvent(tipo,texto){LOG.unshift({t:simStamp(),tipo,texto});if(LOG.length>400)LOG.pop();if(!$('#alm').hidden)renderAlmPanel();}
 const almKey=a=>a.eq+'|'+a.msg.replace(/\(.*?\)|[\d.,]+/g,'#');
+/* ISA-18.2 · racionalização: cada alarme tem tag de campo, causa provável e ação esperada do operador */
+const ALM_RULES=[
+ [/parad[ao]|intertravad|inexistente/i,'XA','Equipamento parado ou intertravado','Verificar o intertravamento e os permissivos no campo; liberar a partida só depois de confirmar a causa.'],
+ [/tratamento de água/i,'FAL','Capacidade de tratamento menor que a demanda','Aumentar a capacidade da ETE ou reduzir o consumo de água nova.'],
+ [/SiO₂ alto/i,'AAH','Liberação insuficiente na moagem ou amina baixa','Aumentar a amina em 5–10 g/t ou reduzir o P80 da moagem; conferir o analisador on-line.'],
+ [/Fe baixo/i,'AAL','Arraste de ganga ou amina em excesso','Revisar a dosagem de amina e amido e o pH da flotação.'],
+ [/amina/i,'FAH','Dosagem de amina acima da faixa','Reduzir a amina ao valor recomendado; avaliar a perda de ferro no rejeito.'],
+ [/lama/i,'AAH','Minério com mais finos (lama) que o previsto','Ajustar a deslamagem (pressão dos ciclones) e avisar a mina.'],
+ [/pilha.*cheia/i,'LAH','Lavra acima do consumo do concentrador','Reduzir a lavra/TCLD ou aumentar a alimentação dos concentradores.'],
+ [/pilha|autonomia|esgotad|sem alimentação/i,'LAL','Reposição da pilha interrompida','Retomar a lavra e a britagem; planejar redução de alimentação se a autonomia cair.'],
+ [/velocidade alta/i,'SAH','Vazão acima do projeto no mineroduto','Reduzir o bombeamento ou ativar outra linha.'],
+ [/velocidade baixa|sedimenta/i,'SAL','Vazão baixa: risco de sedimentação','Aumentar o bombeamento ou lavar a linha com água.'],
+ [/pressão/i,'PAH','Polpa densa ou restrição na linha','Reduzir o % de sólidos (água de diluição) e verificar as válvulas.'],
+ [/sólidos|densa|underflow/i,'DAH','Densidade fora da faixa','Ajustar floculante ou água de diluição pela malha DIC.'],
+ [/cheio|bacia/i,'LAH','Entrada maior que a saída','Aumentar a saída (filtros/bombeamento) ou reduzir a alimentação.'],
+ [/baixo|vazio|sem polpa|sem estoque/i,'LAL','Estoque abaixo do mínimo','Reduzir o consumo a jusante ou aumentar a alimentação a montante.'],
+ [/temperatura/i,'TAH','Combustível em excesso ou carga baixa no forno','Reduzir o combustível pela malha TIC-2001.'],
+ [/pelota fraca|kgf|formação de pelotas/i,'QAL','Queima insuficiente, umidade ou aglomerante fora do ideal','Ajustar a temperatura de queima, a umidade e o aglomerante.'],
+ [/emissão/i,'AAH','Precipitador com baixa eficiência','Verificar os campos do precipitador; reduzir a produção se persistir.'],
+ [/instrumento|suspeito/i,'IA','Medição inconsistente com o balanço de massa','Chamar a instrumentação para aferir o instrumento.'],
+ [/chuva|raio|tempestade|descarga/i,'WA','Condição meteorológica adversa','Seguir o procedimento de chuva e raios da área.'],
+ [/limite|capacidade|reduzida|esgotada/i,'FAH','Equipamento operando no limite de capacidade','Redistribuir a carga ou colocar outra unidade em operação.'],
+ [/fora da faixa/i,'UA','Variável fora da faixa operacional','Ver a tendência e o setpoint da variável no painel da área.']];
+function almMeta(a){if(a.meta)return a.meta;const r=ALM_RULES.find(x=>x[0].test(a.msg))||[null,'UA','Condição anormal do processo','Verificar a área e a tendência das variáveis.'];
+  const n=(EQ[a.eq]&&EQ[a.eq].num)||0;let h=7;const key=a.k||almKey(a);for(let i=0;i<key.length;i++)h=(h*31+key.charCodeAt(i))>>>0;
+  return a.meta={tag:`${String(n).padStart(2,'0')}-${r[1]}-${h%900+100}`,causa:r[2],acao:r[3]};}
+const ALMACT=[];/* ativações em tempo simulado, para os indicadores ISA-18.2 */
 function syncAlarms(){const now=new Set();
-  for(const a of ALARMS){const k=almKey(a);now.add(k);const o=ALMS.get(k);if(o){o.msg=a.msg;o.sev=a.sev;}else{ALMS.set(k,{k,eq:a.eq,sev:a.sev,msg:a.msg,t0:simStamp(),ack:false});logEvent(a.sev==='crit'?'Alarme P1':'Alarme P2',a.msg);}}
+  for(const a of ALARMS){const k=almKey(a);now.add(k);const o=ALMS.get(k);if(o){o.msg=a.msg;o.sev=a.sev;}else{ALMS.set(k,{k,eq:a.eq,sev:a.sev,msg:a.msg,t0:simStamp(),t0n:ST.simT,ack:false});ALMACT.push({k,t:ST.simT,sev:a.sev,eq:a.eq,msg:a.msg});if(ALMACT.length>6000)ALMACT.shift();logEvent(a.sev==='crit'?'Alarme P1':'Alarme P2',a.msg);}}
   for(const [k,o] of ALMS){if(!now.has(k)){ALMS.delete(k);o.tClear=simStamp();ALMHIST.unshift(o);if(ALMHIST.length>300)ALMHIST.pop();logEvent('Normalizado',o.msg);}}}
+/* indicadores de desempenho do gerenciamento de alarmes (ISA-18.2 / EEMUA 191), em tempo simulado */
+function almKpiHTML(){const now=ST.simT,W=Math.min(86400,Math.max(600,now-(ALMACT.length?ALMACT[0].t:now))),t0=now-W,ev=ALMACT.filter(e=>e.t>=t0);
+  const nB=Math.max(1,Math.ceil(W/600)),bins=new Array(nB).fill(0);ev.forEach(e=>{const i=Math.min(nB-1,Math.floor((e.t-t0)/600));bins[i]++;});
+  const rate=ev.length/nB,peak=Math.max(0,...bins),flood=bins.filter(x=>x>10).length/nB*100;
+  const act=[...ALMS.values()],stand=act.filter(a=>now-(a.t0n||now)>86400).length,unack=act.filter(a=>!a.ack).length;
+  const byK={};ev.forEach(e=>{(byK[e.k]=byK[e.k]||{n:0,e,ts:[]}).n++;byK[e.k].ts.push(e.t);});
+  const chat=Object.values(byK).filter(o=>o.ts.some((t,i)=>o.ts.filter(x=>x>=t&&x<t+600).length>=3)).length;
+  const top=Object.values(byK).sort((a,b)=>b.n-a.n).slice(0,10),topShare=ev.length?top.reduce((s,o)=>s+o.n,0)/ev.length*100:0;
+  const p1=ev.length?ev.filter(e=>e.sev==='crit').length/ev.length*100:0;
+  const st=(ok,warn)=>ok?'<span class="tagp ok">dentro da meta</span>':warn?'<span class="tagp warn">gerenciável</span>':'<span class="tagp crit">fora da meta</span>';
+  const row=(n,v,meta,s)=>`<tr><td>${n}</td><td><b>${v}</b></td><td>${meta}</td><td>${s}</td></tr>`;
+  const hh=W/3600;
+  return `<p class="hint">Desempenho do sistema de alarmes nas últimas <b>${fmt(hh,hh<10?1:0)} h simuladas</b> (${ev.length} ativações), comparado às metas da ISA-18.2 / EEMUA 191 para um operador.</p>
+  <table class="alt"><thead><tr><th>Indicador</th><th>Valor</th><th>Meta</th><th>Situação</th></tr></thead><tbody>
+  ${row('Taxa média de alarmes',fmt(rate,1)+' por 10 min','≤ 1 (aceitável) · ≤ 2 (gerenciável)',st(rate<=1,rate<=2))}
+  ${row('Pico em 10 min',peak+' alarmes','≤ 10',st(peak<=10,false))}
+  ${row('Tempo em inundação (> 10 alarmes / 10 min)',fmt(flood,1)+' %','< 1 %',st(flood<1,false))}
+  ${row('Alarmes permanentes (ativos > 24 h)',stand,'0 · máx. 5',st(stand===0,stand<=5))}
+  ${row('Alarmes instáveis (≥ 3 vezes em 10 min)',chat,'0',st(chat===0,chat<=2))}
+  ${row('Participação dos 10 mais frequentes',fmt(topShare,0)+' %','< 20 % das ativações',st(topShare<20,topShare<50))}
+  ${row('Alarmes de prioridade 1 (P1)',fmt(p1,0)+' %','≈ 5–20 % do total',st(p1<=20,p1<=35))}
+  ${row('Alarmes ativos não reconhecidos',unack,'0',st(unack===0,unack<=3))}
+  </tbody></table>
+  <h4 style="margin:14px 0 6px">10 alarmes mais frequentes (maus atores)</h4>
+  ${top.length?`<table class="alt"><thead><tr><th>#</th><th>Tag</th><th>Mensagem</th><th>Ativações</th></tr></thead><tbody>${top.map((o,i)=>`<tr><td>${i+1}</td><td><b>${almMeta({k:o.e.k,eq:o.e.eq,msg:o.e.msg}).tag}</b></td><td>${o.e.msg}</td><td>${o.n}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Sem ativações no período.</p>'}
+  <p class="hint" style="margin-top:10px">Os maus atores são os primeiros candidatos à racionalização: revisar o limite, aplicar banda morta ou atraso de ativação, ou rebaixar a prioridade. Metas de referência: ISA-18.2 (ANSI/ISA-18.2-2016) e EEMUA 191 · modelo didático.</p>`;}
 function renderAlarms(){syncAlarms();const el=$('#alarms');const list=[...ALMS.values()];
   const ab=$('#almBtn');ab.classList.remove('warn','crit');
   if(!list.length){el.innerHTML='<div class="al ok"><b>OK</b>Sem alarmes ativos</div>';ab.textContent='Alarmes e eventos';return;}
@@ -4624,8 +4678,9 @@ function renderAlarms(){syncAlarms();const el=$('#alarms');const list=[...ALMS.v
   el.innerHTML=list.slice(0,1).map(a=>`<div class="al ${a.sev}${a.ack?'':' unack'}"><b>${a.sev==='crit'?'P1':'P2'}</b>${a.msg}</div>`).join('');
   if(!$('#alm').hidden)renderAlmPanel();}
 function renderAlmPanel(){const b=$('#almBody');const pr=a=>`<span class="prio ${a.sev==='crit'?'p1':'p2'}">${a.sev==='crit'?'1':'2'}</span>`;
-  if(almTab==='ativos'){const list=[...ALMS.values()].filter(a=>!ALMFILTER||a.sev===ALMFILTER);b.innerHTML=list.length?`<table class="alt"><thead><tr><th>Prio.</th><th>Início</th><th>Etapa</th><th>Mensagem</th><th></th></tr></thead><tbody>${list.map(a=>`<tr class="${a.ack?'':'unack'}"><td><b>${pr(a)}</b></td><td>${a.t0}</td><td>${EQ[a.eq]?EQ[a.eq].num:''}</td><td>${a.msg}</td><td><button class="btn" data-go="${a.eq}">Ir</button>${a.ack?'':` <button class="btn" data-ack="${esc(a.k)}">Reconhecer</button>`}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Sem alarmes ativos'+(ALMFILTER?(ALMFILTER==='crit'?' P1':' P2'):'')+'.</p>';if(ALMFILTER)b.insertAdjacentHTML('afterbegin',`<p class="hint">Filtro: <b>${ALMFILTER==='crit'?'P1 · críticos':'P2 · avisos'}</b> · <a href="#" id="almAll" style="color:var(--accent)">mostrar todos</a></p>`);}
-  else if(almTab==='hist'){b.innerHTML=ALMHIST.length?`<table class="alt"><thead><tr><th>Prio.</th><th>Início</th><th>Fim</th><th>Etapa</th><th>Mensagem</th></tr></thead><tbody>${ALMHIST.slice(0,150).map(a=>`<tr><td>${pr(a)}</td><td>${a.t0}</td><td>${a.tClear}</td><td>${EQ[a.eq]?EQ[a.eq].num:''}</td><td>${a.msg}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Nenhum alarme normalizado ainda.</p>';}
+  if(almTab==='ativos'){const list=[...ALMS.values()].filter(a=>!ALMFILTER||a.sev===ALMFILTER);b.innerHTML=list.length?`<table class="alt"><thead><tr><th>Prio.</th><th>Início</th><th>Tag</th><th>Mensagem · causa provável · ação do operador</th><th></th></tr></thead><tbody>${list.map(a=>{const m=almMeta(a);return `<tr class="${a.ack?'':'unack'}"><td><b>${pr(a)}</b></td><td>${a.t0}</td><td style="white-space:nowrap"><b>${m.tag}</b><br><span class="hint">etapa ${EQ[a.eq]?EQ[a.eq].num:''}</span></td><td>${a.msg}<div class="hint" style="margin-top:3px">Causa provável: ${m.causa}<br><b style="color:var(--accent)">Ação:</b> ${m.acao}</div></td><td><button class="btn" data-go="${a.eq}">Ir</button>${a.ack?'':` <button class="btn" data-ack="${esc(a.k)}">Reconhecer</button>`}</td></tr>`;}).join('')}</tbody></table>`:'<p class="hint">Sem alarmes ativos'+(ALMFILTER?(ALMFILTER==='crit'?' P1':' P2'):'')+'.</p>';if(ALMFILTER)b.insertAdjacentHTML('afterbegin',`<p class="hint">Filtro: <b>${ALMFILTER==='crit'?'P1 · críticos':'P2 · avisos'}</b> · <a href="#" id="almAll" style="color:var(--accent)">mostrar todos</a></p>`);}
+  else if(almTab==='hist'){b.innerHTML=ALMHIST.length?`<table class="alt"><thead><tr><th>Prio.</th><th>Início</th><th>Fim</th><th>Tag</th><th>Mensagem</th></tr></thead><tbody>${ALMHIST.slice(0,150).map(a=>`<tr><td>${pr(a)}</td><td>${a.t0}</td><td>${a.tClear}</td><td>${almMeta(a).tag}</td><td>${a.msg}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Nenhum alarme normalizado ainda.</p>';}
+  else if(almTab==='kpi'){b.innerHTML=almKpiHTML();}
   else{b.innerHTML=LOG.length?`<table class="alt"><thead><tr><th>Hora simulada</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>${LOG.slice(0,200).map(e=>`<tr><td>${e.t}</td><td>${e.tipo}</td><td>${e.texto}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Sem eventos registrados.</p>';}
   b.querySelectorAll('[data-go]').forEach(x=>x.addEventListener('click',()=>{select(x.dataset.go,true);}));
   const aa=b.querySelector('#almAll');if(aa)aa.addEventListener('click',e=>{e.preventDefault();ALMFILTER=null;renderAlmPanel();});
@@ -5010,6 +5065,16 @@ function engDoc(){return `<p>Inventário das equações do simulador, com a simp
 /* ===== VALIDAÇÃO: simulado × referência publicada (sem dados medidos da usina: compara com fontes públicas e de projeto) ===== */
 const SRCV={m:'Medido (dados importados da usina)',d:'Dissertação Figueiredo (UFMG, 2019) · Concentrador 01 de Germano',p:'Prévias operacionais Samarco 2024–2025 (imprensa)',c:'Derivado da dissertação (potência instalada ÷ taxa)',t:'TCC Rodrigues & Silva (2016) · Usina II'};
 const ORG=k=>`<span class="tagp ${k==='real'?'ok':k==='ref'?'':'warn'}" style="${k==='ref'?'color:#5cc6dc':''}">${{real:'real',ref:'ref.',adot:'adotado',calc:'calculado'}[k]}</span>`;
+/* base de tags no padrão de campo (ISA-5.1): malhas com .PV/.SP/.OP/.MODE, instrumentos e alarmes ativos */
+function engTags(){return `<p>Base de tags como num sistema SCADA/SDCD: cada malha expõe <b>.PV</b> (variável medida), <b>.SP</b> (setpoint), <b>.OP</b> (saída para o elemento final) e <b>.MODE</b> (AUTO/MAN). Nomes no padrão ISA-5.1: a 1ª letra é a variável (L nível, D densidade, T temperatura, A análise, F vazão, W peso), as seguintes a função (I indicação, C controle, T transmissor) e o número indica a área.</p><div id="engLive"></div>`;}
+function liveTags(){const f=(v,d)=>isFinite(+v)?fmt(+v,d):'–';
+  const loops=Object.values(LOOPS).map(L=>{const t=L.tag.replace(/-/,'-');return `<tr><td><b>${t}</b></td><td>${L.nome}</td><td>${t}.PV = <b>${f(L.pv,2)}</b> ${L.pvU}</td><td>${t}.SP = ${f(L.sp,2)} ${L.pvU}</td><td>${t}.OP = ${f(L.mv,1)} ${L.mvU}<br><span class="hint">${L.mvN}</span></td><td><span class="tagp ${L.mode==='auto'?'ok':'warn'}">${L.mode==='auto'?'AUTO':'MAN'}</span></td></tr>`;}).join('');
+  const ins=INSTR.map((I,j)=>{const m=typeof REC!=='undefined'&&REC&&REC.ms&&REC.ms[j];return `<tr><td><b>${I.tag}</b></td><td>${I.nome}</td><td>${I.tag}.PV = <b>${m?f(m.y,0):'–'}</b> t/h</td><td>etapa ${EQ[I.eq]?EQ[I.eq].num:''}</td></tr>`;}).join('');
+  const al=[...ALMS.values()].map(a=>{const m=almMeta(a);return `<tr><td><b>${m.tag}</b></td><td>${a.sev==='crit'?'P1':'P2'}</td><td>${a.msg}</td><td>${a.ack?'reconhecido':'<b>não reconhecido</b>'}</td></tr>`;}).join('');
+  return `<h4>Malhas de controle (${Object.keys(LOOPS).length})</h4><table class="alt"><thead><tr><th>Tag</th><th>Descrição</th><th>PV</th><th>SP</th><th>OP</th><th>Modo</th></tr></thead><tbody>${loops}</tbody></table>
+  <h4 style="margin-top:12px">Instrumentos de vazão e peso (${INSTR.length})</h4><table class="alt"><thead><tr><th>Tag</th><th>Descrição</th><th>Valor</th><th>Área</th></tr></thead><tbody>${ins}</tbody></table>
+  <h4 style="margin-top:12px">Alarmes ativos (${ALMS.size})</h4>${ALMS.size?`<table class="alt"><thead><tr><th>Tag</th><th>Prio.</th><th>Mensagem</th><th>Estado</th></tr></thead><tbody>${al}</tbody></table>`:'<p class="hint">Sem alarmes ativos.</p>'}
+  <p class="hint" style="margin-top:8px">Tags didáticas: num projeto real viriam da lista de instrumentos (I/O list) da planta e seriam lidas por OPC UA.</p>`;}
 function engVal(){const C=CUR,G=C.G||{},F=G.F||C.mine||1,fe=P.fe/100;
   const prodMt=C.total*8760*.92/1e6;// disponibilidade anual 92 % [adotado]
   const desM=(F-(G.slime||0))/F*100,desMet=(1-(G.slime||0)*(G.feSlime||0)/100/(F*fe))*100,flotM=(G.C||0)/Math.max(1,F-(G.slime||0))*100;
@@ -5050,7 +5115,7 @@ function engVal(){const C=CUR,G=C.G||{},F=G.F||C.mine||1,fe=P.fe/100;
    <h4 style="margin-top:14px">Origem dos parâmetros por etapa</h4>
    <div style="overflow-x:auto"><table class="eqt"><tr><th>Etapa</th><th>Modelo</th><th>Origem</th><th>Observação</th></tr>${stages.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${ORG(r[2])}</td><td class="hint" style="font-size:11px">${r[3]}</td></tr>`).join('')}</table></div>
    <p class="hint">real = dado publicado da operação/projeto · ref. = referência ajustável (literatura, catálogo ou fonte pública) · adotado = hipótese do modelo didático. Para validar de fato, importe dados medidos na aba <b>Dados reais</b>.</p>`;}
-function renderEng(){const b=$('#engBody');const DT={clima:engClima,geo:engGeo,prev:engPrev,rec:engRec,vs:engVs,adv:engAdv,dados:engDados,ctl:engCtl,din:engDin,val:engVal};b.innerHTML=DT[engTab]?DT[engTab]():engTab==='cal'?engCal():engTab==='curves'?engCurves():engDoc();
+function renderEng(){const b=$('#engBody');const DT={clima:engClima,geo:engGeo,prev:engPrev,rec:engRec,vs:engVs,adv:engAdv,dados:engDados,ctl:engCtl,din:engDin,val:engVal,tags:engTags};b.innerHTML=DT[engTab]?DT[engTab]():engTab==='cal'?engCal():engTab==='curves'?engCurves():engDoc();
   if(engTab==='ctl'){bindCtl();ctlUpdate();return;}
   if(engTab==='clima'){bindClima();engLive();return;}
   if(engTab==='din')[['dyThC','thC'],['dyTauC','tauC'],['dyThP','thP'],['dyTauP','tauP']].forEach(([id,k])=>{const e=$('#'+id);if(e)e.addEventListener('change',()=>{const v=Math.max(k.startsWith('tau')?1:0,+e.target.value||0);DYN[k]=v*60;logEvent('Dinâmica',`${k}: ${v} min`);});});
@@ -5561,7 +5626,7 @@ function batchReconcile(txt){const L=txt.replace(/\r/g,'').split('\n').filter(l=
     out.push([c[H.indexOf('data')]||r,R.chi0.toFixed(1)].concat(R.xh.map(v=>v.toFixed(0))).concat([R.sus.map(j=>INSTR[j].tag).join(' ')]).join(';'));}
   return{n,bad,st,csv:out.join('\n')};}
 // ---- Painel: abas, atualização ao vivo
-const LIVE_TABS={clima:[liveClima,drawClima],din:[liveDin,drawDin],geo:[liveGeo,null],prev:[livePrev,drawPrev],rec:[liveRec,null],vs:[liveVs,drawVs],adv:[liveAdv,drawAdv]};
+const LIVE_TABS={tags:[liveTags,null],clima:[liveClima,drawClima],din:[liveDin,drawDin],geo:[liveGeo,null],prev:[livePrev,drawPrev],rec:[liveRec,null],vs:[liveVs,drawVs],adv:[liveAdv,drawAdv]};
 function engLive(){const L=LIVE_TABS[engTab];const el=$('#engLive');if(!L||!el||$('#eng').hidden)return;const sc=$('#engBody').scrollTop;el.innerHTML=L[0]();if(L[1])requestAnimationFrame(L[1]);$('#engBody').scrollTop=sc;
   el.querySelectorAll('[data-fix]').forEach(b=>b.addEventListener('click',()=>{const f=FC.viol[+b.dataset.fix].fix;P.amine=f.amine;P.mill=f.mill;inputs.amine.sync();inputs.mill.sync();logEvent('Previsão',`Ajuste preventivo: amina ${f.amine} g/t, moagem ${f.mill} %`);b.textContent='Aplicado ✓';b.disabled=true;FC=forecast();}));}
 function bindDt(){const b=$('#engBody');
