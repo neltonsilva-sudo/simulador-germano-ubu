@@ -1,12 +1,12 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 8 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261008185522';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261010011650';
 
 const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };            // t de material por troca de revestimento/deck (ilustrativo)
-const CAP = { pn: 1500, cone: 1100, vsi: 900 };                // t/h nominal por equipamento (ilustrativo)
+const CAP = { pn: 1500, cone: 800, vsi: 750 };                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
 export const sim = {
-  feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .8, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
+  feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},                                                      // tag → {k, on, w (desgaste %), ...valores}
   kpi: {},
 };
@@ -17,28 +17,32 @@ CRUSHERS.cones.forEach((c) => { sim.eq[c.tag] = { k: 'cone', on: true, w: saved[
 CRUSHERS.vsi.forEach((c) => { sim.eq[c.tag] = { k: 'vsi', on: true, w: saved[c.tag] ?? W0[c.tag] ?? 40 }; });
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-// ---------- circuito fechado com balanço de massa e granulometria coerentes (Rosin–Rammler, % passante acumulado)
-// ROM (itabirito friável): fração < 12,5 mm = f12 · decks: 1º 32 mm, 2º 12,5 mm · e1/e2 = eficiência de recuperação dos finos
-// retido 1º deck → HP 400 (P80 ≈ 1,45·APF) · retido 2º deck → Barmac (≈ 2,1:1) · britados voltam às peneiras
+// ---------- circuito fechado com balanço de massa e granulometria coerentes (Rosin–Rammler truncada, % passante acumulado)
+// Fontes: [real] dissertação Figueiredo (UFMG, 2019) — Britagem 01 de Germano: ROM < 150 mm, decks de 30 mm e 12,5 mm,
+// produto < 12,5 mm; [TCC] Usina II: 8 peneiras banana, HP 400 + Barmac; [adotado] finos do ROM, inclinações das curvas,
+// P80 do HP ≈ 1,45·APF, razão do Barmac ≈ 2,1:1, eficiências das peneiras.
+export const SRC = { top: 150, d1: 30, d2: 12.5 };
 const rrSim = (p80, n) => ({ p80, n, x63: p80 / Math.pow(Math.log(5), 1 / n) });
-const pasSim = (c, x) => 1 - Math.exp(-Math.pow(Math.max(1e-6, x) / c.x63, c.n));
+const pasSim = (c, x) => { const f = (y) => 1 - Math.exp(-Math.pow(Math.max(1e-6, y) / c.x63, c.n)); return c.top ? (x >= c.top ? 1 : f(x) / f(c.top)) : f(x); };
 const bisSim = (f, t, lo, hi) => { for (let i = 0; i < 46; i++) { const m = Math.sqrt(lo * hi); if (f(m) < t) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
+// ROM truncado em 150 mm com a fração < 12,5 mm = f12 (resolve x63 por bissecção)
+function romCurve(f12) { const n = .8, c = { n, top: SRC.top, x63: 30 }; let lo = 1, hi = 2000; for (let i = 0; i < 50; i++) { c.x63 = Math.sqrt(lo * hi); if (pasSim(c, SRC.d2) > f12) lo = c.x63; else hi = c.x63; } c.p80 = bisSim((x) => pasSim(c, x), .8, .5, SRC.top); return c; }
 export function circSolve(css, f12, e2, e1) {
-  const nR = .8, rom = { n: nR, x63: 12.5 / Math.pow(-Math.log(1 - clamp(f12, .3, .97)), 1 / nR) }; rom.p80 = rom.x63 * Math.pow(Math.log(5), 1 / nR);
-  const hp = rrSim(1.45 * css, 1.3); let vsi = rrSim(13, 1.1), r1 = .06, r2 = .18, prod = .76, F80v = 27;
+  const D1 = SRC.d1, D2 = SRC.d2, rom = romCurve(clamp(f12, .25, .9));
+  const hp = rrSim(1.45 * css, 1.3); let vsi = rrSim(10, 1.1), r1 = .2, r2 = .2, prod = .6, F80v = 20;
   let mix = (x) => prod * pasSim(rom, x) + r1 * pasSim(hp, x) + r2 * pasSim(vsi, x);
-  for (let it = 0; it < 60; it++) {
+  for (let it = 0; it < 80; it++) {
     mix = (x) => prod * pasSim(rom, x) + r1 * pasSim(hp, x) + r2 * pasSim(vsi, x);
-    const p32 = mix(32), p12 = mix(12.5), r1n = 1 - e1 * p32, pn = e2 * e1 * p12, r2n = Math.max(0, 1 - r1n - pn);
+    const pA = mix(D1), pB = mix(D2), r1n = 1 - e1 * pA, pn = e2 * e1 * pB, r2n = Math.max(0, 1 - r1n - pn);
     r1 += .5 * (r1n - r1); r2 += .5 * (r2n - r2); prod = 1 - r1 - r2;
-    // F80 da alimentação do Barmac = retido no 2º deck (12,5–32 mm + finos mal classificados)
-    const R2 = (x) => (x <= 12.5 ? e1 * (1 - e2) * mix(x) : x <= 32 ? e1 * ((1 - e2) * p12 + mix(x) - p12) : e1 * ((1 - e2) * p12 + p32 - p12)) / Math.max(1e-6, e1 * ((1 - e2) * p12 + p32 - p12));
-    F80v = bisSim(R2, .8, .5, 32); vsi = rrSim(F80v / 2.1, 1.1);
+    // F80 da alimentação do Barmac = retido no 2º deck (faixa −30 +12,5 mm + finos mal classificados)
+    const R2 = (x) => (x <= D2 ? e1 * (1 - e2) * mix(x) : x <= D1 ? e1 * ((1 - e2) * pB + mix(x) - pB) : e1 * ((1 - e2) * pB + pA - pB)) / Math.max(1e-6, e1 * ((1 - e2) * pB + pA - pB));
+    F80v = bisSim(R2, .8, .5, D1); vsi = rrSim(F80v / 2.1, 1.1);
   }
-  const p32 = mix(32), p12 = mix(12.5);
-  const R1 = (x) => (x <= 32 ? (1 - e1) * mix(x) : (1 - e1) * p32 + mix(x) - p32) / Math.max(1e-6, 1 - e1 * p32);
-  return { rom, hp, vsi, mix, r1, r2, prod, p12, p32, F80hp: bisSim(R1, .8, 1, 2000), F80v, P80hp: hp.p80, P80v: vsi.p80,
-    feedP80: bisSim(mix, .8, .1, 2000), prodP80: bisSim((x) => mix(x) / p12, .8, .05, 12.5) };
+  const pA = mix(D1), pB = mix(D2);
+  const R1 = (x) => (x <= D1 ? (1 - e1) * mix(x) : (1 - e1) * pA + mix(x) - pA) / Math.max(1e-6, 1 - e1 * pA);
+  return { rom, hp, vsi, mix, r1, r2, prod, p12: pB, p32: pA, F80hp: bisSim(R1, .8, 1, 2000), F80v, P80hp: hp.p80, P80v: vsi.p80,
+    feedP80: bisSim(mix, .8, .1, 2000), prodP80: bisSim((x) => mix(x) / pB, .8, .05, D2) };
 }
 let REF = null;   // referência (APF 20 mm, ROM padrão, peneiras 92 %) para o F80 da moagem no simulador
 export function logEv(tipo, txt) { const d = new Date(); sim.log.unshift({ h: d.toLocaleTimeString('pt-BR'), tipo, txt }); if (sim.log.length > 120) sim.log.pop(); }
@@ -91,7 +95,7 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   if (um.st !== 'ok' && F > 0) alarms.unshift({ tag: 'Umidade do ROM', st: um.st, why: um.st === 'crit' ? `${um.m.toFixed(1).replace('.', ',')} %: colmatação nas peneiras, eficiência e capacidade em queda` : `${um.m.toFixed(1).replace('.', ',')} %${mRise > .15 ? ' e subindo' : ''}: risco amarelo de colmatação nas peneiras` });
   // CURVAS GRANULOMÉTRICAS e EFICIÊNCIAS (mesmo circuito do balanço de massa)
   const effs = Object.values(E).filter((e) => e.k === 'pn' && e.on && e.flow > 0).map((e) => e.eff), effM = effs.length ? effs.reduce((a, b) => a + b, 0) / effs.length : 92; sim._effM = effM;
-  if (!REF) REF = circSolve(20, .8, .92, .96);
+  if (!REF) REF = circSolve(20, .55, .92, .96);
   const ST = { rom: CS.rom, hp: CS.hp, vsi: CS.vsi, r1: { p80: CS.F80hp }, r2: { p80: CS.F80v }, prod: { p80: CS.prodP80 } };
   const gran = { st: ST, feedP80: CS.feedP80, effM, pas: pasSim, mix: CS.mix, p12: CS.p12, p80prod: CS.prodP80, f80moagem: CS.prodP80, ratio: CS.prodP80 / REF.prodP80 };
   const grp = (k) => Object.values(E).filter((e) => e.k === k && e.on && e.flow > 0), sum = (a, f) => a.reduce((s2, e) => s2 + f(e), 0);

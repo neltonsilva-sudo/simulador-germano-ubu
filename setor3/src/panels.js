@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261008185522';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010011650';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -25,6 +25,8 @@ const CSS = `
 .s3acc .card small{color:var(--muted);display:block;margin-top:2px}
 .s3k{display:grid;grid-template-columns:1fr 1fr;gap:6px}.s3k div{background:var(--card);border:1px solid var(--cline);border-left:3px solid var(--ok);border-radius:6px;padding:6px 8px}
 .s3k div.warn{border-left-color:var(--warn)}.s3k div.crit{border-left-color:var(--crit)}.s3k b{display:block;font:500 18px var(--mono);color:#fff}.s3k span{color:var(--muted);font-size:11px}
+.s3acc .org{display:inline-block;font:600 9.5px var(--mono);padding:0 5px;border-radius:3px;margin-left:4px;vertical-align:1px;border:1px solid currentColor}.s3acc .org.real{color:#2fbf71}.s3acc .org.ref{color:#5cc6dc}.s3acc .org.adot{color:#ffb020}.s3acc .org.calc{color:#9fb0bd}
+.s3acc details.src{margin-top:6px}.s3acc details.src summary{cursor:pointer;color:#ffd24a;font-size:12px}.s3acc details.src td{font-size:11px;vertical-align:top}
 .s3acc canvas{width:100%;height:110px;display:block;margin:4px 0 8px;background:rgba(4,20,44,.7);border:1px solid var(--cline);border-radius:6px}
 .s3acc .ctl{margin:8px 0}.s3acc .ctl .r{display:flex;justify-content:space-between;color:#ffd24a;font-weight:600;font-size:12.5px}.s3acc .ctl .r b{color:#ffd24a;font:600 12px var(--mono)}
 .s3acc .ctl small{color:var(--muted);display:block;font-size:11px}.s3acc input[type=range]{width:100%;accent-color:#5cc6dc}
@@ -74,7 +76,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     <div class="ctl"><div class="r"><span>Abertura dos HP 400 (APF)</span><b id="cCv"></b></div><input type="range" id="cC" min="12" max="30" step="1"><small>Menor abertura = produto mais fino e mais carga circulante; mais potência nos cônicos.</small></div>
     <div class="ctl"><div class="r"><span>Velocidade da TCLD</span><b id="cTv"></b></div><input type="range" id="cT" min="40" max="110" step="1"><small>Capacidade nominal 6.000 t/h a 100 %.</small></div>
     <div class="ctl"><div class="r"><span>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai. Alerta amarelo a partir de 8,5 % (ou quando sobe rápido) e vermelho a partir de 9,5 %.</small></div>
-    <div class="ctl"><div class="r"><span>Finos do ROM (&lt; 12,5 mm)</span><b id="cRv"></b></div><input type="range" id="cR" min="60" max="92" step="1"><small>Itabirito friável: quanto mais fino o ROM, menor a carga circulante e a energia de britagem.</small></div>
+    <div class="ctl"><div class="r"><span>Finos do ROM (&lt; 12,5 mm)</span><b id="cRv"></b></div><input type="range" id="cR" min="30" max="85" step="1"><small>[adotado] Fração do ROM (&lt; 150 mm) que já chega abaixo de 12,5 mm. Itabirito friável: quanto mais fino, menor a carga circulante e a energia de britagem.</small></div>
     <div class="ctl"><div class="r"><span>Wi do minério (Bond)</span><b id="cWv"></b></div><input type="range" id="cW" min="6" max="20" step=".5"><small>Índice de trabalho de laboratório; referência para a eficiência energética dos britadores (Wi ÷ Wio).</small></div>
     <button class="go" id="cRun"></button>`;
   const cF = $('#cF'), cC = $('#cC'), cT = $('#cT'), cM = $('#cM'), cR = $('#cR'), cW = $('#cW');
@@ -102,7 +104,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   }
   $('#pB_tend').innerHTML = '<canvas id="g1"></canvas><canvas id="g2"></canvas><canvas id="g3"></canvas>';
   // ---- curva granulométrica: % passante acumulado × tamanho (escala log), por etapa
-  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px"></canvas><div id="gT"></div><p class="hint">Curvas Rosin–Rammler fechadas com o balanço de massa do circuito. A APF muda o britado do HP 400 e a carga circulante; o produto é definido pela tela de 12,5 mm e pelos finos do ROM — o P80 do produto é o F80 de alimentação da moagem. Ajuste os finos do ROM e a APF em <b>Controles e ajustes</b>.</p>';
+  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px"></canvas><div id="gT"></div><p class="hint">Curvas Rosin–Rammler (ROM truncado em 150 mm) fechadas com o balanço de massa do circuito; selos indicam a origem de cada número. A APF muda o britado do HP 400 e a carga circulante; o produto é definido pela tela de 12,5 mm e pelos finos do ROM — o P80 do produto é o F80 de alimentação da moagem. Ajuste os finos do ROM e a APF em <b>Controles e ajustes</b>.</p>';
   const GC = [['rom', 'ROM (TCLD)', '#9aa7b3'], ['mix', 'Alimentação das peneiras', '#5cc6dc'], ['hp', 'Britado HP 400', '#ff9a4a'], ['vsi', 'Britado Barmac', '#c58cff'], ['prod', 'Produto → moagem', '#2fbf71']];
   function granChart(cv) {
     const G = sim.kpi.gran; if (!G) return; const r = cv.getBoundingClientRect(); if (!r.width) return; const dpr = Math.min(2, devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr;
@@ -119,10 +121,23 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     for (const [k, , c] of GC) { const f = k === 'mix' ? G.mix : k === 'prod' ? (v) => Math.min(1, G.mix(Math.min(v, 12.5)) / G.p12) : (v) => G.pas(G.st[k], v); x.strokeStyle = c; x.lineWidth = (k === 'prod' ? 2.4 : 1.6) * dpr; x.beginPath();
       for (let i = 0; i <= 80; i++) { const v = Math.pow(10, X0 + (X1 - X0) * i / 80), X = sx(v), Y = sy(f(v)); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); }
   }
+  // selo de origem de cada número: real (fonte publicada), ref. (referência ajustável) ou adotado (hipótese do modelo)
+  const tagO = (k) => `<span class="org ${k}">${{ real: 'real', ref: 'ref.', adot: 'adotado', calc: 'calculado' }[k]}</span>`;
   function granTable() {
     const G = sim.kpi.gran; if (!G) return ''; const f1 = (v) => fm(v, 1);
-    return `<table><tr><th>Etapa</th><th class="n">P80 (mm)</th></tr><tr><td>ROM (TCLD) · F80 do setor</td><td class="n">${f1(G.st.rom.p80)}</td></tr><tr><td>Alimentação das peneiras (nova + retorno)</td><td class="n">${f1(G.feedP80)}</td></tr><tr><td>Retido 1º deck → HP 400</td><td class="n">${f1(G.st.r1.p80)}</td></tr><tr><td>Retido 2º deck → Barmac</td><td class="n">${f1(G.st.r2.p80)}</td></tr><tr><td>Britado HP 400 (APF ${sim.css} mm)</td><td class="n">${f1(G.st.hp.p80)}</td></tr><tr><td>Britado Barmac</td><td class="n">${f1(G.st.vsi.p80)}</td></tr><tr><td><b>Produto &lt; 12,5 mm = F80 da moagem</b></td><td class="n"><b>${f1(G.p80prod)}</b></td></tr></table><p class="hint">Eficiência média das peneiras: ${fm(G.effM)} %. Referência (APF 20 mm, eficiência 92 %): ${f1(G.p80prod / G.ratio)} mm → agora ${G.ratio >= 1 ? '+' : ''}${fm((G.ratio - 1) * 100)} %.</p>`;
+    const row = (a, v, o, b) => `<tr><td>${b ? '<b>' + a + '</b>' : a} ${tagO(o)}</td><td class="n">${b ? '<b>' + v + '</b>' : v}</td></tr>`;
+    return `<table><tr><th>Etapa</th><th class="n">P80 (mm)</th></tr>${row('ROM (TCLD), tamanho máx. 150 mm', f1(G.st.rom.p80), 'adot')}${row('Alimentação das peneiras (nova + retorno)', f1(G.feedP80), 'calc')}${row('Retido 1º deck (&gt; 30 mm) → HP 400', f1(G.st.r1.p80), 'calc')}${row('Retido 2º deck (−30 +12,5 mm) → Barmac', f1(G.st.r2.p80), 'calc')}${row(`Britado HP 400 (APF ${sim.css} mm)`, f1(G.st.hp.p80), 'adot')}${row('Britado Barmac', f1(G.st.vsi.p80), 'adot')}${row('Produto &lt; 12,5 mm = F80 da moagem', f1(G.p80prod), 'calc', 1)}</table>
+    <p class="hint">Eficiência média das peneiras: ${fm(G.effM)} %. Referência (APF 20 mm, eficiência 92 %): ${f1(G.p80prod / G.ratio)} mm → agora ${G.ratio >= 1 ? '+' : ''}${fm((G.ratio - 1) * 100)} %.</p>
+    <details class="src"><summary>Origem dos parâmetros</summary><table>
+      <tr><td>ROM &lt; 150 mm; telas de 30 mm (1º deck) e 12,5 mm (2º deck); produto &lt; 12,5 mm</td><td>${tagO('real')}</td><td>Dissertação Figueiredo (UFMG, 2019), Britagem 01 de Germano</td></tr>
+      <tr><td>8 peneiras banana 2 decks; HP 400 (1ª) e Barmac (2ª), circuito fechado</td><td>${tagO('real')}</td><td>TCC Rodrigues &amp; Silva (2016), Usina II</td></tr>
+      <tr><td>Capacidade por britador (HP 400 800 t/h, Barmac 750 t/h)</td><td>${tagO('ref')}</td><td>Faixa de catálogo; Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h</td></tr>
+      <tr><td>Finos do ROM &lt; 12,5 mm (${fm(sim.f12 * 100)} %), inclinações das curvas</td><td>${tagO('adot')}</td><td>Hipótese do modelo — calibrar com análise granulométrica</td></tr>
+      <tr><td>P80 do HP 400 ≈ 1,45 × APF; Barmac ≈ 2,1:1</td><td>${tagO('adot')}</td><td>Regras práticas de britagem</td></tr>
+      <tr><td>Eficiência das peneiras (92 % / 96 %), Wi ${fm(sim.wi, 1)} kWh/t</td><td>${tagO('adot')}</td><td>Faixas usuais; editáveis em Controles</td></tr>
+    </table></details>`;
   }
+
 
   // ---- renderização periódica
   function render(force) {
