@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010012139';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010082647';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -67,7 +67,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   // ---- sincronização com o simulador
   let bc = null, lastSync = 0;
   try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; lastSync = performance.now(); sim.sync = true;
-    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; }; } catch (e) { bc = null; }
+    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; sim.extAl = Array.isArray(d.alarms) ? d.alarms : []; }; } catch (e) { bc = null; }
   const send = (set) => { if (bc && sim.sync) bc.postMessage({ type: 'set', set }); };
 
   // ---- controles (montados uma vez)
@@ -146,7 +146,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     const sync = sim.sync && performance.now() - lastSync < 6000; if (!sync) sim.sync = false;
     $('#pSync').textContent = sync ? 'sincronizado com o simulador' : 'sem simulador'; $('#pSync').className = 'sync' + (sync ? ' on' : '');
     const pns = Object.values(E).filter((e) => e.k === 'pn' && e.on && e.flow > 0), effM = pns.length ? pns.reduce((a, e) => a + e.eff, 0) / pns.length : 0;
-    $('#pS_ind').textContent = `${fm(K.F)} → ${fm(K.prod)} t/h`; $('#pS_al').textContent = K.alarms.length ? `${K.alarms.length} alarme(s)` : 'normal';
+    $('#pS_ind').textContent = `${fm(K.F)} → ${fm(K.prod)} t/h`; { const nA = K.alarms.length + (((sim.sync && sim.extAl) || []).length); $('#pS_al').textContent = nA ? `${nA} alarme(s)` : 'normal'; }
     $('#pS_eq').textContent = `${K.nPN}/8 PN · ${K.nC}/2 HP · ${K.nV}/3 Barmac`; $('#pS_ctl').textContent = sim.running ? 'operando' : 'parado';
     const nm = (t, e) => (e.k === 'pn' ? 'Peneira ' : e.k === 'cone' ? 'HP 400 ' : 'Barmac ') + t;
     const val = (e) => (!(e.on && e.flow > 0) ? (e.on ? 'sem carga' : 'desligado') : e.k === 'pn' ? `efic. ${fm(e.eff)} % · ${fm(e.load * 100)} % carga · desg. ${fm(e.w)} %` : `${fm(e.kw)} kW · ${fm(e.vib, 1)} mm/s · desg. ${fm(e.w)} %`) + (e.health != null ? ` · saúde ${e.health}` : '');
@@ -158,13 +158,16 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
         : /vibração/.test(why) ? 'Vibração alta: inspecione mancais, molas e fixações; confira a carga e o desgaste.' : /sobrecarga/.test(why) ? 'Sobrecarga: ligue outro equipamento do grupo ou reduza a alimentação.' : /desgaste/.test(why) ? 'Programe a troca do deck/revestimento na próxima parada.' : 'Fora da faixa operacional.';
       probs.push(`<div class="card ${e.st === 'off' ? 'crit' : e.st}"><b>${nm(t, e)}</b> · ${val(e)}<small>${why ? why + ' · ' : ''}${dica}</small></div>`);
     }
+    // alarmes de processo do próprio modelo (umidade, circuito) e alarmes da área 3 vindos do simulador
+    for (const a of K.alarms) if (!E[a.tag] && a.tag !== 'Circuito') probs.push(`<div class="card ${a.st}"><b>${esc(a.tag)}</b><small>${esc(a.why)}</small></div>`);
+    for (const a of ((sim.sync && sim.extAl) || [])) probs.unshift(`<div class="card ${a.sev === 'crit' ? 'crit' : 'warn'}"><b>Alerta do simulador</b><small>${esc(a.msg)}</small></div>`);
     if (K.limited) probs.unshift(`<div class="card crit"><b>Circuito</b> · alimentação limitada<small>Britagem insuficiente para o retido: ligue os britadores parados ou reduza a alimentação.</small></div>`);
     $('#pS_pi').textContent = `${Object.values(E).filter((e) => e.st !== 'ok').length} fora da faixa`; $('#pS_prob').textContent = probs.length ? `${probs.length}` : 'nenhum';
     if (on('pi') || force) {
       $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
         `<div class="hs ${K.circ > 110 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
       el.querySelectorAll('#pB_pi [data-i]').forEach((d) => d.onclick = () => openInfo(d.dataset.i)); }
-    if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || '<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>';
+    if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || ('<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>' + (sim.sync ? '' : '<p class="hint">Sem ligação com o simulador: os alertas da área 3 do simulador só aparecem aqui quando o gêmeo é aberto pelo número 3 do simulador no site (GitHub), na mesma janela/navegador.</p>'));
     if (on('ind') || force) $('#pB_ind').innerHTML = `<div class="s3k">
       <div><b>${fm(K.F)}</b><span>Lavra · ROM da TCLD (t/h)</span></div><div><b>${fm(K.T)}</b><span>Alimentação das peneiras (t/h)</span></div>
       <div class="${K.prod < K.F * .95 ? 'warn' : ''}"><b>${fm(K.prod)}</b><span>Produto &lt; 12,5 mm (t/h)</span></div><div class="${K.circ > 110 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div>
@@ -208,7 +211,8 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       $('#pB_eq').innerHTML = `<table><tr><th>Tag</th><th>Estado</th><th class="n">Carga</th><th class="n">Vibr.</th><th class="n">Desg.</th><th class="n">Saúde</th><th></th></tr>${Object.entries(E).map(([tag, e]) => `<tr><td><a data-i="${tag}">${tag}</a></td><td><span class="st ${e.st}"></span>${stTxt[e.st]}</td><td class="n">${e.on ? fm(e.load * 100) + ' %' : '–'}</td><td class="n">${e.on && e.flow > 0 ? fm(e.vib, 1) : '–'}</td><td class="n">${fm(e.w)} %</td><td class="n" style="color:${e.health == null ? '#9fb0bd' : e.health < 50 ? '#ff6b5b' : e.health < 75 ? '#ffb020' : '#2fbf71'}">${e.health == null ? '–' : e.health}</td><td><button data-t="${tag}">${e.on ? 'Desligar' : 'Ligar'}</button></td></tr>`).join('')}</table>`;
       el.querySelectorAll('#pB_eq [data-t]').forEach((b) => b.onclick = () => { const e = E[b.dataset.t]; e.on = !e.on; logEv('Comando', `${b.dataset.t} ${e.on ? 'ligado' : 'desligado'}`); render(true); });
       el.querySelectorAll('#pB_eq [data-i]').forEach((a) => a.onclick = () => openInfo(a.dataset.i)); }
-    if (on('al') || force) $('#pB_al').innerHTML = (K.alarms.length ? K.alarms.map((a) => `<div class="al ${a.st}"><b>${a.tag}</b> · ${a.why}</div>`).join('') : '<div style="color:#2fbf71">Sem alarmes ativos.</div>') +
+    const XA = (sim.sync && sim.extAl) || [], xaHTML = XA.map((a) => `<div class="al ${a.sev === 'crit' ? 'crit' : 'warn'}"><b>Simulador</b> · ${esc(a.msg)}</div>`).join('');
+    if (on('al') || force) $('#pB_al').innerHTML = xaHTML + (K.alarms.length || XA.length ? (K.alarms.length ? K.alarms.map((a) => `<div class="al ${a.st}"><b>${a.tag}</b> · ${a.why}</div>`).join('') : '') : '<div style="color:#2fbf71">Sem alarmes ativos.</div>') +
       `<div style="margin-top:8px;color:#9fb0bd;font-weight:600">Eventos</div>${sim.log.slice(0, 30).map((v) => `<div class="ev">${v.h} · <b>${v.tipo}</b> · ${v.txt}</div>`).join('') || '<div class="ev">Nenhum evento ainda.</div>'}`;
   }
   // ---- QR Code da área (sessão atual; só a sala de controle gera e imprime)
