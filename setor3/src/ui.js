@@ -1,12 +1,12 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261010084418';
-import { buildEqScreen } from './eqscreen.js?v=20261010084418';
-import { buildTour } from './tour.js?v=20261010084418';
-import { logEv } from './sim.js?v=20261010084418';
-import { SIM_URL } from './api.js?v=20261010084418';
-import { buildRiskMap } from './riskmap.js?v=20261010084418';
+import { buildPanels } from './panels.js?v=20261010085602';
+import { buildEqScreen } from './eqscreen.js?v=20261010085602';
+import { buildTour } from './tour.js?v=20261010085602';
+import { logEv } from './sim.js?v=20261010085602';
+import { SIM_URL } from './api.js?v=20261010085602';
+import { buildRiskMap } from './riskmap.js?v=20261010085602';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -16,6 +16,7 @@ const CSS = `
 .s3card b{display:block;font-size:13.5px;white-space:nowrap}.s3card small{color:#4a5866;font-size:11px;white-space:nowrap}
 .s3bar{position:fixed;top:14px;left:14px;right:14px;z-index:5;display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding:6px;border-radius:14px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 6px 22px rgba(0,0,0,.18)}
 .s3bar>button{flex:none;white-space:nowrap}
+.s3toast{position:fixed;top:72px;right:14px;z-index:20;max-width:360px;padding:10px 14px;border-radius:10px;background:rgba(14,24,38,.95);color:#dce6ee;font:13px/1.4 system-ui;box-shadow:0 8px 24px rgba(0,0,0,.4);border-left:4px solid #5cc6dc}
 .s3vism{position:fixed;z-index:9;display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:12px;background:rgba(255,255,255,.95);box-shadow:0 8px 24px rgba(0,0,0,.25);-webkit-user-select:none;user-select:none}
 .s3vism button{border:0;border-radius:8px;padding:8px 12px;font:600 12.5px system-ui;background:#eef2f6;color:#1d2733;cursor:pointer;text-align:left;white-space:nowrap}.s3vism button:hover{background:#1f63b3;color:#fff}.s3bar .sp{flex:1 0 8px}
 .s3bar #s3risk{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:18px;color:#fff;font:700 12.5px system-ui;text-shadow:0 1px 2px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.55);
@@ -49,7 +50,7 @@ const CSS = `
 export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [], pick = [], pickRoot = null }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.getElementById('ui');
-  root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
+  root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3back" style="background:#1f63b3;color:#fff" title="Ir para o simulador sem fechar o gêmeo">◀ Simulador</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
    <div class="s3lv" id="s3lv" hidden><button data-lv="2">Piso dos alimentadores (+14 m)</button><button data-lv="1">Piso das peneiras (+7,5 m)</button><button data-lv="0">Térreo</button></div>
    <div class="s3help" id="s3help">Arraste para girar · role para aproximar · <b>Caminhar</b>: W A S D ou setas, Shift corre, arraste para olhar. Clique numa etiqueta para ver o equipamento.</div>
    <div class="s3joy" id="s3joy"><i></i></div><div class="s3info" id="s3info" hidden></div>
@@ -63,6 +64,11 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   visMenu.querySelectorAll('[data-cam]').forEach((b) => b.addEventListener('click', () => { setCam(b.dataset.cam); closeVis(); }));
   document.addEventListener('click', (e) => { if (!visMenu.hidden && !visMenu.contains(e.target)) closeVis(); });
   // Sair: avisa o simulador (outra aba) para voltar à visão geral e fecha esta aba; se o navegador não deixar fechar, abre o simulador
+  // Voltar ao simulador sem fechar o gêmeo: pede ao simulador (outra aba) que venha para a frente
+  root.querySelector('#s3back').addEventListener('click', () => {
+    try { const ch = new BroadcastChannel('setor3-sync'); ch.postMessage({ type: 'focus' }); ch.close(); } catch (e) { /* sem canal */ }
+    setTimeout(() => { if (document.hasFocus()) { const t = document.createElement('div'); t.className = 's3toast'; t.textContent = 'O simulador continua aberto na outra aba do navegador: clique nela para voltar (o gêmeo segue sincronizado).'; root.appendChild(t); setTimeout(() => t.remove(), 5000); } }, 600);
+  });
   root.querySelector('#s3exit').addEventListener('click', () => {
     try { const ch = new BroadcastChannel('setor3-sync'); ch.postMessage({ type: 'exit' }); ch.close(); } catch (e) { /* sem canal */ }
     setTimeout(() => { window.close(); setTimeout(() => { if (!window.closed) location.href = SIM_URL; }, 300); }, 80);

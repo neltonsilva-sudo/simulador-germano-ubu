@@ -1,12 +1,12 @@
 // Montagem completa do setor 3 num grupo (usada pelo gêmeo imersivo e pelo simulador, que a embute em escala reduzida).
 import * as THREE from 'three';
-import { buildMaterials } from './mats.js?v=20261010084418';
-import { buildBuilding } from './building.js?v=20261010084418';
-import { buildScreens } from './screens.js?v=20261010084418';
-import { buildCrushers } from './crushers.js?v=20261010084418';
-import { buildFlows } from './flows.js?v=20261010084418';
-import { mergeStatic } from './merge.js?v=20261010084418';
-import { sim, stepSim } from './sim.js?v=20261010084418';
+import { buildMaterials } from './mats.js?v=20261010085602';
+import { buildBuilding } from './building.js?v=20261010085602';
+import { buildScreens } from './screens.js?v=20261010085602';
+import { buildCrushers } from './crushers.js?v=20261010085602';
+import { buildFlows } from './flows.js?v=20261010085602';
+import { mergeStatic } from './merge.js?v=20261010085602';
+import { sim, stepSim } from './sim.js?v=20261010085602';
 
 export function buildSetor3(opt = {}) {
   const root = new THREE.Group(); root.name = 'setor3';

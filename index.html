@@ -5094,6 +5094,7 @@ function tw3Calc(){const V={};if(!S3)return TW3.v=V;const al=(S3.sim.kpi.alarms|
 /* sincronização com o gêmeo imersivo aberto em outra aba (mesma origem: site do GitHub) */
 let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{const d=m.data||{};
   /* botão Sair do gêmeo: volta o simulador para a visão geral */
+  if(d.type==='focus'){try{window.focus();}catch(e){}toast('Gêmeo do setor 3 continua aberto e sincronizado na outra aba.');return;}
   if(d.type==='exit'){try{if(AREA)exitArea();const fv=document.querySelector('#viewSeg [data-v=free]');if(fv&&fv.getAttribute('aria-pressed')!=='true')fv.click();flyTo(homeP(),homeT(),1.4);window.focus();}catch(e){}return;}
   if(d.type!=='set'||!d.set)return;s3ApplySet(d.set);};}catch(e){S3BC=null;}
 /* comando vindo do gêmeo (canal local ou servidor): APF, velocidade da TCLD, partir/parar */
