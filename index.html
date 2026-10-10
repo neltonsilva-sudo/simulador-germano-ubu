@@ -4376,7 +4376,7 @@ const HK={
   emis:['Emissão na chaminé','mg/Nm³',0,()=>CUR.U.emis],prod:['Pelotas produto','t/h',0,()=>CUR.U.prod],fines:['Finos de pelota','t/h',0,()=>CUR.U.fines],
   feP:['Fe na pelota','%',2,()=>CUR.U.feP],total:['Produção total','t/h',0,()=>CUR.total],yard:['Estoque no pátio','mil t',0,()=>ST.yard/1000],
   load:['Taxa de embarque','t/h',0,()=>CUR.load],ship:['Carga do navio','%',0,()=>ST.shipLoad/ST.shipCap*100],dust:['Emissão difusa','índice',0,()=>CUR.dust]};
-const LIM={pbar:[null,150],siP:[null,2.5],feC:[65.5,null],siC:[null,2.5],mr:[45,null],p80:[null,60],sfload:[null,98],tcldLoad:[null,98],circ:[null,50],tank6:[null,55],ovf:[null,150],
+const LIM={pbar:[null,150],siP:[null,2.5],feC:[65.5,null],siC:[null,2.5],mr:[45,null],p80:[null,60],sfload:[null,98],tcldLoad:[null,98],circ:[null,120],tank6:[null,55],ovf:[null,150],
   v:[1.05,2.0],basin:[null,70],tankH:[3,49.5],moist:[8.6,9.9],blaine:[1800,2200],g:[65,null],util:[null,99],cs:[250,null],temp:[1290,1360],emis:[null,50],
   feP:[64,null],yard:[null,1300],dust:[null,100],recMG:[80,null],rec:[85,null]};
 const DASH={
@@ -4836,8 +4836,8 @@ function renderAI(r){
   o.innerHTML=h||'<p class="aimsg">Sem conteúdo na resposta.</p>';
   o.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(typeof canEdit==='function'&&!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}
     if(UKEYS.includes(c.chave)){RUN[c.chave]=c.valor_sugerido?1:0;refreshEq(true);}
-    else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);inputs[c.chave].sync();}
-    b.textContent='Aplicado ✓';b.disabled=true;}));
+    else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);for(const L of Object.values(LOOPS))if(L.spKey===c.chave)L.sp=P[c.chave];if(typeof syncAll==='function')syncAll();else inputs[c.chave].sync();}
+    logEvent('Simulação',`Ajuste aplicado: ${c.titulo} → ${fmt(P[c.chave]??0,(CMETA[c.chave]||[])[7]||0)} ${(CMETA[c.chave]||[])[3]||''}`);b.textContent='Aplicado ✓';b.disabled=true;}));
   const pb=$('#aiPdf');if(pb)pb.addEventListener('click',()=>makePdf(r,pb));
   const sv=$('#aiSave');if(sv)sv.addEventListener('click',()=>{sv.disabled=true;$('#aiSaveMsg').innerHTML='<span class="spin"></span>Salvando…';
     google.script.run.withSuccessHandler(url=>{$('#aiSaveMsg').innerHTML=`Salvo. <a href="${esc(url)}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir planilha</a>`;sv.disabled=false;})
@@ -5162,7 +5162,7 @@ function runAreaAI(){const out=$('#arAiOut');if(!HAS_GAS){out.innerHTML='<p clas
   aiReq={modo:'area',escopo:`Área ${EQ[AREA].num} · ${EQ[AREA].name}`,pergunta:'',ctx};
   google.script.run.withSuccessHandler(r=>{btn.disabled=false;areaAI={};(r.achados||[]).forEach(a=>{const m=String(a.ponto||'').match(/P(\d+)/i);if(m){const i=+m[1]-1;if(HS[AREA][i])areaAI[i]=(areaAI[i]?areaAI[i]+' | ':'')+a.titulo;}});
       renderAI(r);out.innerHTML=$('#aiOut').innerHTML;$('#aiOut').innerHTML='';
-      out.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}if(UKEYS.includes(c.chave)){RUN[c.chave]=c.valor_sugerido?1:0;}else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);inputs[c.chave].sync();}
+      out.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{const c=r.recomendacoes[+b.dataset.i];if(!canEdit(c.chave)){b.textContent='Bloqueado: outra área';b.disabled=true;return;}if(UKEYS.includes(c.chave)){RUN[c.chave]=c.valor_sugerido?1:0;}else{const m=CMETA[c.chave];P[c.chave]=clamp(+c.valor_sugerido,m[4],m[5]);for(const L of Object.values(LOOPS))if(L.spKey===c.chave)L.sp=P[c.chave];if(typeof syncAll==='function')syncAll();else inputs[c.chave].sync();}
         logEvent('Simulação',`Ajuste aplicado: ${c.titulo}`);b.textContent='Aplicado ✓';b.disabled=true;renderArea();}));
       const pb=out.querySelector('#aiPdf');if(pb)pb.addEventListener('click',()=>makePdf(r,pb));const sv=out.querySelector('#aiSave');if(sv)sv.remove();
       renderArea();logEvent('Simulação',`Diagnóstico da área ${EQ[AREA].num} pela Simulação`);})
