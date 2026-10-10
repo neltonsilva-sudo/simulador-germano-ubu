@@ -5095,13 +5095,21 @@ function tw3Calc(){const V={};if(!S3)return TW3.v=V;const al=(S3.sim.kpi.alarms|
 let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{const d=m.data||{};
   /* botão Sair do gêmeo: volta o simulador para a visão geral */
   if(d.type==='exit'){try{if(AREA)exitArea();const fv=document.querySelector('#viewSeg [data-v=free]');if(fv&&fv.getAttribute('aria-pressed')!=='true')fv.click();flyTo(homeP(),homeT(),1.4);window.focus();}catch(e){}return;}
-  if(d.type!=='set'||!d.set)return;const q=d.set;
-  if(isFinite(q.css)){P.css=clamp(+q.css,10,40);inputs.css&&inputs.css.sync();}if(isFinite(q.tcldSpd)){P.tcldSpd=clamp(+q.tcldSpd,40,110);inputs.tcldSpd&&inputs.tcldSpd.sync();}
-  if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}};}catch(e){S3BC=null;}
+  if(d.type!=='set'||!d.set)return;s3ApplySet(d.set);};}catch(e){S3BC=null;}
+/* comando vindo do gêmeo (canal local ou servidor): APF, velocidade da TCLD, partir/parar */
+function s3ApplySet(q){if(!q)return;
+  if(isFinite(q.css)){P.css=clamp(+q.css,10,40);inputs.css&&inputs.css.sync();logEvent('Comando',`APF ajustada pelo gêmeo digital: ${fmt(P.css,0)} mm`);}if(isFinite(q.tcldSpd)){P.tcldSpd=clamp(+q.tcldSpd,40,110);inputs.tcldSpd&&inputs.tcldSpd.sync();}
+  if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}}
+/* integração pelo servidor (sites diferentes): publica o estado da área 3 e busca comandos do gêmeo, por até 3 h depois de abrir o gêmeo */
+let TW3_REMOTE=(()=>{try{return +localStorage.getItem('tw3Remote')||0;}catch(e){return 0;}})(),S3SRVt=0,S3SRVbusy=false;
+function s3State(){const s=S3.sim;return{type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))};}
+function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REMOTE>3*3600e3)return;const now=performance.now();if(now-S3SRVt<6000)return;S3SRVt=now;
+  const tok=(typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'';S3SRVbusy=true;const done=()=>{S3SRVbusy=false;};
+  google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
 function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
-  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage({type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))});}catch(e){}}S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();}
+  if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}S3.stepSim(dt,Math.max(1,speed||1));S3.update(dt,t,camera);tw3Calc();s3Server();}
 const tw3V=tag=>TW3.v[tag]||tw3Calc()[tag]||{on:false,st:'off'};
 function tw3Short(tag){const o=tw3V(tag);if(!o.on)return 'parado';return (o.k==='pn'?`efic. ${fmt(o.eff,0)} % · ${fmt(o.load*100,0)} % carga · desg. ${fmt(o.w,0)} %`:`${fmt(o.kw,0)} kW · ${fmt(o.vib,1)} mm/s · desg. ${fmt(o.w,0)} %`)+(o.health!=null?` · saúde ${o.health}`:'');}
 function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s||'ok';}
@@ -5109,7 +5117,7 @@ function tw3Alarms(add){if(!RUN.crush||!S3)return;for(const a of (S3.sim.kpi.ala
 const tw3Hrs=h=>!isFinite(h)?'–':h>48?`≈ ${fmt(h/24,0)} dias`:`≈ ${fmt(h,0)} h`;
 /* abre o gêmeo digital imersivo do setor 3 (nova aba), levando a sessão para o acesso */
 function twin3URL(){return 'https:'+'/'+'/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/?v='+Date.now().toString(36)+'&t='+encodeURIComponent((typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'');}
-function openTwin3(){const w=window.open(twin3URL(),'_blank');if(w)try{w.opener=null;}catch(e){}if(!w)toast('Permita pop-ups para abrir o gêmeo digital do setor 3 (ou use o botão no painel da área).');else logEvent('Navegação','Gêmeo digital imersivo do setor 3 aberto');}
+function openTwin3(){TW3_REMOTE=Date.now();try{localStorage.setItem('tw3Remote',String(TW3_REMOTE));}catch(e){}const w=window.open(twin3URL(),'_blank');if(w)try{w.opener=null;}catch(e){}if(!w)toast('Permita pop-ups para abrir o gêmeo digital do setor 3 (ou use o botão no painel da área).');else logEvent('Navegação','Gêmeo digital imersivo do setor 3 aberto');}
 function tw3Panel(){const el=$('#tw3');if(!el)return;const V=tw3Calc(),can=!OPER.area||OPER.area==='crush',tag=s=>`<span class="tagp ${s==='crit'?'crit':s==='warn'?'warn':s==='off'?'':'ok'}">${s==='crit'?'crítico':s==='warn'?'alerta':s==='off'?'parado':'normal'}</span>`;
   const imURL=twin3URL();
   el.innerHTML=`<a href="${imURL}" target="_blank" rel="noopener" class="studyb" style="display:inline-block;text-decoration:none;margin:0 0 8px">Abrir gêmeo digital imersivo do setor 3 (3D em escala real)</a><h4>Gêmeo digital · equipamentos do setor 3</h4><p class="hint" style="margin-top:0">Modelado a partir de fotos de campo. Valores calculados pelo simulador a partir da alimentação, carga circulante, APF e clima (ilustrativos). Sinaleiros no 3D: azul normal, âmbar alerta, vermelho piscando crítico. Vibração pela ISO 10816-3: 7,1 mm/s alerta, 11 mm/s crítico.</p>

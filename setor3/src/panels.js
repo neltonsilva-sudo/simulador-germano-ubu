@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010082647';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010082851';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -66,9 +66,15 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
 
   // ---- sincronização com o simulador
   let bc = null, lastSync = 0;
-  try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; lastSync = performance.now(); sim.sync = true;
-    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; sim.extAl = Array.isArray(d.alarms) ? d.alarms : []; }; } catch (e) { bc = null; }
-  const send = (set) => { if (bc && sim.sync) bc.postMessage({ type: 'set', set }); };
+  // estado vindo do simulador: canal local (mesmo site) ou servidor (sites diferentes)
+  let viaBC = 0, srvBusy = false;
+  const applyState = (d) => { lastSync = performance.now(); sim.sync = true;
+    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; sim.extAl = Array.isArray(d.alarms) ? d.alarms : []; };
+  try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; viaBC = performance.now(); applyState(d); }; } catch (e) { bc = null; }
+  // sem canal local recente: busca o estado no servidor a cada 6 s (estado com até 30 s de idade)
+  setInterval(() => { if (performance.now() - viaBC < 6000 || srvBusy || document.hidden) return; srvBusy = true;
+    call('syncGet', ['state', getToken()], 1).then((r) => { srvBusy = false; if (r && r.d && Date.now() - r.t < 30000) applyState(r.d); }).catch(() => { srvBusy = false; }); }, 6000);
+  const send = (set) => { if (!sim.sync) return; if (bc && performance.now() - viaBC < 6000) bc.postMessage({ type: 'set', set }); else call('syncPost', ['cmd', set, getToken()], 2).catch(() => {}); };
 
   // ---- controles (montados uma vez)
   const C = $('#pB_ctl');
@@ -143,8 +149,8 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   // ---- renderização periódica
   function render(force) {
     const K = sim.kpi, E = sim.eq, on = (k) => open.includes(k);
-    const sync = sim.sync && performance.now() - lastSync < 6000; if (!sync) sim.sync = false;
-    $('#pSync').textContent = sync ? 'sincronizado com o simulador' : 'sem simulador'; $('#pSync').className = 'sync' + (sync ? ' on' : '');
+    const local = performance.now() - viaBC < 6000, sync = sim.sync && performance.now() - lastSync < (local ? 6000 : 30000); if (!sync) sim.sync = false;
+    $('#pSync').textContent = sync ? (local ? 'sincronizado com o simulador' : 'sincronizado (via servidor)') : 'sem simulador'; $('#pSync').className = 'sync' + (sync ? ' on' : '');
     const pns = Object.values(E).filter((e) => e.k === 'pn' && e.on && e.flow > 0), effM = pns.length ? pns.reduce((a, e) => a + e.eff, 0) / pns.length : 0;
     $('#pS_ind').textContent = `${fm(K.F)} → ${fm(K.prod)} t/h`; { const nA = K.alarms.length + (((sim.sync && sim.extAl) || []).length); $('#pS_al').textContent = nA ? `${nA} alarme(s)` : 'normal'; }
     $('#pS_eq').textContent = `${K.nPN}/8 PN · ${K.nC}/2 HP · ${K.nV}/3 Barmac`; $('#pS_ctl').textContent = sim.running ? 'operando' : 'parado';
@@ -167,7 +173,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
         `<div class="hs ${K.circ > 110 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
       el.querySelectorAll('#pB_pi [data-i]').forEach((d) => d.onclick = () => openInfo(d.dataset.i)); }
-    if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || ('<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>' + (sim.sync ? '' : '<p class="hint">Sem ligação com o simulador: os alertas da área 3 do simulador só aparecem aqui quando o gêmeo é aberto pelo número 3 do simulador no site (GitHub), na mesma janela/navegador.</p>'));
+    if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || ('<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>' + (sim.sync ? '' : '<p class="hint">Sem ligação com o simulador: abra o gêmeo pelo número 3 do simulador (sala de controle, com a senha) e mantenha o simulador aberto. A ligação funciona pelo próprio navegador (site GitHub) ou pelo servidor (Apps Script), com atualização a cada ~6 s.</p>'));
     if (on('ind') || force) $('#pB_ind').innerHTML = `<div class="s3k">
       <div><b>${fm(K.F)}</b><span>Lavra · ROM da TCLD (t/h)</span></div><div><b>${fm(K.T)}</b><span>Alimentação das peneiras (t/h)</span></div>
       <div class="${K.prod < K.F * .95 ? 'warn' : ''}"><b>${fm(K.prod)}</b><span>Produto &lt; 12,5 mm (t/h)</span></div><div class="${K.circ > 110 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div>
