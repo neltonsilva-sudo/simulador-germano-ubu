@@ -2978,7 +2978,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010171227';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010172024';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4501,7 +4501,7 @@ function updateDash(full){
 }
 /* ============ LABELS ============ */
 const labelEls={};
-const LBLPOS={mine:V3(-88,6,-30),tcld:V3(-76,8,-12),pile:V3(-80,8,20),dry:V3(-60,10,68),cava:V3(-16,3,70),fence:V3(56,12,-45),port:V3(104,9,-40),basin:V3(10,3,-36)};for(const k in LBLPOS)LBLPOS[k]=LP(LBLPOS[k]);
+const LBLPOS={mine:V3(-88,6,-30),tcld:V3(-76,8,-12),pile:V3(-92,4,22),dry:V3(-60,10,68),cava:V3(-16,3,70),fence:V3(56,12,-45),port:V3(104,9,-40),basin:V3(10,3,-36)};for(const k in LBLPOS)LBLPOS[k]=LP(LBLPOS[k]);
 for(const id in EQ){const e=EQ[id];const d=document.createElement('div');d.className='tag';d.dataset.id=id;
   d.innerHTML=`<span class="alb" aria-hidden="true">!</span><span class="n">${e.num}</span><span class="b"><span class="nm">${e.name}</span><span class="vl"></span><span class="dot"></span></span>`;
   d.tabIndex=0;d.setAttribute('role','button');d.setAttribute('aria-label',`Etapa ${e.num}: ${e.name}`);d.addEventListener('keydown',ev=>{if(ev.key==='Enter'){stopTour();select(id,true);}});
