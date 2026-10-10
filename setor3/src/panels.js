@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010082851';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010083652';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -45,7 +45,7 @@ const CSS = `
 @media (max-width:860px){.s3acc{top:auto;bottom:150px;left:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
-const SECS = [['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['efic', 'Eficiência do processo'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
+const SECS = [['ast', 'Assistente de Processo'], ['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['efic', 'Eficiência do processo'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
 
 export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -257,6 +257,47 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       pontos: Object.entries(E).map(([t, e], i) => ({ id: 'P' + (i + 1), nome: t, estado: e.st, carga_pct: Math.round(e.load * 100), vibracao_mm_s: +e.vib.toFixed(1), desgaste_pct: Math.round(e.w), eficiencia_pct: e.k === 'pn' ? Math.round(e.eff) : undefined })),
       alarmes: K.alarms, registros: [reg].concat(INSP.filter((r) => r !== reg).slice(0, 5)).map((r) => ({ tipo: r.tipo, severidade: r.severidade, local: r.local, descricao: r.descricao, data: r.data || r.tempo })) };
   }
+  // ---- ASSISTENTE DE PROCESSO: a Simulação analisa o processo interno do gêmeo, faz o diagnóstico e propõe ajustes na planta
+  $('#pB_ast').innerHTML = `<p class="hint">Analisa os indicadores, a eficiência, a granulometria, cada equipamento e os alarmes deste setor. Apresenta o diagnóstico e, se encontrar problemas, propõe ajustes e soluções que você pode aplicar.</p>
+    <button class="btn2 ai" id="astGo" style="width:100%">Analisar o processo agora</button><div id="astOut"></div>`;
+  function ctxAst() {
+    const E = sim.eq, K = sim.kpi, EF = K.efic || {}, G = K.gran || {}, r1 = (v, d = 1) => (isFinite(v) ? +(+v).toFixed(d) : null);
+    return { area: 'Área 3 · Peneiramento e britagem (Usina II) · gêmeo digital', sincronizado_com_simulador: !!sim.sync,
+      controles: { apf_mm: sim.css, velocidade_tcld_pct: sim.tcld, alimentacao_nova_t_h: sim.feed, finos_rom_pct: r1(sim.f12 * 100, 0), umidade_rom_pct: r1(sim.moist), wi_kwh_t: sim.wi, circuito: sim.running ? 'operando' : 'parado' },
+      indicadores: { lavra_t_h: r1(K.F, 0), alimentacao_peneiras_t_h: r1(K.T, 0), fino_direto_t_h: r1(K.fines, 0), retorno_britadores_t_h: r1(K.ret, 0), produto_t_h: r1(K.prod, 0), carga_circulante_pct: r1(K.circ, 0), potencia_kW: r1(K.kw, 0), energia_especifica_kwh_t: r1(K.spec, 2), alimentacao_limitada: !!K.limited, umidade_alerta: K.umid && K.umid.st },
+      eficiencia: { peneiramento_taggart_pct: r1(EF.tag), oee_pct: r1((EF.oee || 0) * 100, 0), disponibilidade_pct: r1((EF.disp || 0) * 100, 0), desempenho_pct: r1((EF.desemp || 0) * 100, 0),
+        hp400: EF.cone && { carga_pct: r1(EF.cone.load * 100, 0), razao_reducao: r1(EF.cone.rr, 2), wio: r1(EF.cone.wio), efic_energetica_pct: r1(Math.min(1, EF.cone.effE) * 100, 0) },
+        barmac: EF.vsi && { carga_pct: r1(EF.vsi.load * 100, 0), razao_reducao: r1(EF.vsi.rr, 2), wio: r1(EF.vsi.wio), efic_energetica_pct: r1(Math.min(1, EF.vsi.effE) * 100, 0) } },
+      granulometria_p80_mm: { rom: r1(G.st && G.st.rom.p80), retido_hp400: r1(G.st && G.st.r1.p80), retido_barmac: r1(G.st && G.st.r2.p80), britado_hp400: r1(G.st && G.st.hp.p80), britado_barmac: r1(G.st && G.st.vsi.p80), produto: r1(G.p80prod) },
+      limites: { carga_circulante_normal_pct: '60–120', vibracao_alerta_mm_s: 7.1, vibracao_critica_mm_s: 11, desgaste_troca_pct: 85, eficiencia_peneira_min_pct: 80, saude_atencao: 75, saude_critica: 50, umidade_alerta_pct: 8.5 },
+      pontos: Object.entries(E).map(([t, e]) => ({ tag: t, tipo: e.k === 'pn' ? 'peneira' : e.k === 'cone' ? 'HP 400' : 'Barmac', estado: e.st, ligado: e.on, vazao_t_h: r1(e.flow, 0), carga_pct: r1(e.load * 100, 0), vibracao_mm_s: r1(e.vib), oleo_C: r1(e.oil, 0), desgaste_pct: r1(e.w, 0), saude: e.health, vida_util_h: isFinite(e.rsl) ? r1(e.rsl, 0) : null, eficiencia_pct: e.k === 'pn' ? r1(e.eff, 0) : undefined })),
+      alarmes: (K.alarms || []).concat(((sim.sync && sim.extAl) || []).map((a) => ({ tag: 'simulador', st: a.sev, why: a.msg }))) };
+  }
+  const ASTK = { css: ['APF dos HP 400', 'mm', 12, 30], tcld: ['Velocidade da TCLD', '%', 40, 110], feed: ['Alimentação nova', 't/h', 1000, 6000] };
+  function astApply(c) {
+    if (ASTK[c.chave]) { const [nm, u, lo, hi] = ASTK[c.chave], v = Math.max(lo, Math.min(hi, +c.valor_sugerido)); sim[c.chave] = v;
+      if (c.chave === 'css') send({ css: v }); if (c.chave === 'tcld') send({ tcldSpd: v }); logEv('Assistente', `${nm} → ${fm(v, c.chave === 'feed' ? 0 : 1)} ${u} (aplicado)`); render(true); return true; }
+    if (sim.eq[c.chave]) { sim.eq[c.chave].on = !!+c.valor_sugerido; logEv('Assistente', `${c.chave} ${sim.eq[c.chave].on ? 'ligado' : 'desligado'} (aplicado)`); render(true); return true; }
+    return false;
+  }
+  $('#astGo').onclick = async () => {
+    const out = $('#astOut'), btn = $('#astGo'); btn.disabled = true; out.innerHTML = '<p class="hint">A Simulação está analisando o processo do setor…</p>';
+    try {
+      const r = await call('aiAnalyze', [{ modo: 'gemeo3', escopo: 'Área 3 · Peneiramento e britagem', pergunta: '', contexto: ctxAst() }]);
+      const sv = (x) => (/alta/i.test(x) ? 'crit' : /m[eé]dia/i.test(x) ? 'warn' : '');
+      const recs = r.recomendacoes || [];
+      out.innerHTML = `<div class="card"><h6>Diagnóstico</h6><b>${esc(r.resumo || '')}</b></div>
+        ${(r.achados || []).length ? '<h6 style="margin:8px 0 4px;color:#ffd24a">Problemas encontrados</h6>' : ''}${(r.achados || []).map((a) => `<div class="card ${sv(a.severidade)}"><b>${esc(a.titulo)}</b>${a.ponto ? ` · ${esc(a.ponto)}` : ''}<small>${esc(a.evidencia || '')}</small></div>`).join('')}
+        ${(r.causas || []).length ? '<h6 style="margin:8px 0 4px;color:#ffd24a">Causa raiz</h6>' : ''}${(r.causas || []).map((c) => `<div class="card"><b>${esc(c.problema)}</b><small>${esc(c.causa_raiz)}${c.confianca ? ' · confiança ' + esc(c.confianca) : ''}</small></div>`).join('')}
+        ${recs.length ? '<h6 style="margin:8px 0 4px;color:#ffd24a">Ajustes e soluções propostos</h6>' : ''}${recs.map((c, i) => { const ok = (ASTK[c.chave] || sim.eq[c.chave]) && isFinite(c.valor_sugerido);
+          const what = ASTK[c.chave] ? `${ASTK[c.chave][0]}: ${fm(sim[c.chave], 1)} → <b>${fm(+c.valor_sugerido, 1)} ${ASTK[c.chave][1]}</b>` : sim.eq[c.chave] ? `${esc(c.chave)}: <b>${+c.valor_sugerido ? 'ligar' : 'desligar'}</b>` : '';
+          return `<div class="card"><b>${esc(c.titulo)}</b>${what ? `<br>${what}` : ''}<small>${esc(c.efeito_esperado || '')}${c.risco ? ' · Risco: ' + esc(c.risco) : ''}</small>${ok ? `<button class="btn2" data-ast="${i}" style="margin-top:5px;padding:3px 10px">Aplicar</button>` : ''}</div>`; }).join('')}
+        <p class="hint">Gerado pela Simulação a partir dos dados do gêmeo${sim.sync ? ' sincronizado com o simulador' : ''}. Revise antes de aplicar; a decisão final é do operador.</p>`;
+      out.querySelectorAll('[data-ast]').forEach((b) => b.onclick = () => { if (astApply(recs[+b.dataset.ast])) { b.textContent = 'Aplicado ✓'; b.disabled = true; } });
+      logEv('Assistente', 'Diagnóstico do processo: ' + String(r.resumo || '').slice(0, 80));
+    } catch (e) { out.innerHTML = `<p class="hint" style="color:#ff8a7a">Não foi possível analisar: ${esc(e.message)}</p>`; }
+    btn.disabled = false;
+  };
   async function analyze(reg) {
     const out = $('#inAi'); out.innerHTML = '<p class="hint">A Simulação está analisando o registro de inspeção…</p>';
     try {

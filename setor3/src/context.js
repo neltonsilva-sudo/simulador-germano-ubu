@@ -4,10 +4,10 @@
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 // Regra de vizinhança: nada do entorno a menos de ~25 m das paredes do setor 3 (x 0–64, z 0–24), exceto correias e estradas.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261010082851';
-import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261010082851';
-import { mergeStatic } from './merge.js?v=20261010082851';
-import { HIGH } from './render.js?v=20261010082851';
+import { B } from './layout.js?v=20261010083652';
+import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261010083652';
+import { mergeStatic } from './merge.js?v=20261010083652';
+import { HIGH } from './render.js?v=20261010083652';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
