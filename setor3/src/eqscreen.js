@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261010163758';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261010163758';
+import { call } from './api.js?v=20261010164101';
+import { MNT, startMnt, finishMnt } from './sim.js?v=20261010164101';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -85,7 +85,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
     el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'mnt') { startMnt(e); logEv('Manutenção', `${tag} em manutenção: desligado e bloqueado (plano de ${MNT[e.k].h} h)`); sim.cmdEq && sim.cmdEq(tag, { mnt: true }); render(); return; }
-      if (b.dataset.a === 'mfin') { finishMnt(tag, e, true); sim.cmdEq && sim.cmdEq(tag, { mnt: false, troca: true }); render(); checkRep(); return; }
+      if (b.dataset.a === 'mfin') { const r = finishMnt(tag, e, true); if (r) r.sent = true; sim.cmdEq && sim.cmdEq(tag, { mnt: false, troca: true }); render(); checkRep(); return; }
       if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
   }
   // ORDEM DE SERVIÇO SIMULADA: gravada na mesma planilha do registro de inspeção (tipo "OS simulada")
@@ -119,7 +119,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     d.querySelector('[data-r="x"]').onclick = cl; d.addEventListener('click', (ev) => { if (ev.target === d) cl(); });
     d.querySelector('[data-r="on"]').onclick = () => { if (e && !e.mnt) { e.on = true; logEv('Comando', `${r.tag} ligado após a manutenção`); sim.cmdEq && sim.cmdEq(r.tag, { on: true }); } cl(); render(); };
     logEv('Manutenção', `${r.tag}: manutenção concluída em ${fm(r.h, 1)} h · ${r.pecas} trocadas · desgaste ${fm(r.w0)} % → 0 %`); }
-  function checkRep() { for (const t in sim.eq) { const r = sim.eq[t].lastMnt; if (r && !r.shown) { r.shown = true; showRep(r); } } }
+  function checkRep() { for (const t in sim.eq) { const r = sim.eq[t].lastMnt; if (r && !r.sent) { r.sent = true; if (!r.early) sim.cmdEq && sim.cmdEq(t, { mnt: false, troca: true }); } if (r && !r.shown) { r.shown = true; showRep(r); } } }
   function open(t) { feeder = /AL/.test(t); tag = t.replace('AL', 'PN'); if (!sim.eq[tag]) return false; el.hidden = false; render(); markSel(tag); return true; }
   function close() { el.hidden = true; tag = null; markSel(null); }
   let k = 0;

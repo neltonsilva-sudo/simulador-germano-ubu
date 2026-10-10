@@ -2977,7 +2977,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010162446';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010164045';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5208,12 +5208,12 @@ let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{co
 /* comando vindo do gêmeo (canal local ou servidor): APF, velocidade da TCLD, partir/parar */
 function s3ApplySet(q){if(!q)return;
   /* troca / liga-desliga dado no gêmeo: aplica no setor 3 do simulador (fonte única do desgaste e dos alarmes) */
-  if(q.eqCmd&&S3&&S3.sim.eq[q.eqCmd.tag]){const c=q.eqCmd,e=S3.sim.eq[c.tag];if(c.troca){e.w=0;logEvent('Manutenção',`${c.tag}: troca registrada pelo gêmeo digital`);}if(c.mnt===true&&!e.mnt){Setor3.startMnt(e);logEvent('Manutenção',`${c.tag} em manutenção (bloqueado, plano de ${Setor3.MNT[e.k].h} h) pelo gêmeo digital`);}if(c.mnt===false&&e.mnt)Setor3.finishMnt(c.tag,e,true);if(typeof c.on==='boolean'&&e.on!==c.on&&!e.mnt){e.on=c.on;logEvent('Comando',`${c.tag} ${c.on?'ligado':'desligado'} pelo gêmeo digital`);}if(typeof tw3Calc==='function')tw3Calc();}
+  if(q.eqCmd&&S3&&S3.sim.eq[q.eqCmd.tag]){const c=q.eqCmd,e=S3.sim.eq[c.tag];if((c.rev||0)<(e.rev||0))return;e.rev=Math.max(e.rev||0,c.rev||0);if(c.troca){e.w=0;logEvent('Manutenção',`${c.tag}: troca registrada pelo gêmeo digital`);}if(c.mnt===true&&!e.mnt){Setor3.startMnt(e);logEvent('Manutenção',`${c.tag} em manutenção (bloqueado, plano de ${Setor3.MNT[e.k].h} h) pelo gêmeo digital`);}if(c.mnt===false&&e.mnt)Setor3.finishMnt(c.tag,e,true);if(typeof c.on==='boolean'&&e.on!==c.on&&!e.mnt){e.on=c.on;logEvent('Comando',`${c.tag} ${c.on?'ligado':'desligado'} pelo gêmeo digital`);}if(typeof tw3Calc==='function')tw3Calc();}
   if(isFinite(q.css)){P.css=clamp(+q.css,10,40);inputs.css&&inputs.css.sync();logEvent('Comando',`APF ajustada pelo gêmeo digital: ${fmt(P.css,0)} mm`);}if(isFinite(q.tcldSpd)){P.tcldSpd=clamp(+q.tcldSpd,40,110);inputs.tcldSpd&&inputs.tcldSpd.sync();}
   if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}}
 /* integração pelo servidor (sites diferentes): publica o estado da área 3 e busca comandos do gêmeo, por até 3 h depois de abrir o gêmeo */
 let TW3_REMOTE=(()=>{try{return +localStorage.getItem('tw3Remote')||0;}catch(e){return 0;}})(),S3SRVt=0,S3SRVbusy=false;
-function s3State(){const s=S3.sim;return{type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,eq:Object.fromEntries(Object.entries(s.eq).map(([t,e])=>[t,{w:+(+e.w||0).toFixed(2),on:!!e.on,mnt:!!e.mnt,mh:e.mnt?+(e.mnt.h||0).toFixed(2):0}])),alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))};}
+function s3State(){const s=S3.sim;return{type:'state',mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,eq:Object.fromEntries(Object.entries(s.eq).map(([t,e])=>[t,{w:+(+e.w||0).toFixed(2),on:!!e.on,mnt:!!e.mnt,mh:e.mnt?+(e.mnt.h||0).toFixed(2):0,rev:e.rev||0}])),alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))};}
 function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REMOTE>3*3600e3)return;const now=performance.now();if(now-S3SRVt<6000)return;S3SRVt=now;
   const tok=(typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'';S3SRVbusy=true;const done=()=>{S3SRVbusy=false;};
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
@@ -5228,6 +5228,8 @@ function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running
   if(near||TW3_ACC.up>=.12){S3.update(TW3_ACC.up,t,camera);TW3_ACC.up=0;}
   if(TW3_ACC.calc>=.25){tw3Calc();TW3_ACC.calc=0;}s3Server();}
 var TW3_ACC={sim:0,up:0,calc:0,pos:null};
+/* aba do simulador em segundo plano (operador no gêmeo): o navegador pausa a animação, mas o setor 3 segue calculando e trocando estado/comandos com o gêmeo ~1×/s */
+setInterval(()=>{if(!document.hidden||!S3)return;try{S3.stepSim(1,Math.max(1,speed||1));tw3Calc();if(S3BC)S3BC.postMessage(s3State());s3Server();}catch(e){}},1000);
 const tw3V=tag=>TW3.v[tag]||tw3Calc()[tag]||{on:false,st:'off'};
 function tw3Short(tag){const o=tw3V(tag);if(S3&&S3.sim.eq[tag]&&S3.sim.eq[tag].mnt)return 'em manutenção';if(!o.on)return 'parado';return (o.k==='pn'?`efic. ${fmt(o.eff,0)} % · ${fmt(o.load*100,0)} % carga · desg. ${fmt(o.w,0)} %`:`${fmt(o.kw,0)} kW · ${fmt(o.vib,1)} mm/s · desg. ${fmt(o.w,0)} %`)+(o.health!=null?` · saúde ${o.health}`:'');}
 function tw3State(tag){const s=tw3V(tag).st;return s==='off'?'crit':s||'ok';}
@@ -5245,7 +5247,7 @@ function tw3Panel(){const el=$('#tw3');if(!el)return;const V=tw3Calc(),can=!OPER
     <td>${o.on?fmt(o.vib,1)+' mm/s':'–'}</td><td>${fmt(o.oil,0)} °C</td><td><b style="color:${o.w>=95?'var(--crit)':o.w>=85?'var(--warn)':'inherit'}">${fmt(o.w,0)} %</b></td><td>${tw3Hrs(o.left)}</td>
     <td>${can?`<button class="btn" data-tw3="${o.tag}" style="padding:2px 8px">Registrar troca</button>`:''}</td></tr>`).join('')}</table>
    <p class="hint">Configuração da Usina II (TCC): 8 peneiras banana de 2 decks, retido do 1º deck → 2 HP 400, do 2º deck → 3 Barmac, passante &lt; 12,5 mm → pilha. Desgaste: deck ≈ 2,5 Mt · rotor do Barmac ≈ 0,5 Mt · revestimentos do HP 400 ≈ 1,2 Mt por troca (ilustrativo). Use "Registrar troca" depois da manutenção para zerar o desgaste.</p>`;
-  el.querySelectorAll('[data-tw3]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.tw3;confirmCmd(`Registrar troca em ${k}?`,'O desgaste do revestimento/deck volta a 0 % no gêmeo digital.',()=>{if(S3&&S3.sim.eq[k])S3.sim.eq[k].w=0;logEvent('Manutenção',`${k}: troca de revestimento registrada no gêmeo digital`);tw3Panel();});}));}
+  el.querySelectorAll('[data-tw3]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.tw3;confirmCmd(`Registrar troca em ${k}?`,'O desgaste do revestimento/deck volta a 0 % no gêmeo digital.',()=>{if(S3&&S3.sim.eq[k]){S3.sim.eq[k].w=0;S3.sim.eq[k].rev=(S3.sim.eq[k].rev||0)+1;}logEvent('Manutenção',`${k}: troca de revestimento registrada no gêmeo digital`);tw3Panel();});}));}
 setInterval(()=>{if(AREA==='crush'&&$('#tw3')&&!document.querySelector('#cfm:not([hidden])'))tw3Panel();},2500);
 let AREA=null,AREA_PREV=null,areaEls=[],areaAI={};
 const AREA_VIEW={mine:{el:.7,k:.8},tcld:{el:.6,k:.6},crush:{el:.55,k:1.2},pile:{el:.5,k:1},conc:{el:.62,k:.95,ty:.3},thick6:{el:.65,k:.9},sandf:{el:.8,k:1.1,ty:.2},dry:{el:.6,k:.9},cava:{el:.7,k:.9},

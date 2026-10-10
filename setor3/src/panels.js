@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010163758';
-import { startMnt, finishMnt } from './sim.js?v=20261010163758';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010164101';
+import { startMnt, finishMnt } from './sim.js?v=20261010164101';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -73,8 +73,9 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const applyState = (d) => { lastSync = performance.now(); const was = sim.sync; sim.sync = true; if (!was && pend.length) { pend.forEach((x) => { const t = x.eqCmd && x.eqCmd.tag; if (t) (sim._lock = sim._lock || {})[t] = performance.now() + 20000; }); setTimeout(flushPend, 0); }
     if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
     /* desgaste e liga/desliga de cada equipamento vêm do simulador (fonte única), exceto logo depois de um comando dado aqui */
-    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now) continue; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) startMnt(e); else if (q.mnt === false && e.mnt) finishMnt(t, e); if (e.mnt && isFinite(q.mh)) e.mnt.h = Math.max(e.mnt.h || 0, q.mh); }
-    sim.extAl = (Array.isArray(d.alarms) ? d.alarms : []).filter((a) => !Object.keys(lk).some((t) => lk[t] > now && String(a.msg || '').indexOf(t) >= 0)); };
+    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now || (q.rev || 0) < (e.rev || 0)) continue; e.rev = q.rev || 0; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) startMnt(e); else if (q.mnt === false && e.mnt) { const r = finishMnt(t, e); if (r) r.sent = true; } if (e.mnt && isFinite(q.mh)) e.mnt.h = Math.max(e.mnt.h || 0, q.mh); }
+    const stale = (t) => (lk[t] || 0) > now || (d.eq && d.eq[t] && (d.eq[t].rev || 0) < (sim.eq[t].rev || 0));
+    sim.extAl = (Array.isArray(d.alarms) ? d.alarms : []).filter((a) => !Object.keys(sim.eq).some((t) => stale(t) && String(a.msg || '').indexOf(t) >= 0)); };
   try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; viaBC = performance.now(); applyState(d); }; } catch (e) { bc = null; }
   // sem canal local recente: busca o estado no servidor a cada 6 s (estado com até 30 s de idade)
   setInterval(() => { if (performance.now() - viaBC < 6000 || srvBusy || document.hidden) return; srvBusy = true;
@@ -83,7 +84,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const send = (set) => { if (!sim.sync) { if (set && set.eqCmd) { pend.push(set); if (pend.length > 30) pend.shift(); } return; } if (bc && performance.now() - viaBC < 6000) bc.postMessage({ type: 'set', set }); else call('syncPost', ['cmd', set, getToken()], 2).catch(() => {}); };
   const flushPend = () => { if (!pend.length || !sim.sync) return; const L = pend.splice(0); L.forEach((x) => { const t = x.eqCmd && x.eqCmd.tag; if (t) (sim._lock = sim._lock || {})[t] = performance.now() + 20000; send(x); }); logEv('Integração', `${L.length} comando(s) de equipamento enviados ao simulador após a reconexão`); };
   /* comando de equipamento (troca / liga-desliga) dado no gêmeo: vale aqui na hora e vai para o simulador */
-  sim.cmdEq = (tag, c) => { (sim._lock = sim._lock || {})[tag] = performance.now() + 20000; send({ eqCmd: Object.assign({ tag }, c) }); };
+  sim.cmdEq = (tag, c) => { const e = sim.eq[tag]; if (e) e.rev = (e.rev || 0) + 1; (sim._lock = sim._lock || {})[tag] = performance.now() + 20000; send({ eqCmd: Object.assign({ tag, rev: e ? e.rev : 0 }, c) }); };
 
   // ---- controles (montados uma vez)
   const C = $('#pB_ctl');
