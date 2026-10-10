@@ -1,12 +1,12 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261010160033';
-import { buildEqScreen } from './eqscreen.js?v=20261010160033';
-import { buildTour } from './tour.js?v=20261010160033';
-import { logEv } from './sim.js?v=20261010160033';
-import { SIM_URL } from './api.js?v=20261010160033';
-import { buildRiskMap } from './riskmap.js?v=20261010160033';
+import { buildPanels } from './panels.js?v=20261010160621';
+import { buildEqScreen } from './eqscreen.js?v=20261010160621';
+import { buildTour } from './tour.js?v=20261010160621';
+import { logEv } from './sim.js?v=20261010160621';
+import { SIM_URL } from './api.js?v=20261010160621';
+import { buildRiskMap } from './riskmap.js?v=20261010160621';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -65,9 +65,10 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   document.addEventListener('click', (e) => { if (!visMenu.hidden && !visMenu.contains(e.target)) closeVis(); });
   // Sair: avisa o simulador (outra aba) para voltar à visão geral e fecha esta aba; se o navegador não deixar fechar, abre o simulador
   // Voltar ao simulador sem fechar o gêmeo: pede ao simulador (outra aba) que venha para a frente
+  // ◀ Simulador: sai do gêmeo e volta à tela do simulador (traz a aba do simulador para a frente e fecha esta; se o navegador não deixar fechar, abre o simulador aqui)
   root.querySelector('#s3back').addEventListener('click', () => {
     try { const ch = new BroadcastChannel('setor3-sync'); ch.postMessage({ type: 'focus' }); ch.close(); } catch (e) { /* sem canal */ }
-    setTimeout(() => { if (document.hasFocus()) { const t = document.createElement('div'); t.className = 's3toast'; t.textContent = 'O simulador continua aberto na outra aba do navegador: clique nela para voltar (o gêmeo segue sincronizado).'; root.appendChild(t); setTimeout(() => t.remove(), 5000); } }, 600);
+    setTimeout(() => { window.close(); setTimeout(() => { if (!window.closed) location.href = SIM_URL; }, 300); }, 80);
   });
   root.querySelector('#s3exit').addEventListener('click', () => {
     try { const ch = new BroadcastChannel('setor3-sync'); ch.postMessage({ type: 'exit' }); ch.close(); } catch (e) { /* sem canal */ }
@@ -116,7 +117,7 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
     if (h) { const p = h.pos, kk = sim.eq[t] && sim.eq[t].k;
       // vistas a partir dos corredores livres (sem colunas/correias na frente)
       if (kk === 'cone') setCam({ pos: [p.x - 3.5, 2.4, 1.6], look: [p.x, 2.4, p.z], fov: 64 });
-      else if (kk === 'vsi') setCam({ pos: [p.x - 4.2, 2.2, 23.2], look: [p.x, 2.0, p.z], fov: 62 });
+      else if (kk === 'vsi') { const dx = t === '03BR005' ? 1.1 : -4.2; /* 03BR005: vista de frente (a -4,2 m o Barmac 03BR004 ficava na frente da câmera) */ setCam({ pos: [p.x + dx, 2.3, 23.2], look: [p.x, 2.0, p.z], fov: 62 }); }
       else setCam({ pos: [Math.min(63, p.x + 3.5), p.y + 3.2, Math.min(23.2, p.z + 7.5)], look: [p.x, p.y, p.z], fov: 62 }); }
     if (pk && pk.box) highlight(pk.box.min.toArray(), pk.box.max.toArray());
     const tg = tags.find((q) => q.h.tag === t); if (tg) { tg.d.classList.add('sel'); setTimeout(() => tg.d.classList.remove('sel'), 4000); }
