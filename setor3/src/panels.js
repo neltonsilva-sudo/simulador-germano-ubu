@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010160621';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010160646';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -19,7 +19,7 @@ const CSS = `
 .s3sec>h5 em{margin-left:auto;font:500 11px var(--mono);letter-spacing:0;text-transform:none;color:var(--accent)}
 .s3sec>div{display:none;padding:0 12px 12px}.s3sec.open>div{display:block}
 .s3acc .hs{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;padding:7px 9px;margin-bottom:5px;background:var(--card);border:1px solid var(--cline);border-radius:6px;cursor:pointer;backdrop-filter:blur(6px)}
-.s3acc .hs:hover{border-color:rgba(92,198,220,.6)}.s3acc .hs.sel{border-color:#ffd24a;background:rgba(255,210,74,.16);box-shadow:0 0 0 1px #ffd24a inset,0 0 14px rgba(255,210,74,.35)}.s3acc .hs.sel div{color:#ffd24a;font-weight:700}.s3acc .hs i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.s3acc .hs.warn i{background:var(--warn)}.s3acc .hs.crit i{background:var(--crit)}
+.s3acc .hs:hover{border-color:rgba(92,198,220,.6)}.s3acc .hs.sel{border-color:#ffd24a;background:rgba(255,210,74,.16);box-shadow:0 0 0 1px #ffd24a inset,0 0 14px rgba(255,210,74,.35)}.s3acc .hs.sel div{color:#ffd24a;font-weight:700}.s3acc .hs i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.s3acc .hs.warn i,.s3acc .hs.crit i{background:#ff3b3b;box-shadow:0 0 8px #ff3b3b;animation:s3blink 1s steps(2,start) infinite}.s3acc .hs.crit i{animation-duration:.6s}@keyframes s3blink{to{opacity:.15}}
 .s3acc .hs span{font:400 12px var(--mono);color:var(--accent);text-align:right}
 .s3acc .card{background:var(--card);border:1px solid var(--cline);border-left:3px solid var(--ok);border-radius:6px;padding:8px 10px;margin-bottom:6px;line-height:1.5}.s3acc .card.warn{border-left-color:var(--warn)}.s3acc .card.crit{border-left-color:var(--crit)}
 .s3acc .card small{color:var(--muted);display:block;margin-top:2px}
