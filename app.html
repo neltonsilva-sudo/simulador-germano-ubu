@@ -2966,7 +2966,7 @@ return {buildSetor3, sim, stepSim, LAYOUT:{B,LV,SCREENS,CRUSHERS}};
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261010115806';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261010121150';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -6086,6 +6086,8 @@ function stageTipHTML(id){const e=EQ[id],st=eqState(id),S=streams(),sn=k=>S[k]?`
 function placeStip(){if(!stipEl)return;const r=stipEl.getBoundingClientRect(),W=stip.offsetWidth,Hh=stip.offsetHeight;let x=r.right+10,y=r.top-8;if(x+W>innerWidth-8)x=r.left-W-10;if(x<8)x=8;y=Math.max(8,Math.min(innerHeight-Hh-8,y));stip.style.left=x+'px';stip.style.top=y+'px';}
 function showStageTip(id,el){stipId=id;stipEl=el;stip.innerHTML=stageTipHTML(id);stip.hidden=false;placeStip();}
 function hideStageTip(){stipId=null;stipEl=null;stip.hidden=true;}
+/* clique/toque fora do número ou do cartão fecha o cartão da etapa */
+document.addEventListener('pointerdown',e=>{if(stip.hidden)return;if(stip.contains(e.target)||(stipEl&&stipEl.contains(e.target)))return;const f=stipEl;hideStageTip();if(f&&document.activeElement===f)f.blur();},true);
 setInterval(()=>{if(stipId){stip.innerHTML=stageTipHTML(stipId);placeStip();}},700);
 
 /* ---- números 1–24 em vermelho piscando onde há aviso/alarme ---- */
