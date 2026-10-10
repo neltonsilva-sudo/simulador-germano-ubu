@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010085602';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010160033';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -19,7 +19,7 @@ const CSS = `
 .s3sec>h5 em{margin-left:auto;font:500 11px var(--mono);letter-spacing:0;text-transform:none;color:var(--accent)}
 .s3sec>div{display:none;padding:0 12px 12px}.s3sec.open>div{display:block}
 .s3acc .hs{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;padding:7px 9px;margin-bottom:5px;background:var(--card);border:1px solid var(--cline);border-radius:6px;cursor:pointer;backdrop-filter:blur(6px)}
-.s3acc .hs:hover{border-color:rgba(92,198,220,.6)}.s3acc .hs i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.s3acc .hs.warn i{background:var(--warn)}.s3acc .hs.crit i{background:var(--crit)}
+.s3acc .hs:hover{border-color:rgba(92,198,220,.6)}.s3acc .hs.sel{border-color:#ffd24a;background:rgba(255,210,74,.16);box-shadow:0 0 0 1px #ffd24a inset,0 0 14px rgba(255,210,74,.35)}.s3acc .hs.sel div{color:#ffd24a;font-weight:700}.s3acc .hs i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.s3acc .hs.warn i{background:var(--warn)}.s3acc .hs.crit i{background:var(--crit)}
 .s3acc .hs span{font:400 12px var(--mono);color:var(--accent);text-align:right}
 .s3acc .card{background:var(--card);border:1px solid var(--cline);border-left:3px solid var(--ok);border-radius:6px;padding:8px 10px;margin-bottom:6px;line-height:1.5}.s3acc .card.warn{border-left-color:var(--warn)}.s3acc .card.crit{border-left-color:var(--crit)}
 .s3acc .card small{color:var(--muted);display:block;margin-top:2px}
@@ -170,7 +170,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     if (K.limited) probs.unshift(`<div class="card crit"><b>Circuito</b> · alimentação limitada<small>Britagem insuficiente para o retido: ligue os britadores parados ou reduza a alimentação.</small></div>`);
     $('#pS_pi').textContent = `${Object.values(E).filter((e) => e.st !== 'ok').length} fora da faixa`; $('#pS_prob').textContent = probs.length ? `${probs.length}` : 'nenhum';
     if (on('pi') || force) {
-      $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
+      $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}${document.body.dataset.eqsel === t ? ' sel' : ''}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
         `<div class="hs ${K.circ > 110 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
       el.querySelectorAll('#pB_pi [data-i]').forEach((d) => d.onclick = () => openInfo(d.dataset.i)); }
     if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || ('<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>' + (sim.sync ? '' : '<p class="hint">Sem ligação com o simulador: abra o gêmeo pelo número 3 do simulador (sala de controle, com a senha) e mantenha o simulador aberto. A ligação funciona pelo próprio navegador (site GitHub) ou pelo servidor (Apps Script), com atualização a cada ~6 s.</p>'));

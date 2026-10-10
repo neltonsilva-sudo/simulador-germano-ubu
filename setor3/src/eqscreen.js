@@ -1,4 +1,4 @@
-import { call } from './api.js?v=20261010085602';
+import { call } from './api.js?v=20261010160033';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -98,8 +98,11 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     catch (err) { OSST[t] = { busy: false, msg: 'Não foi possível registrar a OS: ' + String(err.message || err).replace(/</g, '&lt;') }; }
     render();
   }
-  function open(t) { feeder = /AL/.test(t); tag = t.replace('AL', 'PN'); if (!sim.eq[tag]) return false; el.hidden = false; render(); return true; }
-  function close() { el.hidden = true; tag = null; }
+  /* marca na lista "Pontos de inspeção" o equipamento cuja tela está aberta */
+  function markSel(t) { if (t) document.body.dataset.eqsel = t; else delete document.body.dataset.eqsel;
+    document.querySelectorAll('#pB_pi [data-i]').forEach((d) => { const on = d.dataset.i === t; d.classList.toggle('sel', on); if (on) d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }); }
+  function open(t) { feeder = /AL/.test(t); tag = t.replace('AL', 'PN'); if (!sim.eq[tag]) return false; el.hidden = false; render(); markSel(tag); return true; }
+  function close() { el.hidden = true; tag = null; markSel(null); }
   let k = 0;
   return { open, close, isOpen: () => !el.hidden, update() { if (++k % 20 === 0) render(); } };
 }
