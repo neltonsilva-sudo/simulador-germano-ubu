@@ -1,12 +1,12 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261010193412';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261010193412';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261010193412';
-import { buildUI } from './ui.js?v=20261010193412';
-import { gate } from './gate.js?v=20261010193412';
-import { buildContext } from './context.js?v=20261010193412';
+import { B, LV, CAMS } from './layout.js?v=20261010193606';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261010193606';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261010193606';
+import { buildUI } from './ui.js?v=20261010193606';
+import { gate } from './gate.js?v=20261010193606';
+import { buildContext } from './context.js?v=20261010193606';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -21,7 +21,10 @@ const LIGHT = buildLighting(scene, renderer, S3.lamps);
 // projetores do entorno (acendem à noite): um por área do processo e quatro em volta do prédio do setor 3
 try { (CTX && CTX.labels || []).filter((l) => l.kind === 'area').forEach((l) => LIGHT.addYard(l.pos.x + 30, 16, l.pos.z + 30, 1));   // poste ao lado da área (fora da cava/pilha)
   const W = S3.LAYOUT ? S3.LAYOUT.B.W : 64, D = S3.LAYOUT ? S3.LAYOUT.B.D : 26; [[-6, -6], [W + 6, -6], [-6, D + 6], [W + 6, D + 6]].forEach(([x, z]) => LIGHT.addYard(x, 12, z, .6)); } catch (e) { console.warn('projetores', e); }
-{ const qn = new URLSearchParams(location.search).get('night'); if (qn != null) LIGHT.setNight(+qn || 1); }   // ?night=1 força a noite (teste)
+{ const qn = new URLSearchParams(location.search).get('night'); if (qn != null) LIGHT.setNight(+qn || 1);   // ?night=1 força a noite (teste)
+  /* sem o horário do simulador (aberto sozinho ou simulador antigo): segue o relógio local — noite das 19 h às 5 h, transição de 1,5 h */
+  else { const clk = () => { if (window.__nightExt && Date.now() - window.__nightExt < 30000) return; const d = new Date(), h = d.getHours() + d.getMinutes() / 60;
+      LIGHT.setNight(h >= 19 || h < 5 ? 1 : h >= 17.5 ? (h - 17.5) / 1.5 : h < 6.5 ? (6.5 - h) / 1.5 : 0); }; clk(); setInterval(clk, 30000); } }
 const composer = createComposer(renderer, scene, camera);
 
 const controls = new OrbitControls(camera, canvas);
