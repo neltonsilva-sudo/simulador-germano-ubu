@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010164101';
-import { startMnt, finishMnt } from './sim.js?v=20261010164101';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010165330';
+import { startMnt, finishMnt } from './sim.js?v=20261010165330';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -165,6 +165,9 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     $('#pS_ind').textContent = `${fm(K.F)} → ${fm(K.prod)} t/h`; { const nA = K.alarms.length + (((sim.sync && sim.extAl) || []).length); $('#pS_al').textContent = nA ? `${nA} alarme(s)` : 'normal'; }
     $('#pS_eq').textContent = `${K.nPN}/8 PN · ${K.nC}/2 HP · ${K.nV}/3 Barmac`; $('#pS_ctl').textContent = sim.running ? 'operando' : 'parado';
     const nm = (t, e) => (e.k === 'pn' ? 'Peneira ' : e.k === 'cone' ? 'HP 400 ' : 'Barmac ') + t;
+    const why = (e) => { const run = e.on && e.flow > 0; if (!run || (e.st !== 'warn' && e.st !== 'crit')) return ''; const r = [];
+      if (e.load > 1.05) r.push(`sobrecarga ${fm(e.load * 100)} %`); if (e.vib >= 7.1) r.push(`vibração ${fm(e.vib, 1)} mm/s`); if (e.w >= 85) r.push(`desgaste ${fm(e.w)} %`); if (e.oil >= 65) r.push(`óleo ${fm(e.oil)} °C`); if (e.k === 'pn' && e.eff < 80) r.push(`eficiência ${fm(e.eff)} %`);
+      return r.length ? `<br><b style="color:#ff8a7a">⚠ ${r.join(' · ')}</b>` : ''; };
     const val = (e) => e.mnt ? `🔒 em manutenção · ${fm(e.mnt.h || 0, 1)} h` : (!(e.on && e.flow > 0) ? (e.on ? 'sem carga' : 'desligado') : e.k === 'pn' ? `efic. ${fm(e.eff)} % · ${fm(e.load * 100)} % carga · desg. ${fm(e.w)} %` : `${fm(e.kw)} kW · ${fm(e.vib, 1)} mm/s · desg. ${fm(e.w)} %`) + (e.health != null ? ` · saúde ${e.health}` : '');
     const dot = (e) => (e.st === 'mnt' ? 'mnt' : e.st === 'off' ? 'crit' : e.st === 'ok' ? '' : e.st);
     const probs = [];
@@ -180,7 +183,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     if (K.limited) probs.unshift(`<div class="card crit"><b>Circuito</b> · alimentação limitada<small>Britagem insuficiente para o retido: ligue os britadores parados ou reduza a alimentação.</small></div>`);
     $('#pS_pi').textContent = `${Object.values(E).filter((e) => e.st !== 'ok').length} fora da faixa`; $('#pS_prob').textContent = probs.length ? `${probs.length}` : 'nenhum';
     if (on('pi') || force) {
-      $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}${document.body.dataset.eqsel === t ? ' sel' : ''}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}</span></div>`).join('') +
+      $('#pB_pi').innerHTML = Object.entries(E).map(([t, e]) => `<div class="hs ${dot(e)}${document.body.dataset.eqsel === t ? ' sel' : ''}" data-i="${t}"><i></i><div>${nm(t, e)}</div><span>${val(e)}${why(e)}</span></div>`).join('') +
         `<div class="hs ${K.circ > 110 ? 'warn' : ''}" data-i="@circ"><i></i><div>Carga circulante</div><span>${fm(K.circ)} %</span></div><div class="hs" data-i="@prod"><i></i><div>Produto britado (&lt; 12,5 mm → pilha → moagem)</div><span>${K.gran ? 'P80 ' + fm(K.gran.p80prod, 1) + ' mm' : '–'}${sim.p80 ? ' · moagem ' + fm(sim.p80) + ' µm' : ''}</span></div>`;
       el.querySelectorAll('#pB_pi [data-i]').forEach((d) => d.onclick = () => openInfo(d.dataset.i)); }
     if (on('prob') || force) $('#pB_prob').innerHTML = probs.join('') || ('<div class="card">Nenhum desvio nos pontos de inspeção desta área.</div>' + (sim.sync ? '' : '<p class="hint">Sem ligação com o simulador: abra o gêmeo pelo número 3 do simulador (sala de controle, com a senha) e mantenha o simulador aberto. A ligação funciona pelo próprio navegador (site GitHub) ou pelo servidor (Apps Script), com atualização a cada ~6 s.</p>'));

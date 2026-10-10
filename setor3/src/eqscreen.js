@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261010164101';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261010164101';
+import { call } from './api.js?v=20261010165330';
+import { MNT, startMnt, finishMnt } from './sim.js?v=20261010165330';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -65,7 +65,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     const hp = e.hParts || {}, hWhy = H == null ? '' : `Saúde = 100 − desgaste ${fm(hp.desgaste)} − vibração ${fm(hp.vibracao)} − temperatura ${fm(hp.temperatura)} − sobrecarga ${fm(hp.sobrecarga)} pontos.`;
     el.innerHTML = `<div class="hd"><h3>${feeder ? 'Alimentador ' + tag.replace('PN', 'AL') + ' → ' : ''}${NOME[e.k]} ${tag}<span class="chip ${e.st}">${stTxt[e.st]}</span><button class="x" aria-label="Fechar">×</button></h3><small>${S.modelo}</small>${feeder ? `<div style="color:#9fdcf0;font-size:11.5px;margin-top:4px">Alimentador ${tag.replace('PN', 'AL')} (correia dosadora no piso +14 m) alimentando a peneira ${tag}.</div>` : ''}</div>
       <h4>Funcionamento</h4><div class="g">
-        <div><b>${run ? 'Operando' : e.on ? 'Sem carga' : 'Desligado'}</b><span>Estado</span></div><div><b>${fm(e.kw)} kW</b><span>Potência</span></div>
+        <div><b>${run ? 'Operando' : e.on ? 'Sem carga' : 'Desligado'}</b><span>Estado</span></div>${(() => { const pN = e.k === 'pn' ? 65 : e.k === 'cone' ? 390 + (18 - sim.css) * 4 : 560, r = e.kw / pN; return `<div class="${run ? cls(r * 100, 105, 125) : ''}"><b>${fm(e.kw)} kW</b><span>Potência · nominal ${fm(pN)} kW (carga 100 %)${run && r > 1.05 ? ` · <b>${fm(r * 100)} %</b>` : ''}</span></div>`; })()}
         <div><b>${fm(amp)} A</b><span>Corrente estimada (${String(KV[e.k]).replace('.', ',')} kV)</span></div><div class="${cls(e.vib, 7.1, 11)}"><b>${run ? fm(e.vib, 1) + ' mm/s' : '–'}</b><span>Vibração (ISO 10816-3)</span></div>
         <div class="${cls(e.oil, 65, 75)}"><b>${fm(e.oil)} °C</b><span>${e.k === 'pn' ? 'Mancais dos vibradores' : 'Óleo de lubrificação'}</span></div>${extra}</div>
       <h4>Produção</h4><div class="g">
