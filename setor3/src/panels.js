@@ -1,11 +1,16 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010193606';
-import { startMnt, finishMnt } from './sim.js?v=20261010193606';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010202929';
+import { startMnt, finishMnt } from './sim.js?v=20261010202929';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
 // vêm do simulador; APF, TCLD e partir/parar alterados aqui voltam para o simulador.
 
 const CSS = `
+.s3gd{position:fixed;right:12px;top:64px;bottom:12px;width:min(600px,48vw);z-index:40;overflow:auto;background:rgba(9,22,40,.96);border:1px solid rgba(92,198,220,.45);border-radius:12px;color:#e8f1f7;font:12.5px/1.45 system-ui;box-shadow:0 18px 50px rgba(0,0,0,.55);backdrop-filter:blur(8px)}
+.s3gd .hd{position:sticky;top:0;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(9,22,40,.98);border-bottom:1px solid rgba(255,255,255,.08);z-index:1}.s3gd .hd h3{margin:0;font-size:15px;flex:1;color:#ffd24a}.s3gd .hd button{border:0;background:#1f3a5c;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:700}
+.s3gd .bd{padding:10px 14px 16px}.s3gd h4{margin:14px 0 6px;color:#ffd24a;font-size:12px;letter-spacing:.06em;text-transform:uppercase}.s3gd .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.s3gd .kp div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 9px}.s3gd .kp b{display:block;font:700 15px ui-monospace,monospace;color:#9fe6f5}.s3gd .kp span{font-size:10.5px;color:#c8d6e2}.s3gd .kp div.warn b{color:#ffb020}
+.s3gd canvas{width:100%;display:block;background:rgba(0,0,0,.18);border-radius:8px}.s3gd table{width:100%;border-collapse:collapse;font-size:11.5px}.s3gd th,.s3gd td{padding:4px 5px;border-bottom:1px solid rgba(255,255,255,.07);text-align:right}.s3gd th:first-child,.s3gd td:first-child{text-align:left}.s3gd th{color:#9fc3dc;font-weight:600}.s3gd .hint{color:#b9c8d4;font-size:11px}
+#gG{cursor:zoom-in}
 .s3acc{--ok:#4ac68f;--warn:#ff9f1a;--crit:#f0544a;--accent:#5cc6dc;--ink:#e8edf1;--muted:#a2afbb;--card:rgba(10,45,95,.30);--cline:rgba(120,170,235,.25);--disp:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   position:fixed;left:14px;top:96px;z-index:5;width:400px;max-height:calc(100vh - 112px);overflow:auto;border-radius:10px;border:1px solid rgba(120,170,235,.38);
   background:radial-gradient(ellipse 60% 80% at 18% 20%,rgba(60,130,200,.28),transparent 60%),radial-gradient(ellipse 50% 70% at 85% 75%,rgba(0,10,30,.55),transparent 65%),linear-gradient(135deg,rgba(13,68,120,.94) 0%,rgba(8,48,94,.94) 50%,rgba(5,32,74,.95) 100%);
@@ -120,7 +125,8 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   }
   $('#pB_tend').innerHTML = '<canvas id="g1"></canvas><canvas id="g2"></canvas><canvas id="g3"></canvas>';
   // ---- curva granulométrica: % passante acumulado × tamanho (escala log), por etapa
-  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px"></canvas><div id="gT"></div><p class="hint">Curvas Rosin–Rammler (ROM truncado em 150 mm) fechadas com o balanço de massa do circuito; selos indicam a origem de cada número. A APF muda o britado do HP 400 e a carga circulante; o produto é definido pela tela de 12,5 mm e pelos finos do ROM — o P80 do produto é o F80 de alimentação da moagem. Ajuste os finos do ROM e a APF em <b>Controles e ajustes</b>.</p>';
+  $('#pB_gran').innerHTML = '<canvas id="gG" style="height:190px" title="Clique para ver o detalhe da granulometria"></canvas><p class="hint" style="margin:2px 0 6px">🔍 Clique no gráfico para abrir o detalhe</p><div id="gT"></div><p class="hint">Curvas Rosin–Rammler (ROM truncado em 150 mm) fechadas com o balanço de massa do circuito; selos indicam a origem de cada número. A APF muda o britado do HP 400 e a carga circulante; o produto é definido pela tela de 12,5 mm e pelos finos do ROM — o P80 do produto é o F80 de alimentação da moagem. Ajuste os finos do ROM e a APF em <b>Controles e ajustes</b>.</p>';
+  $('#gG').addEventListener('click', () => openGran());   // detalhe da granulometria
   const GC = [['rom', 'ROM (TCLD)', '#9aa7b3'], ['mix', 'Alimentação das peneiras', '#5cc6dc'], ['hp', 'Britado HP 400', '#ff9a4a'], ['vsi', 'Britado Barmac', '#c58cff'], ['prod', 'Produto → moagem', '#2fbf71']];
   function granChart(cv) {
     const G = sim.kpi.gran; if (!G) return; const r = cv.getBoundingClientRect(); if (!r.width) return; const dpr = Math.min(2, devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr;
@@ -154,6 +160,39 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       <tr><td>Operação atual: Usina de Beneficiamento 2 (esta Usina II) em operação desde dez/2024, ≈ 60 % da capacidade (≈ 15 Mt/ano); Concentrador 1 (Britagem 01 da dissertação) com retorno previsto até 2028</td><td>${tagO('ref')}</td><td>Prévias operacionais Samarco 2024–2025 (imprensa); a estrutura da Britagem 01 é usada como referência de projeto</td></tr>
     </table></details>`;
   }
+  // ---- TELA DE DETALHE DA GRANULOMETRIA (abre ao clicar no gráfico) ----
+  let gd = null, gdT = 0;
+  const dX = (f, p) => { let lo = .01, hi = 300; if (f(lo) >= p) return lo; if (f(hi) < p) return hi; for (let i = 0; i < 50; i++) { const m = Math.sqrt(lo * hi); if (f(m) < p) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
+  const curves = () => { const G = sim.kpi.gran; if (!G) return null; const prod = G.prodCum || ((v) => Math.min(1, G.mix(Math.min(v, 12.5)) / G.p12));
+    return { rom: (v) => G.pas(G.st.rom, v), mix: G.mix, hp: (v) => G.pas(G.st.hp, v), vsi: (v) => G.pas(G.st.vsi, v), prod }; };
+  const SIEVES = [150, 100, 75, 50, 31.5, 19, 12.5, 9.5, 6.3, 4.75, 2, 1, .5, .15, .075];
+  function gdHist(cv, C) { const r = cv.getBoundingClientRect(); if (!r.width) return; const dpr = Math.min(2, devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr;
+    const x = cv.getContext('2d'), W = cv.width, H = cv.height, pl = 30 * dpr, pb = 30 * dpr, pt = 22 * dpr, n = SIEVES.length, bw = (W - pl - 8 * dpr) / n;
+    const ser = [['rom', '#9aa7b3'], ['mix', '#5cc6dc'], ['prod', '#2fbf71']], vals = ser.map(([k]) => SIEVES.map((a, i) => { const up = i ? SIEVES[i - 1] : 1e9; return Math.max(0, (up > 300 ? 1 : C[k](up)) - C[k](a)); }));
+    vals.forEach((v, j) => { v.push(C[ser[j][0]](SIEVES[n - 1])); });   // fundo (< 0,075 mm)
+    const mx = Math.max(.05, ...vals.flat()); x.clearRect(0, 0, W, H); x.font = `${9 * dpr}px system-ui`; x.fillStyle = '#9fb0bd';
+    for (const p of [0, .5, 1]) { const y = pt + (H - pt - pb) * (1 - p); x.strokeStyle = 'rgba(255,255,255,.07)'; x.beginPath(); x.moveTo(pl, y); x.lineTo(W, y); x.stroke(); x.fillText(Math.round(p * mx * 100) + '%', 2, y + 3 * dpr); }
+    const labs = SIEVES.map((a) => '+' + String(a).replace('.', ',')).concat(['fundo']), bwN = (W - pl - 8 * dpr) / labs.length;
+    labs.forEach((l, i) => { ser.forEach(([, c], j) => { const h = (H - pt - pb) * vals[j][i] / mx; x.fillStyle = c; x.fillRect(pl + i * bwN + j * bwN / 3.4 + 1, H - pb - h, bwN / 3.6, h); });
+      x.save(); x.translate(pl + i * bwN + bwN / 2, H - pb + 6 * dpr); x.rotate(-.7); x.fillStyle = '#9fb0bd'; x.fillText(l, -18 * dpr, 6 * dpr); x.restore(); });
+    let lx = pl; ser.forEach(([k, c]) => { const nm = { rom: 'ROM', mix: 'Alimentação', prod: 'Produto' }[k]; x.fillStyle = c; x.fillRect(lx, 8 * dpr, 9 * dpr, 6 * dpr); x.fillStyle = '#dfe9f1'; x.fillText(nm, lx + 12 * dpr, 14 * dpr); lx += x.measureText(nm).width + 26 * dpr; }); }
+  function gdRender() { if (!gd) return; const G = sim.kpi.gran, K = sim.kpi, C = curves(); if (!G || !C) return; const f1 = (v) => fm(v, 1), f2 = (v) => fm(v, 2);
+    const P = (k, p) => dX(C[k], p), p80 = P('prod', .8), p50 = P('prod', .5), d10 = P('prod', .1), d60 = P('prod', .6), cu = d60 / Math.max(.01, d10), rom80 = P('rom', .8), fines = C.prod(.15) * 100, rr = rom80 / Math.max(.1, p80);
+    const st = gd.querySelector('.bd').scrollTop;
+    gd.querySelector('.bd').innerHTML = `<div class="kp">
+      <div><b>${f1(p80)} mm</b><span>P80 do produto = F80 da moagem</span></div><div><b>${f1(p50)} mm</b><span>P50 do produto (mediana)</span></div><div><b>${f1(rom80)} mm</b><span>P80 do ROM (TCLD)</span></div>
+      <div><b>${f1(rr)} : 1</b><span>Razão de redução global (P80 ROM ÷ P80 produto)</span></div><div class="${K.circ > 110 ? 'warn' : ''}"><b>${fm(K.circ)} %</b><span>Carga circulante</span></div><div class="${G.effM < 80 ? 'warn' : ''}"><b>${fm(G.effM)} %</b><span>Eficiência média das peneiras (Taggart)</span></div>
+      <div><b>${f1(fines)} %</b><span>Finos &lt; 0,15 mm no produto</span></div><div><b>${f1(cu)}</b><span>Coef. de uniformidade D60/D10 do produto</span></div><div><b>${fm(sim.css)} mm</b><span>APF dos HP 400</span></div></div>
+      <h4>Curvas acumuladas (passante × tamanho)</h4><canvas id="gdC" style="height:260px"></canvas>
+      <h4>Distribuição retida por faixa (peneiras padrão)</h4><canvas id="gdH" style="height:210px"></canvas>
+      <h4>Tamanhos característicos (mm)</h4><table><tr><th>Corrente</th><th>D10</th><th>D50</th><th>D80</th><th>D90</th></tr>
+        ${GC.map(([k, n, c]) => `<tr><td><span style="color:${c}">■</span> ${n}</td><td>${f2(P(k, .1))}</td><td>${f1(P(k, .5))}</td><td><b>${f1(P(k, .8))}</b></td><td>${f1(P(k, .9))}</td></tr>`).join('')}</table>
+      <h4>Análise por peneira · % passante acumulado</h4><table><tr><th>Peneira (mm)</th>${GC.map(([, n, c]) => `<th style="color:${c}">${n.replace(' das peneiras', '').replace(' → moagem', '')}</th>`).join('')}</tr>
+        ${SIEVES.map((a) => `<tr><td>${String(a).replace('.', ',')}</td>${GC.map(([k]) => `<td>${f1(C[k](a) * 100)}</td>`).join('')}</tr>`).join('')}</table>
+      <p class="hint">Modelo didático: curvas Rosin–Rammler (ROM truncado em 150 mm) fechadas pelo balanço de massa do circuito em dois estágios. Calibrar com análises granulométricas reais (peneiramento de amostras do ROM, das descargas dos britadores e do produto).</p>`;
+    gd.querySelector('.bd').scrollTop = st; granChart(gd.querySelector('#gdC')); gdHist(gd.querySelector('#gdH'), C); }
+  function openGran() { if (gd) { gdRender(); return; } gd = document.createElement('div'); gd.className = 's3gd'; gd.innerHTML = '<div class="hd"><h3>📊 Granulometria · detalhe do circuito</h3><button aria-label="Fechar">✕ Fechar</button></div><div class="bd"></div>';
+    root.appendChild(gd); gd.querySelector('.hd button').onclick = () => { gd.remove(); gd = null; clearInterval(gdT); }; gdRender(); clearInterval(gdT); gdT = setInterval(gdRender, 1500); }
 
 
   // ---- renderização periódica
