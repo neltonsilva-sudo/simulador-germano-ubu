@@ -1,4 +1,4 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261010160702';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261010161650';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -70,12 +70,17 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   // estado vindo do simulador: canal local (mesmo site) ou servidor (sites diferentes)
   let viaBC = 0, srvBusy = false;
   const applyState = (d) => { lastSync = performance.now(); sim.sync = true;
-    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; sim.extAl = Array.isArray(d.alarms) ? d.alarms : []; };
+    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
+    /* desgaste e liga/desliga de cada equipamento vêm do simulador (fonte única), exceto logo depois de um comando dado aqui */
+    if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now) continue; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; }
+    sim.extAl = (Array.isArray(d.alarms) ? d.alarms : []).filter((a) => !Object.keys(lk).some((t) => lk[t] > now && String(a.msg || '').indexOf(t) >= 0)); };
   try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; viaBC = performance.now(); applyState(d); }; } catch (e) { bc = null; }
   // sem canal local recente: busca o estado no servidor a cada 6 s (estado com até 30 s de idade)
   setInterval(() => { if (performance.now() - viaBC < 6000 || srvBusy || document.hidden) return; srvBusy = true;
     call('syncGet', ['state', getToken()], 1).then((r) => { srvBusy = false; if (r && r.d && Date.now() - r.t < 30000) applyState(r.d); }).catch(() => { srvBusy = false; }); }, 6000);
   const send = (set) => { if (!sim.sync) return; if (bc && performance.now() - viaBC < 6000) bc.postMessage({ type: 'set', set }); else call('syncPost', ['cmd', set, getToken()], 2).catch(() => {}); };
+  /* comando de equipamento (troca / liga-desliga) dado no gêmeo: vale aqui na hora e vai para o simulador */
+  sim.cmdEq = (tag, c) => { (sim._lock = sim._lock || {})[tag] = performance.now() + 20000; send({ eqCmd: Object.assign({ tag }, c) }); };
 
   // ---- controles (montados uma vez)
   const C = $('#pB_ctl');

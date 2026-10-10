@@ -1,12 +1,12 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261010160702';
-import { buildEqScreen } from './eqscreen.js?v=20261010160702';
-import { buildTour } from './tour.js?v=20261010160702';
-import { logEv } from './sim.js?v=20261010160702';
-import { SIM_URL } from './api.js?v=20261010160702';
-import { buildRiskMap } from './riskmap.js?v=20261010160702';
+import { buildPanels } from './panels.js?v=20261010161650';
+import { buildEqScreen } from './eqscreen.js?v=20261010161650';
+import { buildTour } from './tour.js?v=20261010161650';
+import { logEv } from './sim.js?v=20261010161650';
+import { SIM_URL } from './api.js?v=20261010161650';
+import { buildRiskMap } from './riskmap.js?v=20261010161650';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -97,7 +97,7 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
     const live = e ? `<div class="grid"><span>Estado</span><b>${stTxt[e.st]}</b><span>Vazão</span><b>${fm(e.flow)} t/h</b><span>Carga</span><b>${fm(e.load * 100)} %</b><span>Potência</span><b>${fm(e.kw)} kW</b>${e.k === 'pn' ? `<span>Eficiência de peneiramento</span><b>${fm(e.eff)} %</b>` : ''}<span>Vibração</span><b>${fm(e.vib, 1)} mm/s</b><span>Óleo / mancal</span><b>${fm(e.oil)} °C</b><span>Desgaste ${e.k === 'pn' ? 'do deck' : 'dos revestimentos'}</span><b>${fm(e.w)} %</b><span>Troca prevista</span><b>${isFinite(e.left) ? (e.left > 48 ? '≈ ' + fm(e.left / 24) + ' dias' : '≈ ' + fm(e.left) + ' h') : '–'}</b></div>
       <div class="act"><button data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button data-a="wear">Registrar troca</button></div>` : '';
     el.innerHTML = `<button aria-label="Fechar" data-a="x">×</button><h3>${h.tag}</h3><div style="color:#4a5866;margin-bottom:6px">${h.tipo}</div><div>${h.info}</div>${live}`;
-    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { const a = b.dataset.a; if (a === 'x') { el.hidden = true; infoTag = null; return; } if (a === 'tog') { e.on = !e.on; logEv('Comando', `${h.tag} ${e.on ? 'ligado' : 'desligado'}`); } if (a === 'wear') { e.w = 0; logEv('Manutenção', `${h.tag}: troca registrada`); } renderInfo(); });
+    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { const a = b.dataset.a; if (a === 'x') { el.hidden = true; infoTag = null; return; } if (a === 'tog') { e.on = !e.on; logEv('Comando', `${h.tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(h.tag, { on: e.on }); } if (a === 'wear') { e.w = 0; logEv('Manutenção', `${h.tag}: troca registrada`); sim.cmdEq && sim.cmdEq(h.tag, { troca: true }); } renderInfo(); });
   }
   // painéis do processo em cascata
   const flowEls = flowLabels.map((L) => { const d = document.createElement('div'); d.className = 's3flow ' + L.kind; try { d.textContent = L.text(sim.kpi); } catch (e) { /* sem dados ainda */ } root.appendChild(d); return { L, d }; });

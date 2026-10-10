@@ -1,4 +1,4 @@
-import { call } from './api.js?v=20261010160702';
+import { call } from './api.js?v=20261010161650';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -80,7 +80,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div><p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
-    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); } render(); });
+    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
   }
   // ORDEM DE SERVIÇO SIMULADA: gravada na mesma planilha do registro de inspeção (tipo "OS simulada")
   const OSST = {};   // situação da OS por equipamento (a tela é redesenhada a cada ~0,3 s)
