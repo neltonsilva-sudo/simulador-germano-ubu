@@ -2786,7 +2786,8 @@ function buildFlows(scene, M, opt = {}) {
 
 
 
-const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };
+const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };
+const MNT_W = 25;
 
 const MNT = {
   pn: { h: 8, pecas: 'Telas de poliuretano do 1º e do 2º deck', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Limpeza e inspeção dos decks e da estrutura', 'Troca das telas de poliuretano do 1º e do 2º deck', 'Reaperto dos parafusos e inspeção das molas', 'Vibrador: rolamentos e lubrificação', 'Teste a vazio e liberação para operação'] },
@@ -2794,8 +2795,8 @@ const MNT = {
   vsi: { h: 6, pecas: 'Pontas do rotor e placas de desgaste', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Abertura da tampa e inspeção do rotor', 'Troca das pontas do rotor e das placas de desgaste', 'Balanceamento do rotor', 'Correias e rolamentos', 'Teste a vazio e liberação para operação'] } };
 function startMnt(e) { e.mnt = { h: 0, dur: MNT[e.k].h, w0: e.w, h0: e.health, f0: e.flow || 0 }; e.on = false; }
 function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null; const M = MNT[e.k];
-  e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false };
-  e.w = 0; e.mnt = null; return e.lastMnt; }
+  e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false, wf: Math.min(m.w0 != null ? m.w0 : e.w, MNT_W) };
+  e.w = e.lastMnt.wf; e.mnt = null; return e.lastMnt; }
 const CAP = { pn: 1500, cone: 800, vsi: 750 };
 const sim = {
   feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
@@ -2980,7 +2981,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261011073219';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261015221046';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5251,7 +5252,7 @@ function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REM
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
 function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
-  for(const t in s.eq){const r=s.eq[t].lastMnt;if(r&&!r.logged){r.logged=true;logEvent('Manutenção',`${t}: manutenção concluída em ${fmt(r.h,1)} h · ${r.pecas} · desgaste ${fmt(r.w0,0)} % → 0 %`);}}
+  for(const t in s.eq){const r=s.eq[t].lastMnt;if(r&&!r.logged){r.logged=true;logEvent('Manutenção',`${t}: manutenção concluída em ${fmt(r.h,1)} h · ${r.pecas} · desgaste ${fmt(r.w0,0)} % → ${fmt(r.wf!=null?r.wf:25,0)} %`);}}
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
   if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}TW3_ACC.sim+=dt;TW3_ACC.up+=dt;TW3_ACC.calc+=dt;
   if(!TW3_ACC.pos){TW3_ACC.pos=new THREE.Vector3();S3.group.getWorldPosition(TW3_ACC.pos);}

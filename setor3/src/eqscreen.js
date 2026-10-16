@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261010202929';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261010202929';
+import { call } from './api.js?v=20261015221103';
+import { MNT, startMnt, finishMnt } from './sim.js?v=20261015221103';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -85,7 +85,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
     el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'mnt') { startMnt(e); logEv('Manutenção', `${tag} em manutenção: desligado e bloqueado (plano de ${MNT[e.k].h} h)`); sim.cmdEq && sim.cmdEq(tag, { mnt: true }); render(); return; }
-      if (b.dataset.a === 'mfin') { const r = finishMnt(tag, e, true); if (r) r.sent = true; sim.cmdEq && sim.cmdEq(tag, { mnt: false, troca: true }); render(); checkRep(); return; }
+      if (b.dataset.a === 'mfin') { const r = finishMnt(tag, e, true); if (r) r.sent = true; sim.cmdEq && sim.cmdEq(tag, { mnt: false }); render(); checkRep(); return; }
       if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
   }
   // ORDEM DE SERVIÇO SIMULADA: gravada na mesma planilha do registro de inspeção (tipo "OS simulada")
@@ -110,7 +110,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
   function showRep(r) { const e = sim.eq[r.tag], d = document.createElement('div'); d.className = 's3mrep';
     const nm = { pn: 'Peneira', cone: 'Britador cônico HP 400', vsi: 'Britador Barmac' }[r.k] || 'Equipamento';
     d.innerHTML = `<div class="bx" role="dialog" aria-label="Relatório de manutenção"><h3>✅ Manutenção concluída · ${nm} ${r.tag}</h3><small style="color:#9fb0bd">${r.early ? 'Encerrada antes do fim do plano pelo operador' : 'Plano de manutenção executado'} · modelo didático</small>
-      <table><tr><td>Duração</td><td>${fm(r.h, 1)} h (plano ${fm(r.dur)} h)</td></tr><tr><td>Desgaste</td><td>${fm(r.w0)} % → 0 %</td></tr><tr><td>Saúde do ativo</td><td>${r.h0 != null ? r.h0 + ' → ≈ 100 após a partida' : 'recuperada após a partida'}</td></tr>
+      <table><tr><td>Duração</td><td>${fm(r.h, 1)} h (plano ${fm(r.dur)} h)</td></tr><tr><td>Desgaste</td><td>${fm(r.w0)} % → ${fm(r.wf != null ? r.wf : 25)} %</td></tr><tr><td>Saúde do ativo</td><td>${r.h0 != null ? r.h0 + ' → ≈ 100 após a partida' : 'recuperada após a partida'}</td></tr>
       <tr><td>Peças trocadas</td><td>${r.pecas}</td></tr>${r.prox ? `<tr><td>Próxima troca prevista</td><td>≈ ${r.prox > 48 ? fm(r.prox / 24) + ' dias' : fm(r.prox) + ' h'} de operação</td></tr>` : ''}</table>
       <b>Atividades realizadas</b><ul>${r.at.map((x) => `<li>${x}</li>`).join('')}</ul>
       <small style="color:#9fb0bd">Bloqueio retirado: o equipamento está liberado, porém desligado. Os alarmes voltam ao serviço na partida.</small>
@@ -118,8 +118,8 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     root.appendChild(d); const cl = () => d.remove();
     d.querySelector('[data-r="x"]').onclick = cl; d.addEventListener('click', (ev) => { if (ev.target === d) cl(); });
     d.querySelector('[data-r="on"]').onclick = () => { if (e && !e.mnt) { e.on = true; logEv('Comando', `${r.tag} ligado após a manutenção`); sim.cmdEq && sim.cmdEq(r.tag, { on: true }); } cl(); render(); };
-    logEv('Manutenção', `${r.tag}: manutenção concluída em ${fm(r.h, 1)} h · ${r.pecas} trocadas · desgaste ${fm(r.w0)} % → 0 %`); }
-  function checkRep() { for (const t in sim.eq) { const r = sim.eq[t].lastMnt; if (r && !r.sent) { r.sent = true; if (!r.early) sim.cmdEq && sim.cmdEq(t, { mnt: false, troca: true }); } if (r && !r.shown) { r.shown = true; showRep(r); } } }
+    logEv('Manutenção', `${r.tag}: manutenção concluída em ${fm(r.h, 1)} h · ${r.pecas} trocadas · desgaste ${fm(r.w0)} % → ${fm(r.wf != null ? r.wf : 25)} %`); }
+  function checkRep() { for (const t in sim.eq) { const r = sim.eq[t].lastMnt; if (r && !r.sent) { r.sent = true; if (!r.early) sim.cmdEq && sim.cmdEq(t, { mnt: false }); } if (r && !r.shown) { r.shown = true; showRep(r); } } }
   function open(t) { feeder = /AL/.test(t); tag = t.replace('AL', 'PN'); if (!sim.eq[tag]) return false; el.hidden = false; render(); markSel(tag); return true; }
   function close() { el.hidden = true; tag = null; markSel(null); }
   let k = 0;

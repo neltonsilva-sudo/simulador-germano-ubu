@@ -1,9 +1,10 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 8 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261010202929';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261015221103';
 
-const LIFE = { pn: 2.5e6, cone: 1.2e6, vsi: 5e5 };
+const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
+export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova
 // MANUTENÇÃO: duração planejada (h simuladas), peças e atividades por tipo de equipamento (ilustrativo)
 export const MNT = {
   pn: { h: 8, pecas: 'Telas de poliuretano do 1º e do 2º deck', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Limpeza e inspeção dos decks e da estrutura', 'Troca das telas de poliuretano do 1º e do 2º deck', 'Reaperto dos parafusos e inspeção das molas', 'Vibrador: rolamentos e lubrificação', 'Teste a vazio e liberação para operação'] },
@@ -11,8 +12,8 @@ export const MNT = {
   vsi: { h: 6, pecas: 'Pontas do rotor e placas de desgaste', at: ['Bloqueio e etiquetagem (LOTO) e teste de energia zero', 'Abertura da tampa e inspeção do rotor', 'Troca das pontas do rotor e das placas de desgaste', 'Balanceamento do rotor', 'Correias e rolamentos', 'Teste a vazio e liberação para operação'] } };
 export function startMnt(e) { e.mnt = { h: 0, dur: MNT[e.k].h, w0: e.w, h0: e.health, f0: e.flow || 0 }; e.on = false; }
 export function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null; const M = MNT[e.k];
-  e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false };
-  e.w = 0; e.mnt = null; return e.lastMnt; }            // t de material por troca de revestimento/deck (ilustrativo)
+  e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false, wf: Math.min(m.w0 != null ? m.w0 : e.w, MNT_W) };
+  e.w = e.lastMnt.wf; e.mnt = null; return e.lastMnt; }            // t de material por troca de revestimento/deck (ilustrativo)
 const CAP = { pn: 1500, cone: 800, vsi: 750 };                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
 export const sim = {
   feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
