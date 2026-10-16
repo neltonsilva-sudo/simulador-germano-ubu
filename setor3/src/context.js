@@ -4,10 +4,10 @@
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 // Regra de vizinhança: nada do entorno a menos de ~25 m das paredes do setor 3 (x 0–64, z 0–24), exceto correias e estradas.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261015232026';
-import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261015232026';
-import { mergeStatic } from './merge.js?v=20261015232026';
-import { HIGH } from './render.js?v=20261015232026';
+import { B } from './layout.js?v=20261015235448';
+import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261015235448';
+import { mergeStatic } from './merge.js?v=20261015235448';
+import { HIGH } from './render.js?v=20261015235448';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
@@ -80,17 +80,27 @@ function macroNoise(N = 256) {
   const at = (ch, u, v) => { const x = ((u % 1) + 1) % 1 * N, y = ((v % 1) + 1) % 1 * N; return chans[ch][(Math.floor(y) % N) * N + (Math.floor(x) % N)]; };
   return { tex: t, at };
 }
-// junta geometrias coloridas (vértices não indexados, normais facetadas) para a vegetação instanciada
+// junta geometrias coloridas (vértices não indexados, normais facetadas) para a vegetação instanciada;
+// sombreamento interno por parte (base da copa mais escura = oclusão) e leve variação por vértice
 function colGeo(parts) {
   const pos = [], nor = [], col = [];
-  for (const [geo, hex, m4] of parts) {
-    const gg = (geo.index ? geo.toNonIndexed() : geo.clone()).applyMatrix4(m4); gg.deleteAttribute('normal'); gg.computeVertexNormals();
-    const c = colL(hex), P = gg.attributes.position, N = gg.attributes.normal;
-    for (let i = 0; i < P.count; i++) { pos.push(P.getX(i), P.getY(i), P.getZ(i)); nor.push(N.getX(i), N.getY(i), N.getZ(i)); col.push(c.r, c.g, c.b); }
+  for (const [geo, hex, m4, lo = 1] of parts) {
+    const gg = (geo.index ? geo.toNonIndexed() : geo.clone()).applyMatrix4(m4); gg.deleteAttribute('normal'); gg.computeVertexNormals(); gg.computeBoundingBox();
+    const c = colL(hex), P = gg.attributes.position, N = gg.attributes.normal, y0 = gg.boundingBox.min.y, y1 = gg.boundingBox.max.y;
+    for (let i = 0; i < P.count; i++) { const t = (P.getY(i) - y0) / Math.max(1e-3, y1 - y0), k = (lo + (1 - lo) * t) * (.92 + .16 * hsh(i * .91 + P.getX(i)));
+      pos.push(P.getX(i), P.getY(i), P.getZ(i)); nor.push(N.getX(i), N.getY(i), N.getZ(i)); col.push(c.r * k, c.g * k, c.b * k); }
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   return g;
 }
+// copa irregular: icosaedro com vértices deslocados de forma coerente (vértices coincidentes recebem o mesmo deslocamento)
+function blobGeo(r, det, seed) {
+  const gg = new THREE.IcosahedronGeometry(r, det), P = gg.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); const k = Math.round(v.x / r * 50) * 1.31 + Math.round(v.y / r * 50) * 7.13 + Math.round(v.z / r * 50) * 3.77 + seed * 11.1, q = Math.sin(k) * 43758.5453;
+    v.multiplyScalar(.78 + .4 * (q - Math.floor(q))); if (v.y < 0) v.y *= .55; P.setXYZ(i, v.x, v.y, v.z); }
+  return gg;
+}
+const TRSR = (x, y, z, sx, sy, sz, rx = 0, ry = 0, rz = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
 const TRS = (x, y, z, sx = 1, sy = 1, sz = 1) => new THREE.Matrix4().compose(V(x, y, z), new THREE.Quaternion(), V(sx, sy, sz));
 
 export function buildContext(scene, M, root) {
@@ -99,7 +109,15 @@ export function buildContext(scene, M, root) {
   const grain = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#c8c8c8'; x.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 9000; i++) { const v = 175 + Math.random() * 80 | 0; x.fillStyle = `rgb(${v},${v},${v})`; const r = Math.random() < .1 ? 2.5 : 1.2; x.fillRect(Math.random() * 256, Math.random() * 256, r, r); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; })();
-  const pileMat = () => new THREE.MeshStandardMaterial({ vertexColors: true, map: grain, roughness: 1, metalness: 0 });
+  // textura de escorregamento das pilhas: estrias contínuas ao longo do talude (v = descida), grãos e blocos rolados
+  const slideT = ctex(512, 512, (x, w, h) => { x.fillStyle = '#c4c4c4'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 260; i++) { const u = rr() * w, sw = 1 + rr() * rr() * 9, v = 150 + rr() * 90 | 0, a = .25 + rr() * .4, y0 = rr() * h, len = h * (.25 + rr() * .9);
+      const gr = x.createLinearGradient(0, y0, 0, y0 + len); gr.addColorStop(0, `rgba(${v},${v},${v},0)`); gr.addColorStop(.3, `rgba(${v},${v},${v},${a})`); gr.addColorStop(1, `rgba(${v},${v},${v},0)`); x.fillStyle = gr;
+      for (const oy of [-h, 0]) { x.beginPath(); x.moveTo(u, y0 + oy); for (let k = 1; k <= 8; k++) x.lineTo(u + Math.sin(k * 1.3 + i) * 1.5 + sw * (k / 8) * .4, y0 + oy + len * k / 8); for (let k = 8; k >= 0; k--) x.lineTo(u + sw + Math.sin(k * 1.3 + i) * 1.5 + sw * (k / 8) * .4, y0 + oy + len * k / 8); x.fill(); } }
+    for (let i = 0; i < 7000; i++) { const v = 150 + rr() * 100 | 0; x.fillStyle = `rgba(${v},${v},${v},.7)`; const r = rr() < .08 ? 2.4 : 1.1; x.fillRect(rr() * w, rr() * h, r, r * (1 + rr())); }
+    for (let i = 0; i < 160; i++) { const px = rr() * w, py = rr() * h, r = 2 + rr() * 3.5; x.fillStyle = 'rgba(70,70,70,.5)'; x.beginPath(); x.ellipse(px, py + r * .5, r, r * .7, 0, 0, 6.283); x.fill(); x.fillStyle = `rgba(${215 + rr() * 30 | 0},${210 + rr() * 30 | 0},${205 + rr() * 30 | 0},.8)`; x.beginPath(); x.ellipse(px, py, r * .9, r * .65, rr(), 0, 6.283); x.fill(); } });
+  const slideB = slideT.clone(); slideB.colorSpace = THREE.NoColorSpace; slideB.needsUpdate = true;
+  const pileMat = () => new THREE.MeshStandardMaterial({ vertexColors: true, map: slideT, bumpMap: slideB, bumpScale: 1.6, roughness: 1, metalness: 0 });
   function pileTexMat() { return pileMat(); }
   const addOcc = (x, y, z, w, h, d) => occ.push(new THREE.Box3(new THREE.Vector3(x - w / 2, y - h / 2, z - d / 2), new THREE.Vector3(x + w / 2, y + h / 2, z + d / 2)));
   const mat = (c, r = .85, m = .1, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, ...o });
@@ -122,35 +140,54 @@ export function buildContext(scene, M, root) {
   const A = AREAS.mina, PR = 40, PD = 26, NB = 5, BH = PD / NB, WH = 2.8, BWm = 3.0, PER = WH + BWm, RB = PR - NB * PER;   // cava: raio, profundidade, bancadas
   const GC = { x: 40, z: 10 }, GR = 260;                                                                                       // centro/raio do terreno plano
   const MN = macroNoise(256);
+  // pátios compactados (acessos de caminhões/manutenção em torno das instalações): solo claro, empoeirado e sem capim
+  const YARDS = [[-22, -34, 96, 46], [2, 34, 80, 98], [86, -28, 146, 52], [134, 30, 226, 108], [48, 92, 100, 134], [168, -36, 212, -4], [A.x + 30, A.z - 12, A.x + 72, A.z + 42]];
   const groundT = ctex(1024, 1024, (x, s) => {
-    x.fillStyle = '#7b4a33'; x.fillRect(0, 0, s, s);
-    for (let i = 0; i < 240; i++) { const cx = rr() * s, cy = rr() * s, r = 8 + rr() * 60, k = rr(), c = k < .3 ? '150,104,66' : k < .6 ? '88,50,34' : '128,74,46'; const gr = x.createRadialGradient(cx, cy, 0, cx, cy, r); gr.addColorStop(0, `rgba(${c},${.15 + rr() * .25})`); gr.addColorStop(1, `rgba(${c},0)`); x.fillStyle = gr;
+    x.fillStyle = '#6f4332'; x.fillRect(0, 0, s, s);
+    // manchas: hematita arroxeada, laterita vermelha, goethita ocre e poeira clara
+    for (let i = 0; i < 260; i++) { const cx = rr() * s, cy = rr() * s, r = 8 + rr() * 60, k = rr(), c = k < .22 ? '150,108,72' : k < .5 ? '76,48,40' : k < .7 ? '92,70,66' : '126,74,48'; const gr = x.createRadialGradient(cx, cy, 0, cx, cy, r); gr.addColorStop(0, `rgba(${c},${.15 + rr() * .25})`); gr.addColorStop(1, `rgba(${c},0)`); x.fillStyle = gr;
       for (const ox of [-s, 0, s]) for (const oy of [-s, 0, s]) if (Math.abs(cx + ox - s / 2) < s / 2 + r && Math.abs(cy + oy - s / 2) < s / 2 + r) x.fillRect(cx + ox - r, cy + oy - r, 2 * r, 2 * r); }
-    for (let i = 0; i < 9000; i++) { const px = rr() * s, py = rr() * s, r = .6 + rr() * rr() * 3.2, v = rr(); x.fillStyle = v < .5 ? 'rgba(58,34,24,.5)' : v < .8 ? 'rgba(172,124,88,.55)' : 'rgba(122,112,106,.55)'; x.beginPath(); x.arc(px, py, r, 0, 6.283); x.fill(); }
-    x.strokeStyle = 'rgba(48,28,20,.3)'; x.lineWidth = 1; for (let i = 0; i < 70; i++) { let px = rr() * s, py = rr() * s; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 10; k++) { px += (rr() - .5) * 14; py += (rr() - .5) * 14; x.lineTo(px, py); } x.stroke(); }
-    const id = x.getImageData(0, 0, s, s), d = id.data; for (let i = 0; i < d.length; i += 4) { const n = (rr() - .5) * 16; d[i] += n; d[i + 1] += n * .9; d[i + 2] += n * .85; } x.putImageData(id, 0, 0);
+    // cascalho: grãos escuros, claros e fragmentos cinza de itabirito (com sombra própria embaixo)
+    for (let i = 0; i < 11000; i++) { const px = rr() * s, py = rr() * s, r = .6 + rr() * rr() * 3.4, v = rr();
+      if (r > 2) { x.fillStyle = 'rgba(30,18,12,.45)'; x.beginPath(); x.ellipse(px + .8, py + 1, r, r * .8, 0, 0, 6.283); x.fill(); }
+      x.fillStyle = v < .45 ? 'rgba(54,32,24,.5)' : v < .75 ? 'rgba(170,124,90,.55)' : v < .9 ? 'rgba(118,108,104,.6)' : 'rgba(196,160,112,.5)'; x.beginPath(); x.arc(px, py, r, 0, 6.283); x.fill(); }
+    // fissuras de ressecamento e pequenos sulcos de escoamento
+    x.strokeStyle = 'rgba(42,24,18,.32)'; x.lineWidth = 1; for (let i = 0; i < 90; i++) { let px = rr() * s, py = rr() * s; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 10; k++) { px += (rr() - .5) * 14; py += (rr() - .5) * 14; x.lineTo(px, py); } x.stroke(); }
+    x.strokeStyle = 'rgba(48,28,20,.18)'; x.lineWidth = 2.5; for (let i = 0; i < 14; i++) { let px = rr() * s, py = rr() * s, a = rr() * 6.283; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 30; k++) { a += (rr() - .5) * .7; px += Math.cos(a) * 6; py += Math.sin(a) * 6; x.lineTo(px, py); } x.stroke(); }
+    const id = x.getImageData(0, 0, s, s), d = id.data; for (let i = 0; i < d.length; i += 4) { const n = (rr() - .5) * 18; d[i] += n; d[i + 1] += n * .9; d[i + 2] += n * .85; } x.putImageData(id, 0, 0);
   });
   const groundMat = new THREE.MeshStandardMaterial({ map: groundT, vertexColors: true, roughness: 1, metalness: 0 });
   groundMat.onBeforeCompile = (sh) => {
-    sh.uniforms.uMacro = { value: MN.tex };
+    sh.uniforms.uMacro = { value: MN.tex }; sh.uniforms.uYard = { value: YARDS.map((r) => new THREE.Vector4(...r)) };
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWpG;')
       .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n\tvWpG = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWpG;\nuniform sampler2D uMacro;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vWpG;\nuniform sampler2D uMacro;\nuniform vec4 uYard[${YARDS.length}];`)
       .replace('#include <map_fragment>', `
         vec2 wq = vWpG.xz;
         vec3 t1 = texture2D( map, wq / 7.0 ).rgb;
         vec3 t2 = texture2D( map, mat2( .8, -.6, .6, .8 ) * wq / 19.0 + .37 ).rgb;
         vec3 t3 = texture2D( map, mat2( .28, .96, -.96, .28 ) * wq / 53.0 + .71 ).rgb;
         vec3 gd = t1 * .45 + t2 * .35 + t3 * .2;
-        vec4 m1 = texture2D( uMacro, wq / 310.0 ), m2 = texture2D( uMacro, wq / 87.0 + .5 );
-        float ma = m1.r * .6 + m2.r * .4;
-        gd *= mix( vec3( .70, .68, .70 ), vec3( 1.30, 1.17, 1.02 ), ma );
-        float gm = smoothstep( .56, .76, m1.g * .55 + m2.g * .45 + ( t2.g - t2.r ) * .5 );
+        vec4 m1 = texture2D( uMacro, wq / 310.0 ), m2 = texture2D( uMacro, wq / 87.0 + .5 ), m3 = texture2D( uMacro, wq / 23.0 + .21 );
+        float ma = m1.r * .55 + m2.r * .3 + m3.r * .15;
+        // três litologias em manchas grandes: hematita arroxeada escura → laterita vermelha → goethita/poeira ocre
+        vec3 tnt = ma < .5 ? mix( vec3( .60, .50, .53 ), vec3( 1.0, .90, .84 ), smoothstep( .18, .5, ma ) ) : mix( vec3( 1.0, .90, .84 ), vec3( 1.30, 1.12, .86 ), smoothstep( .5, .86, ma ) );
+        gd *= tnt;
+        float cg = smoothstep( .64, .82, m2.b * .6 + m1.b * .4 );                                   // canga cinza
+        gd = mix( gd, vec3( dot( gd, vec3( .3, .5, .2 ) ) ) * vec3( 1.02, .95, .92 ), cg * .45 );
+        // pátios compactados: borda irregular, mais claros e empoeirados, sem capim
+        vec2 yq = wq + ( m2.gb - .5 ) * 16.0 + ( m3.rg - .5 ) * 5.0; float yd = 0.0;
+        for ( int i = 0; i < ${YARDS.length}; i ++ ) { vec2 dd = max( uYard[ i ].xy - yq, yq - uYard[ i ].zw ); yd = max( yd, 1.0 - smoothstep( -5.0, 3.0, max( dd.x, dd.y ) ) ); }
+        float lm = dot( gd, vec3( .3, .55, .15 ) );
+        gd = mix( gd, mix( vec3( lm ) * vec3( 1.30, 1.02, .82 ), gd, .45 ) * ( 1.06 + .1 * m3.g ), yd * .8 );
+        float gm = smoothstep( .56, .76, m1.g * .55 + m2.g * .45 + ( t2.g - t2.r ) * .5 ) * ( 1.0 - yd );
         vec3 gc = mix( vec3( .060, .074, .026 ), vec3( .15, .12, .055 ), m2.b ) * ( .8 + .6 * t1.g / max( t1.r, .02 ) );
         gd = mix( gd, gc, gm * .75 );
+        gd = mix( vec3( dot( gd, vec3( .3, .55, .15 ) ) ), gd, .88 );                               // menos saturado (pó)
         diffuseColor.rgb *= gd;`);
   };
-  groundMat.customProgramCacheKey = () => 'ctxGround';
+  groundMat.customProgramCacheKey = () => 'ctxGround2';
+  const yardAt = (x, z) => { let y = 0; for (const r of YARDS) { const d = Math.max(r[0] - x, x - r[2], r[1] - z, z - r[3]); y = Math.max(y, 1 - smooth(-5, 3, d)); } return y; };
   const grassMask = (x, z) => MN.at(1, x / 310, z / 310) * .55 + MN.at(1, x / 87 + .5, z / 87 + .5) * .45;
   // terreno plano (disco) com a abertura da cava
   {
@@ -161,22 +198,28 @@ export function buildContext(scene, M, root) {
     const ground = new THREE.Mesh(gg, groundMat); ground.position.y = -.03; ground.receiveShadow = true; ground.userData.keep = true; g.add(ground);
   }
   // morros do horizonte próximo (anel), com mata mais densa no alto
-  const hillH = (r, th) => { const a = smooth(GR + 2, 330, r), b = smooth(320, 420, r);
-    const n1 = .5 + .5 * Math.sin(th * 5 + 1.3) * Math.sin(th * 2.3 + .4), n2 = .5 + .5 * Math.sin(th * 9 + 2) * Math.cos(th * 3.7);
-    return -.3 + .3 * smooth(GR - .5, GR + 3, r) + a * (4 + 12 * n1 + 3 * n2) + b * (8 + 18 * n2); };
+  // relevo dos morros: ondulações periódicas em θ + cristas (1-|sen|) em várias escalas → silhueta irregular, sem padrão
+  const ridgeN = (th, r) => { let v = 0, a = 1, t = 0; for (const [k, ph] of [[7, .3], [11, 1.7], [17, 2.9], [29, .8], [43, 4.1]]) { v += a * (1 - Math.abs(Math.sin(th * k * .5 + ph + r * .006 * k / 7))); t += a; a *= .55; } return v / t; };
+  const hillH = (r, th) => { const a = smooth(GR + 2, 330, r), b = smooth(320, 430, r);
+    const n1 = .5 + .5 * Math.sin(th * 5 + 1.3) * Math.sin(th * 2.3 + .4), n2 = .5 + .5 * Math.sin(th * 9 + 2) * Math.cos(th * 3.7), rn = ridgeN(th, r);
+    return -.3 + .3 * smooth(GR - .5, GR + 3, r) + a * (3 + 10 * n1 + 3 * n2 + 5 * rn) + b * (6 + 16 * n2 + 14 * rn * rn); };
   {
-    const RS = [], NT = 256; for (let r = GR - .5; r < 300; r += 2.5) RS.push(r); for (let r = 300; r <= 430; r += 8) RS.push(r);
-    const pos = [], col = [], idx = [], forest = colL('#4a6a3a'), dry = colL('#9a8a5a');
+    const RS = [], NT = 384; for (let r = GR - .5; r < 300; r += 2.5) RS.push(r); for (let r = 300; r <= 440; r += 7) RS.push(r);
+    const pos = [], col = [], idx = [];
     for (let i = 0; i < RS.length; i++) for (let j = 0; j <= NT; j++) {
       const th = j / NT * Math.PI * 2, r = RS[i], y = hillH(r, th); pos.push(GC.x + Math.cos(th) * r, y, GC.z + Math.sin(th) * r);
       const veg = smooth(GR + 4, GR + 45, r), f = smooth(.3, .7, .5 + .5 * Math.sin(th * 13 + r * .04) * Math.cos(th * 4.1 - r * .02));
-      const tR = .55 - .25 * f, tG = 1.25 - .3 * f, tB = .8 - .2 * f;      // tinge o solo laterítico para capim/mata (multiplica o detalhe do material)
-      col.push(1 + (tR - 1) * veg, 1 + (tG - 1) * veg, 1 + (tB - 1) * veg);
+      // mata nas grotas e topos (escura), pasto/capim seco nas encostas (amarelado), cicatrizes de solo exposto (laterita)
+      const pas = smooth(.55, .8, .5 + .5 * Math.sin(th * 7.3 + r * .03 + 1.1) * Math.sin(th * 3.1 - r * .017)) * (1 - f);
+      const scar = smooth(.86, .95, .5 + .5 * Math.sin(th * 19 + r * .05) * Math.sin(th * 5.3 + 2.2)) * smooth(GR + 20, 300, r);
+      let tR = .55 - .27 * f, tG = 1.25 - .32 * f, tB = .8 - .22 * f;
+      tR += pas * .35; tG += pas * .05; tB -= pas * .08;
+      const k = veg * (1 - scar * .85), sh = .9 + .2 * hsh(i * 31 + j * .7);
+      col.push((1 + (tR - 1) * k) * sh, (1 + (tG - 1) * k) * sh, (1 + (tB - 1) * k) * sh);
     }
     for (let i = 0; i < RS.length - 1; i++) for (let j = 0; j < NT; j++) { const a = i * (NT + 1) + j, b = a + NT + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
     const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); hg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); hg.setIndex(idx); hg.computeVertexNormals();
     const hills = new THREE.Mesh(hg, groundMat); hills.userData.keep = true; hills.receiveShadow = true; g.add(hills);
-    void forest; void dry;
   }
 
   // ================= 1 · CAVA =================
@@ -226,6 +269,18 @@ export function buildContext(scene, M, root) {
     }
     pg.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
     const pit = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ vertexColors: true, map: grain, roughness: .97, metalness: 0 })); pit.userData.keep = true; pit.receiveShadow = true; g.add(pit);
+  }
+  { // tálus: blocos desprendidos no pé de cada talude (fora da rampa) e no fundo da cava
+    const NRk = HIGH ? 900 : 420, rk = new THREE.InstancedMesh(rockGeometry(1, 2), new THREE.MeshStandardMaterial({ roughness: .95, metalness: .05 }), NRk);
+    const rp = ['#5e5052', '#7d4a36', '#8f7254', '#4d4446', '#6b5e5c', '#9a7a62'].map(colL), m4r = new THREE.Matrix4(), qr = new THREE.Quaternion(), er = new THREE.Euler(), cr = new THREE.Color(); let k = 0, guard = 0;
+    while (k < NRk && guard++ < NRk * 8) {
+      const kb = Math.floor(rr() * (NB + .4)), th = rr() * 6.283, flo = kb >= NB;
+      const r = flo ? rr() * (RB - 1) : PR - (kb * PER + WH) - .3 - Math.pow(rr(), 2.2) * 2.2, m = pitAt(r, th); if (m.w > .05 || m.wall) continue;
+      const sc = (.18 + Math.pow(rr(), 2.5) * (flo ? .9 : 1.4)), y = m.y + sc * .25;
+      m4r.compose(V(A.x + Math.cos(th) * r, y, A.z + Math.sin(th) * r), qr.setFromEuler(er.set(rr() * 3, rr() * 6.3, rr() * 3)), V(sc * (.8 + rr() * .5), sc * (.6 + rr() * .4), sc * (.8 + rr() * .5)));
+      rk.setMatrixAt(k, m4r); rk.setColorAt(k, cr.copy(rp[Math.floor(rr() * rp.length)]).multiplyScalar(.8 + rr() * .35)); k++;
+    }
+    rk.count = k; rk.computeBoundingSphere(); rk.receiveShadow = true; g.add(rk);
   }
   // fundo: poça de água de drenagem e frente de lavra com escavadeira carregando um caminhão
   const thEnd = TH0 + TT;
@@ -488,21 +543,94 @@ export function buildContext(scene, M, root) {
   const ar = new THREE.Mesh(pileGeo(16, 9, 11, { base: [.36, .28, .18], dark: [.27, .2, .13], wet: [.22, .17, .11] }), pileMat()); ar.position.set(Sf.x + 58, 0, Sf.z + 10); g.add(ar);   // afastada do galpão (≈ 27 m livres até a escada)
   predio(A.x + 38, A.z + 28, 12, 9, 10, { cor: '#7a7570', lantern: false, gates: [{ f: 'w', u: A.z + 28, gw: 5, gh: 5 }] });
 
-  // ================= ESTRADAS =================
-  // cascalho compactado com 4 trilhas de pneu, bordas de material solto e leiras laterais
-  const roadT = ctex(256, 1024, (x, w, h) => { x.fillStyle = '#8e7866'; x.fillRect(0, 0, w, h);
-    for (let i = 0; i < 9000; i++) { const v = rr(); x.fillStyle = v < .5 ? 'rgba(70,48,36,.35)' : 'rgba(190,170,150,.35)'; x.fillRect(rr() * w, rr() * h, 1 + rr() * 2, 1 + rr() * 2); }
-    for (const [k, u] of [[0, .2], [1, .34], [2, .66], [3, .8]]) for (let y = 0; y < h; y += 2) { const off = Math.sin(y * .012 + k) * 4 + Math.sin(y * .05 + k * 3); x.fillStyle = `rgba(62,44,34,${.16 + rr() * .1})`; x.fillRect(u * w - 9 + off, y, 18, 2); x.fillStyle = 'rgba(40,28,22,.1)'; x.fillRect(u * w - 9 + off + (y % 8 < 4 ? 2 : 10), y, 4, 2); }
-    for (const s of [0, 1]) { const gr = x.createLinearGradient(s ? w : 0, 0, s ? w - 26 : 26, 0); gr.addColorStop(0, 'rgba(110,64,42,.75)'); gr.addColorStop(1, 'rgba(110,64,42,0)'); x.fillStyle = gr; x.fillRect(s ? w - 26 : 0, 0, 26, h); } });
+  // ================= ESTRADAS, LEIRAS, DRENAGEM, MARCAS DE PNEU E POÇAS =================
+  // acesso de laterita compactada: trilhas de rodagem largas e lisas, cascalho solto no centro e nas bordas, sem "tábuas"
+  const roadT = ctex(256, 1024, (x, w, h) => { x.fillStyle = '#86624e'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 60; i++) { const cy = rr() * h, cx = rr() * w, r = 20 + rr() * 60, gr = x.createRadialGradient(cx, cy, 0, cx, cy, r), c = rr() < .5 ? '110,72,52' : '150,118,92'; gr.addColorStop(0, `rgba(${c},.25)`); gr.addColorStop(1, `rgba(${c},0)`); x.fillStyle = gr; for (const oy of [-h, 0, h]) x.fillRect(cx - r, cy - r + oy, 2 * r, 2 * r); }
+    for (const [k, u] of [[0, .27], [1, .73]]) for (let y = 0; y < h; y += 4) { const off = Math.sin(y / h * 6.283 * 2 + k) * 5 + Math.sin(y / h * 6.283 * 7 + k * 3) * 1.5;
+      const gr = x.createLinearGradient(u * w - 30 + off, 0, u * w + 30 + off, 0); gr.addColorStop(0, 'rgba(70,46,34,0)'); gr.addColorStop(.3, 'rgba(70,46,34,.22)'); gr.addColorStop(.7, 'rgba(70,46,34,.22)'); gr.addColorStop(1, 'rgba(70,46,34,0)'); x.fillStyle = gr; x.fillRect(u * w - 30 + off, y, 60, 4); }
+    for (let i = 0; i < 12000; i++) { const px = rr() * w, py = rr() * h, cen = Math.min(Math.abs(px / w - .27), Math.abs(px / w - .73)) > .1, v = rr(); if (!cen && rr() < .6) continue;
+      x.fillStyle = v < .45 ? 'rgba(62,40,30,.45)' : v < .8 ? 'rgba(176,144,116,.45)' : 'rgba(120,112,108,.5)'; x.fillRect(px, py, 1 + rr() * 2.2, 1 + rr() * 2.2); }
+    for (const s of [0, 1]) { const gr = x.createLinearGradient(s ? w : 0, 0, s ? w - 34 : 34, 0); gr.addColorStop(0, 'rgba(104,60,40,.8)'); gr.addColorStop(1, 'rgba(104,60,40,0)'); x.fillStyle = gr; x.fillRect(s ? w - 34 : 0, 0, 34, h); } });
   const roadM = new THREE.MeshStandardMaterial({ map: roadT, roughness: 1, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   const ROADS = [[[-20, -30], [94, -12]], [[84, -13.6], [84, 48]], [[84, 48], [98, 96]], [[84, 48], [150, 90]], [[94, -12], [100, -34]], [[100, -34], [190, -40]],
     [[A.x + Math.cos(thExit) * 44, A.z + Math.sin(thExit) * 44], [A.x + Math.cos(thExit) * 44 + 2, -26.4]]];
-  const leiraG = new THREE.CylinderGeometry(.9, .9, 1, 3); leiraG.rotateX(-Math.PI / 2); leiraG.scale(1, .55, 1);
-  for (const [a, b] of ROADS) {
-    const pa = V(a[0], .02, a[1]), pb = V(b[0], .02, b[1]), L = pa.distanceTo(pb), rg = new THREE.Group(); rg.position.copy(pa).lerp(pb, .5); g.add(rg); rg.lookAt(pb);
-    const pg = new THREE.PlaneGeometry(9, L + 4), U = pg.attributes.uv; for (let i = 0; i < U.count; i++) U.setY(i, U.getY(i) * (L + 4) / 40);
+  // leiras de segurança: seção arredondada com crista irregular, pé espraiado e cor por vértice (todas numa malha)
+  const berm = { pos: [], col: [], uv: [], idx: [] };
+  function addBerm(pa, pb, off, hgt = 1.0) {
+    const d = V(pb.x - pa.x, 0, pb.z - pa.z), L = d.length(); d.normalize(); const lt = V(-d.z, 0, d.x), PX = [-1.9, -1.2, -.6, -.2, .2, .6, 1.2, 1.9], PY = [0, .42, .82, .96, .96, .82, .42, 0];
+    const nL = Math.max(2, Math.round(L / .9)), base = berm.pos.length / 3, sd = rr() * 100, c = new THREE.Color(), lat = colL('#7a4a34'), dk = colL('#5a3628'), lt2 = colL('#9a6c50');
+    for (let i = 0; i <= nL; i++) { const t = i / nL, z = t * L, end = smooth(0, 3, z) * smooth(0, 3, L - z), hv = hgt * end * (.82 + .18 * Math.sin(z * .45 + sd) + .12 * (hsh(i + sd) - .5)), wob = .25 * Math.sin(z * .21 + sd * 2);
+      for (let k = 0; k < PX.length; k++) { const px = PX[k] * (.9 + .2 * end) + wob, y = PY[k] * hv + (k > 0 && k < 7 ? (hsh(i * 9 + k + sd) - .5) * .1 : 0);
+        berm.pos.push(pa.x + d.x * z + lt.x * (off + px), y, pa.z + d.z * z + lt.z * (off + px)); berm.uv.push((off + px) / 2, z / 2);
+        c.copy(dk).lerp(lat, PY[k]).lerp(lt2, PY[k] > .9 ? .35 : 0).multiplyScalar(.85 + hsh(i * 3.7 + k * 1.3 + sd) * .3); berm.col.push(c.r, c.g, c.b); } }
+    for (let i = 0; i < nL; i++) for (let k = 0; k < PX.length - 1; k++) { const a0 = base + i * PX.length + k, b0 = a0 + PX.length; berm.idx.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1); }
+  }
+  // canaleta de concreto (meia-cana) com lâmina d'água avermelhada no fundo
+  const canalW = mat(0x6e3e2c, .15, 0);
+  function canaleta(pa, pb, off) { const d = V(pb.x - pa.x, 0, pb.z - pa.z), L = d.length(); d.normalize(); const lt = V(-d.z, 0, d.x), cg = new THREE.Group(); g.add(cg);
+    cg.position.set((pa.x + pb.x) / 2 + lt.x * off, 0, (pa.z + pb.z) / 2 + lt.z * off); cg.rotation.y = Math.atan2(d.x, d.z);
+    for (const sx of [-.42, .42]) box(cg, .14, .34, L, C.concreto, sx, .1, 0); box(cg, .9, .06, L, C.concreto, 0, -.02, 0); box(cg, .7, .02, L, canalW, 0, .03, 0); }
+  for (const [ri, [a2, b2]] of ROADS.entries()) {
+    const pa = V(a2[0], .02, a2[1]), pb = V(b2[0], .02, b2[1]), L = pa.distanceTo(pb), rg = new THREE.Group(); rg.position.copy(pa).lerp(pb, .5); g.add(rg); rg.lookAt(pb);
+    const pg = new THREE.PlaneGeometry(9, L + 4), U = pg.attributes.uv; for (let i = 0; i < U.count; i++) U.setY(i, U.getY(i) * (L + 4) / 40 + ri * .37);
     const rm = new THREE.Mesh(pg, roadM); rm.rotation.x = -Math.PI / 2; rm.receiveShadow = true; rg.add(rm);
-    if (L > 24) for (const s of [-1, 1]) { const lm = new THREE.Mesh(leiraG, C.leira); lm.scale.z = L - 18; lm.position.set(s * 5.3, .22, 0); rg.add(lm); }
+    if (L > 24) { addBerm(pa, pb, 5.6, .95 + rr() * .2); addBerm(pa, pb, -5.6, .95 + rr() * .2); if (ri < 4) canaleta(pa, pb, ri % 2 ? 7.8 : -7.8); }
+  }
+  addBerm(V(A.x + 44, 0, A.z - 18), V(A.x + 44, 0, A.z + 22), 0, 1.3);                     // leira de contenção junto à britagem primária
+  { const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(berm.pos, 3)); bg.setAttribute('color', new THREE.Float32BufferAttribute(berm.col, 3)); bg.setAttribute('uv', new THREE.Float32BufferAttribute(berm.uv, 2)); bg.setIndex(berm.idx); bg.computeVertexNormals();
+    const bm = new THREE.Mesh(bg, new THREE.MeshStandardMaterial({ vertexColors: true, map: grain, roughness: 1, metalness: 0 })); bm.userData.keep = true; bm.receiveShadow = true; g.add(bm); }
+
+  // faixas decalcadas (marcas de pneu de caminhão fora de estrada e sulcos de drenagem natural) ao longo de curvas suaves
+  function ribbons(paths, width, tex, o = {}) {
+    const pos = [], uv = [], idx = [], up = V(0, 1, 0);
+    for (const pts of paths) { const cv = new THREE.CatmullRomCurve3(pts.map((q) => V(q[0], 0, q[1]))), L = cv.getLength(), n = Math.max(4, Math.round(L / 1.2)), base = pos.length / 3, w0 = width;
+      for (let i = 0; i <= n; i++) { const t = i / n, p0 = cv.getPointAt(t), tg = cv.getTangentAt(t), lt = new THREE.Vector3().crossVectors(up, tg).normalize(), ww = w0 * (o.taper ? .45 + .55 * Math.sin(Math.PI * t) : 1) / 2;
+        for (const s of [-1, 1]) { pos.push(p0.x + lt.x * ww * s, o.y ?? .045, p0.z + lt.z * ww * s); uv.push(s < 0 ? 0 : 1, t * L / (o.rep || 12) + (pts.ph || 0)); } }
+      for (let i = 0; i < n; i++) { const a0 = base + i * 2; idx.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3); } }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); rg.setIndex(idx); rg.computeVertexNormals();
+    const rmat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, roughness: o.rough ?? 1, metalness: 0, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+    const ms = new THREE.Mesh(rg, rmat); ms.userData.keep = true; ms.receiveShadow = true; ms.renderOrder = 1; g.add(ms); return ms;
+  }
+  // pneus duplos de caminhão (banda com cravos em V), passadas sobrepostas e falhas onde o solo é mais duro
+  const tireT = ctex(256, 512, (x, w, h) => { x.clearRect(0, 0, w, h);
+    for (const u of [.2, .8]) { for (let y = 0; y < h; y += 2) { const a = (.32 + .22 * Math.sin(y / h * 6.283 * 3 + u * 9) + .1 * Math.sin(y / h * 6.283 * 11)) * (.75 + rr() * .25), cx = u * w + Math.sin(y / h * 6.283 * 2 + u * 4) * 3;
+      x.fillStyle = `rgba(52,32,24,${Math.max(0, a)})`; x.fillRect(cx - 26, y, 52, 2); x.fillStyle = `rgba(36,22,16,${Math.max(0, a) * .8})`; for (const s of [-1, 1]) x.fillRect(cx + s * 13 - 6 + (y % 16 < 8 ? s * 3 : -s * 3), y, 9, 2); }
+      const gr = x.createLinearGradient(u * w - 40, 0, u * w + 40, 0); gr.addColorStop(0, 'rgba(150,112,84,0)'); gr.addColorStop(.12, 'rgba(150,112,84,.25)'); gr.addColorStop(.2, 'rgba(150,112,84,0)'); gr.addColorStop(.8, 'rgba(150,112,84,0)'); gr.addColorStop(.88, 'rgba(150,112,84,.25)'); gr.addColorStop(1, 'rgba(150,112,84,0)'); x.fillStyle = gr; x.fillRect(u * w - 40, 0, 80, h); }
+    x.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 18; i++) { const cy = rr() * h, r = 10 + rr() * 40, gr = x.createRadialGradient(w / 2, cy, 0, w / 2, cy, r * 3); gr.addColorStop(0, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, cy - r * 3, w, r * 6); } x.globalCompositeOperation = 'source-over'; });
+  const P8 = (pts, ph = 0) => Object.assign(pts, { ph });
+  const TRACKS = [[[-12, 44], [-9, 22], [-11, 2], [-5, -14], [10, -22], [40, -24]], [[70, 36], [73, 62], [66, 92], [40, 99], [10, 96], [-6, 84]], [[84, 30], [88, 22], [93, 19]],
+    [[86, 60], [110, 70], [130, 72], [142, 84]], [[84, 96], [70, 97], [57, 103], [50, 114]], [[150, -38], [168, -31], [178, -18]], [[A.x + 30, A.z + 40], [A.x + 40, A.z + 32], [A.x + 52, A.z + 24], [A.x + 56, A.z + 10]],
+    [[-28, 10], [-38, 40], [-30, 70], [-6, 86]], [[100, -30], [118, -22], [140, -26], [162, -40]], [[150, 90], [170, 100], [196, 96], [214, 80]], [[66, 30], [74, 38], [86, 40]]];
+  const trk = []; for (const [i, t] of TRACKS.entries()) { trk.push(P8(t, i * .31)); const jt = t.map((q, k) => [q[0] + Math.sin(k * 2.1 + i) * 1.6, q[1] + Math.cos(k * 1.7 + i) * 1.6]); trk.push(P8(jt, i * .57 + .2)); }
+  ribbons(trk, 6.2, tireT, { rep: 14 });
+  // marcas de pneu também sobre as estradas (passadas recentes)
+  ribbons(ROADS.map(([a2, b2], i) => { const d = Math.hypot(b2[0] - a2[0], b2[1] - a2[1]), lx = -(b2[1] - a2[1]) / d, lz = (b2[0] - a2[0]) / d, o = (i % 2 ? 1 : -1) * .9; return P8([[a2[0] + lx * o, a2[1] + lz * o], [(a2[0] + b2[0]) / 2 + lx * o * 1.4, (a2[1] + b2[1]) / 2 + lz * o * 1.4], [b2[0] + lx * o, b2[1] + lz * o]], i * .43); }), 6.2, tireT, { rep: 14, y: .06 });
+  // drenagem natural: sulcos erodidos com fundo úmido avermelhado, das cristas para os talvegues
+  const drainT = ctex(128, 512, (x, w, h) => { x.clearRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) { const cx = w / 2 + Math.sin(y / h * 6.283 * 3) * 6 + Math.sin(y / h * 6.283 * 9) * 2, ww = 22 + 8 * Math.sin(y / h * 6.283 * 5);
+      const gr = x.createLinearGradient(cx - ww * 1.6, 0, cx + ww * 1.6, 0); gr.addColorStop(0, 'rgba(60,34,24,0)'); gr.addColorStop(.25, 'rgba(60,34,24,.45)'); gr.addColorStop(.42, 'rgba(48,26,20,.85)'); gr.addColorStop(.5, 'rgba(92,48,34,.95)'); gr.addColorStop(.58, 'rgba(48,26,20,.85)'); gr.addColorStop(.75, 'rgba(60,34,24,.45)'); gr.addColorStop(1, 'rgba(60,34,24,0)');
+      x.fillStyle = gr; x.fillRect(cx - ww * 1.6, y, ww * 3.2, 2); }
+    for (let i = 0; i < 500; i++) { x.fillStyle = rr() < .5 ? 'rgba(160,120,90,.6)' : 'rgba(40,24,18,.6)'; x.fillRect(w / 2 + (rr() - .5) * 50, rr() * h, 1.5, 1.5); } });
+  const DRAINS = [[[A.x + 44, A.z - 8], [62, -50], [84, -62], [118, -70], [150, -86]], [[150, 28], [166, 12], [184, 6], [214, 2], [240, -8]], [[-50, -24], [-62, 6], [-74, 30], [-96, 58], [-120, 70]],
+    [[110, 118], [126, 136], [150, 150], [176, 168]], [[-30, 110], [-20, 140], [-6, 168], [10, 200]], [[230, 40], [252, 70], [262, 110]]];
+  ribbons(DRAINS, 3.2, drainT, { rep: 18, taper: true, rough: .55, y: .05 });
+  // poças rasas de água barrenta avermelhada (centro liso que reflete o céu, borda molhada fosca)
+  {
+    const shape = [...Array(48)].map((_, i) => { const a = i / 48 * 6.283; return .78 + .12 * Math.sin(a * 3 + 1) + .07 * Math.sin(a * 5 + 2.3) + .05 * Math.sin(a * 9); });
+    const draw = (x, s, rim, fill) => { x.beginPath(); shape.forEach((r, i) => { const a = i / 48 * 6.283, rx = s / 2 + Math.cos(a) * r * s * .45 * rim, ry = s / 2 + Math.sin(a) * r * s * .45 * rim; i ? x.lineTo(rx, ry) : x.moveTo(rx, ry); }); x.closePath(); x.fillStyle = fill; x.fill(); };
+    const pdT = ctex(256, 256, (x, s) => { x.clearRect(0, 0, s, s); x.filter = 'blur(6px)'; draw(x, s, 1.0, 'rgba(58,34,26,.55)'); x.filter = 'blur(1.5px)'; draw(x, s, .82, 'rgba(92,52,36,1)'); x.filter = 'none';
+      for (let i = 0; i < 160; i++) { const a = rr() * 6.283, r = s * (.3 + rr() * .1); x.fillStyle = 'rgba(70,42,30,.5)'; x.fillRect(s / 2 + Math.cos(a) * r, s / 2 + Math.sin(a) * r, 2, 2); } });
+    const pdR = ctex(256, 256, (x, s) => { x.fillStyle = '#e6e6e6'; x.fillRect(0, 0, s, s); x.filter = 'blur(5px)'; draw(x, s, .95, '#a0a0a0'); x.filter = 'blur(2px)'; draw(x, s, .8, '#101010'); x.filter = 'none'; }, false);
+    const pdM = new THREE.MeshStandardMaterial({ map: pdT, roughnessMap: pdR, roughness: 1, metalness: 0, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+    const pgeo = new THREE.PlaneGeometry(1, 1); pgeo.rotateX(-Math.PI / 2);
+    const spots = [];
+    for (const [a2, b2] of ROADS) for (let k = 0; k < 4; k++) { const t = .1 + rr() * .8, lx = -(b2[1] - a2[1]), lz = b2[0] - a2[0], dd = Math.hypot(lx, lz), o = (rr() < .5 ? -1 : 1) * (1.6 + rr() * 1.2); spots.push([a2[0] + (b2[0] - a2[0]) * t + lx / dd * o, a2[1] + (b2[1] - a2[1]) * t + lz / dd * o, 1.6 + rr() * 2.6]); }
+    for (const t of TRACKS) for (let k = 0; k < 2; k++) { const i = Math.floor(rr() * (t.length - 1)), f = rr(), q0 = t[i], q1 = t[i + 1]; spots.push([q0[0] + (q1[0] - q0[0]) * f + (rr() - .5) * 3, q0[1] + (q1[1] - q0[1]) * f + (rr() - .5) * 3, 2 + rr() * 3.5]); }
+    const ok = spots.filter(([x2, z2]) => !(x2 > -3 && x2 < 67 && z2 > -3 && z2 < 27) && Math.hypot(x2 - P.x, z2 - P.z) > 31 && Math.hypot(x2 - A.x, z2 - A.z) > PR + 4);
+    const pim = new THREE.InstancedMesh(pgeo, pdM, ok.length), m4p = new THREE.Matrix4(), qp = new THREE.Quaternion();
+    ok.forEach(([x2, z2, sz], i) => pim.setMatrixAt(i, m4p.compose(V(x2, .07, z2), qp.setFromAxisAngle(V(0, 1, 0), rr() * 6.283), V(sz * (1 + rr() * .8), 1, sz))));
+    pim.renderOrder = 2; pim.receiveShadow = true; pim.userData.keep = true; g.add(pim);
   }
   // ligações de processo entre as áreas (tubulações de polpa)
   beam(g, V(CB.x1, 2, Cc.z + 10), V(Es.x - 22, 2, Es.z), .6, C.tubo, true);
@@ -510,40 +638,51 @@ export function buildContext(scene, M, root) {
   beam(g, V(Cc.x - 18, 2, CB.z1), V(Sf.x, 2, Sf.z - 11), .5, C.tubo, true);
 
   // ================= VEGETAÇÃO (instanciada) =================
-  // capim em touceiras nas manchas de capim, arbustos e árvores de cerrado esparsas, eucaliptos em talhões nos morros
+  // área minerada quase nua; cerrado em manchas (árvores tortuosas de copa larga), capões de mata atlântica nas grotas e
+  // drenagens, capim seco em touceiras, arbustos nas bordas, eucaliptos em talhões nos morros; cor e porte variados
   {
     const segD = (px, pz, a, b) => { const dx = b[0] - a[0], dz = b[1] - a[1], t = Math.max(0, Math.min(1, ((px - a[0]) * dx + (pz - a[1]) * dz) / (dx * dx + dz * dz))); return Math.hypot(px - a[0] - t * dx, pz - a[1] - t * dz); };
     const RECTS = [[-25, 89, -25, 49], [86, 146, -8, 36], [99, 137, -28, -4], [110, 162, 33, 47], [169, 211, -34, -6], [51, 89, 97, 127], [32, 52, -61, -43], [60, 72, 55, 69], [137, 209, 89, 111], [70, 120, 25, 70]];
-    const CIRC = [[A.x, A.z, PR + 8], [P.x, P.z, 34], [A.x + 52, A.z + 8, 18], [Es.x, Es.z, 30], [Es.x + 52, Es.z + 6, 26], [Sf.x + 30, Sf.z + 4, 20]];
-    const LINES = [...ROADS.map((r) => [r[0], r[1], 8]), [[A.x + 44, A.z + 30], [B.screenEnd + 20, -30], 5], [[P.x, P.z + 44], [Cc.x - 22, Cc.z + 10], 5], [[B.W + 6, 32], [65, 60], 5], [[Bo.x + 17, Bo.z], [Bo.x + 230, Bo.z - 40], 4]];
-    const free = (x, z) => { for (const r of RECTS) if (x > r[0] - 4 && x < r[1] + 4 && z > r[2] - 4 && z < r[3] + 4) return false;
+    const CIRC = [[A.x, A.z, PR + 8], [P.x, P.z, 34], [A.x + 52, A.z + 8, 18], [Es.x, Es.z, 30], [Es.x + 52, Es.z + 6, 26], [Sf.x + 30, Sf.z + 4, 20], [Sf.x + 58, Sf.z + 10, 20]];
+    const LINES = [...ROADS.map((r) => [r[0], r[1], 8.5]), ...TRACKS.flatMap((t) => t.slice(1).map((q, i) => [t[i], q, 4.5])), [[A.x + 44, A.z + 30], [B.screenEnd + 20, -30], 5], [[P.x, P.z + 44], [Cc.x - 22, Cc.z + 10], 5], [[B.W + 6, 32], [65, 60], 5], [[Bo.x + 17, Bo.z], [Bo.x + 230, Bo.z - 40], 4]];
+    const free = (x, z, yardMax = .25) => { if (yardAt(x, z) > yardMax) return false; for (const r of RECTS) if (x > r[0] - 4 && x < r[1] + 4 && z > r[2] - 4 && z < r[3] + 4) return false;
       for (const c of CIRC) if (Math.hypot(x - c[0], z - c[1]) < c[2]) return false; for (const l of LINES) if (segD(x, z, l[0], l[1]) < l[2]) return false; return true; };
     const yAt = (x, z) => { const r = Math.hypot(x - GC.x, z - GC.z); return r > GR ? hillH(r, Math.atan2(z - GC.z, x - GC.x)) : 0; };
-    const vegM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 });
-    const I4 = new THREE.Matrix4();
+    const dPlant = (x, z) => Math.hypot(x - 40, z - 10);
+    const patch = (x, z) => MN.at(2, x / 180, z / 180) * .6 + MN.at(2, x / 60 + .3, z / 60 + .7) * .4;
+    const vegM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, metalness: 0 });
+    const blade = (ang, tilt, h, x0 = 0, z0 = 0) => [new THREE.CylinderGeometry(.002, .045, h, 3, 1, true), '#ffffff', TRSR(x0 + Math.cos(ang) * Math.sin(tilt) * h / 2, h / 2 * Math.cos(tilt), z0 + Math.sin(ang) * Math.sin(tilt) * h / 2, 1, 1, 1, Math.sin(ang) * tilt, 0, -Math.cos(ang) * tilt), .45];
     const kinds = {
-      capim: colGeo([[new THREE.CylinderGeometry(.001, .32, .6, 5), '#ffffff', TRS(0, .28, 0)], [new THREE.CylinderGeometry(.001, .22, .45, 5), '#ffffff', TRS(.25, .2, .1)], [new THREE.CylinderGeometry(.001, .2, .5, 5), '#ffffff', TRS(-.15, .22, -.2)]]),
-      arbusto: colGeo([[new THREE.IcosahedronGeometry(1, 0), '#5c6b3a', TRS(0, .4, 0, 1.1, .65, 1.0)], [new THREE.IcosahedronGeometry(.7, 0), '#6b7a44', TRS(.6, .55, .3, 1, .7, 1)]]),
-      cerrado: colGeo([[new THREE.CylinderGeometry(.13, .22, 3.2, 5), '#5a4434', TRS(0, 1.6, 0)], [new THREE.CylinderGeometry(.07, .1, 1.6, 4), '#5a4434', TRS(.45, 3.0, 0).multiply(new THREE.Matrix4().makeRotationZ(-.5))],
-        [new THREE.IcosahedronGeometry(1.7, 0), '#4d6a33', TRS(0, 3.8, 0, 1.25, .62, 1.15)], [new THREE.IcosahedronGeometry(1.2, 0), '#5e7b3c', TRS(.9, 4.2, .4, 1.1, .6, 1.1)]]),
-      eucalipto: colGeo([[new THREE.CylinderGeometry(.14, .26, 11, 5), '#b9ad9a', TRS(0, 5.5, 0)], [new THREE.IcosahedronGeometry(1.9, 0), '#54704a', TRS(0, 10.8, 0, 1, 1.7, 1)], [new THREE.IcosahedronGeometry(1.3, 0), '#62805a', TRS(.3, 13.4, -.2, 1, 1.5, 1)]]),
+      capim: colGeo([0, 1.2, 2.3, 3.5, 4.6, 5.6].map((a2, i) => blade(a2, .25 + (i % 3) * .14, .55 + (i % 2) * .3, Math.cos(a2) * .06, Math.sin(a2) * .06))),
+      arbusto: colGeo([[blobGeo(1, 0, 1), '#5f6b3a', TRSR(0, .45, 0, 1.1, .7, 1), .5], [blobGeo(.75, 0, 2), '#6e7842', TRSR(.6, .5, .35, 1, .75, 1), .5], [blobGeo(.6, 0, 3), '#566038', TRSR(-.55, .38, -.4, 1, .7, 1), .5]]),
+      cerrado: colGeo([[new THREE.CylinderGeometry(.11, .2, 2.6, 5), '#4a382c', TRSR(.12, 1.25, 0, 1, 1, 1, 0, 0, -.12)], [new THREE.CylinderGeometry(.06, .1, 2.0, 4), '#4a382c', TRSR(.75, 2.95, .05, 1, 1, 1, .1, 0, -.75)], [new THREE.CylinderGeometry(.05, .09, 1.8, 4), '#4a382c', TRSR(-.4, 2.9, .2, 1, 1, 1, -.2, 0, .6)],
+        [blobGeo(1.5, 1, 4), '#62713a', TRSR(1.0, 3.9, .1, 1.25, .5, 1.1), .45], [blobGeo(1.2, 1, 5), '#6b7a3e', TRSR(-.75, 3.65, .3, 1.15, .52, 1.0), .45], [blobGeo(.95, 0, 6), '#57663a', TRSR(.1, 4.35, -.6, 1, .6, 1), .5]]),
+      mata: colGeo([[new THREE.CylinderGeometry(.16, .3, 8, 5), '#4d4034', TRSR(0, 4, 0, 1, 1, 1)], [blobGeo(2.4, 1, 7), '#3f5a2e', TRSR(0, 9.4, 0, 1, .78, 1), .4], [blobGeo(1.9, 1, 8), '#4c6a33', TRSR(1.6, 8.5, .6, 1, .8, 1), .4], [blobGeo(1.7, 1, 9), '#46602f', TRSR(-1.4, 8.7, -.8, 1, .8, 1), .4]]),
+      eucalipto: colGeo([[new THREE.CylinderGeometry(.14, .26, 11, 5), '#b9ad9a', TRSR(0, 5.5, 0, 1, 1, 1)], [blobGeo(1.9, 1, 10), '#55704c', TRSR(0, 10.8, 0, 1, 1.6, 1), .5], [blobGeo(1.3, 0, 11), '#62805a', TRSR(.3, 13.4, -.2, 1, 1.5, 1), .55]]),
     };
-    void I4;
-    const K = HIGH ? 1 : .45, q4 = new THREE.Quaternion(), sc = new THREE.Vector3(), pp = new THREE.Vector3(), m4 = new THREE.Matrix4(), cc = new THREE.Color();
-    function scatter(geo, n, pick, colFn, sMin, sMax) {
+    const K = HIGH ? 1 : .4, q4 = new THREE.Quaternion(), eu2 = new THREE.Euler(), sc = new THREE.Vector3(), pp = new THREE.Vector3(), m4 = new THREE.Matrix4(), cc = new THREE.Color();
+    function scatter(geo, n, pick, colFn, sMin, sMax, o = {}) {
       const im = new THREE.InstancedMesh(geo, vegM, n); let k = 0, guard = 0;
-      while (k < n && guard++ < n * 40) { const p = pick(); if (!p || !free(p[0], p[1])) continue; const s = sMin + rr() * (sMax - sMin);
-        pp.set(p[0], yAt(p[0], p[1]) - .05, p[1]); q4.setFromAxisAngle(V(0, 1, 0), rr() * 6.283); sc.set(s * (.85 + rr() * .3), s, s * (.85 + rr() * .3)); im.setMatrixAt(k, m4.compose(pp, q4, sc)); im.setColorAt(k, colFn(cc, p)); k++; }
+      while (k < n && guard++ < n * 60) { const p = pick(); if (!p || !free(p[0], p[1], o.yard ?? .25)) continue; let s = sMin + Math.pow(rr(), 1.6) * (sMax - sMin); if (rr() < .05) s *= 1.3;
+        pp.set(p[0], yAt(p[0], p[1]) - .08, p[1]); q4.setFromEuler(eu2.set((rr() - .5) * (o.tilt ?? .08), rr() * 6.283, (rr() - .5) * (o.tilt ?? .08))); sc.set(s * (.8 + rr() * .4), s * (.85 + rr() * .3), s * (.8 + rr() * .4)); im.setMatrixAt(k, m4.compose(pp, q4, sc)); im.setColorAt(k, colFn(cc, p)); k++; }
       im.count = k; im.computeBoundingSphere(); im.castShadow = false; im.receiveShadow = true; g.add(im); return im;
     }
+    // paleta de folhagem (fator multiplicativo sobre a cor de base): verde-oliva, verde escuro, amarelado de estiagem, marrom seco, verde-azulado
+    const FOL = [[1, 1, 1, .34], [.78, .9, .8, .22], [1.12, 1.05, .7, .18], [1.15, .92, .66, .1], [.85, .98, 1.0, .16]];
+    const tone = (c, j = .14) => { let u = rr(), f = FOL[0]; for (const q of FOL) { if ((u -= q[3]) <= 0) { f = q; break; } } const b = 1 - j + rr() * 2 * j; return c.setRGB(f[0] * b, f[1] * b, f[2] * b); };
     const ring = (r0, r1) => () => { const a = rr() * 6.283, r = Math.sqrt(r0 * r0 + rr() * (r1 * r1 - r0 * r0)); return [GC.x + Math.cos(a) * r, GC.z + Math.sin(a) * r]; };
-    const pickGrass = () => { const p = ring(20, GR - 2)(); return rr() < .25 + grassMask(p[0], p[1]) * 1.1 ? p : null; };
-    scatter(kinds.capim, Math.round(3200 * K), pickGrass, (c) => c.setRGB(.42 + rr() * .2, .38 + rr() * .14, .16 + rr() * .06).convertSRGBToLinear(), .8, 1.6);
-    scatter(kinds.arbusto, Math.round(700 * K), ring(40, GR + 40), (c) => c.setScalar(.8 + rr() * .4), .7, 1.8);
-    scatter(kinds.cerrado, Math.round(260 * K), ring(110, GR - 4), (c) => c.setRGB(.85 + rr() * .3, .85 + rr() * .3, .8 + rr() * .2), .8, 1.4);
-    scatter(kinds.cerrado, Math.round(320 * K), ring(GR + 6, 300), (c) => c.setRGB(.8 + rr() * .3, .85 + rr() * .3, .8 + rr() * .2), 1.0, 1.6);
+    const pickGrass = () => { const p = ring(20, GR + 30)(); return rr() < .15 + grassMask(p[0], p[1]) * 1.1 ? p : null; };
+    scatter(kinds.capim, Math.round(3800 * K), pickGrass, (c) => { const d = rr(); return c.setRGB(.5 + d * .22, .42 + d * .12 + rr() * .1, .2 + rr() * .07).convertSRGBToLinear(); }, .7, 1.7, { yard: .15, tilt: .2 });
+    scatter(kinds.arbusto, Math.round(900 * K), () => { const p = ring(45, GR + 50)(); return rr() < .08 + smooth(.4, .72, patch(p[0], p[1])) * .9 ? p : null; }, (c) => tone(c, .18), .5, 1.9, { tilt: .15 });
+    scatter(kinds.cerrado, Math.round(460 * K), () => { const p = ring(70, GR - 4)(); return rr() < .03 + smooth(.42, .72, patch(p[0], p[1])) * smooth(60, 150, dPlant(p[0], p[1])) ? p : null; }, (c) => tone(c), .7, 1.5, { tilt: .12 });
+    scatter(kinds.cerrado, Math.round(300 * K), ring(GR + 6, 300), (c) => tone(c), .9, 1.6, { tilt: .12 });
+    // capões de mata: aglomerados nas grotas dos morros e ao longo das drenagens naturais
+    const CAP = []; for (let i = 0; i < 26; i++) { const a2 = rr() * 6.283, r = 150 + rr() * 140; CAP.push([GC.x + Math.cos(a2) * r, GC.z + Math.sin(a2) * r, 10 + rr() * 20]); }
+    for (const d of DRAINS) for (let i = 1; i < d.length; i++) CAP.push([d[i][0], d[i][1], 9 + rr() * 8]);
+    const gauss = () => (rr() + rr() + rr() - 1.5) / 1.5;
+    scatter(kinds.mata, Math.round(560 * K), () => { const c = CAP[Math.floor(rr() * CAP.length)]; return [c[0] + gauss() * c[2], c[1] + gauss() * c[2]]; }, (c) => tone(c, .12).multiplyScalar(.9), .75, 1.35, { tilt: .05 });
     const CL = [...Array(7)].map((_, i) => { const a = i / 7 * 6.283 + .4 + rr() * .5, r = 268 + rr() * 26; /* talhões perto o bastante para não flutuarem na névoa do horizonte */ return [GC.x + Math.cos(a) * r, GC.z + Math.sin(a) * r]; });
-    scatter(kinds.eucalipto, Math.round(300 * K), () => { const c = CL[Math.floor(rr() * CL.length)]; return [c[0] + (rr() - .5) * 46, c[1] + (rr() - .5) * 46]; }, (c) => c.setScalar(.85 + rr() * .3), .8, 1.25);
+    scatter(kinds.eucalipto, Math.round(300 * K), () => { const c = CL[Math.floor(rr() * CL.length)]; return [c[0] + (rr() - .5) * 46, c[1] + (rr() - .5) * 46]; }, (c) => c.setScalar(.85 + rr() * .3), .75, 1.25, { tilt: .04 });
   }
 
   // etiquetas numeradas das áreas (mesmo padrão da página principal)

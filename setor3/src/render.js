@@ -14,10 +14,11 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261015232026';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261015232026';
-import { PhoneShader } from './render_post.js?v=20261015232026';
-import { UpscaleShader } from './render_upscale.js?v=20261015232026';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import { B, LV } from './layout.js?v=20261015235448';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261015235448';
+import { PhoneShader } from './render_post.js?v=20261015235448';
+import { UpscaleShader } from './render_upscale.js?v=20261015235448';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -26,20 +27,25 @@ export const HIGH = Q.get('q') !== 'low' && !MOBILE;
 // Calibração (cor média das fotos: setor escuro, contraste alto, luz do dia forte nas aberturas)
 export const LOOK = {
   exposure: 1.0,
-  sun: 4.2,           // sol (lux relativo) entrando pelas aberturas
+  sun: 4.5,           // sol (lux relativo) entrando pelas aberturas
   sky: 3.4,           // radiância do céu vista pelas aberturas (ambiente)
-  env: 1.0,           // intensidade do ambiente PMREM
+  env: .72,           // intensidade do ambiente PMREM (q=high; parte da luz do céu vem das janelas de área abaixo)
+  win: 1.0,           // luz natural das ABERTURAS (luzes de área retangulares, só q=high): cai com a distância da abertura
   hemi: .18,          // preenchimento muito fraco
   lamp: 55,           // spots das luminárias (cd)
   lampL2: 11,         // projetores locais do piso +14 (a 2,8 m do piso)
   shaft: .32,         // feixes de luz do dia (claraboias) — espalhamento no pó do ar
   motes: .9,          // brilho das partículas de pó dentro dos feixes
   halo: .22,          // halo das luminárias (sem estourar)
-  fogIn: .010,        // névoa de pó dentro do prédio (FogExp2)
+  fogIn: .012,        // névoa de pó dentro do prédio (FogExp2)
   fogOut: .0016,
   aoScale: .6,
   bloom: [.16, .25, 2.6],
-  ao: { radius: .9, distanceExponent: 1.6, thickness: .6, scale: 1.15, samples: 12, distanceFallOff: 1.0 },
+  ao: { radius: 1.25, distanceExponent: 1.5, thickness: .9, scale: 1.3, samples: 12, distanceFallOff: 1.0 },
+  // gradação em HDR linear (antes do tone mapping): realces comprimidos sem mudar o matiz (concreto/chapas claras
+  // não estouram) e sombras puxadas para o tom do pó de minério (marrom-avermelhado), como nas fotos do setor
+  knee: 1.0, white: 5.0,       // início e "branco" da compressão de realces (luminância linear)
+  dust: .16,                   // força do tom de pó nas sombras
 };
 for (const kv of (Q.get('lk') || '').split(',').filter(Boolean)) { const [k, v] = kv.split(':'); if (k.startsWith('ao.')) LOOK.ao[k.slice(3)] = +v; else if (k in LOOK && typeof LOOK[k] === 'number') LOOK[k] = +v; }
 
@@ -101,6 +107,23 @@ function shaftEnd(o, d) {
   if (d.x < 0) { const t = -o.x / d.x; if (t > .5 && t < best && o.y + d.y * t > 6) best = t; }
   return best;
 }
+// gradação de cor (HDR linear): compressão suave de realces preservando o matiz + tom de pó de minério nas sombras
+const GradeShader = {
+  name: 'TwinGradeShader',
+  uniforms: { tDiffuse: { value: null }, knee: { value: LOOK.knee }, white: { value: LOOK.white }, dust: { value: LOOK.dust }, dustCol: { value: new THREE.Vector3(1.10, .97, .84) } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse; uniform float knee, white, dust; uniform vec3 dustCol; varying vec2 vUv;
+    void main(){
+      vec4 t = texture2D(tDiffuse, vUv); vec3 c = max(t.rgb, 0.0);
+      float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+      float e = max(l - knee, 0.0); float lc = l > knee ? knee + e / (1.0 + e / max(white - knee, 1e-3)) : l;
+      c *= lc / max(l, 1e-5);
+      float ws = 1.0 - smoothstep(0.0, 0.18, lc);
+      c *= mix(vec3(1.0), dustCol, ws * dust);
+      gl_FragColor = vec4(c, t.a);
+    }`,
+};
 const SHAFT_VS = /* glsl */`
 varying float vS; varying vec3 vN; varying vec3 vV; varying vec3 vW;
 void main(){ vS = position.y; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vV = -mv.xyz;
@@ -176,10 +199,10 @@ export function buildLighting(scene, renderer, lamps = []) {
   scene.background = new THREE.Color(0xa9c9e6);
   const dome = skyDome(); scene.add(dome);
   scene.environment = buildEnvironment(renderer, lamps, { sky: LOOK.sky, lamp: 40, skylights: findSkylights(scene) });
-  scene.environmentIntensity = HIGH ? LOOK.env : LOOK.env * 1.25;
-  const fog = new THREE.FogExp2(0xa08c7c, LOOK.fogIn); scene.fog = fog;
+  scene.environmentIntensity = HIGH ? LOOK.env : 1.25;
+  const fog = new THREE.FogExp2(0x9c826f, LOOK.fogIn);   // pó de minério em suspensão (bege-avermelhado) scene.fog = fog;
   // meia-luz quente: céu azulado por cima, rebatimento marrom-acinzentado (pó de minério) por baixo
-  const hemi = new THREE.HemisphereLight(0xd6e2ee, 0x56443a, HIGH ? LOOK.hemi : LOOK.hemi * 2.5); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xd6e2ee, 0x6a4636, HIGH ? LOOK.hemi : LOOK.hemi * 2.5); scene.add(hemi);
   // sol: alto, vindo da frente aberta (z = D) e um pouco de lado — entra pelas aberturas e faz faixas de luz no piso
   const sun = new THREE.DirectionalLight(0xfff0dc, LOOK.sun);
   sun.position.set(B.W / 2 - 22, 42, B.D + 46); sun.target.position.set(B.W / 2, 0, B.D / 2);
@@ -196,6 +219,20 @@ export function buildLighting(scene, renderer, lamps = []) {
     const l = new THREE.SpotLight(0xffdcb4, l2 ? LOOK.lampL2 : LOOK.lamp * (crusher ? 1.3 : 1), 0, l2 ? 1.05 : 1.25, .9, 2);
     l.position.set(p.x, p.y - .05, p.z); l.target.position.set(p.x, 0, p.z); scene.add(l, l.target);
   });
+  // LUZ NATURAL DAS ABERTURAS (q=high): luzes de área retangulares nos vãos do fechamento, voltadas para dentro.
+  // Dão o gradiente fotográfico — claro junto às aberturas, escurecendo para o miolo do prédio — que o ambiente
+  // PMREM (igual em todo ponto) não consegue. Parte alta da frente = céu (frio); parte baixa = pátio de minério (quente).
+  const wins = [];
+  if (HIGH && LOOK.win > 0) {
+    RectAreaLightUniformsLib.init();
+    const oH = LV.L2 + 2;
+    const win = (col, I, w, h, x, y, z, tx, tz) => { const l = new THREE.RectAreaLight(col, I * LOOK.win, w, h); l.position.set(x, y, z); l.lookAt(tx, y, tz); l.userData.base = I * LOOK.win; scene.add(l); wins.push(l); };
+    win(0xdde8f4, .55, B.W, oH - 5, B.W / 2, 5 + (oH - 5) / 2, B.D + .05, B.W / 2, 0);   // frente: céu
+    win(0xd2a283, .32, B.W, 5, B.W / 2, 2.5, B.D + .05, B.W / 2, 0);                       // frente: pátio/terreno (rebatido)
+    win(0xe6e2da, .45, B.D, 6, B.W + .05, 3, B.D / 2, 0, B.D / 2);                         // lateral dos britadores
+    win(0xe6e2da, .4, B.D, 6, -.05, 3, B.D / 2, B.W, B.D / 2);                             // lateral oposta
+    win(0xd9c4b0, .3, B.W, 4, B.W / 2, 2, -.05, B.W / 2, B.D);                             // fundo (vão baixo)
+  }
   buildLightFX(scene, sun, lamps);
   // anisotropia máxima em todas as texturas (piso/chapas não borram em ângulo rasante)
   const maxA = renderer.capabilities.getMaxAnisotropy();
@@ -214,7 +251,7 @@ export function buildLighting(scene, renderer, lamps = []) {
     if (FX.motes) { FX.motes.visible = inside; FX.motes.material.uniforms.uT.value = tt; FX.motes.material.uniforms.uScale.value = r.getDrawingBufferSize(_v2).y / (2 * Math.tan(THREE.MathUtils.degToRad((cam.fov || 60) / 2))); }
     const now = performance.now(); if (now - lastSh > 400) { lastSh = now; r.shadowMap.needsUpdate = true; }
   };
-  window.__look = { LOOK, sun, hemi, scene, fog, FX };
+  window.__look = { LOOK, sun, hemi, scene, fog, FX, wins };
   // NOITE: segue o ciclo do simulador (0 = dia, 1 = noite): luz natural cai, céu escurece e o entorno acende os projetores
   const domeK = dome.material.color.r;
   const base = { sun: sun.intensity, hemi: hemi.intensity, env: scene.environmentIntensity, bg: scene.background.clone(), fog: fog.color.clone(), sunC: sun.color.clone(), hs: hemi.color.clone() };
@@ -232,6 +269,7 @@ export function buildLighting(scene, renderer, lamps = []) {
     sun.intensity = base.sun * (1 - .93 * k); sun.color.copy(base.sunC).lerp(moon, k); hemi.intensity = base.hemi * (1 - .8 * k); hemi.color.copy(base.hs).lerp(nightHs, k);
     scene.environmentIntensity = base.env * (1 - .78 * k); scene.background.copy(base.bg).lerp(nightBg, k); fog.color.copy(base.fog).lerp(nightFog, k);
     dome.material.color.setScalar(domeK * (1 - .86 * k));
+    wins.forEach((l) => { l.intensity = l.userData.base * (1 - .97 * k); l.visible = k < .98; });
     yard.forEach((l) => { l.intensity = k * l.userData.k * 650; l.visible = k > .02; }); headMat.emissiveIntensity = k * 6; };
   window.__s3setNight = setNight;
   return { sun, hemi, addYard, setNight };
@@ -278,10 +316,11 @@ export function createComposer(renderer, scene, camera) {
   const TAA = Q.get('taa') === '1',   // desligado por padrão: o acúmulo deixava rastro no minério e nas correias em movimento (MSAA 4x já suaviza as bordas)
    accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum);
   const bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), ...LOOK.bloom); composer.addPass(bloom);
+  const grade = new ShaderPass(GradeShader); composer.addPass(grade);
   composer.addPass(new OutputPass());
   const phone = new ShaderPass(PhoneShader);
   phone.uniforms.sharpen.value = .14; phone.uniforms.vignette.value = .3; phone.uniforms.grain.value = 0; /* sem granulado (aparecia como pontilhado fixo) */ phone.uniforms.chroma.value = .0007;
-  phone.uniforms.wb.value.set(1.03, 1.0, .95); phone.uniforms.contrast.value = 1.05; phone.uniforms.saturation.value = .92; phone.uniforms.distortion.value = .03;
+  phone.uniforms.wb.value.set(1.03, 1.0, .95); phone.uniforms.contrast.value = 1.08; phone.uniforms.saturation.value = .93; phone.uniforms.distortion.value = .03;
   composer.addPass(phone);
   const up = new ShaderPass(UpscaleShader); up.uniforms.srcSize.value = new THREE.Vector2(size.x * dpr, size.y * dpr); composer.addPass(up);
   const forced = Q.has('rs') ? Math.min(1, Math.max(.4, +Q.get('rs') || 1)) : null;
@@ -307,7 +346,7 @@ export function createComposer(renderer, scene, camera) {
   const clock = new THREE.Clock(), lastM = new THREE.Matrix4(); let lastFov = 0, lastAsp = 0, still = 0;
   apply();
   return {
-    composer, passes: { gtao, bloom, phone, up, accum },
+    composer, passes: { gtao, bloom, grade, phone, up, accum },
     setSize(w, h) { size.set(w, h); apply(); },
     render() {
       phone.uniforms.time.value = 0;   // granulado fixo: ruído animado cintilava (efeito de imagem tremendo)

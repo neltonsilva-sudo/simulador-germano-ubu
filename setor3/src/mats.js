@@ -152,7 +152,8 @@ function chips(L, n, o) {
 function dripsL(L, n, col, aMax = .35) {
   const { A, H, R, s } = L;
   for (let i = 0; i < n; i++) {
-    const px = rnd() * s, y0 = rnd() * s * .7, len = s * (.05 + rnd() * .35), w = .6 + rnd() * 2.6 * s / 1024, a = .08 + rnd() * aMax;
+    // fio fino (maioria) ou faixa larga e fraca (lama escorrida) — nada de "veio de madeira"
+    const wide = rnd() < .3, px = rnd() * s, y0 = rnd() * s * .7, len = s * (.05 + rnd() * .35), w = (wide ? 6 + rnd() * 18 : 1 + rnd() * 3.5) * s / 1024, a = (wide ? .05 : .06) + rnd() * aMax * (wide ? .45 : .7);
     const g = A.createLinearGradient(0, y0, 0, y0 + len); g.addColorStop(0, `rgba(${col},${a})`); g.addColorStop(1, `rgba(${col},0)`);
     A.fillStyle = g; A.fillRect(px, y0, w, len);
     if (R) { const gr = R.createLinearGradient(0, y0, 0, y0 + len); gr.addColorStop(0, orm(.92, .1, a * 1.5)); gr.addColorStop(1, orm(.92, .1, 0)); R.fillStyle = gr; R.fillRect(px, y0, w, len); }
@@ -182,25 +183,26 @@ function paintTex(size, o, full = true) {
   blotches(A, s, 50, s * .04, s * .3, () => `rgba(255,250,240,${.02 + rnd() * .06})`);
   blotches(A, s, 50, s * .04, s * .3, () => `rgba(0,0,0,${.03 + rnd() * .08})`);
   if (R) blotches(R, s, 40, s * .05, s * .3, () => orm((o.r ?? .65) + (rnd() - .5) * .25, o.m ?? .3, .35));
-  blotches(A, s, 26 * o.dust, s * .03, s * .18, () => `rgba(${o.dustRGB || '118,62,36'},${.05 + rnd() * .14})`);
-  dripsL(L, 160 * o.drip, o.dripRGB || '92,48,28', .3);
-  chips(L, 70 * (o.chip ?? 1), o);
-  scratchesL(L, 160 * (o.scratch ?? 1), o.scratchRGB || '200,190,175', o.mScr ?? true);
-  // campos de ruído: tom largo, pó (manchas), ferrugem (recortada pelo detalhe fino), detalhe fino
-  const nT = field(2, 4), nD = field(3, 5, .55), nR0 = field(4, 5, .6), nF = field(24, 3, .5);
-  const nR = nR0.map((v, i) => v * .72 + nF[i] * .28);
-  const dCov = Math.min(.6, .2 * o.dust), rCov = Math.min(.25, .028 * o.rust);
-  const d0 = quant(nD, 1 - dCov * 2), d1 = quant(nD, 1 - dCov * .7);
-  const rh = quant(nR, 1 - rCov * 2.6), r0 = quant(nR, 1 - rCov), r1 = quant(nR, 1 - rCov * .45);
-  const DC = parse(o.dustRGB || '118,62,36'), RC = parse(o.rustRGB || '96,52,32'), RD = [64, 40, 30], G = o.grain ?? 10;
+  blotches(A, s, 26 * o.dust, s * .03, s * .18, () => `rgba(${o.dustRGB || '118,62,36'},${.04 + rnd() * .09})`);
+  dripsL(L, 95 * o.drip, o.dripRGB || '92,48,28', .3);
+  chips(L, 55 * (o.chip ?? 1), o);
+  scratchesL(L, 130 * (o.scratch ?? 1), o.scratchRGB || '200,190,175', o.mScr ?? true);
+  // campos de ruído: tom largo, pó (véu contínuo, bordas difusas), ferrugem (focos pequenos recortados pelo detalhe fino), detalhe fino
+  const nT = field(2, 4), nD = field(3, 5, .55), nR0 = field(7, 5, .6), nF = field(24, 3, .5);
+  const nR = nR0.map((v, i) => v * .7 + nF[i] * .3);
+  const dCov = Math.min(.6, .2 * o.dust), rCov = Math.min(.2, .022 * o.rust);
+  // véu de pó: transição longa (sem manchas de "camuflagem"), mais denso onde o campo é alto + película uniforme fina
+  const d0 = quant(nD, Math.max(0, 1 - dCov * 2.8)), d1 = quant(nD, 1 - dCov * .2), film = Math.min(.14, .06 * o.dust);
+  const rh = quant(nR, 1 - rCov * 2.2), r0 = quant(nR, 1 - rCov), r1 = quant(nR, 1 - rCov * .4);
+  const DC = parse(o.dustRGB || '118,62,36'), RC = parse(o.rustRGB || '96,52,32'), RD = [62, 40, 31], G = o.grain ?? 10;
   const sp = L.sp;
   pixels(L, (i, x, y, a, hh, r) => {
     const t = sp(nT, x, y), d = sp(nD, x, y), q = sp(nR, x, y), f = sp(nF, x, y);
     let c0 = a[i], c1 = a[i + 1], c2 = a[i + 2];
-    const tone = .9 + .2 * t; c0 *= tone; c1 *= tone; c2 *= tone;
-    const dm = sst(d0, d1, d) * .75 * (.7 + .6 * f);
-    const df = .8 + .4 * f; c0 += (DC[0] * df - c0) * dm; c1 += (DC[1] * df - c1) * dm; c2 += (DC[2] * df - c2) * dm;
-    const halo = sst(rh, r0, q) * .3, core = sst(r0, r1, q);
+    const tone = .92 + .16 * t; c0 *= tone; c1 *= tone; c2 *= tone;
+    const dm = film + sst(d0, d1, d) * .5 * (.75 + .5 * f);
+    const df = .85 + .3 * f; c0 += (DC[0] * df - c0) * dm; c1 += (DC[1] * df - c1) * dm; c2 += (DC[2] * df - c2) * dm;
+    const halo = sst(rh, r0, q) * .22, core = sst(r0, r1, q);
     c0 += (RC[0] * 1.15 - c0) * halo; c1 += (RC[1] * 1.15 - c1) * halo; c2 += (RC[2] * 1.15 - c2) * halo;
     const mix = core * (.85 + .15 * f), rc0 = RC[0] + (RD[0] - RC[0]) * f, rc1 = RC[1] + (RD[1] - RC[1]) * f, rc2 = RC[2] + (RD[2] - RC[2]) * f;
     c0 += (rc0 - c0) * mix; c1 += (rc1 - c1) * mix; c2 += (rc2 - c2) * mix;
@@ -280,10 +282,24 @@ const G_DUST = /* glsl */`
   float dm = clamp( gUp * uDust * ( .35 + 1.0 * gN1 ), 0., 1. );
   float side = 1. - abs( gN.y );
   float drip = side * uGrime * smoothstep( .5, .85, gNoise( vec2( dot( gP.xz, vec2( 6.3, 5.1 ) ), gP.y * .45 ) ) ) * ( .5 + gN1 );
+  // manchas úmidas de polpa/lama (escala de ~0,5 m, só faces verticais): escurecem e saturam levemente para a cor do pó
+  float gSt = gFbm( vec2( dot( gP.xz, vec2( .8, .6 ) ) * 2.4, gP.y * .9 + gP.x * .15 ) + 11.3 ) * .8 + gN1 * .2;
+  float stain = smoothstep( .49, .63, gSt ) * side * uGrime * .72 * ( .55 + .9 * gNoise( vec2( dot( gP.xz, vec2( .8, .6 ) ) * 9., gP.y * .35 ) ) );   // escorre: estrias verticais
+  float dry = ( 1. - smoothstep( .33, .43, gSt ) ) * side * uGrime * .4;   // véu seco mais claro (pó assentado)
+  // respingo/lama na base das peças junto a cada piso (0 / +7,5 / +14 m)
+  float gHl = gP.y < 7.2 ? gP.y : ( gP.y < 13.7 ? gP.y - 7.5 : gP.y - 14. );
+  float splash = side * uGrime * ( 1. - smoothstep( .05, .55 + .35 * gN1, gHl ) ) * step( -.05, gHl ) * ( .45 + .55 * gN2 );
   vec3 dc = uDustCol * ( .75 + .5 * gN2 );
+  diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * ( .55 + .45 * uDustCol / max( max( uDustCol.r, uDustCol.g ), .05 ) ) * .8, clamp( stain, 0., 1. ) );
+  diffuseColor.rgb = mix( diffuseColor.rgb, mix( diffuseColor.rgb, uDustCol, .5 ) * 1.12, clamp( dry, 0., 1. ) );
+  diffuseColor.rgb = mix( diffuseColor.rgb, dc * .72, clamp( splash * .75, 0., 1. ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, dc, clamp( max( dm, drip * .5 ), 0., 1. ) );
+  // crosta de pó: grão fino de minério (variação de tom e de relevo) — só onde há acumulação
+  float gCr = gNoise( gP.xz * 46. + gP.y * 13. );
+  diffuseColor.rgb *= 1. + ( gCr - .5 ) * .22 * dm;
+  roughnessFactor = mix( roughnessFactor, min( 1., roughnessFactor + .12 ), stain + splash * .5 );
   roughnessFactor = mix( roughnessFactor, .97, dm );
-  metalnessFactor = mix( metalnessFactor, 0., dm );
+  metalnessFactor = mix( metalnessFactor, 0., max( dm, splash * .6 ) );
   // pó espesso esconde o relevo da tinta
   normal = normalize( mix( normal, nonPerturbedNormal, dm * .7 ) );
 #ifdef USE_MAP
@@ -321,7 +337,7 @@ function grime(mat, o = {}) {
     else f = f.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + G_DUST);
     sh.fragmentShader = f;
   };
-  mat.customProgramCacheKey = () => 'grime2' + (tri > 0 ? 't' : 'u');
+  mat.customProgramCacheKey = () => 'grime3' + (tri > 0 ? 't' : 'u');
   return mat;
 }
 
@@ -364,7 +380,7 @@ export function buildMaterials(opt = {}) {
     // montinhos de finos (pó solto, relevo alto e muito fosco)
     for (let i = 0; i < 70; i++) { const cx = rnd() * s, cy = rnd() * s, r = s * (.004 + rnd() * .02); const g = H.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(200,200,200,.6)'); g.addColorStop(1, 'rgba(200,200,200,0)'); H.fillStyle = g; H.beginPath(); H.arc(cx, cy, r, 0, 6.3); H.fill(); const ga = A.createRadialGradient(cx, cy, 0, cx, cy, r); ga.addColorStop(0, 'rgba(88,64,54,.35)'); ga.addColorStop(1, 'rgba(88,64,54,0)'); A.fillStyle = ga; A.beginPath(); A.arc(cx, cy, r, 0, 6.3); A.fill(); R.fillStyle = orm(1, 0, .4); R.beginPath(); R.arc(cx, cy, r * .7, 0, 6.3); R.fill(); }
     // juntas de dilatação (2 por repetição em cada eixo) e trincas
-    for (let i = 0; i <= 2; i++) { const p = i * s / 2; A.fillStyle = 'rgba(22,15,12,.6)'; A.fillRect(p - 2, 0, 4, s); A.fillRect(0, p - 2, s, 4); H.fillStyle = '#303030'; H.fillRect(p - 3, 0, 6, s); H.fillRect(0, p - 3, s, 6); R.fillStyle = orm(1, 0); R.fillRect(p - 3, 0, 6, s); R.fillRect(0, p - 3, s, 6); }
+    for (let i = 0; i <= 2; i++) { const p = i * s / 2; A.fillStyle = 'rgba(22,15,12,.32)'; A.fillRect(p - 1.5, 0, 3, s); A.fillRect(0, p - 1.5, s, 3); H.fillStyle = '#4a4a4a'; H.fillRect(p - 2.5, 0, 5, s); H.fillRect(0, p - 2.5, s, 5); R.fillStyle = orm(1, 0); R.fillRect(p - 3, 0, 6, s); R.fillRect(0, p - 3, s, 6); }
     for (let i = 0; i < 46; i++) { let px = rnd() * s, py = rnd() * s; const pts = [[px, py]]; for (let k = 0; k < 9; k++) { px += (rnd() - .5) * s * .03; py += (rnd() - .3) * s * .03; pts.push([px, py]); } const lw = (.7 + rnd()) * s / 1024; for (const [x, c] of [[A, `rgba(22,15,12,${.3 + rnd() * .3})`], [H, 'rgba(50,50,50,.8)']]) { x.strokeStyle = c; x.lineWidth = lw; x.beginPath(); pts.forEach(([a, b], j) => j ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke(); } }
     // pedriscos de minério soltos (relevo, metálicos em parte — hematita)
     for (let i = 0; i < s * 3; i++) { const px = rnd() * s, py = rnd() * s, r = (.6 + rnd() * rnd() * 3.5) * s / 1024; const met = rnd() < .3; A.fillStyle = met ? `rgba(${70 + rnd() * 20 | 0},${66 + rnd() * 18 | 0},${66 + rnd() * 18 | 0},.8)` : `rgba(${40 + rnd() * 50 | 0},${24 + rnd() * 22 | 0},${18 + rnd() * 14 | 0},${.5 + rnd() * .5})`; A.beginPath(); A.arc(px, py, r, 0, 6.3); A.fill(); H.fillStyle = 'rgba(220,220,220,.8)'; H.beginPath(); H.arc(px, py, r, 0, 6.3); H.fill(); if (met) { R.fillStyle = orm(.5, .6); R.beginPath(); R.arc(px, py, r, 0, 6.3); R.fill(); } }
@@ -410,22 +426,22 @@ export function buildMaterials(opt = {}) {
   const steelDkT = paint(TINY, { base: '#584840', dust: .9, rust: 1.1, drip: 1.2, scratch: .7, chip: 1, r: .76, m: .3, dustRGB: '98,76,64', dripRGB: '60,40,30', rustRGB: '80,46,32' });
   M.steelDk = grime(pm(steelDkT, steelDkT.o), { tri: 1 / 2, dust: 1.1, edge: 1.1, grime: .65, dustCol: '#664434' });
   // chutes/caixas: aço marrom-ferrugem escuro, muito sujo, borda polida pelo minério
-  const chuteT = paint(MID, { base: '#5a3a2a', dust: 1.6, rust: 2.2, drip: 2, scratch: .9, chip: 1.4, bare: .7, chipRust: .35, r: .8, m: .3, rustRGB: '88,48,30' });
+  const chuteT = paint(MID, { base: '#5a3a2a', dust: 1.8, rust: 1.6, drip: 2, scratch: .9, chip: 1.2, bare: .7, chipRust: .35, r: .8, m: .3, dustRGB: '104,74,62', rustRGB: '82,50,36' });
   M.chute = grime(pm(chuteT, chuteT.o), { tri: 1 / 2, dust: 1, edge: .9, grime: .8, dustCol: '#6a3a28' });
   // chapas cinza-claras das peneiras e cinzas gerais
-  const greyT = paint(MID, { base: '#a39e98', dust: 1.3, rust: .5, drip: 1.6, scratch: 1.2, chip: .8, r: .6, m: .4, dustRGB: '130,72,44', rustRGB: '108,62,40' });
+  const greyT = paint(MID, { base: '#a39e98', dust: 1.3, rust: .5, drip: 1.6, scratch: 1.2, chip: .8, r: .6, m: .4, dustRGB: '120,82,64', dripRGB: '80,46,32', rustRGB: '100,58,38' });
   M.grey = grime(pm(greyT, greyT.o), { tri: 1 / 1.6, dust: .9, edge: 1, grime: .9, dustCol: '#7e4a32' });
   const greyDkT = paint(TINY, { base: '#4f5354', dust: .8, rust: .6, drip: .8, scratch: .8, chip: .7, r: .55, m: .5 });
   M.greyDk = grime(pm(greyDkT, greyDkT.o), { tri: 1, dust: .7, edge: .8, grime: .4 });
   // amarelo de segurança gasto (guarda-corpos, proteções): pó marrom, lascas mostrando primer/metal/ferrugem
-  const yelT = paint(MID, { base: '#d8a419', dust: 1.1, rust: .5, drip: 1, scratch: 1.4, chip: 2.4, chipR: .009, bare: .35, chipRust: .55, rimRGB: '70,50,20', scratchRGB: '90,80,70', mScr: false, grain: 8, r: .58, m: .1, rustRGB: '110,64,36' });
+  const yelT = paint(MID, { base: '#d8a419', dust: 1.3, dustRGB: '128,92,56', rust: .5, drip: 1, scratch: 1.4, chip: 2.4, chipR: .009, bare: .35, chipRust: .55, rimRGB: '70,50,20', scratchRGB: '90,80,70', mScr: false, grain: 8, r: .58, m: .1, rustRGB: '110,64,36' });
   M.yellow = grime(pm(yelT, yelT.o), { tri: 1 / 1.2, dust: .8, edge: .9, grime: .6, dustCol: '#8a5536' });
   M.yellowClean = grime(pm(yelT, { r: .52, m: .05, ns: .6 }, { color: 0xfff0d0 }), { tri: 1, dust: .4, edge: .8, grime: .3 });
   // bege dos britadores (carcaça bege-esverdeada clara muito suja de minério escorrido — foto 1)
-  const beigeT = paint(MID, { base: '#c9c4a8', dust: 1.6, rust: .7, drip: 3, scratch: 1, chip: 1.2, dripRGB: '84,44,26', dustRGB: '120,64,38', r: .58, m: .2, rustRGB: '104,58,36' });
+  const beigeT = paint(MID, { base: '#c9c4a8', dust: 1.6, rust: .7, drip: 2.4, scratch: 1, chip: 1.2, dripRGB: '74,42,30', dustRGB: '124,84,66', r: .58, m: .2, rustRGB: '104,58,36' });
   M.beige = grime(pm(beigeT, beigeT.o), { tri: 1 / 1.5, dust: 1, edge: .9, grime: 1, dustCol: '#6c3b28' });
   // amarelo de britador desgastado (HP 400 da foto b)
-  const hpT = paint(TINY, { base: '#d39c1c', dust: 1.6, rust: .8, drip: 2.4, scratch: 1.2, chip: 1.6, dripRGB: '84,44,26', r: .56, m: .15 });
+  const hpT = paint(TINY, { base: '#d39c1c', dust: 1.6, rust: .8, drip: 2, scratch: 1.2, chip: 1.6, dripRGB: '78,44,28', dustRGB: '126,88,56', r: .56, m: .15 });
   M.hp = grime(pm(hpT, hpT.o), { tri: 1 / 1.5, dust: 1, edge: .9, grime: 1, dustCol: '#6c3b28' });
   const orT = paint(TINY, { base: '#b5652a', dust: 1.2, rust: 1.5, drip: 1.5, scratch: 1, r: .62, m: .3 });
   M.orange = grime(pm(orT, orT.o), { tri: 1, dust: .9, edge: .9, grime: .8 });

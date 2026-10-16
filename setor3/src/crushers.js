@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261015232026';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261015232026';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261015235448';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261015235448';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -469,10 +469,9 @@ export function buildCrushers(scene, M) {
       return P;
     }
     rack(51.3, .65, 4.6, 0); rack(58.0, .65, 2.4, 0); rack(63.33, 14.0, 2.3, Math.PI / 2);
-    // palete com manto de reposição do HP 400 e caixas de pontas de rotor do Barmac
-    { const PL = new THREE.Group(); PL.position.set(55, 0, 10.5); PL.rotation.y = .12; RM.add(PL);
+    // palete com caixas de pontas de rotor do Barmac (sem o manto de reposição)
+    { const PL = new THREE.Group(); PL.position.set(63.2, 0, 13.6); PL.rotation.y = Math.PI / 2;   /* manto de reposição retirado (pedido do usuário); caixas encostadas na parede */ RM.add(PL);
       for (const zz of [-.5, 0, .5]) cbox(PL, 1.5, .1, .12, mWood, 0, .05, zz, .01); for (let k = 0; k < 7; k++) cbox(PL, .14, .025, 1.2, mWood, -.66 + k * .22, .115, 0, .004);
-      lathe(PL, [[0, .13], [.74, .13], [.74, .18], [.62, .55], [.42, .95], [.36, .99], [0, .99]], mMn, 48).position.x = -.1;
       cbox(PL, .4, .3, .35, mWood, .55, .28, .3, .01); cbox(PL, .4, .3, .35, mWood, .55, .28, -.15, .01); cbox(PL, .38, .25, .33, mWood, .55, .555, .1, .01); }
     // unidade hidráulica (HPU) do ajuste/alívio dos HP 400: tanque, motobomba, filtros, acumuladores e manômetros
     const HP = new THREE.Group(); HP.position.set(55.2, 0, 3.3); RM.add(HP);
