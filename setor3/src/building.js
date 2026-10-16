@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261015235448';
-import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261015235448';
+import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261016081504';
+import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261016081504';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -44,7 +44,16 @@ export function buildBuilding(scene, M, opt = {}) {
   const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .6, 1.6); t.anisotropy = 8; return new THREE.MeshStandardMaterial({ color: 0x9c9a8c, map: t, alphaMap: t, alphaToCoverage: true, transparent: false, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };   // malha ~7,5 cm de arame fino, borda suave (alpha-to-coverage, sem pontilhado)
   const tela = (a, b) => { railing(g, a, b, M.yellow); const L = a.distanceTo(b); const m = new THREE.Mesh(new THREE.PlaneGeometry(L, .9), telaMat(L)); m.position.set((a.x + b.x) / 2, a.y + .58, (a.z + b.z) / 2); m.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x); g.add(m); };
   for (const [a, b] of holes) { tela(V(a, y1, 3.4), V(a, y1, B.D - 5.6)); tela(V(b, y1, 3.4), V(b, y1, B.D - 5.6)); }
-  holes.forEach(([a, b], i) => tela(V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6)));   // no 1º vão fica a chegada da escada   // frente de cada vão (lado da circulação)
+  holes.forEach(([a, b], i) => tela(V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6)));
+  // GRADES DE PISO nos vãos das peneiras: fecham as faixas abertas ao lado da peneira e o trecho à frente da caixa de descarga (pedido do usuário)
+  { const gc = document.createElement('canvas'); gc.width = gc.height = 64; const gx = gc.getContext('2d'); gx.strokeStyle = '#fff'; gx.lineWidth = 5; for (let k = 0; k <= 64; k += 16) { gx.beginPath(); gx.moveTo(k, 0); gx.lineTo(k, 64); gx.stroke(); } gx.lineWidth = 3; for (let k = 0; k <= 64; k += 32) { gx.beginPath(); gx.moveTo(0, k); gx.lineTo(64, k); gx.stroke(); }
+    const gTexB = new THREE.CanvasTexture(gc); gTexB.wrapS = gTexB.wrapT = THREE.RepeatWrapping; gTexB.anisotropy = 8;
+    const gratB = (w, d, x, z) => { const t = gTexB.clone(); t.needsUpdate = true; t.repeat.set(w / .25, d / .25); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x5a5650, map: t, alphaMap: t, alphaToCoverage: true, roughness: .7, metalness: .5, side: THREE.DoubleSide }));
+      m.rotation.x = -Math.PI / 2; m.position.set(x, y1 - .02, z); m.receiveShadow = true; g.add(m); };
+    const hw = SCREENS.w / 2 + .15, zA = 3.4, zB = B.D - 5.6, zF = Math.min(zB - .3, SCREENS.zFeed + SCREENS.len + 1.4);
+    for (const [a, b] of holes) { const xc = (a + b) / 2;
+      gratB(xc - hw - a, zB - zA, (a + xc - hw) / 2, (zA + zB) / 2); gratB(b - xc - hw, zB - zA, (b + xc + hw) / 2, (zA + zB) / 2);   // laterais da peneira
+      if (zB - zF > .3) gratB(2 * hw, zB - zF, xc, (zF + zB) / 2); } }   // à frente da descarga   // no 1º vão fica a chegada da escada   // frente de cada vão (lado da circulação)
   railing(g, V(B.screenEnd, y1, 0.3), V(B.screenEnd, y1, B.D - .3), M.yellow);
   // PISO DOS ALIMENTADORES (L2): faixa sobre a alimentação das peneiras, com grade e guarda-corpo voltado ao vão
   const E = B.screenEnd, y2 = LV.L2;

@@ -15,10 +15,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
-import { B, LV } from './layout.js?v=20261015235448';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261015235448';
-import { PhoneShader } from './render_post.js?v=20261015235448';
-import { UpscaleShader } from './render_upscale.js?v=20261015235448';
+import { B, LV } from './layout.js?v=20261016081504';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261016081504';
+import { PhoneShader } from './render_post.js?v=20261016081504';
+import { UpscaleShader } from './render_upscale.js?v=20261016081504';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
