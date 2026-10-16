@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261016081929';
-import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261016081929';
+import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261016082032';
+import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261016082032';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -38,7 +38,7 @@ export function buildBuilding(scene, M, opt = {}) {
   slab(B.screenEnd - x0, t, B.D, (B.screenEnd + x0) / 2, y1 - t / 2, B.D / 2);
   for (const [a, b] of holes) { slab(b - a, t, 3.4, (a + b) / 2, y1 - t / 2, 1.7); slab(b - a, t, 5.6, (a + b) / 2, y1 - t / 2, B.D - 2.8); }
   // tela de arame preenchendo o guarda-corpo (foto da 03PN002)
-  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(205,190,150,1)'; x.lineWidth = 2.5;
+  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(215,200,160,1)'; x.lineWidth = 4;
     for (let i = 0; i <= 128; i += 16) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 128); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(128, i); x.stroke(); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
   const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .6, 1.6); t.anisotropy = 8; return new THREE.MeshStandardMaterial({ color: 0x9c9a8c, map: t, alphaMap: t, transparent: true, depthWrite: false, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };   // transparência real: a tela continua visível de longe (com alphaToCoverage sumia nos mipmaps) · malha ~7,5 cm de arame fino, borda suave (alpha-to-coverage, sem pontilhado)
