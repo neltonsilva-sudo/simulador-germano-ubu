@@ -1,10 +1,11 @@
 // Contrato de layout do prédio do setor 3 · Britagem e peneiramento da Usina II (metros). x ao longo do prédio, z na profundidade, y para cima.
-// Configuração pelo TCC (Rodrigues & Silva, 2016): 8 peneiras banana de 2 decks; retido 1º deck → britagem primária (2 cônicos HP 400);
+// Configuração do Concentrador III (apostila GEA/Samarco): 7 peneiras banana de 2 decks (4 primárias + 3 secundárias); retido 1º deck → britagem primária (2 cônicos HP 400);
 // retido 2º deck → britagem secundária (3 Barmac VSI); passante < 12,5 mm → pilha; circuito fechado com silos alimentando os britadores.
 export const B = { W: 64, D: 24, H: 24, colX: [0, 8, 16, 24, 32, 40, 48, 56, 64], colZ: [0, 12, 24], screenEnd: 46 };
 export const LV = { L0: 0, L1: 7.5, L2: 14 };            // térreo, piso das peneiras, piso dos alimentadores
-export const SCREENS = { xs: [3.5, 9, 14.5, 20, 25.5, 31, 36.5, 42], zFeed: 4.6, len: 7.3, w: 3.0,
-  tags: ['03PN001', '03PN002', '03PN003', '03PN004', '03PN005', '03PN006', '03PN007', '03PN008'] };
+// Concentrador III (apostila GEA/Samarco, MES set/2022–set/2023): 7 peneiras banana 10×28 ft — primário 03PN001–004, secundário 03PN005–007; 1º deck 25,4 mm, 2º deck 14 mm
+export const SCREENS = { xs: [3.5, 9, 14.5, 20, 25.5, 31, 36.5], zFeed: 4.6, len: 7.3, w: 3.0,
+  tags: ['03PN001', '03PN002', '03PN003', '03PN004', '03PN005', '03PN006', '03PN007'], sec: ['03PN005', '03PN006', '03PN007'] };
 export const CRUSHERS = {
   cones: [{ x: 51, z: 7, tag: '03BR001' }, { x: 59, z: 7, tag: '03BR002' }],                       // britagem primária · HP 400
   vsi: [{ x: 50, z: 17.5, tag: '03BR004' }, { x: 55.5, z: 17.5, tag: '03BR005' }, { x: 61, z: 17.5, tag: '03BR006' }],  // secundária · Barmac

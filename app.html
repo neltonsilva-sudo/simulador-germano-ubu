@@ -475,6 +475,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 .brand h1{margin-left:clamp(14px,3.2vw,52px)!important}
 #exitBtn{background:linear-gradient(180deg,#d9534a,#a8261d)!important;border-color:#ffb3a8!important;color:#fff!important}#exitBtn:hover{filter:brightness(1.12)}
 #cfm .row{justify-content:flex-end}#cfm .row button{flex:0 0 auto!important;width:auto!important;min-width:120px}/* Cancelar do mesmo tamanho do Confirmar */
+#kpiMGP .mgp{margin:10px 0 4px}#kpiMGP .mgph{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}#kpiMGP select{background:#0b1622;color:#fff;border:1px solid var(--line-2);border-radius:6px;padding:2px 6px}#kpiMGP table{font-size:11.5px}#kpiMGP td,#kpiMGP th{color:#fff}
 #alm .ah h3{white-space:nowrap}#alm .tagp{white-space:nowrap}
 #alm .ab,#alm .alt td,#alm .alt th,#alm .hint{color:#fff!important;opacity:1!important}#engBody,#engBody td,#engBody th,#engBody .hint,#engBody h4,#engBody p,#engBody label{color:#fff!important;opacity:1!important}
 #alm .tagp,#engBody .tagp{color:#fff!important;font-weight:700;border:0!important;background:#4b5b6b!important;text-shadow:0 1px 1px rgba(0,0,0,.35);padding:2px 8px;border-radius:6px}#alm .tagp.ok,#engBody .tagp.ok{background:#1e9e57!important}#alm .tagp.warn,#engBody .tagp.warn{background:#d9771a!important}#alm .tagp.crit,#engBody .tagp.crit{background:#d23a3a!important}
@@ -547,7 +548,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
   <aside id="right" class="panel collapsed" aria-label="Indicadores">
     <div class="ph" role="button" tabindex="0" aria-expanded="false"><h2>Indicadores<span class="chev">▾</span></h2><span id="ssTag">regime</span></div>
     <div class="pb">
-      <div class="kpis" id="kpis"></div>
+      <div class="kpis" id="kpis"></div><div id="kpiMGP"></div>
       <div class="spark"><header><span>Produção de pelotas · últimas 48 h</span><b id="sparkVal">–</b></header><canvas id="spark" width="600" height="128"></canvas></div>
       <div class="ship">
         <header><span id="shipName">Navio no berço</span><b id="shipPct">–</b></header>
@@ -714,8 +715,9 @@ function oreColors(im, seed = 1) { const c = new THREE.Color(); let s = seed * 9
 
 const B = { W: 64, D: 24, H: 24, colX: [0, 8, 16, 24, 32, 40, 48, 56, 64], colZ: [0, 12, 24], screenEnd: 46 };
 const LV = { L0: 0, L1: 7.5, L2: 14 };
-const SCREENS = { xs: [3.5, 9, 14.5, 20, 25.5, 31, 36.5, 42], zFeed: 4.6, len: 7.3, w: 3.0,
-  tags: ['03PN001', '03PN002', '03PN003', '03PN004', '03PN005', '03PN006', '03PN007', '03PN008'] };
+
+const SCREENS = { xs: [3.5, 9, 14.5, 20, 25.5, 31, 36.5], zFeed: 4.6, len: 7.3, w: 3.0,
+  tags: ['03PN001', '03PN002', '03PN003', '03PN004', '03PN005', '03PN006', '03PN007'], sec: ['03PN005', '03PN006', '03PN007'] };
 const CRUSHERS = {
   cones: [{ x: 51, z: 7, tag: '03BR001' }, { x: 59, z: 7, tag: '03BR002' }],
   vsi: [{ x: 50, z: 17.5, tag: '03BR004' }, { x: 55.5, z: 17.5, tag: '03BR005' }, { x: 61, z: 17.5, tag: '03BR006' }],
@@ -2797,7 +2799,7 @@ function startMnt(e) { e.mnt = { h: 0, dur: MNT[e.k].h, w0: e.w, h0: e.health, f
 function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null; const M = MNT[e.k];
   e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false, wf: Math.min(m.w0 != null ? m.w0 : e.w, MNT_W) };
   e.w = e.lastMnt.wf; e.mnt = null; return e.lastMnt; }
-const CAP = { pn: 1500, cone: 800, vsi: 750 };
+const CAP = { pn: 1500, cone: 800, vsi: 690 };
 const sim = {
   feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},
@@ -2814,7 +2816,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 
 
-const SRC = { top: 150, d1: 30, d2: 12.5 };
+const SRC = { top: 150, d1: 25.4, d2: 12.5 };
 const rrSim = (p80, n) => ({ p80, n, x63: p80 / Math.pow(Math.log(5), 1 / n) });
 const pasSim = (c, x) => { const f = (y) => 1 - Math.exp(-Math.pow(Math.max(1e-6, y) / c.x63, c.n)); return c.top ? (x >= c.top ? 1 : f(x) / f(c.top)) : f(x); };
 const bisSim = (f, t, lo, hi) => { for (let i = 0; i < 46; i++) { const m = Math.sqrt(lo * hi); if (f(m) < t) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
@@ -2981,7 +2983,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261015221046';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261015232007';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4589,8 +4591,9 @@ function evalAlarms(){const c=CUR,G=c.G,U=c.U,A=[];const add=(eq,sev,msg)=>A.pus
   if(!(RUN.mine&&RUN.tcld&&RUN.crush)&&ST.stockPile>500)add('pile','warn',`Pilha de regularização sem reposição: ${fmt(ST.stockPile/Math.max(1,P.feedC*Math.max(1,G.nC)),0)} h de autonomia`);
   if(ST.stockPile>310000)add('pile','warn','Pilha de regularização cheia: lavra reduzida');
   if(ST.stockPile<=500)add('conc','crit','Concentrador sem alimentação: pilha esgotada');
-  if(G.siC>2.5&&G.F>0)add('conc','warn',`SiO₂ alto no concentrado (${fmt(G.siC,2)} %)`);
-  if(G.feC<65.5&&G.F>0)add('conc','warn',`Fe baixo no concentrado (${fmt(G.feC,2)} %)`);
+  if(G.F>0&&G.siC>SPEC.siBi)add('conc','crit',`SiO₂ alto no concentrado (${fmt(G.siC,2)} %): acima do máximo bi-horário da campanha ${CAMP}`);
+  else if(G.F>0&&G.siC>SPEC.siMax)add('conc','warn',`SiO₂ alto no concentrado (${fmt(G.siC,2)} %): acima da média da campanha ${CAMP}`);
+  if(G.feC<SPEC.feMin&&G.F>0)add('conc','warn',`Fe baixo no concentrado (${fmt(G.feC,2)} %): abaixo do mínimo da campanha ${CAMP}`);
   if(P.amine>95&&RUN.conc)add('conc','warn','Excesso de amina: perda de ferro no rejeito');
   if(G.slime/Math.max(1,G.slime+G.sand)>.3&&G.F>0)add('cava','warn','Lama acima de 30 % dos rejeitos');
   if(G.limited&&G.F>0)add('sandf','warn',`Filtragem de rejeito no limite: alimentação reduzida para ${fmt(G.F,0)} t/h`);
@@ -4896,8 +4899,28 @@ function frame(){
   histD+=sdt;while(histD>=600){histD-=600;histPush();}
   histT+=sdt;if(histT>=900){const k=Math.floor(histT/900);histT-=k*900;for(let i=0;i<Math.min(k,192);i++)hist.push(U.prod);while(hist.length>192)hist.shift();}
 }
+/* indicadores oficiais do Beneficiamento (Manual MGP, item 11.2) + metas do Concentrador III (apostila GEA, MES set/2022–set/2023) */
+function mgpUpdate(){const el=$('#kpiMGP');if(!el||$('#right').classList.contains('collapsed'))return;const G=CUR.G||{},on=(G.F||0)>50,nrr=(typeof PCAL!=='undefined'&&PCAL.n_rr)||1;
+  const x63=(G.P80||45)*.81/Math.pow(Math.log(5),1/nrr)/* concentrado após a remoagem (moagem secundária: 87–91 % < 44 µm) */,p325=(1-Math.exp(-Math.pow(44/x63,nrr)))*100,se=1900+(p325-89.5)*45;
+  const lim=CAMP==='CLS'?{se:[1700,2060],m:[87.4,95]}:{se:[1850,2060],m:[87,91]};
+  const itens=[(G.siC||0)<=SPEC.siMax,p325>=lim.m[0]&&p325<=lim.m[1],se>=lim.se[0]&&se<=lim.se[1]],iq=itens.filter(Boolean).length/3*100;
+  const r=(n,v,u,meta,ok)=>`<tr><td>${n}</td><td class="n"><b>${on?v:'–'}</b> ${u}</td><td class="n">${meta}</td><td>${on?`<span class="tagp ${ok?'ok':'warn'}">${ok?'na meta':'fora'}</span>`:''}</td></tr>`;
+  const h=`<div class="mgp"><div class="mgph"><b>Indicadores oficiais · Beneficiamento</b><label>Campanha <select id="campSel"><option${CAMP==='CNS'?' selected':''}>CNS</option><option${CAMP==='CLS'?' selected':''}>CLS</option></select></label></div>
+   <table class="alt"><tr><th>Indicador</th><th class="n">Valor</th><th class="n">Meta C3</th><th></th></tr>
+   ${r('RP · recuperação em peso',fmt(G.massRec||0,1),'%','50–55',(G.massRec||0)>=50&&(G.massRec||0)<=56)}
+   ${r('RM · recuperação metálica',fmt(G.feRec||0,1),'%','≥ 82',(G.feRec||0)>=80)}
+   ${r('Fe no concentrado',fmt(G.feC||0,2),'%','≥ '+fmt(SPEC.feMin,2),(G.feC||0)>=SPEC.feMin)}
+   ${r('SiO₂ no concentrado',fmt(G.siC||0,2),'%','≤ '+fmt(SPEC.siMax,2)+' (bi-h '+fmt(SPEC.siBi,2)+')',(G.siC||0)<=SPEC.siMax)}
+   ${r('−325# (< 44 µm) · estimado',fmt(p325,1),'%',lim.m.join('–'),itens[1])}
+   ${r('Superfície específica · estimada',fmt(se,0),'cm²/g',lim.se.join('–'),itens[2])}
+   ${r('CEE · energia de moagem',fmt(CUR.kWhT||0,1),'kWh/t','≈ 15 (5 + 9–11)',(CUR.kWhT||0)<=17)}
+   ${r('CE amina',fmt(P.amine,0),'g/t','35–40 por estágio',P.amine<=95)}
+   ${r('CE amido',fmt(P.starch,0),'g/t','400–960',P.starch>=350&&P.starch<=1000)}
+   ${r('IQCP · índice de qualidade',fmt(iq,0),'%','100',iq>=99)}</table>
+   <p class="hint">Fórmulas do Manual do Beneficiamento (11.2): RP = concentrado ÷ alimentação; RM = Fe no concentrado ÷ Fe na alimentação; IQCP = itens atendidos (SiO₂, −325#, superfície específica) ÷ 3. −325# e superfície específica do concentrado estimados pelo P80 da moagem com a remoagem (moagem secundária).</p></div>`;
+  if(el._h!==h){el._h=h;el.innerHTML=h;const sc=$('#campSel');if(sc)sc.addEventListener('change',e=>{setCamp(e.target.value);logEvent('Comando',`Campanha de produção: ${CAMP} (SiO₂ ≤ ${fmt(SPEC.siMax,2)} %)`);el._h='';mgpUpdate();});}}
 function updateUI(){
-  const c=CUR,G=c.G,U=c.U;evalAlarms();renderAlarms();
+  const c=CUR,G=c.G,U=c.U;evalAlarms();renderAlarms();try{mgpUpdate();}catch(e){}
   const d=Math.floor(ST.simT/86400)+1,hh=Math.floor(ST.simT%86400/3600),mm=Math.floor(ST.simT%3600/60);
   if(fpsAcc>1){window.__fps=fpsN/fpsAcc;fpsAcc=0;fpsN=0;
     if(!HQ){const pr=renderer.getPixelRatio();PRLOW=window.__fps<40?PRLOW+1:0;if(PRLOW>=4&&pr>1.01){PRNEXT=Math.max(1,pr-.25);PRLOW=0;}}}
@@ -5131,20 +5154,22 @@ function engVal(){const C=CUR,G=C.G||{},F=G.F||C.mine||1,fe=P.fe/100;
    ['Recuperação mássica da deslamagem',desM,'%',91,'d',''],
    ['Recuperação metalúrgica da deslamagem',desMet,'%',90,'d',''],
    ['Recuperação mássica da flotação',flotM,'%',62,'d','Referência = só a flotação convencional (1º estágio); o modelo agrega convencional + tank cells + colunas'],
-   ['SiO₂ no concentrado',G.siC||0,'%',1.55,'d','Média CNS 1,55 % (limite 1,67 %); CLS 1,14 % (limite 1,22 %)'],
+   ['SiO₂ no concentrado',G.siC||0,'%',CAMP==='CLS'?1.15:1.70,'d','Manual do Beneficiamento 2023: média CNS 1,70 % (máx. 1,90 %); CLS 1,15 % (máx. 1,25 %) · campanha atual '+CAMP],
    ['Fe no rejeito da flotação',G.feSand||0,'%',12.5,'d','Referência = rejeito da flotação convencional; o rejeito final (após scavenger) é mais pobre'],
    ['Moagem: passante em 149 µm',pas(149),'%',84,'d','Referência = moagem primária; o modelo usa a moagem até a flotação'],
-   ['Energia específica de moagem',C.kWhT||0,'kWh/t',12.9,'c','Pré + primária + secundária; potência instalada ÷ taxa de alimentação'],
-   ['Teor de Fe do ROM',P.fe,'% Fe',44,'d','Padrão do simulador 40 % [adotado]; ajustável em Controles'],
+   ['Energia específica de moagem',C.kWhT||0,'kWh/t',15,'d','Apostila Concentrador III: moagem primária 5 kWh/t + secundária 9–11 kWh/t (Wi 4,7 kWh/t)'],
+   ['Teor de Fe do ROM',P.fe,'% Fe',43,'d','Apostila Concentrador III: alimentação 39–47 % Fe; ajustável em Controles'],
+   ['Recuperação em peso global (RP)',G.massRec||0,'%',52.5,'d','Apostila Concentrador III (MES set/2022–set/2023): 50–55 %'],
+   ['Recuperação metálica global (RM)',G.feRec||0,'%',82,'d','Apostila Concentrador III: 82 %'],
    ['Britagem: produto P80 (abaixo de 12,5 mm)',(S3k.gran&&S3k.gran.p80prod)||0,'mm',null,'d','Só limite superior (12,5 mm) é publicado; P80 é calculado'],
   ];
-  const VID=["producao_mt_ano", "desl_rec_massica_pct", "desl_rec_metalurgica_pct", "flot_rec_massica_pct", "sio2_conc_pct", "fe_rejeito_flot_pct", "moagem_passante_149um_pct", "energia_moagem_kwh_t", "fe_rom_pct", "britagem_p80_produto_mm"];let MED={};try{MED=JSON.parse(localStorage.getItem('valMed')||'{}');}catch(e){}
+  const VID=["producao_mt_ano", "desl_rec_massica_pct", "desl_rec_metalurgica_pct", "flot_rec_massica_pct", "sio2_conc_pct", "fe_rejeito_flot_pct", "moagem_passante_149um_pct", "energia_moagem_kwh_t", "fe_rom_pct", "rp_global_pct", "rm_global_pct", "britagem_p80_produto_mm"];let MED={};try{MED=JSON.parse(localStorage.getItem('valMed')||'{}');}catch(e){}
   rows.forEach((r,i)=>{const k=VID[i];r.id=k;if(MED[k]!=null&&isFinite(MED[k])){r[3]=+MED[k];r[4]='m';r[5]=(r[5]?r[5]+' · ':'')+'valor MEDIDO importado';}});
   const st=(v,r)=>{if(r==null)return'<span class="tagp">sem ref.</span>';const d=(v-r)/r*100,a=Math.abs(d);return `<span class="tagp ${a<=10?'ok':a<=25?'warn':'crit'}">${d>=0?'+':''}${fmt(d,0)} %</span>`;};
   const ok=rows.filter(r=>r[3]!=null&&Math.abs((r[1]-r[3])/r[3])<=.1).length,tot=rows.filter(r=>r[3]!=null).length;
   const stages=[
    ['Mina e TCLD','Taxa de lavra = demanda; capacidade da TCLD','adot','Capacidade 6.000 t/h e frota ilustrativas'],
-   ['Britagem e peneiramento (setor 3)','Dois estágios, malhas 30/12,5 mm, ROM < 150 mm','real','Finos do ROM, curvas, Wi e capacidades: adotado/ref.'],
+   ['Britagem e peneiramento (setor 3)','7 peneiras banana 10×28 (4 primárias + 3 secundárias), telas 25,4/14 mm, 2 HP 400 + 3 Barmac 9100 (690 t/h), ROM < 150 mm','real','Finos do ROM, curvas, Wi e capacidades: adotado/ref.'],
    ['Pilha de regularização','Mistura perfeita','adot','Sem blendagem por camadas'],
    ['Moagem','Bond + P80; energia','ref','Potências e taxas: dissertação; Wi adotado'],
    ['Deslamagem','Partição de Whiten (d50, nitidez, bypass)','ref','Recuperações de referência: dissertação'],
@@ -5388,7 +5413,11 @@ function vsTick(){if(ST.simT<VS.next||!CUR.G)return;VS.next=ST.simT+600;const G=
   VS.pend=VS.pend.filter(q=>{if(q.av>ST.simT)return true;const e1=q.p80-q.sp,e2=q.si-q.ss;VS.bias.p80+=.5*e1;VS.bias.si+=.5*e2;VS.err.p80=Math.sqrt(.75*VS.err.p80**2+.25*e1*e1);VS.err.si=Math.sqrt(.75*VS.err.si**2+.25*e2*e2);VS.lab.push({t:q.t,p80:q.p80,si:q.si});if(VS.lab.length>40)VS.lab.shift();return false;});
   VS.hist.push({t:ST.simT,p80T:G.P80,p80S:p80s,siT:G.siC,siS:sis,e1:VS.err.p80,e2:VS.err.si});if(VS.hist.length>288)VS.hist.shift();}
 // ---- C. Previsão de 48 h pelo plano de lavra + ajuste prescritivo
-const SPEC={siMax:2.2,feMin:65.8,alMax:.55,pMax:.06};let FC=null;
+const SPEC={siMax:1.90,siBi:2.50,feMin:64.87,alMax:.55,pMax:.06};let FC=null;
+/* campanhas de produção (Manual do Beneficiamento, tab. 9): CNS → SiO₂ médio ≤ 1,90 % (máx. bi-horário 2,50 %), Fe ≥ 64,87 %; CLS → SiO₂ ≤ 1,25 % (1,36 %), Fe ≥ 66,58 % */
+let CAMP=(()=>{try{return localStorage.getItem('camp')==='CLS'?'CLS':'CNS';}catch(e){return 'CNS';}})();
+function setCamp(c){CAMP=c==='CLS'?'CLS':'CNS';Object.assign(SPEC,CAMP==='CLS'?{siMax:1.25,siBi:1.36,feMin:66.58}:{siMax:1.90,siBi:2.50,feMin:64.87});try{localStorage.setItem('camp',CAMP);}catch(e){}}
+setCamp(CAMP);
 function forecast(h=48){if(!GEO.on||!CUR.G)return null;const G=CUR.G,nC=Math.max(1,G.nC),F=G.F>50?G.F:P.feedC*nC,mine=CUR.mine>50?CUR.mine:F;
   const g={plan:GEO.plan,i:GEO.i,rem:GEO.rem,pile:JSON.parse(JSON.stringify(GEO.pile))};let M=ST.stockPile;const pts=[];
   for(let k=0;k<=h;k++){const r=germanoCore(F,g.pile);pts.push({h:k,fe:r.feC,si:r.siC,al:r.alC,p:r.pC,p80:r.P80,mr:r.massRec,feRec:r.feRec,blk:g.plan[g.i].id,tipo:g.plan[g.i].tipo,pileFe:g.pile.fe,wi:g.pile.wi,pile:JSON.parse(JSON.stringify(g.pile))});
@@ -5688,7 +5717,7 @@ function bindDt(){const b=$('#engBody');
   if(engTab==='rec'){$('#recAdd').addEventListener('click',()=>{const tag=$('#recTag').value,t=$('#recTipo').value;FAULT[tag]={tipo:t==='biasn'?'bias':t,mag:t==='bias'?.08:t==='biasn'?-.10:t==='drift'?.06:0,t0:ST.simT,val:null};SUSH[tag]=[];logEvent('Instrumentação',`Falha injetada em ${tag}: ${$('#recTipo').selectedOptions[0].textContent}`);renderEng();});
     $('#recClr').addEventListener('click',()=>{for(const k in FAULT)delete FAULT[k];for(const k in SUSH)SUSH[k]=[];logEvent('Instrumentação','Falhas de instrumento removidas');renderEng();});}
   if(engTab==='adv')b.querySelectorAll('[data-adv]').forEach(c=>c.addEventListener('change',()=>{ADV[c.dataset.adv]=c.checked;logEvent('Modelo',`${{mill:'Moagem (Austin)',pipe:'Mineroduto (reologia)',fur:'Forno por zonas'}[c.dataset.adv]} ${c.checked?'ligado':'desligado'}`);seedPipe();FC=GEO.on?forecast():null;}));
-  if(engTab==='val'){const ids=["producao_mt_ano", "desl_rec_massica_pct", "desl_rec_metalurgica_pct", "flot_rec_massica_pct", "sio2_conc_pct", "fe_rejeito_flot_pct", "moagem_passante_149um_pct", "energia_moagem_kwh_t", "fe_rom_pct", "britagem_p80_produto_mm"];
+  if(engTab==='val'){const ids=["producao_mt_ano", "desl_rec_massica_pct", "desl_rec_metalurgica_pct", "flot_rec_massica_pct", "sio2_conc_pct", "fe_rejeito_flot_pct", "moagem_passante_149um_pct", "energia_moagem_kwh_t", "fe_rom_pct", "rp_global_pct", "rm_global_pct", "britagem_p80_produto_mm"];
     $('#valTpl').addEventListener('click',()=>{const t='indicador;valor\n'+ids.map(k=>k+';').join('\n');navigator.clipboard&&navigator.clipboard.writeText(t);$('#valMsg').textContent='Modelo copiado: cole numa planilha, preencha os valores medidos e salve como CSV.';});
     $('#valFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const M={};String(rd.result).split(/\r?\n/).forEach(l=>{const [k,v]=l.split(/[;\t]/).map(x=>(x||'').trim());if(ids.includes(k)&&v!==''&&isFinite(+v.replace(',','.')))M[k]=+v.replace(',','.');});
       try{localStorage.setItem('valMed',JSON.stringify(M));}catch(x){}logEvent('Validação',`${Object.keys(M).length} indicador(es) medido(s) importado(s)`);renderEng();};rd.readAsText(f);});

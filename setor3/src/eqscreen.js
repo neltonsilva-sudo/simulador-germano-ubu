@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261015221103';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261015221103';
+import { call } from './api.js?v=20261015232026';
+import { MNT, startMnt, finishMnt } from './sim.js?v=20261015232026';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -21,9 +21,9 @@ const CSS = `
 `;
 
 const SPEC = {
-  pn: { modelo: 'Peneira vibratória tipo banana, 2 decks · 3,0 × 7,3 m (10 × 24 ft)', itens: [['Deck superior (1º)', 'abertura ≈ 32 mm · painéis de poliuretano'], ['Deck inferior (2º)', 'abertura 12,5 mm (corte do produto)'], ['Inclinação dos segmentos', '28° · 18° · 9°'], ['Acionamento', '2 vibradores · 2 × 30 kW · 440 V'], ['Frequência / amplitude', '≈ 16 Hz (960 rpm) · ≈ 9 mm'], ['Capacidade nominal (modelo)', '1.500 t/h']] },
-  cone: { modelo: 'Britador cônico HP 400 · britagem primária (compressão)', itens: [['Motor', '315 kW · 4,16 kV'], ['APF (abertura na posição fechada)', '13 a 38 mm (ajuste pela coroa)'], ['Proteção', 'alívio hidráulico (acumuladores)'], ['Lubrificação', 'óleo · alarme acima de 65 °C'], ['Capacidade nominal (modelo)', '1.100 t/h']] },
-  vsi: { modelo: 'Britador de impacto vertical Barmac B9100SE (VSI) · britagem secundária', itens: [['Acionamento', '2 × 300 kW · 4,16 kV · correias'], ['Rotor', 'Ø ≈ 990 mm · 1.450 rpm (≈ 75 m/s na ponta)'], ['Mecanismo', 'impacto rocha contra rocha (cascata)'], ['Lubrificação', 'óleo · alarme acima de 65 °C'], ['Capacidade nominal (modelo)', '900 t/h']] },
+  pn: { modelo: 'Peneira vibratória tipo banana Metso, 2 decks · 10 × 28 ft (3,0 × 8,5 m)', itens: [['Deck superior (1º)', 'abertura 25,4 mm · painéis de poliuretano'], ['Deck inferior (2º)', 'abertura 14 mm (produto < 12,5 mm)'], ['Função', 'primário 03PN001–004 (ROM) · secundário 03PN005–007 (produto do Barmac)'], ['Inclinação dos segmentos', '28° · 18° · 9°'], ['Acionamento', '2 vibradores · 2 × 30 kW · 440 V'], ['Frequência / amplitude', '≈ 16 Hz (960 rpm) · ≈ 9 mm'], ['Capacidade nominal (modelo)', '1.500 t/h']] },
+  cone: { modelo: 'Britador cônico Metso Nordberg HP 400 · britagem primária · 260–854 t/h (com cascata)', itens: [['Motor', '315 kW · 4,16 kV'], ['APF (abertura na posição fechada)', '13 a 38 mm (ajuste pela coroa)'], ['Proteção', 'alívio hidráulico (acumuladores)'], ['Lubrificação', 'óleo · alarme acima de 65 °C'], ['Capacidade nominal (modelo)', '1.100 t/h']] },
+  vsi: { modelo: 'Britador de impacto vertical Barmac 9100 (VSI) · britagem secundária · 690 t/h', itens: [['Acionamento', '2 × 300 kW · 4,16 kV · correias'], ['Rotor', 'Ø ≈ 990 mm · 1.450 rpm (≈ 75 m/s na ponta)'], ['Mecanismo', 'impacto rocha contra rocha (cascata)'], ['Lubrificação', 'óleo · alarme acima de 65 °C'], ['Capacidade nominal (modelo)', '900 t/h']] },
 };
 const KV = { pn: .44, cone: 4.16, vsi: 4.16 };   // tensão (kV) para estimar a corrente
 

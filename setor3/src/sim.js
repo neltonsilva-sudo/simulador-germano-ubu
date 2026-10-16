@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
-// alimentação nova F → 8 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
+// alimentação nova F → 7 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261015221103';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261015232026';
 
 const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
 export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova
@@ -14,7 +14,7 @@ export function startMnt(e) { e.mnt = { h: 0, dur: MNT[e.k].h, w0: e.w, h0: e.he
 export function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null; const M = MNT[e.k];
   e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false, wf: Math.min(m.w0 != null ? m.w0 : e.w, MNT_W) };
   e.w = e.lastMnt.wf; e.mnt = null; return e.lastMnt; }            // t de material por troca de revestimento/deck (ilustrativo)
-const CAP = { pn: 1500, cone: 800, vsi: 750 };                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
+const CAP = { pn: 1500, cone: 800, vsi: 690 };   // Barmac 9100: 690 t/h (apostila C3); HP 400: 260–854 t/h com cascata                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
 export const sim = {
   feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},                                                      // tag → {k, on, w (desgaste %), ...valores}
@@ -31,7 +31,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 // Fontes: [real] dissertação Figueiredo (UFMG, 2019) — Britagem 01 de Germano: ROM < 150 mm, decks de 30 mm e 12,5 mm,
 // produto < 12,5 mm; [TCC] Usina II: 8 peneiras banana, HP 400 + Barmac; [adotado] finos do ROM, inclinações das curvas,
 // P80 do HP ≈ 1,45·APF, razão do Barmac ≈ 2,1:1, eficiências das peneiras.
-export const SRC = { top: 150, d1: 30, d2: 12.5 };
+export const SRC = { top: 150, d1: 25.4, d2: 12.5 };   // 1º deck 25,4 mm; 2º deck 14 mm (corte efetivo do produto 12,5 mm) — apostila C3
 const rrSim = (p80, n) => ({ p80, n, x63: p80 / Math.pow(Math.log(5), 1 / n) });
 const pasSim = (c, x) => { const f = (y) => 1 - Math.exp(-Math.pow(Math.max(1e-6, y) / c.x63, c.n)); return c.top ? (x >= c.top ? 1 : f(x) / f(c.top)) : f(x); };
 const bisSim = (f, t, lo, hi) => { for (let i = 0; i < 46; i++) { const m = Math.sqrt(lo * hi); if (f(m) < t) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
@@ -45,7 +45,7 @@ export function circSolve(css, f12, e2, e1) {
     mix = (x) => prod * pasSim(rom, x) + r1 * pasSim(hp, x) + r2 * pasSim(vsi, x);
     const pA = mix(D1), pB = mix(D2), r1n = 1 - e1 * pA, pn = e2 * e1 * pB, r2n = Math.max(0, 1 - r1n - pn);
     r1 += .5 * (r1n - r1); r2 += .5 * (r2n - r2); prod = 1 - r1 - r2;
-    // F80 da alimentação do Barmac = retido no 2º deck (faixa −30 +12,5 mm + finos mal classificados)
+    // F80 da alimentação do Barmac = retido no 2º deck (faixa −25,4 +12,5 mm + finos mal classificados)
     const R2 = (x) => (x <= D2 ? e1 * (1 - e2) * mix(x) : x <= D1 ? e1 * ((1 - e2) * pB + mix(x) - pB) : e1 * ((1 - e2) * pB + pA - pB)) / Math.max(1e-6, e1 * ((1 - e2) * pB + pA - pB));
     F80v = bisSim(R2, .8, .5, D1); vsi = rrSim(F80v / 2.1, 1.1);
   }
@@ -56,7 +56,7 @@ export function circSolve(css, f12, e2, e1) {
 }
 // ---------- CIRCUITO EM DOIS ESTÁGIOS (fluxograma da Britagem 01, dissertação 2019) — balanço por classes de tamanho
 // 1) peneiramento primário do ROM (12,5 mm): fino → pilha/concentrador; retido → pilha de regularização
-// 2) peneiras da britagem primária (30 / 12,5 mm): > 30 → cônicos (circuito fechado); −30 +12,5 → Barmac; < 12,5 → produto
+// 2) peneiras da britagem primária (25,4 / 14 mm): > 25,4 → cônicos (circuito fechado); −25,4 +12,5 → Barmac; < 12,5 → produto
 // 3) Barmac em circuito fechado com peneiras próprias (16 / 12,5 mm): > 12,5 volta ao Barmac; < 12,5 → produto
 const NB = 90, XG = Array.from({ length: NB }, (_, k) => .05 * Math.pow(150 / .05, k / (NB - 1)));   // limites superiores das classes (mm)
 const toBins = (cum) => { const m = new Float64Array(NB); let prev = 0; for (let k = 0; k < NB; k++) { const c = cum(XG[k]); m[k] = Math.max(0, c - prev); prev = c; } return m; };
