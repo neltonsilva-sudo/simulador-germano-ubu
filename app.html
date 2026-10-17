@@ -476,6 +476,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #exitBtn{background:linear-gradient(180deg,#d9534a,#a8261d)!important;border-color:#ffb3a8!important;color:#fff!important}#exitBtn:hover{filter:brightness(1.12)}
 #cfm .row{justify-content:flex-end}#cfm .row button{flex:0 0 auto!important;width:auto!important;min-width:120px}/* Cancelar do mesmo tamanho do Confirmar */
 #kpiMGP .mgp{margin:10px 0 4px}#kpiMGP .mgph{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}#kpiMGP select{background:#0b1622;color:#fff;border:1px solid var(--line-2);border-radius:6px;padding:2px 6px}#kpiMGP table{font-size:11.5px}#kpiMGP td,#kpiMGP th{color:#fff}
+#labels .ctxl{position:absolute;left:0;top:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;font:600 11px system-ui;color:#fff;text-shadow:0 1px 3px #000;white-space:nowrap}#labels .ctxl span{font-size:10px;padding:1px 7px;border-radius:9px;color:#08202a;text-shadow:none}
 #alm .ah h3{white-space:nowrap}#alm .tagp{white-space:nowrap}
 #alm .ab,#alm .alt td,#alm .alt th,#alm .hint{color:#fff!important;opacity:1!important}#engBody,#engBody td,#engBody th,#engBody .hint,#engBody h4,#engBody p,#engBody label{color:#fff!important;opacity:1!important}
 #alm .tagp,#engBody .tagp{color:#fff!important;font-weight:700;border:0!important;background:#4b5b6b!important;text-shadow:0 1px 1px rgba(0,0,0,.35);padding:2px 8px;border-radius:6px}#alm .tagp.ok,#engBody .tagp.ok{background:#1e9e57!important}#alm .tagp.warn,#engBody .tagp.warn{background:#d9771a!important}#alm .tagp.crit,#engBody .tagp.crit{background:#d23a3a!important}
@@ -2983,7 +2984,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261017000352';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261017001801';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3164,9 +3165,9 @@ function bld(g,x,z,w,d,h,{wall=MAT.wall,roof=MAT.roof,gable=false,win=true,y=0,t
 }
 
 /* ============ TERRAIN (realistic, smooth, fBm relief) ============ */
-const ZONES=[[-108,-50,-66,-14],[-102,-16,-34,42],[-42,-6,-14,40],[4,-52,90,30],[-76,54,-44,84],[-32,56,0,86],[-63,34,-57,57],[-29,34,-23,58]];// + clareiras da pilha de rejeito e da cava (afastadas ao sul) e corredores da correia e da tubulação de lama
+const ZONES=[[-116,66,-84,94],[-146,4,-110,40],[-108,-50,-66,-14],[-102,-16,-34,42],[-42,-6,-14,40],[4,-52,90,30],[-76,54,-44,84],[-32,56,0,86],[-63,34,-57,57],[-29,34,-23,58]];// + clareiras da pilha de rejeito e da cava (afastadas ao sul) e corredores da correia e da tubulação de lama
 const PITS=[{x:-90,z:-32,r:15,d:11,b:5,rim:4},{x:-16,z:70,r:10,d:6,b:4,rim:2.5}];
-const MOUNDS=[{x:-60,z:68,r:11,h:7,b:4}];
+const MOUNDS=[{x:-60,z:68,r:11,h:7,b:4,type:'pder'},{x:-100,z:80,r:11,h:5,b:3,type:'eixo'},{x:-128,z:22,r:14,h:11,b:6,type:'dam'}];/* PDER Alegria Sul (área 8), PDER Eixo 1 e Barragem de Germano (desativada, em descaracterização) — site da Samarco */
 const SHORE=100;
 PITS.concat(MOUNDS).forEach(p=>{const d=layDelta(p.x,p.z);p.x+=d.x;p.z+=d.z;});
 ZONES.forEach(zn=>{const S=layS((zn[0]+zn[2])/2);zn[0]=S.ax+(zn[0]-S.ax)*S.kx+(S.ox||0);zn[2]=S.ax+(zn[2]-S.ax)*S.kx+(S.ox||0);zn[1]=S.az+(zn[1]-S.az)*S.kz;zn[3]=S.az+(zn[3]-S.az)*S.kz;});
@@ -3189,7 +3190,12 @@ const _tc=new THREE.Color(),_tc2=new THREE.Color();
 function colAt(x,z,h){
   const n=fbm(x*.08,z*.08,3),n2=fbm(x*.02+11,z*.02,3);
   for(const p of PITS){const d=Math.hypot(x-p.x,z-p.z);if(d<p.r+p.rim){const pit=p===PITS[0];_tc.setHex(pit?0x8e4b2d:0xa3714f).lerp(_tc2.setHex(pit?0xb06a42:0xc79a70),n);return _tc;}}
-  for(const p of MOUNDS){if(Math.hypot(x-p.x,z-p.z)<p.r){_tc.setHex(0xcdb892).lerp(_tc2.setHex(0xe4d5b3),n);return _tc;}}
+  for(const p of MOUNDS){const d=Math.hypot(x-p.x,z-p.z);if(d<p.r){const t=(1-d/p.r)*p.b,k=Math.floor(t),fr=t-k,top=k>=p.b-1,slope=fr<.35;
+    /* PDER em terraços: topo claro (rejeito arenoso em deposição), taludes revegetados (verde) nas bancadas concluídas, bermas de estéril marrom; barragem: taludes gramados */
+    if(top)_tc.setHex(p.type==='dam'?0xb7bba2:0xd6ccb4).lerp(_tc2.setHex(p.type==='dam'?0x9fa88a:0xc4b79b),n);
+    else if(slope&&(p.type==='dam'||k<p.b-2))_tc.setHex(0x55733a).lerp(_tc2.setHex(0x7a9550),n);
+    else if(slope)_tc.setHex(0x9a5a3a).lerp(_tc2.setHex(0xb07050),n);
+    else _tc.setHex(p.type==='dam'?0x8f8a6a:0xa07a58).lerp(_tc2.setHex(0xb89470),n);return _tc;}}
   const s=seaF(x,z);if(s>.05){_tc.setHex(0xcdbb95).lerp(_tc2.setHex(0x8f7f63),clamp(-h/3,0,1));return _tc;}
   const zd=zoneDist(x,z);
   if(zd<2){if(x<-12)_tc.setHex(0x8f5536).lerp(_tc2.setHex(0xa86a45),n);else _tc.setHex(0x9e8b7d).lerp(_tc2.setHex(0xb3a192),n);return _tc;}
@@ -3472,7 +3478,7 @@ const DS=grp(-53,70);DS.position.y=H(DS.position.x,DS.position.z)-.05;DS.rotatio
   DS.userData.push={berm,gr,du,g:Array.from({length:48},(_,i)=>({u:Math.random(),s:i%2?1:-1,r:Math.random()*6,o:Math.random()}))};}
 /* ---------- 9 Cava Alegria Sul (slime pond) ---------- */
 const CAVA=grp(-16,70);
-const slimeSurf=(()=>{const m=mesh(new THREE.CircleGeometry(9.5,32),MAT.slime,0,-4.2,0,CAVA);m.rotation.x=-Math.PI/2;m.receiveShadow=true;m.castShadow=false;return m;})();
+const slimeSurf=(()=>{const m=mesh(new THREE.CircleGeometry(9.5,32),std(0xa8481e,.05,.22),0,-4.2,0,CAVA);/* lama do SDR Alegria Sul: vermelho-alaranjada (foto Samarco) */m.rotation.x=-Math.PI/2;m.receiveShadow=true;m.castShadow=false;return m;})();
 /* ---------- 10 Pump station ---------- */
 const PS=grp(-24,6);
 {bld(PS,0,0,9,7,5,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});for(let i=0;i<3;i++){const p=cyl(.7,.7,1.4,MAT.teal,-3+i*3,.9,5,PS,16);p.rotation.x=Math.PI/2;box(1.4,.9,1.2,MAT.wall2,-3+i*3,.6,6.6,PS);}
@@ -4544,7 +4550,9 @@ function labelVal(id){const c=CUR,G=c.G,U=c.U;switch(id){
   case 'esp':return fmt(U.emis,0)+' mg/Nm³';case 'furnace':return fmt(ST.Tq,0)+' °C';case 'screen':return fmt(U.prod,0)+' t/h';
   case 'yard':return fmtT(ST.yard);case 'fence':return '';case 'port':return fmt(ST.shipLoad/ST.shipCap*100,0)+' %';}return '';}
 const tmpV=new THREE.Vector3();let occT=0;const occRay=new THREE.Raycaster();
-function updateLabels(dt){
+const CTXL=[{t:'PDER Eixo 1',s:'em operação',c:'#2fbf71',m:1},{t:'Barragem de Germano',s:'desativada · em descaracterização',c:'#ffb020',m:2}].map(o=>{const d=document.createElement('div');d.className='ctxl';d.innerHTML=`<b>${o.t}</b><span style="background:${o.c}">${o.s}</span>`;$('#labels').appendChild(d);const p=MOUNDS[o.m];o.p=V3(p.x,p.h+4,p.z);o.d=d;return o;});
+function updateCtxLabels(){const w=stage.clientWidth,h=stage.clientHeight,show=!AREA&&showLbl;for(const o of CTXL){if(!show){o.d.style.display='none';continue;}tmpV.copy(o.p).project(camera);const vis=tmpV.z<1&&Math.abs(tmpV.x)<1.05&&Math.abs(tmpV.y)<1.05;o.d.style.display=vis?'':'none';if(vis)o.d.style.transform=`translate(${(tmpV.x*.5+.5)*w}px,${(-tmpV.y*.5+.5)*h}px) translate(-50%,-100%)`;}}
+function updateLabels(dt){try{updateCtxLabels();}catch(e){}
   if(!showLbl)return;const w=stage.clientWidth,h=stage.clientHeight;occT+=dt;const doOcc=occT>.35;if(doOcc)occT=0;
   const dCam=camera.position.distanceTo(controls.target);const compact=dCam>150||w<700;
   const vis=[];
@@ -5326,7 +5334,10 @@ const PZ=[
   {tag:'PZ-09-01',a:'cava',loc:'cava · talude oeste',x:-28,z:70,h0:7.0,fs0:1.63},
   {tag:'PZ-09-02',a:'cava',loc:'cava · talude norte',x:-16,z:58,h0:6.4,fs0:1.66},
   {tag:'PZ-09-03',a:'cava',loc:'cava · talude leste',x:-4,z:72,h0:7.6,fs0:1.61},
-  {tag:'PZ-09-04',a:'cava',loc:'cava · dique sul',x:-16,z:82,h0:8.2,fs0:1.60}];
+  {tag:'PZ-09-04',a:'cava',loc:'cava · dique sul',x:-16,z:82,h0:8.2,fs0:1.60},
+  {tag:'PZ-E1-01',a:'eixo',eq:'dry',loc:'PDER Eixo 1 · talude',x:-92,z:84,h0:3.8,fs0:1.75},
+  {tag:'PZ-BG-01',a:'dam',eq:'dry',loc:'Barragem de Germano · maciço',x:-128,z:10,h0:9.5,fs0:1.58},
+  {tag:'PZ-BG-02',a:'dam',eq:'dry',loc:'Barragem de Germano · ombreira',x:-140,z:26,h0:8.8,fs0:1.61}];
 PZ.forEach((p,i)=>{p.h=p.h0+.3+(i%3)*.15;p.hist=[];const q=LP(V3(p.x,0,p.z));p.pos=V3(q.x,H(q.x,q.z),q.z);
   const g=new THREE.Group();g.position.copy(p.pos);root.add(g);mesh(new THREE.CylinderGeometry(.12,.12,1.5,10),MAT.frame,0,.75,0,g);
   p.cap=new THREE.MeshStandardMaterial({color:0x2fbf71,emissive:0x2fbf71,emissiveIntensity:.6,roughness:.5});mesh(new THREE.BoxGeometry(.5,.36,.36),p.cap,0,1.6,0,g);
@@ -5336,15 +5347,15 @@ const pzStN=p=>{const d=p.h-p.h0;return d>=PZ_LIM[2]?'crit':d>=PZ_LIM[1]?'warn':
 const pzStTxt={ok:'normal',att:'atenção',warn:'alerta',crit:'emergência'};
 const pzFS=p=>Math.max(.9,p.fs0-.065*Math.max(0,p.h-p.h0));
 function pzStep(sdt){if(!(sdt>0))return;const hrs=sdt/3600,G=CUR.G||{},rain=Math.max(0,+RAIN.rate||0);
-  for(const p of PZ){const src=p.a==='dry'?(RUN.sandf?(G.sand||0)/900*.012+Math.max(0,(+RAIN.stack||0))*.002:0):((G.slimeCava||0)/600*.015+clamp(ST.slime/2.5e6,0,1)*.004);
-    const k=p.a==='dry'?.022:.016;p.h+=(k*rain+src-(p.h-p.h0-.3)/140)*hrs;p.h=clamp(p.h,p.h0-1,p.h0+8);
+  for(const p of PZ){const src=p.a==='dam'?-.004:p.a==='eixo'?.003:p.a==='dry'?(RUN.sandf?(G.sand||0)/900*.012+Math.max(0,(+RAIN.stack||0))*.002:0):((G.slimeCava||0)/600*.015+clamp(ST.slime/2.5e6,0,1)*.004);
+    const k=p.a==='dry'?.022:p.a==='dam'?.008:p.a==='eixo'?.02:.016;p.h+=(k*rain+src-(p.h-p.h0-.3)/140)*hrs;p.h=clamp(p.h,p.h0-1,p.h0+8);
     if(!p._t||ST.simT-p._t>=600){p._t=ST.simT;p.hist.push([ST.simT,p.h]);if(p.hist.length>288)p.hist.shift();}
     const c=PZ_COL[pzStN(p)];p.cap.color.setHex(c);p.cap.emissive.setHex(c);}}
 const pzMax=a=>Math.max(0,...PZ.filter(p=>p.a===a).map(p=>p.h-p.h0));
 const pzFSmin=a=>Math.min(...PZ.filter(p=>p.a===a).map(pzFS));
 const pzTrend=p=>{const h=p.hist;if(h.length<7)return 0;return p.h-h[h.length-7][1];};
 function pzAlarms(add){for(const p of PZ){const s=pzStN(p);if(s==='ok')continue;
-  add(p.a,s==='att'?'warn':s==='warn'?'warn':'crit',`Piezômetro ${p.tag} (${p.loc}): nível de ${pzStTxt[s]} · ${fmt(p.h-p.h0,1)} m acima do normal, FS ${fmt(pzFS(p),2)}`);}}
+  add(p.eq||p.a,s==='att'?'warn':s==='warn'?'warn':'crit',`Piezômetro ${p.tag} (${p.loc}): nível de ${pzStTxt[s]} · ${fmt(p.h-p.h0,1)} m acima do normal, FS ${fmt(pzFS(p),2)}`);}}
 HS.dry.push(...PZ.filter(p=>p.a==='dry').map(p=>[`Piezômetro ${p.tag}`,()=>p.pos.clone().add(V3(0,1.9,0)),null,null,()=>`${fmt(p.h,1)} m · ${pzStTxt[pzStN(p)]} · FS ${fmt(pzFS(p),2)}`,()=>({ok:'ok',att:'warn',warn:'warn',crit:'crit'})[pzStN(p)]]));
 HS.cava.push(...PZ.filter(p=>p.a==='cava').map(p=>[`Piezômetro ${p.tag}`,()=>p.pos.clone().add(V3(0,1.9,0)),null,null,()=>`${fmt(p.h,1)} m · ${pzStTxt[pzStN(p)]} · FS ${fmt(pzFS(p),2)}`,()=>({ok:'ok',att:'warn',warn:'warn',crit:'crit'})[pzStN(p)]]));
 Object.assign(HK,{pzD:['Piezômetros · máx. acima do normal','m',1,()=>pzMax('dry')],fsD:['Fator de segurança do talude (mín.)','',2,()=>pzFSmin('dry')],
