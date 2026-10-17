@@ -2983,7 +2983,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261015232007';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261016235718';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3443,6 +3443,8 @@ const mills=[],froths=[];
 /* ---------- 6 Thickening + storage tanks ---------- */
 const TH6=grp(0,0);
 const th6=thickener(TH6,-38,20,6.5);
+/* Concentrador III (apostila GEA): espessador de lama Ø50 m (underflow 38 % sól.) e de rejeito Ø38 m (55 %) ao lado do de concentrado Ø44 m — foto aérea do C3 (2025) */
+const thL=thickener(TH6,-45,35,7.4,{pulp:std(0x8a5a3c,.05,.3)}),thR=thickener(TH6,-31,36,5.6,{pulp:std(0x9c8a6e,.05,.35)});
 tank(TH6,-28,16,3,8,MAT.gTank);tank(TH6,-28,24,3,8,MAT.gTank);{const d=layDelta(-35,20);TH6.position.x+=d.x;TH6.position.z+=d.z;TH6.position.y=ALT(-35+d.x);}
 {const sg=grp(-28,20);for(const [dx,dz] of [[-.8,-.8],[.8,-.8],[-.8,.8],[.8,.8]])box(.15,8.6,.15,MAT.yellow,dx,4.3,dz,sg);for(let y=2;y<=8;y+=2)box(1.8,.12,1.8,MAT.yellow,0,y,0,sg);for(let y=0;y<8;y+=2)beam(V3(-.8,y,-.8),V3(.8,y+2,.8),.08,MAT.yellow,sg);beam(V3(0,8,-.9),V3(0,8,-1.8),.12,MAT.yellow,sg);beam(V3(0,8,.9),V3(0,8,1.8),.12,MAT.yellow,sg);}
 /* ---------- 7 Sand tailings filtration ---------- */
@@ -4859,7 +4861,7 @@ function frame(){
   mills.forEach((m,i)=>{const k=['c1','c2','c3'][i];const onM=RUN.conc&&RUN[k]&&G.F>0;if(onM)m.rotation.z+=dt*1.2;m.userData.mats[0].color.setHex(RUN[k]?0x4f9aa6:0x9aa3ac);m.userData.mats[1].color.setHex(RUN[k]?0x3c7c87:0x7d868f);});
   sfDrums.forEach((d,i)=>d.color.setHex(RUN[['f1','f2','f3'][i]]?0xffffff:0x8d959c));
   froths.forEach((f,i)=>f.material.color.setHSL(.09,.25,.72+Math.sin(t*2+i)*.04));
-  [th6,th12,ete1,ete2].forEach(th=>th.rake.rotation.y+=dt*.1);
+  [th6,th12,ete1,ete2,thL,thR].forEach(th=>th.rake.rotation.y+=dt*.1);
   {const ly=-.8+(clamp(ST.slime/2.5e6,0,1)-.5)*.1;slimeSurf.position.y=ly;slimeSurf.scale.setScalar(1.1);}/* cava 70 % cheia em VOLUME (cava cônica: volume ∝ h³ → nível a ~88 % da profundidade de 6 m) *//* cava quase cheia: espelho de lama até perto da borda (borda +0,8 m em r≈10) *//* cava mais cheia (rejeito de lama) e espelho acompanhando a abertura da cava */
   if(RUN.roller&&c.filterRate>0)rolls.forEach((r,i)=>r.rotation.y+=dt*(i?1:-1)*2);
   if(RUN.pell&&U.green>0)discs.forEach(d=>d.rotateY(dt*1.4));
