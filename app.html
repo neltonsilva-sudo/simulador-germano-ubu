@@ -2983,7 +2983,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261016235718';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261017000352';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4623,6 +4623,7 @@ function evalAlarms(){const c=CUR,G=c.G,U=c.U,A=[];const add=(eq,sev,msg)=>A.pus
   if(typeof tw3Alarms==='function')try{tw3Alarms(add);}catch(e){}
   if(typeof wxAlarms==='function')try{wxAlarms(add);}catch(e){}
   if(typeof ltnAlarms==='function')try{ltnAlarms(add);}catch(e){}
+  if(typeof pzAlarms==='function')try{pzAlarms(add);}catch(e){}
   if(U.emis>50)add('esp',U.emis>200?'crit':'warn',`Emissão na chaminé ${fmt(U.emis,0)} mg/Nm³ (limite 50)`);
   if(U.g<.65&&U.green>0)add('pell','warn','Baixa formação de pelotas na faixa de 10–15 mm');
   if(ST.yard>1300000)add('yard','warn','Pátio de estocagem quase cheio');
@@ -4650,6 +4651,7 @@ function logEvent(tipo,texto){LOG.unshift({t:simStamp(),tipo,texto});if(LOG.leng
 const almKey=a=>a.eq+'|'+a.msg.replace(/\(.*?\)|[\d.,]+/g,'#');
 /* ISA-18.2 · racionalização: cada alarme tem tag de campo, causa provável e ação esperada do operador */
 const ALM_RULES=[
+ [/piezômetro|poropressão/i,'PAH','Elevação da poropressão no maciço (chuva, ritmo de deposição ou umidade da torta)','Avisar a geotecnia, inspecionar o talude e os drenos, reduzir ou desviar a deposição até o nível estabilizar; em emergência, seguir o plano de ação da estrutura.'],
  [/parad[ao]|intertravad|inexistente/i,'XA','Equipamento parado ou intertravado','Verificar o intertravamento e os permissivos no campo; liberar a partida só depois de confirmar a causa.'],
  [/tratamento de água/i,'FAL','Capacidade de tratamento menor que a demanda','Aumentar a capacidade da ETE ou reduzir o consumo de água nova.'],
  [/SiO₂ alto/i,'AAH','Liberação insuficiente na moagem ou amina baixa','Aumentar a amina em 5–10 g/t ou reduzir o P80 da moagem; conferir o analisador on-line.'],
@@ -4832,7 +4834,7 @@ function frame(){
   const rawDt=Math.min(clock.getDelta(),1);const dt=Math.min(rawDt,.05);t+=dt;
   let sdt=paused?0:rawDt*speed;ST.simT+=sdt;fpsAcc+=rawDt;fpsN++;
   // integrate in sub-steps for stability at high speed
-  const n=Math.min(40,Math.max(1,Math.ceil(sdt/30)));for(let i=0;i<n;i++)step(sdt/n);
+  const n=Math.min(40,Math.max(1,Math.ceil(sdt/30)));for(let i=0;i<n;i++)step(sdt/n);try{pzStep(sdt);}catch(e){}
   const c=CUR,G=c.G,U=c.U;
   // animations
   trucks.forEach((tk,i)=>{const p=PITS[0];if(!RUN.mine){return;}tk.phase+=dt*.02;const a=tk.phase*Math.PI*2;const r=tk.r;const bench=tk.bench;const y=-p.d*bench/p.b;// o grupo MINE já está na cota do planalto
@@ -4919,6 +4921,7 @@ function mgpUpdate(){const el=$('#kpiMGP');if(!el||$('#right').classList.contain
    ${r('CE amina',fmt(P.amine,0),'g/t','35–40 por estágio',P.amine<=95)}
    ${r('CE amido',fmt(P.starch,0),'g/t','400–960',P.starch>=350&&P.starch<=1000)}
    ${r('IQCP · índice de qualidade',fmt(iq,0),'%','100',iq>=99)}</table>
+   ${(typeof pzTable==='function')?pzTable():''}
    <p class="hint">Fórmulas do Manual do Beneficiamento (11.2): RP = concentrado ÷ alimentação; RM = Fe no concentrado ÷ Fe na alimentação; IQCP = itens atendidos (SiO₂, −325#, superfície específica) ÷ 3. −325# e superfície específica do concentrado estimados pelo P80 da moagem com a remoagem (moagem secundária).</p></div>`;
   if(el._h!==h){el._h=h;el.innerHTML=h;const sc=$('#campSel');if(sc)sc.addEventListener('change',e=>{setCamp(e.target.value);logEvent('Comando',`Campanha de produção: ${CAMP} (SiO₂ ≤ ${fmt(SPEC.siMax,2)} %)`);el._h='';mgpUpdate();});}}
 function updateUI(){
@@ -5313,6 +5316,47 @@ let AREA=null,AREA_PREV=null,areaEls=[],areaAI={};
 const AREA_VIEW={mine:{el:.7,k:.8},tcld:{el:.6,k:.6},crush:{el:.55,k:1.2},pile:{el:.5,k:1},conc:{el:.62,k:.95,ty:.3},thick6:{el:.65,k:.9},sandf:{el:.8,k:1.1,ty:.2},dry:{el:.6,k:.9},cava:{el:.7,k:.9},
   pump:{el:.75,k:1.3,ty:.2},tower:{el:.25,k:1.4,ty:.6},thick12:{el:.65,k:.9},filter:{el:.8,k:1.1,ty:.2},basin:{el:.7,k:.9},ete:{el:.7,k:1},roller:{el:.8,k:1.4,ty:.25},mix:{el:.85,k:.7,ty:.2},
   pell:{el:.7,k:.9,ty:.2},esp:{el:.75,k:.9,ty:.35},furnace:{dir:[.15,1],el:.9,k:.75,ty:.3},screen:{el:.8,k:1.4,ty:.25},yard:{el:.6,k:.8},fence:{el:.5,k:.8},port:{dir:[-1,.5],el:.45,k:.7}};
+/* ---------- GEOTECNIA · piezômetros (pilha de rejeito arenoso · área 8 e Cava de Alegria Sul · área 9) ----------
+   modelo didático: nível piezométrico (m de coluna d'água acima da base) sobe com a chuva real, a deposição de rejeito/lama e a umidade da torta; drena devagar.
+   Níveis de controle: atenção (normal + 2 m), alerta (+3,5 m), emergência (+5 m). Fator de segurança simplificado do talude cai com a poropressão. */
+const PZ=[
+  {tag:'PZ-08-01',a:'dry',loc:'pilha · crista norte',x:-66,z:61,h0:5.0,fs0:1.68},
+  {tag:'PZ-08-02',a:'dry',loc:'pilha · berma leste',x:-50,z:63,h0:4.2,fs0:1.72},
+  {tag:'PZ-08-03',a:'dry',loc:'pilha · pé do talude sul',x:-61,z:78,h0:6.1,fs0:1.65},
+  {tag:'PZ-09-01',a:'cava',loc:'cava · talude oeste',x:-28,z:70,h0:7.0,fs0:1.63},
+  {tag:'PZ-09-02',a:'cava',loc:'cava · talude norte',x:-16,z:58,h0:6.4,fs0:1.66},
+  {tag:'PZ-09-03',a:'cava',loc:'cava · talude leste',x:-4,z:72,h0:7.6,fs0:1.61},
+  {tag:'PZ-09-04',a:'cava',loc:'cava · dique sul',x:-16,z:82,h0:8.2,fs0:1.60}];
+PZ.forEach((p,i)=>{p.h=p.h0+.3+(i%3)*.15;p.hist=[];const q=LP(V3(p.x,0,p.z));p.pos=V3(q.x,H(q.x,q.z),q.z);
+  const g=new THREE.Group();g.position.copy(p.pos);root.add(g);mesh(new THREE.CylinderGeometry(.12,.12,1.5,10),MAT.frame,0,.75,0,g);
+  p.cap=new THREE.MeshStandardMaterial({color:0x2fbf71,emissive:0x2fbf71,emissiveIntensity:.6,roughness:.5});mesh(new THREE.BoxGeometry(.5,.36,.36),p.cap,0,1.6,0,g);
+  mesh(new THREE.CylinderGeometry(.5,.5,.08,14),MAT.concrete,0,.04,0,g);});
+window.__pz=PZ;const PZ_LIM=[2,3.5,5],PZ_COL={ok:0x2fbf71,att:0xffd24a,warn:0xff9a1a,crit:0xff3b3b};
+const pzStN=p=>{const d=p.h-p.h0;return d>=PZ_LIM[2]?'crit':d>=PZ_LIM[1]?'warn':d>=PZ_LIM[0]?'att':'ok';};
+const pzStTxt={ok:'normal',att:'atenção',warn:'alerta',crit:'emergência'};
+const pzFS=p=>Math.max(.9,p.fs0-.065*Math.max(0,p.h-p.h0));
+function pzStep(sdt){if(!(sdt>0))return;const hrs=sdt/3600,G=CUR.G||{},rain=Math.max(0,+RAIN.rate||0);
+  for(const p of PZ){const src=p.a==='dry'?(RUN.sandf?(G.sand||0)/900*.012+Math.max(0,(+RAIN.stack||0))*.002:0):((G.slimeCava||0)/600*.015+clamp(ST.slime/2.5e6,0,1)*.004);
+    const k=p.a==='dry'?.022:.016;p.h+=(k*rain+src-(p.h-p.h0-.3)/140)*hrs;p.h=clamp(p.h,p.h0-1,p.h0+8);
+    if(!p._t||ST.simT-p._t>=600){p._t=ST.simT;p.hist.push([ST.simT,p.h]);if(p.hist.length>288)p.hist.shift();}
+    const c=PZ_COL[pzStN(p)];p.cap.color.setHex(c);p.cap.emissive.setHex(c);}}
+const pzMax=a=>Math.max(0,...PZ.filter(p=>p.a===a).map(p=>p.h-p.h0));
+const pzFSmin=a=>Math.min(...PZ.filter(p=>p.a===a).map(pzFS));
+const pzTrend=p=>{const h=p.hist;if(h.length<7)return 0;return p.h-h[h.length-7][1];};
+function pzAlarms(add){for(const p of PZ){const s=pzStN(p);if(s==='ok')continue;
+  add(p.a,s==='att'?'warn':s==='warn'?'warn':'crit',`Piezômetro ${p.tag} (${p.loc}): nível de ${pzStTxt[s]} · ${fmt(p.h-p.h0,1)} m acima do normal, FS ${fmt(pzFS(p),2)}`);}}
+HS.dry.push(...PZ.filter(p=>p.a==='dry').map(p=>[`Piezômetro ${p.tag}`,()=>p.pos.clone().add(V3(0,1.9,0)),null,null,()=>`${fmt(p.h,1)} m · ${pzStTxt[pzStN(p)]} · FS ${fmt(pzFS(p),2)}`,()=>({ok:'ok',att:'warn',warn:'warn',crit:'crit'})[pzStN(p)]]));
+HS.cava.push(...PZ.filter(p=>p.a==='cava').map(p=>[`Piezômetro ${p.tag}`,()=>p.pos.clone().add(V3(0,1.9,0)),null,null,()=>`${fmt(p.h,1)} m · ${pzStTxt[pzStN(p)]} · FS ${fmt(pzFS(p),2)}`,()=>({ok:'ok',att:'warn',warn:'warn',crit:'crit'})[pzStN(p)]]));
+Object.assign(HK,{pzD:['Piezômetros · máx. acima do normal','m',1,()=>pzMax('dry')],fsD:['Fator de segurança do talude (mín.)','',2,()=>pzFSmin('dry')],
+  pzC:['Piezômetros · máx. acima do normal','m',1,()=>pzMax('cava')],fsC:['Fator de segurança do talude (mín.)','',2,()=>pzFSmin('cava')]});
+Object.assign(LIM,{pzD:[null,2],pzC:[null,2],fsD:[1.5,null],fsC:[1.5,null]});
+DASH.dry.k.push('pzD','fsD');DASH.dry.t.push('pzD');DASH.cava.k.push('pzC','fsC');DASH.cava.t.push('pzC');
+function pzTable(){const ch=s=>`<span class="tagp ${s==='ok'?'ok':s==='crit'?'crit':'warn'}">${pzStTxt[s]}</span>`;
+  return `<div class="mgp"><div class="mgph"><b>Geotecnia · piezômetros</b><span class="hint">chuva agora ${fmt(+RAIN.rate||0,1)} mm/h</span></div>
+  <table class="alt"><tr><th>Tag</th><th>Local</th><th class="n">Nível</th><th class="n">Δ normal</th><th class="n">Tend. 1 h</th><th class="n">FS</th><th></th></tr>
+  ${PZ.map(p=>{const s=pzStN(p),tr=pzTrend(p);return `<tr><td><b>${p.tag}</b></td><td>${p.loc}</td><td class="n">${fmt(p.h,1)} m</td><td class="n">${p.h-p.h0>=0?'+':''}${fmt(p.h-p.h0,1)} m</td><td class="n">${tr>.02?'↑':tr<-.02?'↓':'→'} ${fmt(Math.abs(tr),2)}</td><td class="n">${fmt(pzFS(p),2)}</td><td>${ch(s)}</td></tr>`;}).join('')}</table>
+  <p class="hint">Níveis de controle (acima do normal): atenção +2 m · alerta +3,5 m · emergência +5 m. FS mínimo recomendado 1,5 (condição drenada). Modelo didático: o nível sobe com a chuva real de Germano, a deposição de rejeito/lama e a umidade da torta, e drena lentamente — não substitui a instrumentação e a análise geotécnica reais.</p></div>`;}
+
 function hsState(h){if(h[5])return h[5]();const [,,key,unit]=h;if(unit&&!RUN[unit])return'crit';if(EQ[AREA]&&EQ[AREA].toggle&&!RUN[AREA])return'crit';if(!key)return'ok';const st=kState(key,hk(key));return st==='warn'?'warn':'ok';}
 function hsVal(h){return h[4]?h[4]():h[2]?hv(h[2]):'';}
 function enterArea(id){
@@ -5448,6 +5492,7 @@ function dtContext(){const c=CUR;const o={observacao:'Use as vazões reconciliad
   o.geometalurgia=GEO.on?{bloco_atual:GEO.plan[GEO.i].id,tipologia:TIPOS[GEO.plan[GEO.i].tipo].nome,pilha:{fe:+GEO.pile.fe.toFixed(1),sio2:+GEO.pile.si.toFixed(1),al2o3:+GEO.pile.al.toFixed(2),p:+GEO.pile.p.toFixed(3),wi:+GEO.pile.wi.toFixed(1),tipologias_pct:Object.fromEntries(Object.entries(GEO.pile.frac).map(([k,v])=>[TIPOS[k].nome,Math.round(v*100)]))},
     proximos_blocos:[1,2,3,4,5].map(d=>GEO.plan[(GEO.i+d)%GEO.plan.length]).map(b=>({id:b.id,tipologia:TIPOS[b.tipo].nome,massa_t:b.massa,fe:b.fe,sio2:b.si}))}:'desligada (alimentação com teor único)';
   if(FC)o.previsao_48h={especificacao:SPEC,violacoes:FC.viol.map(v=>({inicio_h:v.h0,fim_h:v.h1,pico:v.what,bloco:v.peak.blk,tipologia_dominante_na_pilha:TIPOS[v.dom[0]].nome,ajuste_sugerido:v.fix?{amina_g_t:v.fix.amine,potencia_moagem_pct:v.fix.mill,perda_recuperacao_fe_pp:+(-v.fix.dRec).toFixed(1)}:'sem ajuste de reagente suficiente: rever blendagem'}))};
+  o.geotecnia={piezometros:PZ.map(p=>({tag:p.tag,local:p.loc,nivel_m:+p.h.toFixed(2),acima_normal_m:+(p.h-p.h0).toFixed(2),estado:pzStTxt[pzStN(p)],fator_seguranca:+pzFS(p).toFixed(2)})),limites:'atenção +2 m · alerta +3,5 m · emergência +5 m; FS mínimo 1,5'};
   {const S=perfStats();o.controle={malhas:Object.values(LOOPS).map(L=>({tag:L.tag,nome:L.nome,modo:L.mode==='auto'?'automático':'manual',pv:+(+L.pv).toFixed(2),sp:+(+L.sp).toFixed(2),mv:+(+L.mv).toFixed(1),mv_nome:L.mvN,saturada_min:Math.round(L.satT/60),sintonia:{kp:L.kp,ti_s:L.ti,td_s:L.td}})),
     mpc_sio2:MPC.on?{sp:MPC.sp,ultima_acao_amina_g_t:+MPC.lastDu.toFixed(1),ganho_pp_por_100g_t:+(MPC.K*100).toFixed(2)}:'desligado',sistema_especialista:EXPERT.on?EXPERT.rules.filter(r=>r.active).map(r=>r.txt):'desligado',
     disturbios:DIST.on?{dureza_pct:+(DIST.wi*100).toFixed(1),fe_pp:+DIST.fe.toFixed(2)}:'desligados',desempenho:S.h>.5?{horas:+S.h.toFixed(1),sio2_desvio:+S.si.sd.toFixed(3),tempo_fora_spec_pct:+S.off.toFixed(1),p80_desvio:+S.p80.sd.toFixed(2)}:null};
