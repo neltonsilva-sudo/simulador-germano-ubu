@@ -115,6 +115,17 @@ td.num{font:500 12px var(--f-mono);font-variant-numeric:tabular-nums;white-space
 .imp{display:grid;gap:10px}
 .imp .it{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
 .tag{font:600 11px var(--f-body);text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:3px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
+.row select{flex:1;width:auto;min-width:0}
+.mon{border-top:1px solid var(--line);padding-top:12px}
+.mon.on .label{color:var(--crit)}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto}
+.hist button{width:100%;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:6px;font-weight:500}
+.hist button.cur{border-color:var(--ink)}
+.hist img{width:56px;height:42px;object-fit:cover;border-radius:3px;display:block}
+.hist .t{font:500 12px var(--f-mono);color:var(--muted)}
+.hist .sc{font:700 20px var(--f-display)}
+.alert{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:4px;background:var(--cell-crit);border:2px solid var(--crit);font-weight:600}
+.alert b{font:700 16px var(--f-display);letter-spacing:.05em;color:var(--crit);text-transform:uppercase;white-space:nowrap}
 .limit{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 .empty{color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -147,7 +158,23 @@ td.num{font:500 12px var(--f-mono);font-variant-numeric:tabular-nums;white-space
           <button id="camBtn" type="button">Ligar câmera</button>
           <button id="snapBtn" type="button" disabled>Capturar quadro</button>
         </div>
-        <p class="hint" id="camHint">A câmera é usada só neste navegador. As imagens vão para a análise apenas quando você clica em Analisar.</p>
+        <p class="hint" id="camHint">A câmera é usada só neste navegador. As imagens vão para a análise apenas quando você clica em Analisar ou liga o monitoramento.</p>
+        <div id="monBox" class="stack mon">
+          <p class="label" style="margin:0">Monitoramento automático</p>
+          <div class="row">
+            <select id="monInt" aria-label="Intervalo entre análises">
+              <option value="60">A cada 1 min</option><option value="120">A cada 2 min</option>
+              <option value="300" selected>A cada 5 min</option><option value="600">A cada 10 min</option>
+              <option value="900">A cada 15 min</option><option value="1800">A cada 30 min</option>
+            </select>
+            <button id="monBtn" type="button" disabled>Iniciar monitoramento</button>
+          </div>
+          <p class="hint" id="monInfo">Ligue a câmera e informe a chave da API. A cada intervalo, um quadro é capturado e analisado. Risco crítico toca um alerta sonoro.</p>
+        </div>
+        <div id="dlBox" class="stack" hidden>
+          <button id="dlBtn" type="button">Baixar versão com câmera ao vivo</button>
+          <p class="hint">Abra o arquivo baixado no Google Chrome, permita a câmera e escolha a Brio 500. Lá ficam a câmera ao vivo e o monitoramento automático.</p>
+        </div>
       </div>
 
       <div class="panel stack">
@@ -171,6 +198,11 @@ td.num{font:500 12px var(--f-mono);font-variant-numeric:tabular-nums;white-space
         <button class="primary" id="goBtn" type="button" disabled>Analisar ambiente</button>
         <div class="row" id="stopRow" hidden><button id="stopBtn" type="button">Parar</button></div>
         <div class="status" id="status" role="status"></div>
+      </div>
+
+      <div class="panel stack" id="histBox" hidden>
+        <p class="label">Histórico do monitoramento</p>
+        <ol class="hist" id="hist"></ol>
       </div>
     </section>
 
@@ -301,6 +333,7 @@ function render(d, isExample){
   const w2h = (d.plano_5w2h||[]).map(a => `<tr><td><b>${esc(a.what)}</b></td><td>${esc(a.why)}</td><td>${esc(a.where)}</td><td>${esc(a.who)}</td><td>${esc(a.when)}</td><td>${esc(a.how)}</td><td>${esc(a.how_much)}</td></tr>`).join("");
 
   $("report").innerHTML = `
+    ${!isExample && counts.crit ? `<div class="alert" role="alert"><b>Alerta</b><span>${counts.crit} risco(s) crítico(s): ${esc(riscos[0].perigo)}</span></div>` : ""}
     ${isExample ? '<div class="banner"><span>Relatório de exemplo · capture imagens e clique em Analisar para gerar o seu</span></div>' : ""}
     <div class="summary">
       <svg class="gauge" viewBox="0 0 132 132" role="img" aria-label="Nota geral ${score} de 100">
@@ -405,7 +438,7 @@ async function startCam(deviceId){
     stream = await navigator.mediaDevices.getUserMedia({audio:false, video: deviceId ? {deviceId:{exact:deviceId}, width:{ideal:1920}, height:{ideal:1080}} : {width:{ideal:1920}, height:{ideal:1080}}});
     v.srcObject = stream; await v.play();
     v.hidden = false; $("videoMsg").hidden = true; $("rec").hidden = false;
-    $("snapBtn").disabled = false; $("camBtn").textContent = "Desligar câmera";
+    $("snapBtn").disabled = false; $("camBtn").textContent = "Desligar câmera"; updateGo();
     await listCams();
     const t = stream.getVideoTracks()[0]; if (t?.getSettings) $("camSel").value = t.getSettings().deviceId || $("camSel").value;
   }catch(e){
@@ -419,22 +452,27 @@ function stopCam(){
   if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
   const v = $("video"); v.srcObject = null; v.hidden = true;
   $("videoMsg").hidden = false; $("rec").hidden = true; $("snapBtn").disabled = true; $("camBtn").textContent = "Ligar câmera";
+  if (mon) stopMon(); updateGo();
 }
 $("camBtn").onclick = () => stream ? stopCam() : startCam($("camSel").value || undefined);
 $("camSel").onchange = e => startCam(e.target.value);
-$("snapBtn").onclick = () => {
-  const v = $("video"); if (!v.videoWidth) return;
-  const s = Math.min(1, 1600 / v.videoWidth);
-  const c = document.createElement("canvas"); c.width = Math.round(v.videoWidth*s); c.height = Math.round(v.videoHeight*s);
-  c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
-  c.toBlob(b => b && addBlob(b), "image/jpeg", 0.86);
-};
+function grabFrame(){
+  return new Promise(res => {
+    const v = $("video"); if (!stream || !v.videoWidth) return res(null);
+    const s = Math.min(1, 1600 / v.videoWidth);
+    const c = document.createElement("canvas"); c.width = Math.round(v.videoWidth*s); c.height = Math.round(v.videoHeight*s);
+    c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+    c.toBlob(res, "image/jpeg", 0.86);
+  });
+}
+$("snapBtn").onclick = async () => { const b = await grabFrame(); if (b) addBlob(b); };
 if (!navigator.mediaDevices?.getUserMedia){ $("camBtn").disabled = true; $("videoMsg").textContent = "Este navegador não oferece acesso à câmera. Use fotos."; }
 
 /* ---------- análise ---------- */
 function updateGo(){
   const ready = frames.length > 0 && (sample || (!inViewer && $("apiKey").value.trim()));
   $("goBtn").disabled = !ready || !!ctl;
+  $("monBtn").disabled = !mon && !(stream && !inViewer && $("apiKey").value.trim());
 }
 $("apiKey").addEventListener("input", e => { store("sst_api_key", e.target.value.trim() || null); updateGo(); });
 
@@ -447,10 +485,10 @@ function parseJSON(text){
 }
 const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(b); });
 
-async function viaApi(prompt, signal){
+async function viaApi(prompt, blobs, signal){
   const key = $("apiKey").value.trim();
   const content = [];
-  for (const f of frames) content.push({type:"image", source:{type:"base64", media_type:"image/jpeg", data: await blobToB64(f.blob)}});
+  for (const b of blobs) content.push({type:"image", source:{type:"base64", media_type:"image/jpeg", data: await blobToB64(b)}});
   content.push({type:"text", text: prompt});
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method:"POST", signal,
@@ -473,26 +511,96 @@ const ERR = {
   invalid_json:"A resposta veio fora do formato. Clique em Analisar de novo.", session_expired:"Sua sessão expirou. Entre de novo no Claude."
 };
 
-$("goBtn").onclick = async () => {
-  if (!frames.length) return;
+// roda uma análise; devolve os dados ou null se falhou (status já mostra o motivo)
+async function analyze(blobs, label){
   ctl = new AbortController(); updateGo(); $("stopRow").hidden = false;
-  const t0 = Date.now(); const tick = setInterval(() => setStatus(`Analisando ${frames.length} imagem(ns)… ${Math.round((Date.now()-t0)/1000)} s`), 1000);
-  setStatus(`Analisando ${frames.length} imagem(ns)…`);
+  const t0 = Date.now(); const tick = setInterval(() => setStatus(`${label}… ${Math.round((Date.now()-t0)/1000)} s`), 1000);
+  setStatus(label + "…");
   const prompt = buildPrompt($("ctx").value.trim());
   try{
     const data = sample
-      ? await sample.json(prompt, {images: frames.map(f => f.blob), signal: ctl.signal, cache:false})
-      : await viaApi(prompt, ctl.signal);
+      ? await sample.json(prompt, {images: blobs, signal: ctl.signal, cache:false})
+      : await viaApi(prompt, blobs, ctl.signal);
     render(data, false);
-    setStatus(`Concluído em ${Math.round((Date.now()-t0)/1000)} s.`);
+    setStatus(`Concluído às ${new Date().toLocaleTimeString("pt-BR")} em ${Math.round((Date.now()-t0)/1000)} s.`);
+    return data;
   }catch(e){
     if (e?.code === "cancelled" || e?.name === "AbortError") setStatus("Análise interrompida.");
-    else if (e?.code === "http") setStatus(e.status === 401 ? "Chave da API inválida." : "Erro da API: " + e.message, true);
+    else if (e?.code === "http") { setStatus(e.status === 401 ? "Chave da API inválida." : "Erro da API: " + e.message, true); if (e.status === 401 && mon) stopMon(); }
     else setStatus(ERR[e?.code] || "Falha na análise. Tente de novo em instantes.", true);
+    return null;
   }finally{
     clearInterval(tick); ctl = null; $("stopRow").hidden = true; updateGo();
   }
-};
+}
+$("goBtn").onclick = () => { if (frames.length) analyze(frames.map(f => f.blob), `Analisando ${frames.length} imagem(ns)`); };
+
+/* ---------- monitoramento ---------- */
+let mon = null, audio = null;
+const history = [];
+const fmt = s => s >= 60 ? `${Math.floor(s/60)} min ${String(s%60).padStart(2,"0")} s` : `${s} s`;
+function beep(){
+  try{
+    if (!audio) return;
+    [0, 0.35, 0.7].forEach(t => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = "square"; o.frequency.value = 880; g.gain.value = 0.08;
+      o.connect(g).connect(audio.destination); o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.2);
+    });
+  }catch(e){}
+}
+function critOf(d){ return (d.riscos || []).filter(r => level(r.severidade, r.probabilidade).k === "crit"); }
+function addHistory(blob, data){
+  const url = URL.createObjectURL(blob);
+  history.unshift({t: new Date(), url, data});
+  while (history.length > 50) URL.revokeObjectURL(history.pop().url);
+  drawHistory(0);
+}
+function drawHistory(cur){
+  const ol = $("hist"); ol.innerHTML = ""; $("histBox").hidden = !history.length;
+  history.forEach((h, i) => {
+    const counts = {crit:0, high:0}; (h.data.riscos || []).forEach(r => { const k = level(r.severidade, r.probabilidade).k; if (k in counts) counts[k]++; });
+    const li = document.createElement("li"); const b = document.createElement("button"); b.type = "button";
+    if (i === cur) b.className = "cur";
+    b.innerHTML = `<img src="${h.url}" alt=""><span><span class="t">${h.t.toLocaleTimeString("pt-BR")}</span><span class="chips" style="margin-top:2px">${counts.crit ? `<span class="chip crit">${counts.crit} crítico</span>` : ""}${counts.high ? `<span class="chip high">${counts.high} alto</span>` : ""}${!counts.crit && !counts.high ? '<span class="chip ok">sem risco alto</span>' : ""}</span></span><span class="sc">${clamp(h.data.nota_geral,0,100)}</span>`;
+    b.onclick = () => { render(h.data, false); drawHistory(i); };
+    li.append(b); ol.append(li);
+  });
+}
+async function cycle(){
+  if (ctl) return; // ainda analisando o quadro anterior
+  const blob = await grabFrame();
+  if (!blob){ setStatus("Câmera sem imagem. Monitoramento pausado.", true); stopMon(); return; }
+  const data = await analyze([blob], `Monitoramento: analisando quadro das ${new Date().toLocaleTimeString("pt-BR")}`);
+  if (!data) return;
+  addHistory(blob, data);
+  const crit = critOf(data);
+  if (crit.length){
+    beep();
+    try{ if (window.Notification && Notification.permission === "granted") new Notification("Risco crítico detectado", {body: crit.map(r => r.perigo).join("; ").slice(0, 180)}); }catch(e){}
+  }
+}
+function tickMon(){
+  if (!mon) return;
+  const left = Math.round((mon.next - Date.now()) / 1000);
+  if (left <= 0){ mon.next = Date.now() + mon.sec * 1000; cycle(); }
+  else if (!ctl) $("monInfo").textContent = `Monitorando. Próxima análise em ${fmt(left)} · ${history.length} análise(s) feita(s).`;
+}
+function startMon(){
+  try{ audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); }catch(e){}
+  try{ if (window.Notification && Notification.permission === "default") Notification.requestPermission(); }catch(e){}
+  mon = {sec: Number($("monInt").value) || 300, next: Date.now()};
+  mon.timer = setInterval(tickMon, 1000); tickMon();
+  $("monBtn").textContent = "Parar monitoramento"; $("monInt").disabled = true; $("monBox").classList.add("on"); $("rec").textContent = "● MONITORANDO";
+  updateGo();
+}
+function stopMon(){
+  if (mon) clearInterval(mon.timer); mon = null;
+  $("monBtn").textContent = "Iniciar monitoramento"; $("monInt").disabled = false; $("monBox").classList.remove("on"); $("rec").textContent = "● AO VIVO";
+  $("monInfo").textContent = history.length ? `Monitoramento parado · ${history.length} análise(s) no histórico.` : "Monitoramento parado.";
+  updateGo();
+}
+$("monBtn").onclick = () => mon ? stopMon() : startMon();
 $("stopBtn").onclick = () => ctl?.abort();
 
 /* ---------- modo ---------- */
@@ -500,7 +608,20 @@ function setMode(txt){ $("mode").innerHTML = "Modo: <b>" + esc(txt) + "</b>"; }
 async function init(){
   render(EXAMPLE, true); refreshThumbs();
   if (inViewer){
-    $("camHint").textContent = "Dentro do Claude, a análise usa a sua conta, sem chave. A câmera ao vivo funciona na versão aberta direto no navegador.";
+    $("camHint").textContent = "Dentro do Claude, a análise usa a sua conta, sem chave. A câmera ao vivo e o monitoramento funcionam na versão para navegador (botão abaixo).";
+    $("monBox").hidden = true;
+    claude.use("downloads").then(dl => {
+      if (!dl) return;
+      $("dlBox").hidden = false;
+      $("dlBtn").onclick = async () => {
+        try{
+          const r = await fetch("camera.html"); if (!r.ok) throw {code:"unavailable"};
+          await dl.save({filename:"inspecao-sst-camera.html", data: await r.text()});
+        }catch(e){
+          if (e?.code !== "declined") setStatus("Não foi possível baixar aqui. Pegue o arquivo inspecao/index.html no GitHub.", true);
+        }
+      };
+    });
     try{ sample = await claude.use("sample"); }catch(e){ sample = null; }
     if (sample){
       try{ const lim = await sample.limits(); if (lim?.images?.maxCount) maxImages = Math.min(MAX_DEFAULT, lim.images.maxCount); }catch(e){}
