@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inspeção SST por Câmera</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: barra de comando no topo, coluna de captura à esquerda, relatório de inspeção à direita (empilha no celular) */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --ink:#1c2328; --muted:#5b6770; --line:#d5dbe0;
+  --signal:#f5c400; --signal-ink:#1c2328;
+  --ok:#2e8b57; --warn:#d9a400; --high:#e0661b; --crit:#c62828; --info:#1f6fb2;
+  --cell-ok:#d7eedf; --cell-warn:#fbefc2; --cell-high:#fbd9c2; --cell-crit:#f6c9c9;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171b; --panel:#1b2227; --ink:#e7ecef; --muted:#9aa7b0; --line:#2d373e;
+  --signal:#f5c400; --signal-ink:#12171b;
+  --ok:#4fbf7f; --warn:#e8bb2a; --high:#f08a45; --crit:#ef5a5a; --info:#5aa6e6;
+  --cell-ok:#1f3a2b; --cell-warn:#3d3416; --cell-high:#42291a; --cell-crit:#4a2020;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171b; --panel:#1b2227; --ink:#e7ecef; --muted:#9aa7b0; --line:#2d373e;
+  --signal:#f5c400; --signal-ink:#12171b;
+  --ok:#4fbf7f; --warn:#e8bb2a; --high:#f08a45; --crit:#ef5a5a; --info:#5aa6e6;
+  --cell-ok:#1f3a2b; --cell-warn:#3d3416; --cell-high:#42291a; --cell-crit:#4a2020;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:3px solid var(--ink);margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center}
+.tri{width:40px;height:36px;flex:none}
+h1{font:700 30px/1 var(--f-display);letter-spacing:.01em;margin:0;text-transform:uppercase;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.mode{font:500 12px var(--f-mono);padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--muted)}
+.mode b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.label{font:600 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.video-box{position:relative;background:#0d1114;border-radius:4px;aspect-ratio:16/9;max-width:100%;overflow:hidden;display:grid;place-items:center}
+.video-box video{width:100%;height:100%;object-fit:cover}
+.video-box .msg{color:#c9d2d8;font-size:13px;padding:16px;text-align:center}
+.rec{position:absolute;top:8px;left:8px;font:500 11px var(--f-mono);color:#fff;background:rgba(198,40,40,.85);padding:2px 7px;border-radius:3px}
+select,input[type=password],input[type=text],textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+textarea{resize:vertical;min-height:64px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button,.btn{font:600 14px var(--f-body);border-radius:4px;padding:9px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button:hover,.btn:hover{border-color:var(--ink)}
+button:focus-visible,.btn:focus-within,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--info);outline-offset:1px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal);font-family:var(--f-display);font-size:18px;letter-spacing:.04em;text-transform:uppercase;padding:10px 18px;width:100%;justify-content:center}
+.primary:hover{border-color:var(--ink)}
+.btn input{display:none}
+.thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.thumb{position:relative;aspect-ratio:4/3;border-radius:3px;overflow:hidden;background:var(--bg);border:1px dashed var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:3px;right:3px;padding:0 6px;font-size:12px;line-height:18px;border-radius:3px;background:rgba(0,0,0,.6);color:#fff;border:0}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.status{font:500 13px var(--f-mono);color:var(--muted);min-height:1.4em}
+.status.err{color:var(--crit)}
+/* Relatório */
+.report{display:flex;flex-direction:column;gap:20px}
+.banner{display:flex;align-items:center;gap:10px;font-size:13px;padding:8px 12px;border-radius:4px;background:repeating-linear-gradient(-45deg,var(--signal) 0 10px,var(--signal-ink) 10px 20px);}
+.banner span{background:var(--panel);padding:3px 10px;border-radius:3px;font-weight:600}
+.summary{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:560px){.summary{grid-template-columns:minmax(0,1fr)}}
+.gauge{width:132px;height:132px}
+.gauge text{font-family:var(--f-display)}
+h2{font:700 22px/1.15 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:0 0 10px;text-wrap:balance}
+h3{font:700 17px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px}
+.env{font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font:500 12px var(--f-mono);padding:3px 8px;border-radius:3px;border:1px solid var(--line)}
+.chip.crit{background:var(--cell-crit);border-color:transparent}
+.chip.high{background:var(--cell-high);border-color:transparent}
+.chip.warn{background:var(--cell-warn);border-color:transparent}
+.chip.ok{background:var(--cell-ok);border-color:transparent}
+.two{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:minmax(0,1fr)}}
+.risk{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:1150px){.risk{grid-template-columns:minmax(0,1fr)}.risk .mwrap{max-width:300px}}
+.matrix{display:grid;grid-template-columns:22px repeat(5,minmax(0,1fr));gap:3px;font:500 11px var(--f-mono)}
+.matrix .c{aspect-ratio:1;border-radius:3px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;padding:2px}
+.matrix .ax{display:grid;place-items:center;color:var(--muted)}
+.dot{width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:10px}
+.axis-note{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-top:4px;padding-left:25px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font:600 11px var(--f-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num{font:500 12px var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sev{border-left:5px solid var(--line)}
+.sev.crit{border-left-color:var(--crit)} .sev.high{border-left-color:var(--high)} .sev.warn{border-left-color:var(--warn)} .sev.ok{border-left-color:var(--ok)}
+.nr{font:500 12px var(--f-mono);white-space:nowrap;background:var(--bg);padding:1px 6px;border-radius:3px}
+.s5{display:grid;gap:8px}
+.s5 .r{display:grid;grid-template-columns:110px minmax(0,1fr) 34px;gap:10px;align-items:center}
+.s5 .jp{font-weight:600}
+.s5 .jp small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.bar{height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px}
+.s5 .obs{grid-column:2/4;font-size:12.5px;color:var(--muted);margin-top:-4px}
+.pdca{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.pdca{grid-template-columns:minmax(0,1fr)}}
+.pdca .q{border:1px solid var(--line);border-radius:4px;padding:10px 12px}
+.pdca .q h4{margin:0 0 4px;font:700 15px var(--f-display);text-transform:uppercase;letter-spacing:.04em;display:flex;gap:8px;align-items:baseline}
+.pdca .q h4 b{font:700 22px var(--f-display);color:var(--info)}
+.pdca ul,.list{margin:0;padding-left:18px}
+.pdca li,.list li{margin:3px 0}
+.imp{display:grid;gap:10px}
+.imp .it{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
+.tag{font:600 11px var(--f-body);text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:3px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
+.limit{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.empty{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="tri" viewBox="0 0 40 36" aria-hidden="true"><path d="M20 2 38 34H2Z" fill="var(--signal)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><rect x="18.4" y="12" width="3.2" height="12" rx="1.2" fill="var(--ink)"/><circle cx="20" cy="28.5" r="1.9" fill="var(--ink)"/></svg>
+      <div>
+        <h1>Inspeção SST por Câmera</h1>
+        <div class="sub">Riscos pelas NRs, 5S, PDCA e plano 5W2H a partir de imagens do ambiente · teste</div>
+      </div>
+    </div>
+    <div class="mode" id="mode">Modo: <b>verificando…</b></div>
+  </header>
+
+  <div class="grid">
+    <section class="stack" aria-label="Captura">
+      <div class="panel stack">
+        <p class="label">1 · Câmera ao vivo</p>
+        <div class="video-box">
+          <video id="video" playsinline muted hidden></video>
+          <div class="msg" id="videoMsg">Conecte a webcam (ex.: Logitech Brio 500) e clique em <b>Ligar câmera</b>.</div>
+          <span class="rec" id="rec" hidden>● AO VIVO</span>
+        </div>
+        <select id="camSel" aria-label="Escolher câmera" hidden></select>
+        <div class="row">
+          <button id="camBtn" type="button">Ligar câmera</button>
+          <button id="snapBtn" type="button" disabled>Capturar quadro</button>
+        </div>
+        <p class="hint" id="camHint">A câmera é usada só neste navegador. As imagens vão para a análise apenas quando você clica em Analisar.</p>
+      </div>
+
+      <div class="panel stack">
+        <p class="label">2 · Ou use fotos</p>
+        <div class="row">
+          <label class="btn">Tirar foto<input id="shoot" type="file" accept="image/*" capture="environment"></label>
+          <label class="btn">Enviar fotos<input id="pick" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+        </div>
+        <div class="thumbs" id="thumbs"></div>
+        <p class="hint">Até <span id="maxN">4</span> imagens. Ângulos diferentes do mesmo setor dão um diagnóstico melhor.</p>
+      </div>
+
+      <div class="panel stack">
+        <p class="label">3 · Contexto (opcional)</p>
+        <textarea id="ctx" placeholder="Ex.: oficina de manutenção de correias transportadoras, 6 mantenedores por turno, uso de lixadeira e solda."></textarea>
+        <div id="keyBox" class="stack" hidden>
+          <label class="label" for="apiKey" style="margin:0">Chave da API Anthropic</label>
+          <input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-...">
+          <p class="hint">Fica salva só neste navegador. Use uma chave de teste.</p>
+        </div>
+        <button class="primary" id="goBtn" type="button" disabled>Analisar ambiente</button>
+        <div class="row" id="stopRow" hidden><button id="stopBtn" type="button">Parar</button></div>
+        <div class="status" id="status" role="status"></div>
+      </div>
+    </section>
+
+    <section class="panel report" id="report" aria-live="polite"></section>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const MAX_DEFAULT = 4;
+let maxImages = MAX_DEFAULT;
+const frames = []; // {blob, url}
+let stream = null, sample = null, ctl = null;
+const inViewer = !!window.claude;
+const MODEL = "claude-opus-5-5";
+
+/* ---------- prompt ---------- */
+function buildPrompt(ctx){
+  return `Você é um engenheiro de segurança do trabalho e consultor de gestão industrial no Brasil.
+Analise a(s) imagem(ns) anexada(s) de um ambiente de trabalho. Cada imagem é um quadro de câmera ou foto do mesmo setor.
+${ctx ? "Contexto informado pelo usuário: " + ctx + "\n" : ""}
+Tarefas:
+1. Identifique o tipo de ambiente e as atividades visíveis.
+2. Liste os perigos e riscos visíveis citando a Norma Regulamentadora aplicável (NR-01 GRO/PGR, NR-06 EPI, NR-10, NR-11, NR-12, NR-15, NR-16, NR-17, NR-18, NR-20, NR-22 mineração, NR-23, NR-24, NR-26 sinalização, NR-33, NR-35 etc.) e, quando tiver segurança, o item. Classifique pela matriz da NR-01: severidade 1-5 e probabilidade 1-5. Categoria: Físico, Químico, Biológico, Ergonômico ou Acidente.
+3. Avalie os 5 sensos (Seiri, Seiton, Seiso, Seiketsu, Shitsuke) com nota 0-5 e observação curta.
+4. Proponha melhorias citando a metodologia (Kaizen, Lean, Poka-Yoke, Gestão visual, Hierarquia de controles, TPM, etc.).
+5. Monte um ciclo PDCA e um plano 5W2H com as 3 a 5 ações mais importantes.
+Regras: baseie-se só no que é visível; se algo não puder ser confirmado pela imagem, diga "verificar em campo". Não invente pessoas nem números. Se a imagem não mostrar um ambiente de trabalho, avalie mesmo assim o que for possível (ex.: escritório, home office, ergonomia NR-17) e explique em "limitacoes".
+Escreva em português do Brasil, frases curtas.
+
+Responda SOMENTE com um objeto JSON neste formato:
+{"ambiente":"string","resumo":"2-3 frases","nota_geral":0-100,
+"riscos":[{"perigo":"string","categoria":"Acidente","nr":"NR-12","item":"12.38 ou vazio","severidade":1-5,"probabilidade":1-5,"medida":"controle recomendado"}],
+"cinco_s":{"seiri":{"nota":0-5,"obs":""},"seiton":{"nota":0-5,"obs":""},"seiso":{"nota":0-5,"obs":""},"seiketsu":{"nota":0-5,"obs":""},"shitsuke":{"nota":0-5,"obs":""}},
+"melhorias":[{"titulo":"","metodologia":"","descricao":""}],
+"pdca":{"plan":[""],"do":[""],"check":[""],"act":[""]},
+"plano_5w2h":[{"what":"","why":"","where":"","who":"","when":"","how":"","how_much":""}],
+"limitacoes":"string"}`;
+}
+
+/* ---------- exemplo exibido ao abrir ---------- */
+const EXAMPLE = {
+  ambiente:"Oficina de manutenção mecânica (exemplo ilustrativo)",
+  resumo:"Bancada com esmerilhadeira sem proteção da rebolo, cabos elétricos no piso e corredor parcialmente obstruído por peças. Ferramentas sem local definido. Boa iluminação geral.",
+  nota_geral:54,
+  riscos:[
+    {perigo:"Esmerilhadeira de bancada sem coifa/anteparo do rebolo",categoria:"Acidente",nr:"NR-12",item:"12.38",severidade:5,probabilidade:3,medida:"Instalar proteção fixa e anteparo; ajustar apoio a 3 mm do rebolo"},
+    {perigo:"Extensões elétricas cruzando a área de circulação",categoria:"Acidente",nr:"NR-10",item:"10.4.1",severidade:4,probabilidade:3,medida:"Eliminar extensões; instalar tomadas industriais na bancada"},
+    {perigo:"Corredor obstruído por peças e caixas",categoria:"Acidente",nr:"NR-12",item:"12.6",severidade:3,probabilidade:4,medida:"Demarcar corredor de 1,20 m e área de estocagem"},
+    {perigo:"Ruído da esmerilhadeira sem protetor auricular visível",categoria:"Físico",nr:"NR-15",item:"Anexo 1",severidade:3,probabilidade:3,medida:"Avaliar dose (NHO-01); fornecer protetor com CA válido (NR-06)"},
+    {perigo:"Extintor sem sinalização de piso",categoria:"Acidente",nr:"NR-23",item:"",severidade:2,probabilidade:2,medida:"Sinalizar e desobstruir conforme NR-26 e norma estadual"}
+  ],
+  cinco_s:{seiri:{nota:2,obs:"Sucata misturada a peças úteis"},seiton:{nota:2,obs:"Ferramentas sem quadro de sombra"},seiso:{nota:3,obs:"Piso com limalha junto à bancada"},seiketsu:{nota:2,obs:"Sem padrão visual de áreas"},shitsuke:{nota:2,obs:"Verificar em campo: auditorias 5S"}},
+  melhorias:[
+    {titulo:"Quadro de sombras para ferramentas",metodologia:"Gestão visual / 5S",descricao:"Cada ferramenta com silhueta pintada; falta fica evidente."},
+    {titulo:"Intertravamento na esmerilhadeira",metodologia:"Poka-Yoke / Hierarquia de controles",descricao:"Máquina só liga com a proteção fechada."},
+    {titulo:"Evento Kaizen de 1 dia no layout",metodologia:"Kaizen / Lean",descricao:"Redefinir fluxo de peças e eliminar transportes."}
+  ],
+  pdca:{plan:["Inventariar riscos no PGR da oficina","Definir metas 5S ≥ 4"],do:["Instalar proteções NR-12","Executar Kaizen de layout"],check:["Auditoria 5S quinzenal","Inspeção de segurança mensal"],act:["Padronizar no POP da oficina","Replicar para outras oficinas"]},
+  plano_5w2h:[
+    {what:"Proteção fixa no rebolo",why:"Risco de projeção e contato (NR-12)",where:"Bancada 2",who:"Manutenção",when:"7 dias",how:"Coifa + anteparo + ajuste do apoio",how_much:"Verificar em campo"},
+    {what:"Remover extensões do piso",why:"Tropeço e choque (NR-10)",where:"Corredor central",who:"Eletricista autorizado",when:"15 dias",how:"Tomadas na bancada",how_much:"Verificar em campo"},
+    {what:"Demarcar corredores",why:"Circulação segura (NR-12/NR-26)",where:"Toda a oficina",who:"Equipe 5S",when:"30 dias",how:"Faixa amarela 10 cm",how_much:"Verificar em campo"}
+  ],
+  limitacoes:"Relatório de exemplo, sem relação com nenhuma imagem real. Serve para mostrar o formato do resultado."
+};
+
+/* ---------- utilidades ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp = (n,a,b) => Math.max(a, Math.min(b, Number(n) || 0));
+function level(sev, prob){
+  const r = clamp(sev,1,5) * clamp(prob,1,5);
+  if (r >= 15) return {k:"crit", t:"Crítico", r};
+  if (r >= 10) return {k:"high", t:"Alto", r};
+  if (r >= 5)  return {k:"warn", t:"Moderado", r};
+  return {k:"ok", t:"Baixo", r};
+}
+function setStatus(msg, err){ const s=$("status"); s.textContent = msg || ""; s.classList.toggle("err", !!err); }
+function store(k, v){ try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k, v); }catch(e){} }
+function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+
+/* ---------- render do relatório ---------- */
+function render(d, isExample){
+  const riscos = Array.isArray(d.riscos) ? d.riscos.slice() : [];
+  riscos.sort((a,b) => level(b.severidade,b.probabilidade).r - level(a.severidade,a.probabilidade).r);
+  const score = clamp(d.nota_geral, 0, 100);
+  const sc = score >= 75 ? "var(--ok)" : score >= 50 ? "var(--warn)" : "var(--crit)";
+  const C = 2*Math.PI*52;
+  const counts = {crit:0,high:0,warn:0,ok:0};
+  riscos.forEach(r => counts[level(r.severidade,r.probabilidade).k]++);
+
+  // matriz 5x5: linhas = severidade 5→1, colunas = probabilidade 1→5
+  let mx = "";
+  for (let s = 5; s >= 1; s--){
+    mx += `<div class="ax">${s}</div>`;
+    for (let p = 1; p <= 5; p++){
+      const L = level(s,p);
+      const dots = riscos.map((r,i) => (clamp(r.severidade,1,5)===s && clamp(r.probabilidade,1,5)===p) ? `<span class="dot" title="${esc(r.perigo)}">${i+1}</span>` : "").join("");
+      mx += `<div class="c" style="background:var(--cell-${L.k})">${dots}</div>`;
+    }
+  }
+  mx += `<div></div>` + [1,2,3,4,5].map(p => `<div class="ax">${p}</div>`).join("");
+
+  const rows = riscos.map((r,i) => {
+    const L = level(r.severidade, r.probabilidade);
+    return `<tr><td class="num sev ${L.k}">${i+1}</td><td>${esc(r.perigo)}<div class="hint">${esc(r.categoria)}</div></td>
+      <td><span class="nr">${esc(r.nr)}${r.item ? " · " + esc(r.item) : ""}</span></td>
+      <td class="num">${clamp(r.severidade,1,5)}×${clamp(r.probabilidade,1,5)}=${L.r}<div><span class="chip ${L.k}">${L.t}</span></div></td>
+      <td>${esc(r.medida)}</td></tr>`;
+  }).join("");
+
+  const S5 = [["seiri","Seiri","Utilização"],["seiton","Seiton","Organização"],["seiso","Seiso","Limpeza"],["seiketsu","Seiketsu","Padronização"],["shitsuke","Shitsuke","Disciplina"]];
+  const cs = d.cinco_s || {};
+  let s5total = 0;
+  const s5 = S5.map(([k,jp,pt]) => {
+    const v = clamp(cs[k]?.nota, 0, 5); s5total += v;
+    const col = v >= 4 ? "var(--ok)" : v >= 3 ? "var(--warn)" : "var(--crit)";
+    return `<div class="r"><div class="jp">${jp}<small>${pt}</small></div><div class="bar"><i style="width:${v*20}%;background:${col}"></i></div><div class="num">${v}/5</div><div class="obs">${esc(cs[k]?.obs)}</div></div>`;
+  }).join("");
+
+  const P = d.pdca || {};
+  const quad = (letter, name, arr) => `<div class="q"><h4><b>${letter}</b>${name}</h4><ul>${(arr||[]).map(x=>`<li>${esc(x)}</li>`).join("") || '<li class="empty">—</li>'}</ul></div>`;
+
+  const imp = (d.melhorias||[]).map(m => `<div class="it"><span class="tag">${esc(m.metodologia)}</span><div><b>${esc(m.titulo)}</b><div>${esc(m.descricao)}</div></div></div>`).join("") || '<p class="empty">Nenhuma sugestão.</p>';
+
+  const w2h = (d.plano_5w2h||[]).map(a => `<tr><td><b>${esc(a.what)}</b></td><td>${esc(a.why)}</td><td>${esc(a.where)}</td><td>${esc(a.who)}</td><td>${esc(a.when)}</td><td>${esc(a.how)}</td><td>${esc(a.how_much)}</td></tr>`).join("");
+
+  $("report").innerHTML = `
+    ${isExample ? '<div class="banner"><span>Relatório de exemplo · capture imagens e clique em Analisar para gerar o seu</span></div>' : ""}
+    <div class="summary">
+      <svg class="gauge" viewBox="0 0 132 132" role="img" aria-label="Nota geral ${score} de 100">
+        <circle cx="66" cy="66" r="52" fill="none" stroke="var(--line)" stroke-width="12"/>
+        <circle cx="66" cy="66" r="52" fill="none" stroke="${sc}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C*score/100} ${C}" transform="rotate(-90 66 66)"/>
+        <text x="66" y="72" text-anchor="middle" font-size="38" font-weight="700" fill="var(--ink)">${score}</text>
+        <text x="66" y="92" text-anchor="middle" font-size="12" fill="var(--muted)">NOTA GERAL</text>
+      </svg>
+      <div>
+        <h2>Diagnóstico do ambiente</h2>
+        <div class="env">${esc(d.ambiente)}</div>
+        <p style="margin:6px 0 0">${esc(d.resumo)}</p>
+        <div class="chips">
+          <span class="chip crit">${counts.crit} crítico</span><span class="chip high">${counts.high} alto</span>
+          <span class="chip warn">${counts.warn} moderado</span><span class="chip ok">${counts.ok} baixo</span>
+          <span class="chip">5S ${s5total}/25</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h3>Riscos identificados pelas NRs</h3>
+      <div class="risk">
+        <div class="mwrap">
+          <p class="label">Matriz de risco · NR-01 (GRO/PGR)</p>
+          <div class="matrix" aria-label="Matriz severidade por probabilidade">${mx}</div>
+          <div class="axis-note"><span>Linhas: severidade</span><span>Colunas: probabilidade</span></div>
+        </div>
+        <div class="tbl">
+          <table><thead><tr><th>#</th><th>Perigo</th><th>NR</th><th>S×P</th><th>Medida de controle</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="5" class="empty">Nenhum risco visível identificado.</td></tr>'}</tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="two">
+      <div><h3>Avaliação 5S</h3><div class="s5">${s5}</div></div>
+      <div><h3>Pontos de melhoria</h3><div class="imp">${imp}</div></div>
+    </div>
+
+    <div>
+      <h3>Ciclo PDCA</h3>
+      <div class="pdca">${quad("P","Planejar",P.plan)}${quad("D","Executar",P.do)}${quad("C","Verificar",P.check)}${quad("A","Agir",P.act)}</div>
+    </div>
+
+    <div>
+      <h3>Plano de ação 5W2H</h3>
+      <div class="tbl"><table><thead><tr><th>O quê</th><th>Por quê</th><th>Onde</th><th>Quem</th><th>Quando</th><th>Como</th><th>Quanto</th></tr></thead>
+      <tbody>${w2h || '<tr><td colspan="7" class="empty">—</td></tr>'}</tbody></table></div>
+    </div>
+
+    <p class="limit"><b>Limitações:</b> ${esc(d.limitacoes)} Análise por imagem apoia, mas não substitui, a inspeção de campo e a avaliação do profissional de SST.</p>`;
+}
+
+/* ---------- imagens ---------- */
+function refreshThumbs(){
+  const box = $("thumbs"); box.innerHTML = "";
+  for (let i = 0; i < maxImages; i++){
+    const f = frames[i]; const d = document.createElement("div"); d.className = "thumb";
+    if (f){
+      const img = document.createElement("img"); img.src = f.url; img.alt = "Imagem " + (i+1);
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "×"; b.setAttribute("aria-label","Remover imagem " + (i+1));
+      b.onclick = () => { URL.revokeObjectURL(f.url); frames.splice(i,1); refreshThumbs(); };
+      d.append(img, b);
+    }
+    box.append(d);
+  }
+  updateGo();
+}
+function addBlob(blob){
+  if (frames.length >= maxImages){ setStatus(`Limite de ${maxImages} imagens. Remova uma para adicionar outra.`, true); return; }
+  frames.push({blob, url: URL.createObjectURL(blob)}); refreshThumbs(); setStatus("");
+}
+async function normalize(file){
+  // reduz para ~1600px e converte para JPEG (aceita formatos que o navegador decodifica)
+  try{
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width*s); c.height = Math.round(bmp.height*s);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise(r => c.toBlob(r, "image/jpeg", 0.86));
+  }catch(e){ return file; }
+}
+async function onFiles(list){ for (const f of Array.from(list || [])) addBlob(await normalize(f)); }
+$("pick").onchange = e => { onFiles(e.target.files); e.target.value = ""; };
+$("shoot").onchange = e => { onFiles(e.target.files); e.target.value = ""; };
+
+/* ---------- câmera ---------- */
+async function listCams(){
+  try{
+    const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
+    const sel = $("camSel"); const cur = sel.value; sel.innerHTML = "";
+    devs.forEach((d,i) => { const o = document.createElement("option"); o.value = d.deviceId; o.textContent = d.label || ("Câmera " + (i+1)); sel.append(o); });
+    if (cur) sel.value = cur;
+    sel.hidden = devs.length < 2;
+  }catch(e){}
+}
+async function startCam(deviceId){
+  stopCam();
+  const v = $("video");
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:false, video: deviceId ? {deviceId:{exact:deviceId}, width:{ideal:1920}, height:{ideal:1080}} : {width:{ideal:1920}, height:{ideal:1080}}});
+    v.srcObject = stream; await v.play();
+    v.hidden = false; $("videoMsg").hidden = true; $("rec").hidden = false;
+    $("snapBtn").disabled = false; $("camBtn").textContent = "Desligar câmera";
+    await listCams();
+    const t = stream.getVideoTracks()[0]; if (t?.getSettings) $("camSel").value = t.getSettings().deviceId || $("camSel").value;
+  }catch(e){
+    stream = null;
+    $("videoMsg").innerHTML = inViewer
+      ? "A câmera ao vivo não abre dentro desta janela do Claude. Use <b>Tirar foto</b> / <b>Enviar fotos</b> ao lado, ou abra a versão do repositório no navegador."
+      : (e && e.name === "NotAllowedError" ? "Permissão da câmera negada. Libere a câmera nas configurações do navegador e tente de novo." : "Nenhuma câmera encontrada. Verifique o cabo USB da webcam e tente de novo.");
+  }
+}
+function stopCam(){
+  if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  const v = $("video"); v.srcObject = null; v.hidden = true;
+  $("videoMsg").hidden = false; $("rec").hidden = true; $("snapBtn").disabled = true; $("camBtn").textContent = "Ligar câmera";
+}
+$("camBtn").onclick = () => stream ? stopCam() : startCam($("camSel").value || undefined);
+$("camSel").onchange = e => startCam(e.target.value);
+$("snapBtn").onclick = () => {
+  const v = $("video"); if (!v.videoWidth) return;
+  const s = Math.min(1, 1600 / v.videoWidth);
+  const c = document.createElement("canvas"); c.width = Math.round(v.videoWidth*s); c.height = Math.round(v.videoHeight*s);
+  c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+  c.toBlob(b => b && addBlob(b), "image/jpeg", 0.86);
+};
+if (!navigator.mediaDevices?.getUserMedia){ $("camBtn").disabled = true; $("videoMsg").textContent = "Este navegador não oferece acesso à câmera. Use fotos."; }
+
+/* ---------- análise ---------- */
+function updateGo(){
+  const ready = frames.length > 0 && (sample || (!inViewer && $("apiKey").value.trim()));
+  $("goBtn").disabled = !ready || !!ctl;
+}
+$("apiKey").addEventListener("input", e => { store("sst_api_key", e.target.value.trim() || null); updateGo(); });
+
+function parseJSON(text){
+  try{ return JSON.parse(text); }catch(e){}
+  const m = text.match(/```(?:json)?\s*([\s\S]*?)```/); if (m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  const a = text.indexOf("{"), b = text.lastIndexOf("}");
+  if (a >= 0 && b > a) return JSON.parse(text.slice(a, b+1));
+  throw new Error("Resposta sem JSON");
+}
+const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(b); });
+
+async function viaApi(prompt, signal){
+  const key = $("apiKey").value.trim();
+  const content = [];
+  for (const f of frames) content.push({type:"image", source:{type:"base64", media_type:"image/jpeg", data: await blobToB64(f.blob)}});
+  content.push({type:"text", text: prompt});
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", signal,
+    headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01",
+             "anthropic-dangerous-direct-browser-access":"true","anthropic-beta":"server-side-fallback-2026-07-01"},
+    body: JSON.stringify({model:MODEL, max_tokens:16000, output_config:{effort:"medium"}, fallbacks:"default",
+                          messages:[{role:"user", content}]})
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw {code:"http", message: (j.error && j.error.message) || ("HTTP " + res.status), status: res.status};
+  if (j.stop_reason === "refusal") throw {code:"refused", message:"A análise foi recusada para estas imagens."};
+  const text = (j.content || []).filter(c => c.type === "text").map(c => c.text).join("");
+  return parseJSON(text);
+}
+
+const ERR = {
+  not_granted:"Uso do Claude não autorizado nesta página.", sampling_disabled:"Claude indisponível para esta conta.",
+  rate_limited:"Muitas análises seguidas. Aguarde um pouco e tente de novo.", image_rejected:"Uma das imagens não foi aceita. Troque por outra foto.",
+  images_unavailable:"Esta visualização não pode enviar imagens.", refused:"A análise foi recusada para estas imagens.",
+  invalid_json:"A resposta veio fora do formato. Clique em Analisar de novo.", session_expired:"Sua sessão expirou. Entre de novo no Claude."
+};
+
+$("goBtn").onclick = async () => {
+  if (!frames.length) return;
+  ctl = new AbortController(); updateGo(); $("stopRow").hidden = false;
+  const t0 = Date.now(); const tick = setInterval(() => setStatus(`Analisando ${frames.length} imagem(ns)… ${Math.round((Date.now()-t0)/1000)} s`), 1000);
+  setStatus(`Analisando ${frames.length} imagem(ns)…`);
+  const prompt = buildPrompt($("ctx").value.trim());
+  try{
+    const data = sample
+      ? await sample.json(prompt, {images: frames.map(f => f.blob), signal: ctl.signal, cache:false})
+      : await viaApi(prompt, ctl.signal);
+    render(data, false);
+    setStatus(`Concluído em ${Math.round((Date.now()-t0)/1000)} s.`);
+  }catch(e){
+    if (e?.code === "cancelled" || e?.name === "AbortError") setStatus("Análise interrompida.");
+    else if (e?.code === "http") setStatus(e.status === 401 ? "Chave da API inválida." : "Erro da API: " + e.message, true);
+    else setStatus(ERR[e?.code] || "Falha na análise. Tente de novo em instantes.", true);
+  }finally{
+    clearInterval(tick); ctl = null; $("stopRow").hidden = true; updateGo();
+  }
+};
+$("stopBtn").onclick = () => ctl?.abort();
+
+/* ---------- modo ---------- */
+function setMode(txt){ $("mode").innerHTML = "Modo: <b>" + esc(txt) + "</b>"; }
+async function init(){
+  render(EXAMPLE, true); refreshThumbs();
+  if (inViewer){
+    $("camHint").textContent = "Dentro do Claude, a análise usa a sua conta, sem chave. A câmera ao vivo funciona na versão aberta direto no navegador.";
+    try{ sample = await claude.use("sample"); }catch(e){ sample = null; }
+    if (sample){
+      try{ const lim = await sample.limits(); if (lim?.images?.maxCount) maxImages = Math.min(MAX_DEFAULT, lim.images.maxCount); }catch(e){}
+      $("maxN").textContent = maxImages; refreshThumbs(); setMode("Claude (sua conta)");
+    } else { setMode("análise indisponível"); setStatus("A análise não está disponível nesta visualização.", true); }
+  } else {
+    $("keyBox").hidden = false; const k = load("sst_api_key"); if (k) $("apiKey").value = k;
+    setMode("navegador + API"); updateGo();
+  }
+}
+init();
+})();
+</script>
+
+</body></html>
