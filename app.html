@@ -887,7 +887,8 @@ function chips(L, n, o) {
 function dripsL(L, n, col, aMax = .35) {
   const { A, H, R, s } = L;
   for (let i = 0; i < n; i++) {
-    const px = rnd() * s, y0 = rnd() * s * .7, len = s * (.05 + rnd() * .35), w = .6 + rnd() * 2.6 * s / 1024, a = .08 + rnd() * aMax;
+
+    const wide = rnd() < .3, px = rnd() * s, y0 = rnd() * s * .7, len = s * (.05 + rnd() * .35), w = (wide ? 6 + rnd() * 18 : 1 + rnd() * 3.5) * s / 1024, a = (wide ? .05 : .06) + rnd() * aMax * (wide ? .45 : .7);
     const g = A.createLinearGradient(0, y0, 0, y0 + len); g.addColorStop(0, `rgba(${col},${a})`); g.addColorStop(1, `rgba(${col},0)`);
     A.fillStyle = g; A.fillRect(px, y0, w, len);
     if (R) { const gr = R.createLinearGradient(0, y0, 0, y0 + len); gr.addColorStop(0, orm(.92, .1, a * 1.5)); gr.addColorStop(1, orm(.92, .1, 0)); R.fillStyle = gr; R.fillRect(px, y0, w, len); }
@@ -916,25 +917,26 @@ function paintTex(size, o, full = true) {
   blotches(A, s, 50, s * .04, s * .3, () => `rgba(255,250,240,${.02 + rnd() * .06})`);
   blotches(A, s, 50, s * .04, s * .3, () => `rgba(0,0,0,${.03 + rnd() * .08})`);
   if (R) blotches(R, s, 40, s * .05, s * .3, () => orm((o.r ?? .65) + (rnd() - .5) * .25, o.m ?? .3, .35));
-  blotches(A, s, 26 * o.dust, s * .03, s * .18, () => `rgba(${o.dustRGB || '118,62,36'},${.05 + rnd() * .14})`);
-  dripsL(L, 160 * o.drip, o.dripRGB || '92,48,28', .3);
-  chips(L, 70 * (o.chip ?? 1), o);
-  scratchesL(L, 160 * (o.scratch ?? 1), o.scratchRGB || '200,190,175', o.mScr ?? true);
+  blotches(A, s, 26 * o.dust, s * .03, s * .18, () => `rgba(${o.dustRGB || '118,62,36'},${.04 + rnd() * .09})`);
+  dripsL(L, 95 * o.drip, o.dripRGB || '92,48,28', .3);
+  chips(L, 55 * (o.chip ?? 1), o);
+  scratchesL(L, 130 * (o.scratch ?? 1), o.scratchRGB || '200,190,175', o.mScr ?? true);
 
-  const nT = field(2, 4), nD = field(3, 5, .55), nR0 = field(4, 5, .6), nF = field(24, 3, .5);
-  const nR = nR0.map((v, i) => v * .72 + nF[i] * .28);
-  const dCov = Math.min(.6, .2 * o.dust), rCov = Math.min(.25, .028 * o.rust);
-  const d0 = quant(nD, 1 - dCov * 2), d1 = quant(nD, 1 - dCov * .7);
-  const rh = quant(nR, 1 - rCov * 2.6), r0 = quant(nR, 1 - rCov), r1 = quant(nR, 1 - rCov * .45);
-  const DC = parse(o.dustRGB || '118,62,36'), RC = parse(o.rustRGB || '96,52,32'), RD = [64, 40, 30], G = o.grain ?? 10;
+  const nT = field(2, 4), nD = field(3, 5, .55), nR0 = field(7, 5, .6), nF = field(24, 3, .5);
+  const nR = nR0.map((v, i) => v * .7 + nF[i] * .3);
+  const dCov = Math.min(.6, .2 * o.dust), rCov = Math.min(.2, .022 * o.rust);
+
+  const d0 = quant(nD, Math.max(0, 1 - dCov * 2.8)), d1 = quant(nD, 1 - dCov * .2), film = Math.min(.14, .06 * o.dust);
+  const rh = quant(nR, 1 - rCov * 2.2), r0 = quant(nR, 1 - rCov), r1 = quant(nR, 1 - rCov * .4);
+  const DC = parse(o.dustRGB || '118,62,36'), RC = parse(o.rustRGB || '96,52,32'), RD = [62, 40, 31], G = o.grain ?? 10;
   const sp = L.sp;
   pixels(L, (i, x, y, a, hh, r) => {
     const t = sp(nT, x, y), d = sp(nD, x, y), q = sp(nR, x, y), f = sp(nF, x, y);
     let c0 = a[i], c1 = a[i + 1], c2 = a[i + 2];
-    const tone = .9 + .2 * t; c0 *= tone; c1 *= tone; c2 *= tone;
-    const dm = sst(d0, d1, d) * .75 * (.7 + .6 * f);
-    const df = .8 + .4 * f; c0 += (DC[0] * df - c0) * dm; c1 += (DC[1] * df - c1) * dm; c2 += (DC[2] * df - c2) * dm;
-    const halo = sst(rh, r0, q) * .3, core = sst(r0, r1, q);
+    const tone = .92 + .16 * t; c0 *= tone; c1 *= tone; c2 *= tone;
+    const dm = film + sst(d0, d1, d) * .5 * (.75 + .5 * f);
+    const df = .85 + .3 * f; c0 += (DC[0] * df - c0) * dm; c1 += (DC[1] * df - c1) * dm; c2 += (DC[2] * df - c2) * dm;
+    const halo = sst(rh, r0, q) * .22, core = sst(r0, r1, q);
     c0 += (RC[0] * 1.15 - c0) * halo; c1 += (RC[1] * 1.15 - c1) * halo; c2 += (RC[2] * 1.15 - c2) * halo;
     const mix = core * (.85 + .15 * f), rc0 = RC[0] + (RD[0] - RC[0]) * f, rc1 = RC[1] + (RD[1] - RC[1]) * f, rc2 = RC[2] + (RD[2] - RC[2]) * f;
     c0 += (rc0 - c0) * mix; c1 += (rc1 - c1) * mix; c2 += (rc2 - c2) * mix;
@@ -1013,10 +1015,24 @@ const G_DUST = /* glsl */`
   float dm = clamp( gUp * uDust * ( .35 + 1.0 * gN1 ), 0., 1. );
   float side = 1. - abs( gN.y );
   float drip = side * uGrime * smoothstep( .5, .85, gNoise( vec2( dot( gP.xz, vec2( 6.3, 5.1 ) ), gP.y * .45 ) ) ) * ( .5 + gN1 );
+
+  float gSt = gFbm( vec2( dot( gP.xz, vec2( .8, .6 ) ) * 2.4, gP.y * .9 + gP.x * .15 ) + 11.3 ) * .8 + gN1 * .2;
+  float stain = smoothstep( .49, .63, gSt ) * side * uGrime * .72 * ( .55 + .9 * gNoise( vec2( dot( gP.xz, vec2( .8, .6 ) ) * 9., gP.y * .35 ) ) );
+  float dry = ( 1. - smoothstep( .33, .43, gSt ) ) * side * uGrime * .4;
+
+  float gHl = gP.y < 7.2 ? gP.y : ( gP.y < 13.7 ? gP.y - 7.5 : gP.y - 14. );
+  float splash = side * uGrime * ( 1. - smoothstep( .05, .55 + .35 * gN1, gHl ) ) * step( -.05, gHl ) * ( .45 + .55 * gN2 );
   vec3 dc = uDustCol * ( .75 + .5 * gN2 );
+  diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * ( .55 + .45 * uDustCol / max( max( uDustCol.r, uDustCol.g ), .05 ) ) * .8, clamp( stain, 0., 1. ) );
+  diffuseColor.rgb = mix( diffuseColor.rgb, mix( diffuseColor.rgb, uDustCol, .5 ) * 1.12, clamp( dry, 0., 1. ) );
+  diffuseColor.rgb = mix( diffuseColor.rgb, dc * .72, clamp( splash * .75, 0., 1. ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, dc, clamp( max( dm, drip * .5 ), 0., 1. ) );
+
+  float gCr = gNoise( gP.xz * 46. + gP.y * 13. );
+  diffuseColor.rgb *= 1. + ( gCr - .5 ) * .22 * dm;
+  roughnessFactor = mix( roughnessFactor, min( 1., roughnessFactor + .12 ), stain + splash * .5 );
   roughnessFactor = mix( roughnessFactor, .97, dm );
-  metalnessFactor = mix( metalnessFactor, 0., dm );
+  metalnessFactor = mix( metalnessFactor, 0., max( dm, splash * .6 ) );
 
   normal = normalize( mix( normal, nonPerturbedNormal, dm * .7 ) );
 #ifdef USE_MAP
@@ -1054,7 +1070,7 @@ function grime(mat, o = {}) {
     else f = f.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + G_DUST);
     sh.fragmentShader = f;
   };
-  mat.customProgramCacheKey = () => 'grime2' + (tri > 0 ? 't' : 'u');
+  mat.customProgramCacheKey = () => 'grime3' + (tri > 0 ? 't' : 'u');
   return mat;
 }
 
@@ -1096,7 +1112,7 @@ function buildMaterials(opt = {}) {
 
     for (let i = 0; i < 70; i++) { const cx = rnd() * s, cy = rnd() * s, r = s * (.004 + rnd() * .02); const g = H.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(200,200,200,.6)'); g.addColorStop(1, 'rgba(200,200,200,0)'); H.fillStyle = g; H.beginPath(); H.arc(cx, cy, r, 0, 6.3); H.fill(); const ga = A.createRadialGradient(cx, cy, 0, cx, cy, r); ga.addColorStop(0, 'rgba(88,64,54,.35)'); ga.addColorStop(1, 'rgba(88,64,54,0)'); A.fillStyle = ga; A.beginPath(); A.arc(cx, cy, r, 0, 6.3); A.fill(); R.fillStyle = orm(1, 0, .4); R.beginPath(); R.arc(cx, cy, r * .7, 0, 6.3); R.fill(); }
 
-    for (let i = 0; i <= 2; i++) { const p = i * s / 2; A.fillStyle = 'rgba(22,15,12,.6)'; A.fillRect(p - 2, 0, 4, s); A.fillRect(0, p - 2, s, 4); H.fillStyle = '#303030'; H.fillRect(p - 3, 0, 6, s); H.fillRect(0, p - 3, s, 6); R.fillStyle = orm(1, 0); R.fillRect(p - 3, 0, 6, s); R.fillRect(0, p - 3, s, 6); }
+    for (let i = 0; i <= 2; i++) { const p = i * s / 2; A.fillStyle = 'rgba(22,15,12,.32)'; A.fillRect(p - 1.5, 0, 3, s); A.fillRect(0, p - 1.5, s, 3); H.fillStyle = '#4a4a4a'; H.fillRect(p - 2.5, 0, 5, s); H.fillRect(0, p - 2.5, s, 5); R.fillStyle = orm(1, 0); R.fillRect(p - 3, 0, 6, s); R.fillRect(0, p - 3, s, 6); }
     for (let i = 0; i < 46; i++) { let px = rnd() * s, py = rnd() * s; const pts = [[px, py]]; for (let k = 0; k < 9; k++) { px += (rnd() - .5) * s * .03; py += (rnd() - .3) * s * .03; pts.push([px, py]); } const lw = (.7 + rnd()) * s / 1024; for (const [x, c] of [[A, `rgba(22,15,12,${.3 + rnd() * .3})`], [H, 'rgba(50,50,50,.8)']]) { x.strokeStyle = c; x.lineWidth = lw; x.beginPath(); pts.forEach(([a, b], j) => j ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke(); } }
 
     for (let i = 0; i < s * 3; i++) { const px = rnd() * s, py = rnd() * s, r = (.6 + rnd() * rnd() * 3.5) * s / 1024; const met = rnd() < .3; A.fillStyle = met ? `rgba(${70 + rnd() * 20 | 0},${66 + rnd() * 18 | 0},${66 + rnd() * 18 | 0},.8)` : `rgba(${40 + rnd() * 50 | 0},${24 + rnd() * 22 | 0},${18 + rnd() * 14 | 0},${.5 + rnd() * .5})`; A.beginPath(); A.arc(px, py, r, 0, 6.3); A.fill(); H.fillStyle = 'rgba(220,220,220,.8)'; H.beginPath(); H.arc(px, py, r, 0, 6.3); H.fill(); if (met) { R.fillStyle = orm(.5, .6); R.beginPath(); R.arc(px, py, r, 0, 6.3); R.fill(); } }
@@ -1140,22 +1156,22 @@ function buildMaterials(opt = {}) {
   const steelDkT = paint(TINY, { base: '#584840', dust: .9, rust: 1.1, drip: 1.2, scratch: .7, chip: 1, r: .76, m: .3, dustRGB: '98,76,64', dripRGB: '60,40,30', rustRGB: '80,46,32' });
   M.steelDk = grime(pm(steelDkT, steelDkT.o), { tri: 1 / 2, dust: 1.1, edge: 1.1, grime: .65, dustCol: '#664434' });
 
-  const chuteT = paint(MID, { base: '#5a3a2a', dust: 1.6, rust: 2.2, drip: 2, scratch: .9, chip: 1.4, bare: .7, chipRust: .35, r: .8, m: .3, rustRGB: '88,48,30' });
+  const chuteT = paint(MID, { base: '#5a3a2a', dust: 1.8, rust: 1.6, drip: 2, scratch: .9, chip: 1.2, bare: .7, chipRust: .35, r: .8, m: .3, dustRGB: '104,74,62', rustRGB: '82,50,36' });
   M.chute = grime(pm(chuteT, chuteT.o), { tri: 1 / 2, dust: 1, edge: .9, grime: .8, dustCol: '#6a3a28' });
 
-  const greyT = paint(MID, { base: '#a39e98', dust: 1.3, rust: .5, drip: 1.6, scratch: 1.2, chip: .8, r: .6, m: .4, dustRGB: '130,72,44', rustRGB: '108,62,40' });
+  const greyT = paint(MID, { base: '#a39e98', dust: 1.3, rust: .5, drip: 1.6, scratch: 1.2, chip: .8, r: .6, m: .4, dustRGB: '120,82,64', dripRGB: '80,46,32', rustRGB: '100,58,38' });
   M.grey = grime(pm(greyT, greyT.o), { tri: 1 / 1.6, dust: .9, edge: 1, grime: .9, dustCol: '#7e4a32' });
   const greyDkT = paint(TINY, { base: '#4f5354', dust: .8, rust: .6, drip: .8, scratch: .8, chip: .7, r: .55, m: .5 });
   M.greyDk = grime(pm(greyDkT, greyDkT.o), { tri: 1, dust: .7, edge: .8, grime: .4 });
 
-  const yelT = paint(MID, { base: '#d8a419', dust: 1.1, rust: .5, drip: 1, scratch: 1.4, chip: 2.4, chipR: .009, bare: .35, chipRust: .55, rimRGB: '70,50,20', scratchRGB: '90,80,70', mScr: false, grain: 8, r: .58, m: .1, rustRGB: '110,64,36' });
+  const yelT = paint(MID, { base: '#d8a419', dust: 1.3, dustRGB: '128,92,56', rust: .5, drip: 1, scratch: 1.4, chip: 2.4, chipR: .009, bare: .35, chipRust: .55, rimRGB: '70,50,20', scratchRGB: '90,80,70', mScr: false, grain: 8, r: .58, m: .1, rustRGB: '110,64,36' });
   M.yellow = grime(pm(yelT, yelT.o), { tri: 1 / 1.2, dust: .8, edge: .9, grime: .6, dustCol: '#8a5536' });
   M.yellowClean = grime(pm(yelT, { r: .52, m: .05, ns: .6 }, { color: 0xfff0d0 }), { tri: 1, dust: .4, edge: .8, grime: .3 });
 
-  const beigeT = paint(MID, { base: '#c9c4a8', dust: 1.6, rust: .7, drip: 3, scratch: 1, chip: 1.2, dripRGB: '84,44,26', dustRGB: '120,64,38', r: .58, m: .2, rustRGB: '104,58,36' });
+  const beigeT = paint(MID, { base: '#c9c4a8', dust: 1.6, rust: .7, drip: 2.4, scratch: 1, chip: 1.2, dripRGB: '74,42,30', dustRGB: '124,84,66', r: .58, m: .2, rustRGB: '104,58,36' });
   M.beige = grime(pm(beigeT, beigeT.o), { tri: 1 / 1.5, dust: 1, edge: .9, grime: 1, dustCol: '#6c3b28' });
 
-  const hpT = paint(TINY, { base: '#d39c1c', dust: 1.6, rust: .8, drip: 2.4, scratch: 1.2, chip: 1.6, dripRGB: '84,44,26', r: .56, m: .15 });
+  const hpT = paint(TINY, { base: '#d39c1c', dust: 1.6, rust: .8, drip: 2, scratch: 1.2, chip: 1.6, dripRGB: '78,44,28', dustRGB: '126,88,56', r: .56, m: .15 });
   M.hp = grime(pm(hpT, hpT.o), { tri: 1 / 1.5, dust: 1, edge: .9, grime: 1, dustCol: '#6c3b28' });
   const orT = paint(TINY, { base: '#b5652a', dust: 1.2, rust: 1.5, drip: 1.5, scratch: 1, r: .62, m: .3 });
   M.orange = grime(pm(orT, orT.o), { tri: 1, dust: .9, edge: .9, grime: .8 });
@@ -1410,13 +1426,23 @@ function buildBuilding(scene, M, opt = {}) {
   slab(B.screenEnd - x0, t, B.D, (B.screenEnd + x0) / 2, y1 - t / 2, B.D / 2);
   for (const [a, b] of holes) { slab(b - a, t, 3.4, (a + b) / 2, y1 - t / 2, 1.7); slab(b - a, t, 5.6, (a + b) / 2, y1 - t / 2, B.D - 2.8); }
 
-  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(205,190,150,1)'; x.lineWidth = 2.5;
+  const meshTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.strokeStyle = 'rgba(215,200,160,1)'; x.lineWidth = 4;
     for (let i = 0; i <= 128; i += 16) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 128); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(128, i); x.stroke(); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
-  const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .6, 1.6); t.anisotropy = 8; return new THREE.MeshStandardMaterial({ color: 0x9c9a8c, map: t, alphaMap: t, alphaToCoverage: true, transparent: false, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };
+  const telaMat = (L) => { const t = meshTex.clone(); t.needsUpdate = true; t.repeat.set(L / .6, 1.6); t.anisotropy = 8; return new THREE.MeshStandardMaterial({ color: 0x9c9a8c, map: t, alphaMap: t, transparent: true, depthWrite: false, roughness: .6, metalness: .5, side: THREE.DoubleSide }); };
   const tela = (a, b) => { railing(g, a, b, M.yellow); const L = a.distanceTo(b); const m = new THREE.Mesh(new THREE.PlaneGeometry(L, .9), telaMat(L)); m.position.set((a.x + b.x) / 2, a.y + .58, (a.z + b.z) / 2); m.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x); g.add(m); };
   for (const [a, b] of holes) { tela(V(a, y1, 3.4), V(a, y1, B.D - 5.6)); tela(V(b, y1, 3.4), V(b, y1, B.D - 5.6)); }
+  for (const [a, b] of holes) tela(V(a, y1, 3.4), V(b, y1, 3.4));
   holes.forEach(([a, b], i) => tela(V(i ? a : a + 1.2, y1, B.D - 5.6), V(b, y1, B.D - 5.6)));
+
+  { const gc = document.createElement('canvas'); gc.width = gc.height = 64; const gx = gc.getContext('2d'); gx.strokeStyle = '#fff'; gx.lineWidth = 5; for (let k = 0; k <= 64; k += 16) { gx.beginPath(); gx.moveTo(k, 0); gx.lineTo(k, 64); gx.stroke(); } gx.lineWidth = 3; for (let k = 0; k <= 64; k += 32) { gx.beginPath(); gx.moveTo(0, k); gx.lineTo(64, k); gx.stroke(); }
+    const gTexB = new THREE.CanvasTexture(gc); gTexB.wrapS = gTexB.wrapT = THREE.RepeatWrapping; gTexB.anisotropy = 8;
+    const gratB = (w, d, x, z) => { const t = gTexB.clone(); t.needsUpdate = true; t.repeat.set(w / .25, d / .25); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x5a5650, map: t, alphaMap: t, alphaToCoverage: true, roughness: .7, metalness: .5, side: THREE.DoubleSide }));
+      m.rotation.x = -Math.PI / 2; m.position.set(x, y1 - .02, z); m.receiveShadow = true; g.add(m); };
+    const hw = SCREENS.w / 2 + .15, zA = 3.4, zB = B.D - 5.6, zF = Math.min(zB - .3, SCREENS.zFeed + SCREENS.len + 1.4);
+    for (const [a, b] of holes) { const xc = (a + b) / 2;
+      gratB(xc - hw - a, zB - zA, (a + xc - hw) / 2, (zA + zB) / 2); gratB(b - xc - hw, zB - zA, (b + xc + hw) / 2, (zA + zB) / 2);
+      if (zB - zF > .3) gratB(2 * hw, zB - zF, xc, (zF + zB) / 2); } }
   railing(g, V(B.screenEnd, y1, 0.3), V(B.screenEnd, y1, B.D - .3), M.yellow);
 
   const E = B.screenEnd, y2 = LV.L2;
@@ -1489,15 +1515,15 @@ function buildBuilding(scene, M, opt = {}) {
   const walls = [];
   const wall = (w, h, x, y, z, ry) => { for (const m of [M.cladOut, M.cladIn]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); walls.push(p); p.userData.shell = true; p.position.set(x, y, z); p.rotation.y = ry + (m === M.cladIn ? Math.PI : 0); p.position.x += m === M.cladIn ? Math.sin(ry) * -.05 : 0; p.position.z += m === M.cladIn ? Math.cos(ry) * -.05 : 0; p.receiveShadow = true; p.castShadow = true; g.add(p); } };
 
-  wall(B.W, B.H - 4, B.W / 2, 4 + (B.H - 4) / 2, -.02, Math.PI);
+  wall(B.W, B.H - 12, B.W / 2, 12 + (B.H - 12) / 2, -.02, Math.PI);
 
   wall(B.W, B.H - LV.L2 - 2, B.W / 2, LV.L2 + 2 + (B.H - LV.L2 - 2) / 2, B.D + .02, 0);
-  wall(B.D, B.H - 6, -.02, 6 + (B.H - 6) / 2, B.D / 2, -Math.PI / 2);
-  wall(B.D, B.H - 6, B.W + .02, 6 + (B.H - 6) / 2, B.D / 2, Math.PI / 2);
+  wall(B.D, B.H - 12, -.02, 12 + (B.H - 12) / 2, B.D / 2, -Math.PI / 2);
+  wall(B.D, B.H - 12, B.W + .02, 12 + (B.H - 12) / 2, B.D / 2, Math.PI / 2);
 
   const girt = (a, b) => { const m = beam(g, a, b, .1, M.steelDk); m.userData.shell = true; };
-  for (let y = 6; y < B.H - .5; y += 2.4) girt(V(0, y, .2), V(B.W, y, .2));
-  for (let y = 8; y < B.H - .5; y += 2.4) for (const x of [.2, B.W - .2]) girt(V(x, y, 0), V(x, y, B.D));
+  for (let y = 12.4; y < B.H - .5; y += 2.4) girt(V(0, y, .2), V(B.W, y, .2));
+  for (let y = 12.4; y < B.H - .5; y += 2.4) for (const x of [.2, B.W - .2]) girt(V(x, y, 0), V(x, y, B.D));
   for (let y = LV.L2 + 3.2; y < B.H - .5; y += 2.4) girt(V(0, y, B.D - .2), V(B.W, y, B.D - .2));
 
 
@@ -2602,9 +2628,8 @@ function buildCrushers(scene, M) {
     }
     rack(51.3, .65, 4.6, 0); rack(58.0, .65, 2.4, 0); rack(63.33, 14.0, 2.3, Math.PI / 2);
 
-    { const PL = new THREE.Group(); PL.position.set(55, 0, 10.5); PL.rotation.y = .12; RM.add(PL);
+    { const PL = new THREE.Group(); PL.position.set(63.2, 0, 13.6); PL.rotation.y = Math.PI / 2;   /* manto de reposição retirado (pedido do usuário); caixas encostadas na parede */ RM.add(PL);
       for (const zz of [-.5, 0, .5]) cbox(PL, 1.5, .1, .12, mWood, 0, .05, zz, .01); for (let k = 0; k < 7; k++) cbox(PL, .14, .025, 1.2, mWood, -.66 + k * .22, .115, 0, .004);
-      lathe(PL, [[0, .13], [.74, .13], [.74, .18], [.62, .55], [.42, .95], [.36, .99], [0, .99]], mMn, 48).position.x = -.1;
       cbox(PL, .4, .3, .35, mWood, .55, .28, .3, .01); cbox(PL, .4, .3, .35, mWood, .55, .28, -.15, .01); cbox(PL, .38, .25, .33, mWood, .55, .555, .1, .01); }
 
     const HP = new THREE.Group(); HP.position.set(55.2, 0, 3.3); RM.add(HP);
@@ -2708,39 +2733,218 @@ function buildCrushers(scene, M) {
 
 
 
+
+
+
+
+const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
+
+function grainGeoF(k) {
+  const g = new THREE.IcosahedronGeometry(1, 0), P = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); const q = .72 + .5 * hashF(Math.round(v.x * 50) + k, Math.round(v.y * 50) * 3 + Math.round(v.z * 50) * 7); v.multiplyScalar(q); v.y *= .68; P.setXYZ(i, v.x, v.y, v.z); }
+  g.computeVertexNormals(); return g;
+}
+
+function ribbonGeoF(nu, zs, pf, th = 0) {
+  const nz = zs.length, ly = th ? 2 : 1, pos = new Float32Array(nu * nz * 3 * ly), uv = new Float32Array(nu * nz * 2 * ly), idx = [], o = { x: 0, y: 0 };
+  for (let l = 0; l < ly; l++) for (let j = 0; j < nz; j++) for (let i = 0; i < nu; i++) {
+    const k = l * nu * nz + j * nu + i; pf(i, zs[j], o); pos[k * 3] = o.x; pos[k * 3 + 1] = o.y - l * th; pos[k * 3 + 2] = zs[j]; uv[k * 2] = i / (nu - 1); uv[k * 2 + 1] = j / (nz - 1);
+  }
+  for (let l = 0; l < ly; l++) for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nu - 1; i++) {
+    const a = l * nu * nz + j * nu + i, b = a + 1, c = a + nu, d = c + 1;
+    if (l === 0) idx.push(a, c, b, b, c, d); else idx.push(a, b, c, b, d, c);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+
+function moundGeoF(k) {
+  const g = new THREE.SphereGeometry(1, 16, 6, 0, Math.PI * 2, 0, Math.PI / 2), P = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < P.count; i++) {
+    v.fromBufferAttribute(P, i); const h = hashF(Math.round(v.x * 40) + k * 13, Math.round(v.z * 40) * 5 + Math.round(v.y * 40) * 11);
+    const rr = .75 + .45 * h; v.x *= rr; v.z *= rr; v.y = v.y * (.6 + .6 * h) * (v.y > .99 ? .85 : 1); P.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals(); return g;
+}
+
 function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
-  const belts = [], labels = [];
-  const rockGeo = new THREE.DodecahedronGeometry(.06);
-  function belt(a, b, w, key, oreMat = M.ore) {
-    const d = new THREE.Vector3().subVectors(b, a), L = d.length();
-    const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
-    box(grp, w + .25, .3, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .18, 0);
-    for (let s = .6; s < L; s += 1.3) { box(grp, w + .35, .07, .1, M.grey, 0, .09, -L / 2 + s); }
-    for (const sx of [-1, 1]) box(grp, .05, .5, L, M.steel, sx * (w / 2 + .25), .3, 0);
+  const belts = [], labels = [], embed = !!opt.embed;
+  const LOW = embed || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) || (typeof location !== 'undefined' && /[?&]q=low/.test(location.search));
+  let sd = 7; const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+  const lumpGeo = rockGeometry(1, 5), grainGeo = grainGeoF(3);
 
-    for (const zz of [-L / 2, L / 2]) { const dr = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, w + .3, 16), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, .02, zz); grp.add(dr); }
+  const WET = [[.5, .29, .21], [.42, .24, .18], [.58, .35, .25], [.34, .21, .17], [.44, .38, .36], [.5, .33, .26]];
+  const FIN = [[.44, .26, .19], [.36, .21, .16], [.5, .31, .23], [.3, .19, .15]];
+  const DRY = [[.62, .42, .32], [.55, .37, .29], [.5, .4, .36], [.68, .48, .36]];
+  const col = new THREE.Color(), setCol = (im, i, pal) => { const k = pal[(rnd() * pal.length) | 0], j = .82 + rnd() * .3; im.setColorAt(i, col.setRGB(k[0] * j, k[1] * j, k[2] * j)); };
 
-    if (Math.abs(d.y) / L > .42) { for (const sx of [-1, 1]) box(grp, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(grp, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); }
-    const n = Math.floor(L * 14), im = new THREE.InstancedMesh(rockGeo, oreMat, n); im.castShadow = true; grp.add(im);
-    const rk = Array.from({ length: n }, (_, k) => ({ z: -L / 2 + (k + Math.random()) * L / n, x: (Math.random() - .5) * w * .7, r: Math.random() * 6, s: .6 + Math.random() * .9 }));
+  const GRADE = { F: [8, .05, .14, 20, .02, .04, .09], T: [8, .05, .13, 20, .02, .04, .09], R1: [12, .045, .11, 8, .022, .04, .07],
+    R2: [12, .03, .065, 16, .018, .032, .07], P: [3, .02, .035, 34, .011, .022, .06] };
+  const dens0 = LOW ? .5 : 1;
 
-    for (let i = rk.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rk[i], rk[j]] = [rk[j], rk[i]]; }
-    belts.push({ im, rk, L, key, w });
+  const ROLL = [], IMP = [], FRM = [], SPILL = [];
+  const mt = new THREE.Matrix4(), qt = new THREE.Quaternion(), sc = new THREE.Vector3(), Y = V(0, 1, 0), X = V(1, 0, 0);
+  const rollAt = (list, grp, x, y, z, dir, len, r) => { qt.setFromUnitVectors(Y, dir); mt.compose(V(x, y, z), qt, sc.set(r, len, r)); list.push(new THREE.Matrix4().multiplyMatrices(grp.matrix, mt)); };
+  const frmAt = (grp, x, y, z, sx, sy, sz) => { mt.compose(V(x, y, z), qt.identity(), sc.set(sx, sy, sz)); FRM.push(new THREE.Matrix4().multiplyMatrices(grp.matrix, mt)); };
 
-    for (let s = 3; s < L - 1; s += 8) { const p = a.clone().addScaledVector(d, s / L); if (p.y > 1.5) beam(g, V(p.x, 0, p.z), V(p.x, p.y - .15, p.z), .18, M.steelDk); }
+  const rc = new THREE.Raycaster(); rc.far = 26; const DOWN = V(0, -1, 0), nW = new THREE.Vector3();
+  let targets = null;
+  const floorAt = (p) => {
+    if (embed) return null;
+    if (!targets) { scene.updateMatrixWorld(true); targets = scene.children.filter((o) => o !== g); }
+    rc.set(V(p.x, p.y - .05, p.z), DOWN);
+    let hits = []; try { hits = rc.intersectObjects(targets, true); } catch (e) { return null; }
+    for (const h of hits) {
+      const m = h.object.material; if (!h.object.isMesh || !h.face || !m || Array.isArray(m) || m.transparent || !h.object.visible) continue;
+      nW.copy(h.face.normal).transformDirection(h.object.matrixWorld); if (nW.y < .6) continue;
+      return h.point.y;
+    }
+    return null;
+  };
+
+  const dGeo = [0, 1, 2, 3].map((q) => { const pg = new THREE.PlaneGeometry(1, 1), uv = pg.attributes.uv, ox = (q % 2) * .5, oy = (q >> 1) * .5; for (let i = 0; i < uv.count; i++) uv.setXY(i, ox + uv.getX(i) * .5, oy + uv.getY(i) * .5); return pg; });
+  const mGeo = [moundGeoF(1), moundGeoF(2), moundGeoF(3)];
+  const spillRock = (x, y, z, s) => { qt.setFromEuler(new THREE.Euler(rnd() * 6, rnd() * 6, rnd() * 6)); mt.compose(V(x, y + s * .25, z), qt, sc.set(s * (.8 + rnd() * .5), s * (.6 + rnd() * .4), s * (.8 + rnd() * .5))); SPILL.push(mt.clone()); };
+  const spill = (p, size = 1, dx = 0, dz = 0) => {
+    const fy = floorAt(p); if (fy == null || p.y - fy < .25) return;
+    const cx = p.x + dx, cz = p.z + dz;
+    if (size > .35) {
+      const r = .35 + .5 * size * (.7 + rnd() * .5), h = .07 + .16 * size * (.6 + rnd() * .6);
+      const md = new THREE.Mesh(mGeo[(rnd() * 3) | 0], M.oreBed); md.scale.set(r * (.8 + rnd() * .4), h, r * (.8 + rnd() * .4)); md.rotation.y = rnd() * 6.28; md.position.set(cx, fy - .015, cz); md.receiveShadow = true; md.castShadow = false; g.add(md);
+      if (size > .7) { const m2 = new THREE.Mesh(mGeo[(rnd() * 3) | 0], M.oreBed); m2.scale.set(r * .55, h * .7, r * .5); m2.position.set(cx + (rnd() - .5) * r * 1.4, fy - .01, cz + (rnd() - .5) * r * 1.4); m2.receiveShadow = true; m2.castShadow = false; g.add(m2); }
+    }
+    const nr = Math.round((LOW ? 8 : 18) * size + 2);
+    for (let i = 0; i < nr; i++) { const an = rnd() * 6.28, rr = (.2 + 1.1 * Math.sqrt(rnd())) * (.4 + size * .8); spillRock(cx + Math.cos(an) * rr, fy, cz + Math.sin(an) * rr, .025 + .07 * rnd() * rnd()); }
+    if (M.dust) { const dc = new THREE.Mesh(dGeo[(rnd() * 4) | 0], M.dust); dc.rotation.set(-Math.PI / 2, 0, rnd() * 6.28); const ds = 1.2 + size * 1.8; dc.scale.set(ds * (.8 + rnd() * .5), ds * (.7 + rnd() * .5), 1); dc.position.set(cx, fy + .008, cz); dc.receiveShadow = true; dc.castShadow = false; g.add(dc); }
+  };
+
+  const EMIT = [];
+  const dustAt = (p, k = 1) => { if (!embed) EMIT.push({ p: p.clone(), k }); };
+
+  function belt(a, b, w, key) {
+    const d = new THREE.Vector3().subVectors(b, a), L = d.length(), steep = Math.abs(d.y) / L > .42, G = GRADE[key] || GRADE.T;
+    const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp); grp.updateMatrix();
+    const toG = (x, y, z) => V(x, y, z).applyMatrix4(grp.matrix);
+    const tro = steep ? 0 : .52, lc = steep ? w : w * .4, hw = w / 2, wing = (w - lc) / 2, yS = .2, Z0 = -L / 2, Z1 = L / 2;
+    const trans = (z) => Math.min(1, Math.max(0, (Math.min(z - Z0, Z1 - z) - .3) / 1.1));
+
+    const surf = (sx, z, o) => { const as = Math.abs(sx); if (as <= lc / 2) { o.x = sx; o.y = yS; return o; } const an = tro * trans(z), e = as - lc / 2; o.x = Math.sign(sx) * (lc / 2 + e * Math.cos(an)); o.y = yS + e * Math.sin(an); return o; };
+    const zs = []; for (let z = Z0; z < Z1 - .01; z += .5) zs.push(z); zs.push(Z1);
+
+    const SX = [-hw, -lc / 2, lc / 2, hw];
+    const lona = new THREE.Mesh(ribbonGeoF(4, zs, (i, z, o) => surf(SX[i], z, o), .016), M.belt); lona.castShadow = true; lona.receiveShadow = true; grp.add(lona);
+    const r = .3, yc = yS - .006 - r, yRet = yc - r - .008;
+    box(grp, w, .014, L, M.belt, 0, yRet, 0);
+
+    for (const s of [-1, 1]) { box(grp, .07, .24, L - .3, M.steelDk, s * (hw + .2), -.07, 0); box(grp, .03, .08, L - .3, M.steelDk, s * (hw + .165), .035, 0); box(grp, .03, .08, L - .3, M.steelDk, s * (hw + .165), -.175, 0); }
+
+    for (const zz of [Z0, Z1]) {
+      const dr = new THREE.Mesh(flatU(new THREE.CylinderGeometry(r, r, w + .12, 22)), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, yc, zz); dr.castShadow = true; grp.add(dr);
+      const wr = new THREE.Mesh(flatU(new THREE.CylinderGeometry(r + .014, r + .014, w, 22)), M.belt); wr.rotation.z = Math.PI / 2; wr.position.set(0, yc, zz); grp.add(wr);
+      const ax = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.055, .055, w + .95, 10)), M.steel); ax.rotation.z = Math.PI / 2; ax.position.set(0, yc, zz); grp.add(ax);
+      for (const s of [-1, 1]) { box(grp, .2, .2, .3, M.greyDk, s * (hw + .4), yc, zz); box(grp, .26, .05, .4, M.steelDk, s * (hw + .4), yc - .12, zz); box(grp, .06, .62, 1.1, M.steelDk, s * (hw + .24), yc + .02, zz + (zz > 0 ? -.35 : .35)); }
+    }
+
+    box(grp, w * .86, .14, .035, M.pu, 0, yc - .06, Z1 + r + .03).rotation.x = .55;
+    const t1 = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.045, .045, w + .75, 10)), M.yellow); t1.rotation.z = Math.PI / 2; t1.position.set(0, yc - .16, Z1 + r + .14); grp.add(t1);
+    for (let k = 0; k < 4; k++) box(grp, .05, .1, .06, M.greyDk, (k / 3 - .5) * w * .8, yc - .1, Z1 + r + .09);
+    box(grp, w * .82, .07, .03, M.pu, 0, yRet - .045, Z1 - .5);
+    const t2 = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.04, .04, w + .7, 10)), M.yellow); t2.rotation.z = Math.PI / 2; t2.position.set(0, yRet - .12, Z1 - .5); grp.add(t2);
+
+    if (!embed && L > 6) {
+      const sx0 = -(hw + .78);
+      box(grp, .5, .52, .6, M.greyDk, sx0, yc, Z1); box(grp, .7, .05, 1.5, M.steelDk, sx0, yc - .3, Z1 - .35);
+      const mo = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.2, .2, .7, 16)), M.motorBlue || M.motor); mo.rotation.x = Math.PI / 2; mo.position.set(sx0, yc + .02, Z1 - .68); mo.castShadow = true; grp.add(mo);
+      const fc = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.17, .17, .14, 14)), M.motor); fc.rotation.x = Math.PI / 2; fc.position.set(sx0, yc + .02, Z1 - 1.1); grp.add(fc);
+      box(grp, .4, .1, .1, M.steelDk, sx0 + .35, yc - .1, Z1 - .15);
+    }
+
+    const zA = Z0 + .45, Ls = Math.min(3.2, Math.max(1.2, L * .22)), zB = zA + Ls;
+    const skS = lc / 2 + wing * .42, skX = lc / 2 + wing * .42 * Math.cos(tro), skY = yS + wing * .42 * Math.sin(tro);
+    for (const s of [-1, 1]) {
+      box(grp, .035, .44, Ls, M.chute, s * skX, skY + .27, zA + Ls / 2);
+      box(grp, .022, .11, Ls, M.rubber, s * (skX + .03), skY + .045, zA + Ls / 2);
+      for (let z = zA + .25; z < zB; z += .55) { box(grp, .16, .05, .06, M.steelDk, s * (skX + .1), skY + .15, z); box(grp, .05, .3, .05, M.steelDk, s * (skX + .2), skY + .05, z); }
+    }
+    box(grp, 2 * skX + .12, .035, Ls, M.chute, 0, skY + .5, zA + Ls / 2); box(grp, 2 * skX + .12, .5, .035, M.chute, 0, skY + .25, zA);
+    for (let z = zA + .4; z < zB; z += .8) box(grp, 2 * skX + .16, .06, .05, M.steelDk, 0, skY + .54, z);
+
+    const rr = .065, ycR = yS - .008 - rr, lw = wing + .05;
+    for (let z = Z0 + .9; z < Z1 - .7; z += (z > zA - .2 && z < zB) ? .42 : 1.2) {
+      const an = tro * trans(z), list = (z > zA - .2 && z < zB) ? IMP : ROLL;
+      rollAt(list, grp, 0, ycR, z, X, lc - .02, rr);
+      if (wing > .05) for (const s of [-1, 1]) { const dir = V(s * Math.cos(an), Math.sin(an), 0), x0 = s * (lc / 2 + .02); rollAt(list, grp, x0 + dir.x * lw / 2, ycR + dir.y * lw / 2, z, dir, lw, rr); }
+      frmAt(grp, 0, ycR - rr - .03, z, 2 * hw + .42, .05, .07);
+      for (const s of [-1, 1]) {
+        if (wing > .05) { const ex = lc / 2 + .02 + lw * Math.cos(an), ey = ycR + lw * Math.sin(an); frmAt(grp, s * (ex + .04), (ycR - rr + ey) / 2, z, .045, ey - ycR + rr + .02, .06); frmAt(grp, s * (lc / 2 + .01), ycR - rr + .01, z, .04, .07, .06); }
+        else frmAt(grp, s * (hw + .05), ycR, z, .045, .16, .06);
+      }
+    }
+    const ycRet = yRet - .008 - rr;
+    for (let z = Z0 + 1.6; z < Z1 - 1; z += 3) { rollAt(ROLL, grp, 0, ycRet, z, X, w + .04, rr); for (const s of [-1, 1]) frmAt(grp, s * (hw + .11), (ycRet - .19) / 2 - .02, z, .045, -.19 - ycRet + .1, .055); }
+
+    if (steep) { for (const sx of [-1, 1]) box(grp, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(grp, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); }
+
+    const zr0 = zA + .12, span = Z1 + .05 - zr0, wo = (steep ? .8 : .84) * w, t0 = G[6] * Math.min(1.3, w / 1.2), NU = 9;
+    const bzs = zs.filter((z) => z > zr0); bzs.unshift(zr0);
+    const bedTh = (sx) => { const u = sx / (wo / 2); return Math.pow(Math.max(0, 1 - u * u), .6); };
+    const so = { x: 0, y: 0 };
+    const bedG = ribbonGeoF(NU, bzs, (i, z, o) => { const sx = (i / (NU - 1) - .5) * wo; surf(sx, z, o); o.y += .004; }); const bedP = bedG.attributes.position, base = Float32Array.from(bedP.array);
+    const bed = new THREE.Mesh(bedG, M.oreBed); bed.receiveShadow = true; bed.castShadow = false; bed.userData.keep = true; grp.add(bed);
+    const setBed = (h) => { for (let k = 0; k < bedP.count; k++) { const i = k % NU, sx = (i / (NU - 1) - .5) * wo, z = base[k * 3 + 2], wav = 1 + .12 * Math.sin(z * 2.3 + i) * (i % (NU - 1) ? 1 : 0); bedP.setY(k, base[k * 3 + 1] + t0 * h * bedTh(sx) * wav); } bedP.needsUpdate = true; bedG.computeVertexNormals(); };
+
+    const mkRocks = (geo, perM, s0, s1, pal, cast) => {
+      const n = Math.max(4, Math.round(L * perM * Math.min(1.3, w / 1.2) * dens0)), im = new THREE.InstancedMesh(geo, M.ore, n); im.castShadow = cast; im.receiveShadow = true;
+      const z0 = new Float32Array(n), sx = new Float32Array(n), up = new Float32Array(n);
+      for (let k = 0; k < n; k++) z0[k] = (k + rnd()) / n * span;
+      for (let k = n - 1; k > 0; k--) { const j = (rnd() * (k + 1)) | 0, t = z0[k]; z0[k] = z0[j]; z0[j] = t; }
+      for (let k = 0; k < n; k++) {
+        const s = s0 + (s1 - s0) * Math.pow(rnd(), 1.8); sx[k] = (rnd() + rnd() - 1) * wo * .48; up[k] = s * (cast ? (.15 + .35 * rnd()) : (-.35 + .5 * rnd()));
+        qt.setFromEuler(new THREE.Euler(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28)); mt.compose(V(0, 0, 0), qt, sc.set(s * (.85 + rnd() * .35), s * (.75 + rnd() * .3), s * (.85 + rnd() * .35))); im.setMatrixAt(k, mt); setCol(im, k, cast ? WET : FIN);
+      }
+      im.instanceColor.needsUpdate = true; im.boundingSphere = new THREE.Sphere(V(0, .2, 0), L / 2 + 1); grp.add(im);
+      return { im, n, z0, sx, up };
+    };
+    const lump = mkRocks(lumpGeo, G[0], G[1], G[2], WET, true), grain = mkRocks(grainGeo, G[3], G[4], G[5], FIN, false);
+    const B0 = { key, grp, L, span, zr0, off: rnd() * span, lump, grain, bed, setBed, hs: -1, surf, bedTh, t0, wo, so, ctr: grp.position.clone(), rad: L / 2 + 1.5 };
+    belts.push(B0);
+
+    for (let z = Z0 + 3; z < Z1 - 1; z += 6) {
+      const pa = toG(-(hw + .2), -.19, z), pb = toG(hw + .2, -.19, z), fa = floorAt(pa) ?? (embed ? 0 : null), fb = floorAt(pb) ?? (embed ? 0 : null);
+      const ya = fa ?? 0, yb = fb ?? 0; if (pa.y - ya < 1.2 || pb.y - yb < 1.2) continue;
+      beam(g, pa, V(pa.x, ya, pa.z), .14, M.steelDk); beam(g, pb, V(pb.x, yb, pb.z), .14, M.steelDk);
+      const ym = Math.max(ya, yb) + (Math.min(pa.y, pb.y) - Math.max(ya, yb)) * .5; beam(g, V(pa.x, ym, pa.z), V(pb.x, ym, pb.z), .1, M.steelDk);
+      if (!embed) { box(g, .36, .03, .36, M.steelDk, pa.x, ya + .015, pa.z); box(g, .36, .03, .36, M.steelDk, pb.x, yb + .015, pb.z); }
+    }
+    if (!embed) {
+      spill(toG(0, -.5, Z1 - .45), 1.0, (rnd() - .5) * .4, (rnd() - .5) * .4);
+      spill(toG(0, -.5, zA + Ls * .4), .7);
+      for (let z = Z0 + 2; z < Z1 - 2; z += 2.6) { if (rnd() < .45) continue; const s = rnd() < .5 ? -1 : 1; spill(toG(s * (hw + .1 + rnd() * .5), -.5, z + rnd()), .12 + rnd() * .22); }
+    }
     return grp;
   }
+
   const E = B.screenEnd, zD1 = 12.8, zD2 = 13.9, yD1 = 6.4, yD2 = 5.5, yTop = 17.4;
 
-  const xfer = (a, b, w = .9) => { beam(g, a, b, w, M.chute); box(g, w + .4, .5, w + .4, M.chute, a.x, a.y + .1, a.z); };
+  const xfer = (a, b, w = .9) => {
+    const d = new THREE.Vector3().subVectors(b, a), L = d.length(), n = Math.max(1, Math.round(L / .5));
+    beam(g, a, b, w - .02, M.steelDk);
+    for (let i = 0; i < n; i++) beam(g, a.clone().addScaledVector(d, (i + .05) / n), a.clone().addScaledVector(d, (i + .95) / n), w + .035, M.chute);
+    for (const t of [.02, .98]) { const p = a.clone().addScaledVector(d, t); beam(g, p.clone().addScaledVector(d, -.03 / L), p.clone().addScaledVector(d, .03 / L), w + .14, M.steelDk); }
+    box(g, w + .55, .8, w + .75, M.chute, a.x, a.y + .25, a.z); box(g, w + .65, .06, w + .85, M.steelDk, a.x, a.y + .66, a.z);
+    box(g, .04, .34, .3, M.greyDk, a.x + (w + .55) / 2 + .02, a.y + .25, a.z);
+    dustAt(V(b.x, b.y + .25, b.z), 1); if (!embed) spill(V(b.x, b.y - .3, b.z), .8, (rnd() - .5) * .6, (rnd() - .5) * .6);
+  };
 
 
   if (!opt.embed) { belt(V(E + 20, 2.5, -30), V(E - .6, yTop + 1.6, 1.9), 1.4, 'F'); xfer(V(E - .6, yTop + 1.5, 2.0), V(E - .8, yTop + .4, 2.3)); }
   belt(V(E + 2.2, yTop, 2.4), V(-.5, yTop, 2.4), 1.4, 'T');
   const trip = new THREE.Group(); g.add(trip); box(trip, 2.4, 1.2, 2.2, M.yellow, 0, yTop + .7, 2.4); box(trip, 1.0, 1.4, 1.0, M.chute, 0, yTop - .4, 2.4);
 
-  SCREENS.xs.forEach((x) => { beam(g, V(x - .6, LV.L1 + .9, 11.9), V(x - .6, yD1 + .3, zD1), .5, M.chute); beam(g, V(x + .6, LV.L1 + .5, 11.9), V(x + .6, yD2 + .3, zD2), .5, M.chute); });
+  SCREENS.xs.forEach((x) => {
+    beam(g, V(x - .6, LV.L1 + .9, 11.9), V(x - .6, yD1 + .3, zD1), .5, M.chute); beam(g, V(x + .6, LV.L1 + .5, 11.9), V(x + .6, yD2 + .3, zD2), .5, M.chute);
+    dustAt(V(x - .6, yD1 + .45, zD1), .7); dustAt(V(x + .6, yD2 + .45, zD2), .7);
+  });
 
   const zC = CRUSHERS.cones[0].z, zV = CRUSHERS.vsi[0].z, x1 = E + 1.5, x2 = E + .75;
   belt(V(2.8, yD1, zD1), V(E + 1, yD1, zD1), 1.0, 'R1');
@@ -2754,11 +2958,31 @@ function buildFlows(scene, M, opt = {}) {
   xfer(V(x2, 15.9, zV - .1), V(x2 + .4, 15.35, zV));
   belt(V(x2 + .4, 15.2, zV), V(63, 15.2, zV), 1.0, 'R2');
 
-  CRUSHERS.cones.forEach((c) => { box(g, 1.5, .6, 1.5, M.chute, c.x, 15.55, zC); box(g, .4, 1.2, 1.7, M.yellow, c.x, 16.6, zC); });
-  CRUSHERS.vsi.forEach((c) => { box(g, 1.3, .5, 1.3, M.chute, c.x, 14.85, zV); box(g, .4, 1.2, 1.7, M.yellow, c.x, 15.8, zV); });
+  CRUSHERS.cones.forEach((c) => { box(g, 1.5, .6, 1.5, M.chute, c.x, 15.55, zC); box(g, .4, 1.2, 1.7, M.yellow, c.x, 16.6, zC); dustAt(V(c.x, 15.7, zC + .9), .6); });
+  CRUSHERS.vsi.forEach((c) => { box(g, 1.3, .5, 1.3, M.chute, c.x, 14.85, zV); box(g, .4, 1.2, 1.7, M.yellow, c.x, 15.8, zV); dustAt(V(c.x, 15.0, zV - .8), .6); });
 
   xfer(V(E + 2.3, 1.25, 20.5), V(E + 2.9, .95, 20.6), .8);
-  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 6, 7.6, 32), 1.2, 'P', M.ore);
+  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 6, 7.6, 32), 1.2, 'P');
+
+  const inst = (geo, mat, list, cast = true) => { if (!list.length) return null; const im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach((m, i) => im.setMatrixAt(i, m)); im.castShadow = cast; im.receiveShadow = true; im.computeBoundingSphere(); g.add(im); return im; };
+  const rollGeo = flatU(new THREE.CylinderGeometry(1, 1, 1, LOW ? 8 : 12));
+  inst(rollGeo, M.greyDk, ROLL); inst(rollGeo, M.rubber, IMP); inst(new THREE.BoxGeometry(1, 1, 1), M.steelDk, FRM);
+  const spIm = inst(lumpGeo, M.ore, SPILL, false); if (spIm) { for (let i = 0; i < SPILL.length; i++) setCol(spIm, i, rnd() < .6 ? DRY : WET); spIm.instanceColor.needsUpdate = true; }
+
+  let dust = null;
+  if (EMIT.length) {
+    const PER = LOW ? 8 : 16, N = EMIT.length * PER, pos = new Float32Array(N * 3), colA = new Float32Array(N * 4), P = [];
+    for (let i = 0; i < N; i++) { const life = 2.4 + rnd() * 2.2; P.push({ e: EMIT[(i / PER) | 0], age: rnd() * life, life, vx: 0, vy: 0, vz: 0, x: 0, y: 0, z: 0, seed: rnd() }); }
+    const respawn = (q) => { const e = q.e.p; q.x = e.x + (rnd() - .5) * .5; q.y = e.y + (rnd() - .5) * .2; q.z = e.z + (rnd() - .5) * .5; q.vx = (rnd() - .5) * .22; q.vy = .08 + rnd() * .22; q.vz = (rnd() - .5) * .22; };
+    P.forEach((q) => { respawn(q); q.x += q.vx * q.age; q.y += q.vy * q.age; q.z += q.vz * q.age; });
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const cx = cv.getContext('2d');
+    const gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.45, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = gr; cx.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(cv); __srgb(tex);
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); pg.setAttribute('color', new THREE.BufferAttribute(colA, 4));
+    const pm = new THREE.PointsMaterial({ map: tex, size: .85, sizeAttenuation: true, transparent: true, depthWrite: false, vertexColors: true, fog: true });
+    const pts = new THREE.Points(pg, pm); pts.frustumCulled = false; pts.renderOrder = 4; g.add(pts);
+    dust = { P, pos, colA, pg, respawn };
+  }
 
   const fmt = (v) => Math.round(v).toLocaleString('pt-BR');
   labels.push({ pos: V(-12, 10.5, -16), kind: 'in', text: (K) => `ENTRADA · ROM da TCLD · ${fmt(K.F)} t/h` });
@@ -2768,17 +2992,45 @@ function buildFlows(scene, M, opt = {}) {
   labels.push({ pos: V(30, yD2 + 1.0, zD2 + .4), kind: 'mid', text: (K) => `Retido 2º deck → britagem secundária Barmac · ${fmt(K.T * K.r2)} t/h` });
   labels.push({ pos: V(56, 2.2, 13.2), kind: 'mid', text: (K) => `Britado → retorno às peneiras · ${fmt((K.ret ?? (K.T - K.prod)))} t/h (carga circulante ${Math.round(K.circ)} %)` });
   labels.push({ pos: V(B.W + 8, 6, 24), kind: 'out', text: (K) => `SAÍDA · produto < 12,5 mm → pilha de regularização · ${fmt(K.prod)} t/h` });
-  const p4 = new THREE.Vector3(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3(1, 1, 1), m4 = new THREE.Matrix4();
+
+  const SPD = 2.6, fr = new THREE.Frustum(), pmF = new THREE.Matrix4(), sph = new THREE.Sphere();
+
+  const place = (bt, R, cnt) => {
+    const A = R.im.instanceMatrix.array, o = bt.so, h = bt.hs * bt.t0;
+    for (let i = 0; i < cnt; i++) {
+      let z = R.z0[i] + bt.off; if (z >= bt.span) z -= bt.span; z += bt.zr0;
+      const sx = R.sx[i]; bt.surf(sx, z, o);
+      const k = i * 16; A[k + 12] = o.x; A[k + 13] = o.y + h * bt.bedTh(sx) + R.up[i]; A[k + 14] = z;
+    }
+    R.im.count = cnt; R.im.instanceMatrix.clearUpdateRanges(); R.im.instanceMatrix.addUpdateRange(0, cnt * 16); R.im.instanceMatrix.needsUpdate = true;
+  };
   return {
     group: g, labels,
-    update(dt, t, S) {
-      const K = S ? S.kpi : { F: 3800, T: 6300, prod: 3800, r1: .2, r2: .2 };
+    update(dt, t, S, cam) {
+      const K = S && S.kpi ? S.kpi : { F: 3800, T: 6300, prod: 3800, r1: .2, r2: .2 };
+      dt = Math.min(Math.max(dt || 0, 0), .25);
+      let useFr = false;
+      if (cam && cam.isCamera) { pmF.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); fr.setFromProjectionMatrix(pmF); useFr = true; }
       for (const b of belts) {
         const q = b.key === 'F' ? K.F : b.key === 'T' ? K.T : b.key === 'R1' ? K.T * K.r1 : b.key === 'R2' ? K.T * K.r2 : K.prod;
-        const run = q > 1; b.im.visible = run; if (!run) continue;
+        const run = q > 1; b.lump.im.visible = b.grain.im.visible = b.bed.visible = run;
+        b.off = (b.off + dt * SPD) % b.span;
+        if (!run) continue;
         const dens = Math.min(1, .6 + q / 6000);
-        for (let i = 0; i < b.im.count; i++) { const r = b.rk[i]; r.z += dt * 2.6; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .24 + (1 - Math.abs(r.x) / (b.w || 1)) * .06, r.z); e4.set(r.r, r.r * 1.7, 0); q4.setFromEuler(e4); s4.setScalar(r.s); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); }
-        b.im.instanceMatrix.needsUpdate = true;
+        if (Math.abs(dens - b.hs) > .02) { b.hs = dens; b.setBed(dens); }
+        if (useFr) { sph.center.copy(b.ctr).applyMatrix4(g.matrixWorld); sph.radius = b.rad * g.matrixWorld.getMaxScaleOnAxis(); if (!fr.intersectsSphere(sph)) continue; }
+        place(b, b.lump, Math.max(1, Math.round(b.lump.n * dens))); place(b, b.grain, Math.max(1, Math.round(b.grain.n * dens)));
+      }
+      if (dust) {
+        const { P, pos, colA, pg, respawn } = dust;
+        for (let i = 0; i < P.length; i++) {
+          const p = P[i]; p.age += dt; if (p.age >= p.life) { p.age -= p.life; respawn(p); }
+          p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vx *= .995; p.vz *= .995;
+          pos[i * 3] = p.x + Math.sin(t * .7 + p.seed * 9) * .05; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
+          const f = p.age / p.life, al = Math.sin(Math.PI * f) * .2 * p.e.k;
+          colA[i * 4] = .66; colA[i * 4 + 1] = .46; colA[i * 4 + 2] = .34; colA[i * 4 + 3] = al;
+        }
+        pg.attributes.position.needsUpdate = true; pg.attributes.color.needsUpdate = true;
       }
     },
   };
@@ -2984,7 +3236,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261017001801';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261017002711';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3285,7 +3537,7 @@ const clouds=[];for(let i=0;i<34;i++){const m=new THREE.SpriteMaterial({map:clou
 /* ============ BUILDERS ============ */
 const EQ={};const pickables=[];
 function reg(id,num,group,meta){const o=Object.assign({id,num,group},meta);EQ[id]=o;group.traverse(m=>{if(m.isMesh){m.userData.eq=id;pickables.push(m);}});return o;}
-function conveyor(a,b,w,{kind='ore',nominal=2600,cover=false,yellow=false,raw=false}={}){if(!raw){a=LP(a);b=LP(b);}
+function conveyor(a,b,w,{kind='ore',nominal=2600,cover=false,yellow=false,raw=false,gallery=false}={}){if(!raw){a=LP(a);b=LP(b);}
   const g=new THREE.Group();root.add(g);
   const d=b.clone().sub(a),L=d.length(),dir=d.clone().normalize();
   const inner=new THREE.Group();inner.position.copy(a);inner.quaternion.setFromUnitVectors(XA,dir);g.add(inner);
@@ -3294,6 +3546,12 @@ function conveyor(a,b,w,{kind='ore',nominal=2600,cover=false,yellow=false,raw=fa
   for(const s of [-1,1])box(L,.35,.1,yellow?MAT.yellow:MAT.frame,L/2,-.2,s*(w/2+.12),inner);
   if(yellow){for(const s of [-1,1]){beam(V3(0,-1.1,s*(w/2+.12)),V3(L,-1.1,s*(w/2+.12)),.07,MAT.yellow,inner);const n=Math.max(1,Math.round(L/1.5));for(let i=0;i<n;i++){const x0=i*L/n,x1=(i+.5)*L/n,x2=(i+1)*L/n;beam(V3(x0,-.35,s*(w/2+.12)),V3(x1,-1.1,s*(w/2+.12)),.05,MAT.yellow,inner);beam(V3(x1,-1.1,s*(w/2+.12)),V3(x2,-.35,s*(w/2+.12)),.05,MAT.yellow,inner);}}
     box(L,.05,.6,MAT.grating||MAT.frame,L/2,-.3,w/2+.55,inner);}
+  if(gallery){/* galeria de correia coberta (Germano): telhado e fechamento verde canelado na metade de cima, treliça galvanizada aparente embaixo */
+    const zs=w/2+.95,gm=texd(MAT.gGreen,stripeTex),gal=MAT.steel;
+    mesh(uvBox(L,.08,2*zs+.4,4),texd(MAT.gRoof,roofTex),L/2,1.75,0,inner);
+    for(const s of [-1,1]){mesh(uvBox(L,.85,.06),gm,L/2,1.25,s*zs,inner);beam(V3(0,1.7,s*zs),V3(L,1.7,s*zs),.07,gal,inner);beam(V3(0,-.45,s*zs),V3(L,-.45,s*zs),.08,gal,inner);
+      const n=Math.max(1,Math.round(L/2.2));for(let i=0;i<=n;i++){const x=i*L/n;beam(V3(x,-.45,s*zs),V3(x,1.7,s*zs),.05,gal,inner);if(i<n)beam(V3(x,-.45,s*zs),V3((i+1)*L/n,.8,s*zs),.04,gal,inner);}}
+    box(L,.05,.7,MAT.grating||MAT.frame,L/2,-.42,w/2+.5,inner);}
   if(cover){const c=mesh(new THREE.CylinderGeometry(w*.75,w*.75,L,12,1,true,0,Math.PI),MAT.white,L/2,.05,0,inner);c.rotation.z=Math.PI/2;c.material=MAT.white.clone();c.material.side=THREE.DoubleSide;}
   box(1.2,1,w+.6,MAT.tealDk,L,.1,0,inner);
   const perp=V3(-dir.z,0,dir.x).normalize();
@@ -3358,7 +3616,7 @@ try{if(window.Setor3){S3=Setor3.buildSetor3({embed:true});S3.group.scale.setScal
 if(!S3){bld(CRU,0,0,11,9,10,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});bld(CRU,8.5,1,6,6,13,{wall:MAT.gGreen,tex:stripeTex,roof:MAT.gRoof,win:false});}
 /* correias ligadas à estrutura do setor 3: TCLD chega na ponta do distribuidor (tripper) e a B34 sai da correia do produto */
 CRU.updateMatrixWorld(true);const s3T=(x,y,z)=>S3.group.localToWorld(V3(x,y,z));/* coordenadas do gêmeo (m) */
-const TCLD=conveyor(LP(V3(-70,2.3,-19.5)),/* início sob a descarga da correia da mina (BPIT) */S3?s3T(45,17.9,2.4):LP(V3(-80,9,-2.5)),1.4,{yellow:true,raw:true});
+const TCLD=conveyor(LP(V3(-70,2.3,-19.5)),/* início sob a descarga da correia da mina (BPIT) */S3?s3T(45,17.9,2.4):LP(V3(-80,9,-2.5)),1.4,{gallery:true,yellow:true,raw:true});
 /* ---------- 4 Regularization stockpile ---------- */
 const PILE=grp(-80,20);
 /* ---- Pilha de regularização · gêmeo digital (foto de campo): cone no ângulo de repouso (~37°) com camadas claras/escuras,
@@ -3406,9 +3664,9 @@ const PILEFALL=(()=>{const n=140,geo=new THREE.DodecahedronGeometry(.13),im=new 
   box(4.2,3.2,.6,MAT.concrete,0,1.6,0,tun);box(3,2.4,.62,MAT.dark,0,1.25,.02,tun);
   PILE.userData.tunnel=tun;
 }
-const B34=conveyor(S3?s3T(67.5,2.6,22):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true});
+const B34=conveyor(S3?s3T(67.5,2.6,22):LP(V3(-79,9.5,6.6)),LP(V3(-80,5.2,11.2)),1.2,{yellow:true,raw:true,gallery:true});
 /* retomada da pilha (4) → concentradores (5): parte da saída do túnel junto à pilha (não acompanha o ajuste da área 7) e sobe em treliça */
-const B45=conveyor(PILE.position.clone().add(V3(12,2.4,4)),(()=>{const d=layDelta(-50,4),x=-50+d.x;return V3(x,ALT(x),4+d.z).add(V3(-15.5,10.6,-5));})(),1.2,{yellow:true,raw:true});// termina no topo do silo de alimentação da moagem (área 5)
+const B45=conveyor(PILE.position.clone().add(V3(12,2.4,4)),(()=>{const d=layDelta(-50,4),x=-50+d.x;return V3(x,ALT(x),4+d.z).add(V3(-15.5,10.6,-5));})(),1.2,{yellow:true,raw:true,gallery:true});// termina no topo do silo de alimentação da moagem (área 5)
 /* ---------- 5 Concentrator: grinding, desliming, flotation ---------- */
 const CON=grp(-50,4);
 const mills=[],froths=[];
@@ -3451,8 +3709,17 @@ const TH6=grp(0,0);
 const th6=thickener(TH6,-38,20,6.5);
 /* Concentrador III (apostila GEA): espessador de lama Ø50 m (underflow 38 % sól.) e de rejeito Ø38 m (55 %) ao lado do de concentrado Ø44 m — foto aérea do C3 (2025) */
 const thL=thickener(TH6,-45,35,7.4,{pulp:std(0x8a5a3c,.05,.3)}),thR=thickener(TH6,-31,36,5.6,{pulp:std(0x9c8a6e,.05,.35)});
+{/* bacias retangulares de decantação/água (fotos aéreas do C3) */const bw=std(0xc98a4a,.05,.3),bc=std(0xa8b8a8,.05,.2);
+  for(const [x,z,c] of [[-22,42,bw],[-22,49,bc]]){box(9,.8,5.6,MAT.concrete,x,.4,z,TH6);const w=mesh(new THREE.PlaneGeometry(8.4,5),c,x,.78,z,TH6);w.rotation.x=-Math.PI/2;}
+  /* tubovia ligando concentrador e espessadores */for(let k=0;k<5;k++)box(.2,3.2,.2,MAT.steel,-50+k*5,1.6,27,TH6);beam(V3(-50,3.2,27),V3(-30,3.2,27),.12,MAT.steel,TH6);for(const dz of [-.25,0,.25])beam(V3(-50,3.4,27+dz),V3(-30,3.4,27+dz),.08,MAT.white,TH6);}
 tank(TH6,-28,16,3,8,MAT.gTank);tank(TH6,-28,24,3,8,MAT.gTank);{const d=layDelta(-35,20);TH6.position.x+=d.x;TH6.position.z+=d.z;TH6.position.y=ALT(-35+d.x);}
 {const sg=grp(-28,20);for(const [dx,dz] of [[-.8,-.8],[.8,-.8],[-.8,.8],[.8,.8]])box(.15,8.6,.15,MAT.yellow,dx,4.3,dz,sg);for(let y=2;y<=8;y+=2)box(1.8,.12,1.8,MAT.yellow,0,y,0,sg);for(let y=0;y<8;y+=2)beam(V3(-.8,y,-.8),V3(.8,y+2,.8),.08,MAT.yellow,sg);beam(V3(0,8,-.9),V3(0,8,-1.8),.12,MAT.yellow,sg);beam(V3(0,8,.9),V3(0,8,1.8),.12,MAT.yellow,sg);}
+/* ---------- área administrativa de Germano (prédios de telhado claro, estacionamento e ônibus — fotos aéreas) ---------- */
+{const AD=grp(-24,-2);const wl=std(0xd8d2c4,.05,.8),rf=std(0xc8b48a,.1,.7),as=std(0x3b3b3b,0,.95),bus=std(0x2f6fb0,.3,.5),car=[0xd0d4d8,0x8a9096,0x3a3f45,0xb03a2e];
+  for(const [x,z,w,d] of [[0,0,9,5],[0,7,7,4.5],[9,4,6,6]]){box(w,3.2,d,wl,x,1.6,z,AD);box(w+.4,.25,d+.4,rf,x,3.3,z,AD);}
+  const pk=mesh(new THREE.PlaneGeometry(14,8),as,4,.05,-8,AD);pk.rotation.x=-Math.PI/2;
+  for(let i=0;i<10;i++)box(1.1,.6,.55,std(car[i%4],.4,.4),-1.5+(i%5)*2.4,.35,-10+Math.floor(i/5)*2.6,AD);
+  for(let i=0;i<3;i++){box(3.8,1.4,1,bus,6.5+i*.0,.75,-6+i*1.5,AD);}}
 /* ---------- 7 Sand tailings filtration ---------- */
 const SF=grp(-66,32);
 const sfDrums=[];

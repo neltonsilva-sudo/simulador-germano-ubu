@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 7 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261016082032';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261017002728';
 
 const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
 export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova

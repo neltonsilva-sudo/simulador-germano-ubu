@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261016082032';
-import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261016082032';
+import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261017002728';
+import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261017002728';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -128,15 +128,15 @@ export function buildBuilding(scene, M, opt = {}) {
   const walls = [];
   const wall = (w, h, x, y, z, ry) => { for (const m of [M.cladOut, M.cladIn]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); walls.push(p); p.userData.shell = true; p.position.set(x, y, z); p.rotation.y = ry + (m === M.cladIn ? Math.PI : 0); p.position.x += m === M.cladIn ? Math.sin(ry) * -.05 : 0; p.position.z += m === M.cladIn ? Math.cos(ry) * -.05 : 0; p.receiveShadow = true; p.castShadow = true; g.add(p); } };
   // fundo (z=0) fechado acima de 4 m, abertura baixa
-  wall(B.W, B.H - 4, B.W / 2, 4 + (B.H - 4) / 2, -.02, Math.PI);
+  wall(B.W, B.H - 12, B.W / 2, 12 + (B.H - 12) / 2, -.02, Math.PI);   // foto aérea da britagem: fechamento verde só nos níveis altos, base aberta com a estrutura aparente
   // frente (z=D): fechada só acima de L2 (a frente baixa fica aberta como na foto da peneira)
   wall(B.W, B.H - LV.L2 - 2, B.W / 2, LV.L2 + 2 + (B.H - LV.L2 - 2) / 2, B.D + .02, 0);
-  wall(B.D, B.H - 6, -.02, 6 + (B.H - 6) / 2, B.D / 2, -Math.PI / 2);
-  wall(B.D, B.H - 6, B.W + .02, 6 + (B.H - 6) / 2, B.D / 2, Math.PI / 2);
+  wall(B.D, B.H - 12, -.02, 12 + (B.H - 12) / 2, B.D / 2, -Math.PI / 2);
+  wall(B.D, B.H - 12, B.W + .02, 12 + (B.H - 12) / 2, B.D / 2, Math.PI / 2);
   // longarinas de fechamento (terças de parede) por dentro das telhas: quebram o plano e seguram o pó
   const girt = (a, b) => { const m = beam(g, a, b, .1, M.steelDk); m.userData.shell = true; };
-  for (let y = 6; y < B.H - .5; y += 2.4) girt(V(0, y, .2), V(B.W, y, .2));
-  for (let y = 8; y < B.H - .5; y += 2.4) for (const x of [.2, B.W - .2]) girt(V(x, y, 0), V(x, y, B.D));
+  for (let y = 12.4; y < B.H - .5; y += 2.4) girt(V(0, y, .2), V(B.W, y, .2));
+  for (let y = 12.4; y < B.H - .5; y += 2.4) for (const x of [.2, B.W - .2]) girt(V(x, y, 0), V(x, y, B.D));
   for (let y = LV.L2 + 3.2; y < B.H - .5; y += 2.4) girt(V(0, y, B.D - .2), V(B.W, y, B.D - .2));
   // cobertura: telha + treliças, com telhas translúcidas (claraboias) alternadas em duas fileiras — o sol entra por elas
   // (manchas de sol no piso +14 e na parede do fundo; feixes com poeira em render.js)
