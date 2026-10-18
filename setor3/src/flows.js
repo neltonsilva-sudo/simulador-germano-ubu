@@ -7,8 +7,8 @@
 // Minério: leito contínuo (finos) + pedras de granulometria variada por correia (InstancedMesh, só a translação é atualizada),
 // derramamento acumulado sob cabeças, caudas e transferências, e poeira leve nas quedas.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261017002728';
-import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261017002728';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261018074953';
+import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261018074953';
 
 const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
 // pedrisco facetado (icosaedro sem subdivisão), deslocamento coerente por posição (não abre as faces)
@@ -239,7 +239,7 @@ export function buildFlows(scene, M, opt = {}) {
   belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 6, 7.6, 32), 1.2, 'P');
 
   // instâncias estáticas: roletes (aço), rolos de impacto (borracha), cavaletes e pedras derramadas
-  const inst = (geo, mat, list, cast = true) => { if (!list.length) return null; const im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach((m, i) => im.setMatrixAt(i, m)); im.castShadow = cast; im.receiveShadow = true; im.computeBoundingSphere(); g.add(im); return im; };
+  const inst = (geo, mat, list, cast = true) => { if (!list.length) return null; const im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach((m, i) => im.setMatrixAt(i, m)); im.castShadow = cast; im.receiveShadow = true; if (im.computeBoundingSphere) im.computeBoundingSphere(); g.add(im); return im; };
   const rollGeo = flatU(new THREE.CylinderGeometry(1, 1, 1, LOW ? 8 : 12));
   inst(rollGeo, M.greyDk, ROLL); inst(rollGeo, M.rubber, IMP); inst(new THREE.BoxGeometry(1, 1, 1), M.steelDk, FRM);
   const spIm = inst(lumpGeo, M.ore, SPILL, false); if (spIm) { for (let i = 0; i < SPILL.length; i++) setCol(spIm, i, rnd() < .6 ? DRY : WET); spIm.instanceColor.needsUpdate = true; }
@@ -279,7 +279,7 @@ export function buildFlows(scene, M, opt = {}) {
       const sx = R.sx[i]; bt.surf(sx, z, o);
       const k = i * 16; A[k + 12] = o.x; A[k + 13] = o.y + h * bt.bedTh(sx) + R.up[i]; A[k + 14] = z;
     }
-    R.im.count = cnt; R.im.instanceMatrix.clearUpdateRanges(); R.im.instanceMatrix.addUpdateRange(0, cnt * 16); R.im.instanceMatrix.needsUpdate = true;
+    R.im.count = cnt; (R.im.instanceMatrix.clearUpdateRanges ? R.im.instanceMatrix.clearUpdateRanges() : 0); (R.im.instanceMatrix.addUpdateRange ? R.im.instanceMatrix.addUpdateRange(0, cnt * 16) : (R.im.instanceMatrix.updateRange.offset = 0, R.im.instanceMatrix.updateRange.count = cnt * 16)); R.im.instanceMatrix.needsUpdate = true;
   };
   return {
     group: g, labels,
