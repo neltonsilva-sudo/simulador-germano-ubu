@@ -3236,7 +3236,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261018070717';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261018071106';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3417,7 +3417,7 @@ function bld(g,x,z,w,d,h,{wall=MAT.wall,roof=MAT.roof,gable=false,win=true,y=0,t
 }
 
 /* ============ TERRAIN (realistic, smooth, fBm relief) ============ */
-const ZONES=[[-94,76,-66,104],[-112,35,-82,65],[-108,-50,-66,-14],[-102,-16,-34,42],[-42,-6,-14,40],[4,-52,90,30],[-76,54,-44,84],[-32,56,0,86],[-63,34,-57,57],[-29,34,-23,58]];// + clareiras da pilha de rejeito e da cava (afastadas ao sul) e corredores da correia e da tubulação de lama
+const ZONES=[[-104,68,-56,114],[-126,22,-70,78],[-108,-50,-66,-14],[-102,-16,-34,42],[-42,-6,-14,40],[4,-52,90,30],[-76,54,-44,84],[-32,56,0,86],[-63,34,-57,57],[-29,34,-23,58]];// + clareiras da pilha de rejeito e da cava (afastadas ao sul) e corredores da correia e da tubulação de lama
 const PITS=[{x:-90,z:-32,r:15,d:11,b:5,rim:4},{x:-16,z:70,r:10,d:6,b:4,rim:2.5}];
 const MOUNDS=[{x:-60,z:68,r:11,h:7,b:4,type:'pder'},{x:-80,z:90,r:9,h:4.5,b:3,type:'eixo'},{x:-97,z:50,r:10,h:9,b:5,type:'dam'}];/* PDER Alegria Sul (área 8), PDER Eixo 1 e Barragem de Germano (desativada, em descaracterização) — site da Samarco */
 const SHORE=100;
@@ -3496,7 +3496,7 @@ function terrainMesh(W,D,SX,SZ,cx,cz,hole){
       const y=H(xx,zz);if(y<.3)continue;const sc=scMin+hash2(xx*1.7,zz)*(scMax-scMin);e.set(0,hash2(zz,xx)*6,0);q.setFromEuler(e);sv.set(sc*(.85+hash2(xx,1)*.3),sc*(.75+hash2(2,zz)*.35),sc*(.85+hash2(zz,3)*.3));
       M.compose(V3(xx,y+sc*.45,zz),q,sv);im.setMatrixAt(n,M);const g=fbm(xx*.05,zz*.05,2);cc.setHSL(.2+g*.1+hash2(xx,zz)*.05,.4+hash2(zz,xx)*.18,.15+g*.09+hash2(xx*3,zz)*.07);im.setColorAt(n,cc);n++;}
     im.count=n;return n;};
-  const inTree=(x,z)=>{if(zoneDist(x,z)<7||seaF(x,z)>.01)return false;for(const p of PITS.concat(MOUNDS))if(Math.hypot(x-p.x,z-p.z)<p.r+5)return false;const f=fbm(x*.035+3,z*.035,3);return x<-10?f>.16:f>.24;};
+  const inTree=(x,z)=>{if(zoneDist(x,z)<7||seaF(x,z)>.01)return false;for(const p of PITS.concat(MOUNDS))if(Math.hypot(x-p.x,z-p.z)<p.r+(p.type==='eixo'||p.type==='dam'?18:5))return false;/* clareira maior em volta da PDER Eixo 1 e da Barragem de Germano */const f=fbm(x*.035+3,z*.035,3);return x<-10?f>.16:f>.24;};
   // copas em tufos (aglomerado de esferas suaves), 3 formatos, cores variadas e árvores floridas (ipê-rosa, jacarandá, ipê-amarelo)
   const mkCluster=(seed,det=1)=>{let sd=seed;const r=()=>{sd=(sd*16807)%2147483647;return(sd-1)/2147483646;};const lobes=[[0,.1,0,1]];const n=5+Math.floor(r()*3);
     for(let i=0;i<n;i++){const a=i/n*Math.PI*2+r()*.6,d=.5+r()*.25,rr=.52+r()*.2;lobes.push([Math.cos(a)*d,-.05+r()*.3,Math.sin(a)*d,rr]);}lobes.push([(r()-.5)*.3,.55+r()*.15,(r()-.5)*.3,.55+r()*.12]);
@@ -3519,7 +3519,7 @@ function terrainMesh(W,D,SX,SZ,cx,cz,hole){
   const TREES=[11,23,37].map(sd=>{const im=new THREE.InstancedMesh(mkCluster(sd),cm,8600);im.castShadow=true;im.receiveShadow=true;im.setColorAt(0,new THREE.Color());root.add(im);return im;});
   placeT(TREES,2.45,-255,145,-65,105,1.35,2.6,inTree2);
   const FAR=[5,17].map(sd=>{const im=new THREE.InstancedMesh(mkCluster(sd,0),cm,15000);im.receiveShadow=false;im.setColorAt(0,new THREE.Color());root.add(im);return im;});
-  placeT(FAR,7.2,-900,1250,-900,900,2.6,5.2,(x,z)=>!(x>-254&&x<144&&z>-64&&z<104)&&seaF(x,z)<.01&&Math.hypot(x-150,z)<950&&fbm(x*.01,z*.01,2)>.18);
+  placeT(FAR,7.2,-900,1250,-900,900,2.6,5.2,(x,z)=>!(x>-254&&x<144&&z>-64&&z<104)&&!MOUNDS.some(p=>p.type&&p.type!=='pder'&&Math.hypot(x-p.x,z-p.z)<p.r+30)&&seaF(x,z)<.01&&Math.hypot(x-150,z)<950&&fbm(x*.01,z*.01,2)>.18);
   // power transmission line over the Germano hills (as in the photo)
   const towers=[];for(let i=0;i<7;i++){const x=-118+i*14,z=-58+i*3.5;const y=H(x,z);const tg=grp(x,z,y);const hh=16;
     for(const [dx,dz] of [[-1.6,-1.6],[1.6,-1.6],[-1.6,1.6],[1.6,1.6]])beam(V3(dx,0,dz),V3(dx*.25,hh,dz*.25),.12,MAT.galv||MAT.steel,tg);
