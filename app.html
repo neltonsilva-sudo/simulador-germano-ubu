@@ -3236,7 +3236,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261017004319';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261018070717';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3417,9 +3417,9 @@ function bld(g,x,z,w,d,h,{wall=MAT.wall,roof=MAT.roof,gable=false,win=true,y=0,t
 }
 
 /* ============ TERRAIN (realistic, smooth, fBm relief) ============ */
-const ZONES=[[-116,66,-84,94],[-146,4,-110,40],[-108,-50,-66,-14],[-102,-16,-34,42],[-42,-6,-14,40],[4,-52,90,30],[-76,54,-44,84],[-32,56,0,86],[-63,34,-57,57],[-29,34,-23,58]];// + clareiras da pilha de rejeito e da cava (afastadas ao sul) e corredores da correia e da tubulação de lama
+const ZONES=[[-94,76,-66,104],[-112,35,-82,65],[-108,-50,-66,-14],[-102,-16,-34,42],[-42,-6,-14,40],[4,-52,90,30],[-76,54,-44,84],[-32,56,0,86],[-63,34,-57,57],[-29,34,-23,58]];// + clareiras da pilha de rejeito e da cava (afastadas ao sul) e corredores da correia e da tubulação de lama
 const PITS=[{x:-90,z:-32,r:15,d:11,b:5,rim:4},{x:-16,z:70,r:10,d:6,b:4,rim:2.5}];
-const MOUNDS=[{x:-60,z:68,r:11,h:7,b:4,type:'pder'},{x:-100,z:80,r:11,h:5,b:3,type:'eixo'},{x:-128,z:22,r:14,h:11,b:6,type:'dam'}];/* PDER Alegria Sul (área 8), PDER Eixo 1 e Barragem de Germano (desativada, em descaracterização) — site da Samarco */
+const MOUNDS=[{x:-60,z:68,r:11,h:7,b:4,type:'pder'},{x:-80,z:90,r:9,h:4.5,b:3,type:'eixo'},{x:-97,z:50,r:10,h:9,b:5,type:'dam'}];/* PDER Alegria Sul (área 8), PDER Eixo 1 e Barragem de Germano (desativada, em descaracterização) — site da Samarco */
 const SHORE=100;
 PITS.concat(MOUNDS).forEach(p=>{const d=layDelta(p.x,p.z);p.x+=d.x;p.z+=d.z;});
 ZONES.forEach(zn=>{const S=layS((zn[0]+zn[2])/2);zn[0]=S.ax+(zn[0]-S.ax)*S.kx+(S.ox||0);zn[2]=S.ax+(zn[2]-S.ax)*S.kx+(S.ox||0);zn[1]=S.az+(zn[1]-S.az)*S.kz;zn[3]=S.az+(zn[3]-S.az)*S.kz;});
@@ -5605,9 +5605,9 @@ const PZ=[
   {tag:'PZ-09-02',a:'cava',loc:'cava · talude norte',x:-16,z:58,h0:6.4,fs0:1.66},
   {tag:'PZ-09-03',a:'cava',loc:'cava · talude leste',x:-4,z:72,h0:7.6,fs0:1.61},
   {tag:'PZ-09-04',a:'cava',loc:'cava · dique sul',x:-16,z:82,h0:8.2,fs0:1.60},
-  {tag:'PZ-E1-01',a:'eixo',eq:'dry',loc:'PDER Eixo 1 · talude',x:-92,z:84,h0:3.8,fs0:1.75},
-  {tag:'PZ-BG-01',a:'dam',eq:'dry',loc:'Barragem de Germano · maciço',x:-128,z:10,h0:9.5,fs0:1.58},
-  {tag:'PZ-BG-02',a:'dam',eq:'dry',loc:'Barragem de Germano · ombreira',x:-140,z:26,h0:8.8,fs0:1.61}];
+  {tag:'PZ-E1-01',a:'eixo',eq:'dry',loc:'PDER Eixo 1 · talude',x:-74,z:93,h0:3.8,fs0:1.75},
+  {tag:'PZ-BG-01',a:'dam',eq:'dry',loc:'Barragem de Germano · maciço',x:-97,z:41,h0:9.5,fs0:1.58},
+  {tag:'PZ-BG-02',a:'dam',eq:'dry',loc:'Barragem de Germano · ombreira',x:-106,z:52,h0:8.8,fs0:1.61}];
 PZ.forEach((p,i)=>{p.h=p.h0+.3+(i%3)*.15;p.hist=[];const q=LP(V3(p.x,0,p.z));p.pos=V3(q.x,H(q.x,q.z),q.z);
   const g=new THREE.Group();g.position.copy(p.pos);root.add(g);mesh(new THREE.CylinderGeometry(.12,.12,1.5,10),MAT.frame,0,.75,0,g);
   p.cap=new THREE.MeshStandardMaterial({color:0x2fbf71,emissive:0x2fbf71,emissiveIntensity:.6,roughness:.5});mesh(new THREE.BoxGeometry(.5,.36,.36),p.cap,0,1.6,0,g);
