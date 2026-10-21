@@ -3236,7 +3236,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261018074937';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261021201339';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4855,7 +4855,7 @@ document.querySelectorAll('#mtabs button').forEach(b=>b.addEventListener('click'
 function setTab(eq){$('#tabEq').setAttribute('aria-selected',eq);$('#tabBal').setAttribute('aria-selected',!eq);$('#eqPane').hidden=!eq;$('#balPane').hidden=eq;}
 $('#tabEq').addEventListener('click',()=>setTab(true));$('#tabBal').addEventListener('click',()=>setTab(false));
 const KPI=[['rom','Alimentação dos concentradores','t/h',0],['fe','Fe no concentrado','%',2],['si','SiO₂ no concentrado','%',2],['mr','Recuperação mássica','%',1],
-  ['pel','Pelotas + pellet feed','t/h',0],['cs','Resistência à compressão','kgf',0],['em','Emissão na chaminé','mg/Nm³',0],['pipe','Mineroduto','m/s',2]];
+  ['pel','Pelotas + pellet feed','t/h',0],['pzk','Piezômetros · pior nível acima do normal','m',1],['fsk','Fator de segurança mínimo (taludes)','',2],['cs','Resistência à compressão','kgf',0],['em','Emissão na chaminé','mg/Nm³',0],['pipe','Mineroduto','m/s',2]];
 $('#kpis').innerHTML=KPI.map(([k,l,u])=>`<div class="kpi" id="k-${k}"><b>–<small>${u}</small></b><span>${l}</span></div>`).join('');
 function setKpi(k,v,dec,unit,state,extra=''){const el=$('#k-'+k);el.className='kpi '+(state||'');el.firstElementChild.innerHTML=fmt(v,dec)+`<small>${unit}${extra}</small>`;}
 
@@ -5494,7 +5494,7 @@ function mgpUpdate(){const el=$('#kpiMGP');if(!el||$('#right').classList.contain
    ${r('IQCP · índice de qualidade',fmt(iq,0),'%','100',iq>=99)}</table>
    ${(typeof pzTable==='function')?pzTable():''}
    <p class="hint">Fórmulas do Manual do Beneficiamento (11.2): RP = concentrado ÷ alimentação; RM = Fe no concentrado ÷ Fe na alimentação; IQCP = itens atendidos (SiO₂, −325#, superfície específica) ÷ 3. −325# e superfície específica do concentrado estimados pelo P80 da moagem com a remoagem (moagem secundária).</p></div>`;
-  if(el._h!==h){el._h=h;el.innerHTML=h;el.querySelectorAll('[data-pz]').forEach(b=>b.addEventListener('click',()=>{const [k,a]=b.dataset.pz.split('|');pzSim(k,a||null);el._h='';mgpUpdate();}));const sc=$('#campSel');if(sc)sc.addEventListener('change',e=>{setCamp(e.target.value);logEvent('Comando',`Campanha de produção: ${CAMP} (SiO₂ ≤ ${fmt(SPEC.siMax,2)} %)`);el._h='';mgpUpdate();});}}
+  if(el._h!==h){el._h=h;el.innerHTML=h;el.querySelectorAll('[data-pzd]').forEach(r=>r.addEventListener('click',()=>pzDetail(r.dataset.pzd)));el.querySelectorAll('[data-pz]').forEach(b=>b.addEventListener('click',()=>{const [k,a]=b.dataset.pz.split('|');pzSim(k,a||null);el._h='';mgpUpdate();}));const sc=$('#campSel');if(sc)sc.addEventListener('change',e=>{setCamp(e.target.value);logEvent('Comando',`Campanha de produção: ${CAMP} (SiO₂ ≤ ${fmt(SPEC.siMax,2)} %)`);el._h='';mgpUpdate();});}}
 function updateUI(){
   const c=CUR,G=c.G,U=c.U;evalAlarms();renderAlarms();try{mgpUpdate();}catch(e){}
   const d=Math.floor(ST.simT/86400)+1,hh=Math.floor(ST.simT%86400/3600),mm=Math.floor(ST.simT%3600/60);
@@ -5513,6 +5513,7 @@ function updateUI(){
   setKpi('pel',c.total,0,'t/h',c.total<1?'crit':'ok',` · ${fmt(c.total*8760*.92/1e6,1)} Mt/ano · ${fmt(c.total*8760*.92/26e6*100,0)} % de 26 Mt`);
   setKpi('cs',U.CS,0,'kgf',U.prod<1?'':U.CS<250?'warn':'ok',tr('p_CS',2));
   setKpi('em',U.emis,0,'mg/Nm³',U.emis>200?'crit':U.emis>50?'warn':U.prod>0?'ok':'');
+  try{const w=PZ.reduce((a,p)=>p.h-p.h0>a.h-a.h0?p:a,PZ[0]),st=pzStN(w),fsm=Math.min(...PZ.map(pzFS));setKpi('pzk',w.h-w.h0,1,'m',st==='crit'?'crit':st==='ok'?'ok':'warn',` · ${w.tag} ${pzStTxt[st]}`);setKpi('fsk',fsm,2,'',fsm<1.3?'crit':fsm<1.5?'warn':'ok',' · mín. 1,5');}catch(e){}
   setKpi('pipe',c.v,2,'m/s',!RUN.pump?'crit':c.v<1.05?'warn':'ok',isFinite(c.transit)?` · ${fmt(c.transit,0)} h`:'');
   $('#sparkVal').textContent=fmt(U.prod,0)+' t/h';
   $('#shipName').textContent=ST.shipState==='loading'?`Navio ${ST.ships+1} carregando no berço`:ST.shipState==='departing'?`Navio ${ST.ships} zarpando`:'Próximo navio a caminho';
@@ -5917,6 +5918,16 @@ function pzStep(sdt){if(!(sdt>0))return;const hrs=sdt/3600,G=CUR.G||{},rain=Math
 const pzMax=a=>Math.max(0,...PZ.filter(p=>p.a===a).map(p=>p.h-p.h0));
 const pzFSmin=a=>Math.min(...PZ.filter(p=>p.a===a).map(pzFS));
 const pzTrend=p=>p.rate||0;/* taxa de variação (m/h), média móvel */
+/* janela de detalhe do piezômetro: nível × tempo com faixas de controle, FS, taxa, estado e ação recomendada */
+let PZD=null,PZDt=0;
+function pzDetail(tag){const p=PZ.find(q=>q.tag===tag);if(!p)return;PZD=p;let d=$('#pzDlg');if(!d){d=document.createElement('div');d.id='pzDlg';d.className='modal';d.innerHTML='<div class="box" style="max-width:620px"><h3 id="pzT"></h3><div id="pzB"></div><canvas id="pzC" style="width:100%;height:220px;margin-top:8px"></canvas><div class="row" style="margin-top:10px"><button class="btn" id="pzX">Fechar</button></div></div>';document.body.appendChild(d);
+    $('#pzX').addEventListener('click',()=>{d.hidden=true;PZD=null;clearInterval(PZDt);});d.addEventListener('click',e=>{if(e.target===d){d.hidden=true;PZD=null;clearInterval(PZDt);}});}
+  d.hidden=false;pzDraw();clearInterval(PZDt);PZDt=setInterval(pzDraw,1500);}
+function pzDraw(){const p=PZD;if(!p)return;const s=p.fault?'falha':pzStTxt[pzStN(p)],fs=pzFS(p),tr=pzTrend(p),acao={normal:'Rotina: leitura e inspeção conforme o plano de monitoramento.',atenção:'Aumentar a frequência de leitura e inspecionar drenos e o talude.',alerta:'Avisar a geotecnia, reduzir a deposição e inspecionar o talude.',emergência:'Acionar o plano de ação da estrutura, suspender a deposição e restringir o acesso.',falha:'Verificar o instrumento e fazer leitura manual de contingência.'}[s];
+  $('#pzT').textContent=`Piezômetro ${p.tag} · ${p.loc}`;
+  $('#pzB').innerHTML=`<div class="kpis" style="grid-template-columns:repeat(4,1fr)"><div class="kpi ${s==='normal'?'ok':s==='emergência'?'crit':'warn'}"><b>${fmt(p.fault?p.read:p.h,2)}<small>m</small></b><span>Nível piezométrico</span></div><div class="kpi"><b>${p.h-p.h0>=0?'+':''}${fmt(p.h-p.h0,2)}<small>m</small></b><span>Acima do normal (${fmt(p.h0,1)} m)</span></div><div class="kpi ${tr>.3?'warn':''}"><b>${fmt(tr,2)}<small>m/h</small></b><span>Taxa de variação</span></div><div class="kpi ${fs<1.3?'crit':fs<1.5?'warn':'ok'}"><b>${fmt(fs,2)}</b><span>Fator de segurança</span></div></div>
+   <p style="margin:8px 0 0"><b>Estado:</b> <span class="tagp ${s==='normal'?'ok':s==='emergência'?'crit':'warn'}">${s}</span> &nbsp; <b>Ação:</b> ${acao}</p>`;
+  const H0=p.h0;lineChart($('#pzC'),[{pts:p.hist.map(q=>[(q[0]-ST.simT)/3600,q[1]]).concat([[0,p.h]]),color:'#5cc6dc',label:'Nível (m)'}],{hl:[{y:H0+PZ_LIM[0],color:'#ffd24a',label:'atenção'},{y:H0+PZ_LIM[1],color:'#ff9a1a',label:'alerta'},{y:H0+PZ_LIM[2],color:'#ff3b3b',label:'emergência'}],ymin:H0-1.5,ymax:H0+6.5,empty:'Coletando histórico (1 ponto a cada 10 min simulados).'});}
 function pzAlarms(add){for(const p of PZ){const eq=p.eq||p.a,s=pzStN(p),tr=pzTrend(p),fs=pzFS(p);
   if(p.fault){add(eq,'warn',`Piezômetro ${p.tag} · ${p.loc}: leitura congelada em ${fmt(p.read,1)} m (falha de instrumento ou comunicação)`);continue;}
   if(s!=='ok')add(eq,s==='crit'?'crit':'warn',`Piezômetro ${p.tag} · ${p.loc}: nível de ${pzStTxt[s]} · ${fmt(p.h-p.h0,1)} m acima do normal, FS ${fmt(fs,2)}`);
@@ -5933,7 +5944,7 @@ DASH.dry.k.push('pzD','fsD');DASH.dry.t.push('pzD');DASH.cava.k.push('pzC','fsC'
 function pzTable(){const ch=s=>`<span class="tagp ${s==='ok'?'ok':s==='crit'?'crit':'warn'}">${pzStTxt[s]}</span>`;
   return `<div class="mgp"><div class="mgph"><b>Geotecnia · piezômetros</b><span class="hint">chuva agora ${fmt(+RAIN.rate||0,1)} mm/h</span></div>
   <table class="alt"><tr><th>Tag</th><th>Local</th><th class="n">Nível</th><th class="n">Δ normal</th><th class="n">Taxa (m/h)</th><th class="n">FS</th><th></th></tr>
-  ${PZ.map(p=>{const s=p.fault?'warn':pzStN(p),tr=pzTrend(p);return `<tr><td><b>${p.tag}</b>${p.fault?' <span class="tagp warn">falha</span>':''}</td><td>${p.loc}</td><td class="n">${fmt(p.fault?p.read:p.h,1)} m</td><td class="n">${p.h-p.h0>=0?'+':''}${fmt(p.h-p.h0,1)} m</td><td class="n">${tr>.02?'↑':tr<-.02?'↓':'→'} ${fmt(Math.abs(tr),2)}</td><td class="n">${fmt(pzFS(p),2)}</td><td>${ch(s)}</td></tr>`;}).join('')}</table>
+  ${PZ.map(p=>{const s=p.fault?'warn':pzStN(p),tr=pzTrend(p);return `<tr data-pzd="${p.tag}" style="cursor:pointer" title="Clique para ver o histórico"><td><b>${p.tag}</b>${p.fault?' <span class="tagp warn">falha</span>':''}</td><td>${p.loc}</td><td class="n">${fmt(p.fault?p.read:p.h,1)} m</td><td class="n">${p.h-p.h0>=0?'+':''}${fmt(p.h-p.h0,1)} m</td><td class="n">${tr>.02?'↑':tr<-.02?'↓':'→'} ${fmt(Math.abs(tr),2)}</td><td class="n">${fmt(pzFS(p),2)}</td><td>${ch(s)}</td></tr>`;}).join('')}</table>
   <div class="row" style="flex-wrap:wrap;gap:6px;margin:6px 0"><button class="btn" data-pz="rise|dry">Simular chuva extrema · área 8</button><button class="btn" data-pz="rise|cava">Simular chuva extrema · área 9</button><button class="btn" data-pz="fault|">Simular falha de instrumento</button><button class="btn" data-pz="reset|">Normalizar</button></div>
   <p class="hint">Alarmes: nível (atenção/alerta P2, emergência P1), subida rápida (&gt; 0,3 m/h P2; &gt; 0,8 m/h P1), FS &lt; 1,5 (P2) e &lt; 1,3 (P1), leitura congelada (falha de instrumento). Níveis de controle (acima do normal): atenção +2 m · alerta +3,5 m · emergência +5 m. FS mínimo recomendado 1,5 (condição drenada). Modelo didático: o nível sobe com a chuva real de Germano, a deposição de rejeito/lama e a umidade da torta, e drena lentamente — não substitui a instrumentação e a análise geotécnica reais.</p></div>`;}
 
