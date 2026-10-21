@@ -15,10 +15,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
-import { B, LV } from './layout.js?v=20261018074953';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261018074953';
-import { PhoneShader } from './render_post.js?v=20261018074953';
-import { UpscaleShader } from './render_upscale.js?v=20261018074953';
+import { B, LV } from './layout.js?v=20261021200856';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261021200856';
+import { PhoneShader } from './render_post.js?v=20261021200856';
+import { UpscaleShader } from './render_upscale.js?v=20261021200856';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -30,7 +30,7 @@ export const LOOK = {
   sun: 4.5,           // sol (lux relativo) entrando pelas aberturas
   sky: 3.4,           // radiância do céu vista pelas aberturas (ambiente)
   env: .72,           // intensidade do ambiente PMREM (q=high; parte da luz do céu vem das janelas de área abaixo)
-  win: 1.0,           // luz natural das ABERTURAS (luzes de área retangulares, só q=high): cai com a distância da abertura
+  win: 0,             // (desligado por desempenho) luz natural das ABERTURAS (luzes de área retangulares, só q=high): cai com a distância da abertura
   hemi: .18,          // preenchimento muito fraco
   lamp: 55,           // spots das luminárias (cd)
   lampL2: 11,         // projetores locais do piso +14 (a 2,8 m do piso)
