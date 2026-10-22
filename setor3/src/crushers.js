@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261021215024';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021215024';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261021215351';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021215351';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -96,7 +96,7 @@ export function buildCrushers(scene, M) {
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * .28, r * .28, .26, 16), M.steelDk || M.greyDk); o.add(hub);
     const mk = new THREE.Mesh(new THREE.BoxGeometry(r * .5, .25, .07), new THREE.MeshStandardMaterial({ color: 0xffd24a, emissive: 0x332200 })); mk.position.x = r * .62; o.add(mk); };
   const rockGeo = new THREE.DodecahedronGeometry(.09); const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3(1, 1, 1), p4 = new THREE.Vector3();
-  const stream = (tag, x, z, y0, y1) => { const n = 46, im = new THREE.InstancedMesh(rockGeo, M.ore, n); g.add(im); streams.push({ tag, im, x, z, y0, y1, d: Array.from({ length: n }, () => ({ u: Math.random(), x: (Math.random() - .5) * .45, z: (Math.random() - .5) * .45 })) }); };
+  const stream = (tag, x, z, y0, y1) => { const n = 150, im = new THREE.InstancedMesh(rockGeo, M.ore, n); g.add(im); streams.push({ tag, im, x, z, y0, y1, d: Array.from({ length: n }, () => ({ u: Math.random(), x: (Math.random() - .5) * .6, z: (Math.random() - .5) * .6, s: .6 + Math.pow(Math.random(), 2) * 1.6 })) }); };
   const bc = () => { const m = new THREE.Mesh(new THREE.SphereGeometry(.16, 16, 12), new THREE.MeshStandardMaterial({ color: 0x5ff0ff, emissive: 0x5ff0ff, emissiveIntensity: 4 })); m.userData.keep = true; return m; };
 
   // ---- materiais locais (clonam o shader de sujeira do material base)
@@ -558,8 +558,11 @@ export function buildCrushers(scene, M) {
   // correias: produto dos britadores → retorno às peneiras (circuito fechado)
   const belt = (a, b, w = 1.2) => { const d = new THREE.Vector3().subVectors(b, a), L = d.length(); const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
     box(grp, w + .2, .25, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .16, 0);
-    const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.065), M.ore, Math.floor(L * 12)); const m4 = new THREE.Matrix4();
-    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 12 + Math.random() * .08, x: (Math.random() - .5) * w * .7, r: Math.random() * 6 })); grp.add(oreG); belts.push({ im: oreG, rk, L });
+    const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.065), M.ore, Math.floor(L * 34)); const m4 = new THREE.Matrix4();
+    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 34 + Math.random() * .03, x: (Math.random() - .5) * w * .62 * Math.random(), r: Math.random() * 6, s: .55 + Math.pow(Math.random(), 2.2) * 1.9 }));
+    const bedG = new THREE.CylinderGeometry(w * .33, w * .33, L, 10, 1, true, -Math.PI / 2, Math.PI); bedG.rotateX(Math.PI / 2); bedG.scale(1, .32, 1);
+    const bed = new THREE.Mesh(bedG, M.ore); bed.position.y = .2; bed.userData.keep = true; grp.add(bed);   // cordão contínuo de minério sobre a lona
+    grp.add(oreG); belts.push({ im: oreG, rk, L, bed });
     for (let s = 0; s < L; s += 1.2) { box(grp, w + .3, .08, .1, M.grey, 0, .08, -L / 2 + s); }
     for (const zz of [-L / 2, L / 2]) { const dr = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, w + .3, 16), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, .02, zz); grp.add(dr); }
     grp.userData.L = L; return grp; };
@@ -583,8 +586,8 @@ export function buildCrushers(scene, M) {
     { const anyOn = vbDrive.some((v) => { const e = E[v.tag] || { on: true, flow: 1 }; return e.on && e.flow > 0; }); if (anyOn) vbTexC.offset.y -= dt * 3.2; }
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); }
     for (const st of streams) { const e = E[st.tag] || { on: true, flow: 1, load: .7 }, run = e.on && e.flow > 0; st.im.visible = run; if (!run) continue;
-      const k = .6 + Math.min(1.2, e.load); for (let i = 0; i < st.d.length; i++) { const d = st.d[i]; d.u += dt * 1.4 * k; if (d.u > 1) d.u -= 1; p4.set(st.x + d.x, st.y0 + (st.y1 - st.y0) * d.u * d.u, st.z + d.z); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.setScalar(1); m4.compose(p4, q4, s4); st.im.setMatrixAt(i, m4); } st.im.instanceMatrix.needsUpdate = true; }
-    const run = K.F > 0; for (const b of belts) { b.im.visible = run; if (!run) continue; for (let i = 0; i < b.rk.length; i++) { const r = b.rk[i]; r.z += dt * 2.2; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .25, r.z); e4.set(r.r, r.r * 2, 0); q4.setFromEuler(e4); s4.setScalar(1); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); } b.im.instanceMatrix.needsUpdate = true; }
+      const k = .6 + Math.min(1.2, e.load); for (let i = 0; i < st.d.length; i++) { const d = st.d[i]; d.u += dt * 1.4 * k; if (d.u > 1) d.u -= 1; p4.set(st.x + d.x, st.y0 + (st.y1 - st.y0) * d.u * d.u, st.z + d.z); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.setScalar(d.s || 1); m4.compose(p4, q4, s4); st.im.setMatrixAt(i, m4); } st.im.instanceMatrix.needsUpdate = true; }
+    const run = K.F > 0; for (const b of belts) { b.im.visible = run; if (b.bed) b.bed.visible = run; if (!run) continue; for (let i = 0; i < b.rk.length; i++) { const r = b.rk[i]; r.z += dt * 2.2; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .27 + (1 - Math.abs(r.x) * 3) * .03, r.z); e4.set(r.r, r.r * 2, 0); q4.setFromEuler(e4); s4.setScalar(r.s || 1); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); } b.im.instanceMatrix.needsUpdate = true; }
     for (const [tag, b] of Object.entries(beacons)) { const e = E[tag] || { st: 'ok' }; const c = COL[e.st] || COL.ok; b.material.color.setHex(c); b.material.emissive.setHex(c); b.material.emissiveIntensity = e.st === 'off' ? .15 : e.st === 'crit' ? (Math.sin(t * 9) > 0 ? 6 : .5) : 2.5 + Math.max(0, Math.sin(t * 6 + tag.length)) * 3; }
   } };
 }
