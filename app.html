@@ -519,6 +519,20 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trHud .trfx2{position:absolute;inset:0;pointer-events:none}#trHud .trfx2.rain{background:linear-gradient(rgba(20,30,45,.35),rgba(20,30,45,.35)),repeating-linear-gradient(105deg,rgba(210,225,240,0) 0 7px,rgba(210,225,240,.35) 7px 8px,rgba(210,225,240,0) 8px 18px);background-size:auto,40px 40px;animation:trRain .5s linear infinite}
 #trHud .trfx2.freeze{box-shadow:inset 0 0 0 2px rgba(120,200,255,.6),inset 0 0 40px rgba(120,200,255,.35)}#trHud .trfx2.trip{box-shadow:inset 0 0 0 2px rgba(255,70,50,.7),inset 0 0 50px rgba(255,60,40,.4);animation:trPulse 1.1s ease-in-out infinite}#trHud .trfx2.spec{box-shadow:inset 0 0 0 2px rgba(255,178,61,.6),inset 0 0 40px rgba(255,178,61,.25)}
 #trHud.min .trimg,#trHud.min .trpz,#trHud.min .trqz{display:none}
+#trHud .trmeta{font-size:11.5px;color:#9fb3bf;margin:4px 0 2px}#trHud .tre2{margin:6px 0;padding:6px 8px;border-radius:8px;background:rgba(255,154,26,.16);border:1px solid rgba(255,154,26,.5);color:#ffd9a8;font-size:12px}
+#trHud li.wait{opacity:.6}#trHud .trdica{display:block;margin-top:3px;font-style:normal;color:#ffe08a;font-size:11.5px}#trHud .trq.radio{background:rgba(92,198,220,.08);border:1px solid rgba(92,198,220,.35);border-radius:8px;padding:6px}
+#trHud .btn.sel,#trHud .trqz .btn.sel{border-color:#5cc6dc;background:rgba(92,198,220,.18);opacity:1}
+#trBrief .trlv{display:flex;gap:6px;flex-wrap:wrap}#trBrief .trlv .btn{flex:1}
+.modal .trf{display:grid;gap:4px;margin:8px 0;font-size:12.5px;color:#cfd8de}.modal .trf input{background:#0b1622;color:#fff;border:1px solid var(--line-2);border-radius:6px;padding:7px 9px;font:14px system-ui}
+#trDlg .trwho{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:13px}
+#trPre .trpa{display:grid;gap:6px}#trPre .trpa .btn{text-align:left;white-space:normal;height:auto;padding:8px 10px}
+.modal .trpp{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.modal .trpp div{background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:8px;padding:6px 12px;min-width:90px}.modal .trpp small{display:block;color:#9fb3bf;font-size:11px}.modal .trpp b{font-size:20px}
+.modal .trbm{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}.modal .trbm h4{margin:0 0 4px;font-size:13px}.modal .trbm ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.45;display:grid;gap:3px}
+.modal .trbm>div:first-child h4{color:#2fbf71}.modal .trbm>div:last-child h4{color:#ffb23d}.modal details{margin:6px 0}.modal summary{cursor:pointer;color:#9fdcf0;font-size:13px;margin:4px 0}
+.modal .trtl td{font-size:12px}#trRes .box,#trTur .box{max-height:88vh;overflow:auto}
+#trIns{position:fixed;right:16px;top:120px;z-index:26;width:260px;display:grid;gap:6px;background:rgba(40,20,10,.9);border:1px solid #ff9a1a;border-radius:12px;padding:10px;color:#fff;font-size:12px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+#trIns b{color:#ffb23d}#trIns .btn{text-align:left;white-space:normal;height:auto;padding:6px 8px;font-size:12px}#trIns small{color:#d9c2a8}
+@media (max-width:760px){.modal .trbm{grid-template-columns:1fr}#trIns{top:auto;bottom:70px;right:8px;width:220px}}
 </style>
 
 <div id="app">
@@ -3470,7 +3484,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022171601';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022172501';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5517,7 +5531,7 @@ const DOW=['dom','seg','ter','qua','qui','sex','sáb'];
 const simDate=(t=ST.simT)=>new Date(SIM_T0+t*1000);
 const fmtD=(t=ST.simT,y=true)=>{const d=simDate(t);return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}${y?'/'+d.getUTCFullYear():''}`;};
 const simStamp=()=>{const d=Math.floor(ST.simT/86400)+1,hh=Math.floor(ST.simT%86400/3600),mm=Math.floor(ST.simT%3600/60);return `D${d} ${fmtD(ST.simT,false)} ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;};
-function logEvent(tipo,texto){LOG.unshift({t:simStamp(),tipo,texto});if(LOG.length>400)LOG.pop();if(!$('#alm').hidden)renderAlmPanel();}
+function logEvent(tipo,texto){const _r=window.__TRON;if(_r&&tipo!=='Treinamento'&&tipo!=='Instrutor')_r.ev.push({h:(ST.simT-_r.t0)/3600,k:tipo,t:String(texto)});LOG.unshift({t:simStamp(),tipo,texto});if(LOG.length>400)LOG.pop();if(!$('#alm').hidden)renderAlmPanel();}
 const almKey=a=>a.eq+'|'+a.msg.replace(/\(.*?\)|[\d.,]+/g,'#');
 /* ISA-18.2 · racionalização: cada alarme tem tag de campo, causa provável e ação esperada do operador */
 const ALM_RULES=[
@@ -6158,7 +6172,7 @@ function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REM
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
 let S3OV=null;/* sobreposição do treinamento (alimentação e APF do setor 3) */
-function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=S3OV&&S3OV.feed!=null?S3OV.feed:(CUR.mine||0);s.running=!!RUN.crush;s.css=S3OV&&S3OV.css!=null?S3OV.css:P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
+function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=S3OV&&S3OV.feed!=null?S3OV.feed:(CUR.mine||0);s.running=!!RUN.crush;s.css=S3OV&&S3OV.css!=null?S3OV.css:P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;if(S3OV&&S3OV.moist!=null)s.moist=S3OV.moist;
   for(const t in s.eq){const r=s.eq[t].lastMnt;if(r&&!r.logged){r.logged=true;logEvent('Manutenção',`${t}: manutenção concluída em ${fmt(r.h,1)} h · ${r.pecas} · desgaste ${fmt(r.w0,0)} % → ${fmt(r.wf!=null?r.wf:25,0)} %`);}}
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
   if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}TW3_ACC.sim+=dt;TW3_ACC.up+=dt;TW3_ACC.calc+=dt;
@@ -7123,95 +7137,165 @@ const canEdit=k=>!OPER.area||(CMETA[k]?CTRL_STAGE[k]===OPER.area:unitArea(k)===O
 function qrSVG(text,px){if(typeof qrcode==='undefined')return '<p class="hint">Gerador de QR indisponível (sem internet).</p>';const q=qrcode(0,'M');q.addData(text);q.make();const n=q.getModuleCount(),m=4,s=(n+2*m);let d='';
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c+m} ${r+m}h1v1h-1z`;return `<svg viewBox="0 0 ${s} ${s}" width="${px}" height="${px}" shape-rendering="crispEdges" style="background:#fff;border-radius:6px"><path d="${d}" fill="#000"/></svg>`;}
 function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e);}e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600);}
-/* ==== Modo de treinamento: cenários guiados com objetivos, tempo simulado, perguntas de decisão e pontuação ==== */
-const TR={on:null,hist:(()=>{try{return JSON.parse(localStorage.getItem('trHist')||'[]');}catch(e){return [];}})()};
+/* ==== Modo de treinamento (metodologia de simulador de treinamento operacional): identificação do treinando, níveis de dificuldade, briefing com imagem,
+   pré-teste e pós-teste com banco de questões (situação-problema), objetivos com prazo, comunicação pelo rádio, dicas sob demanda, eventos inesperados,
+   narração por voz, modo instrutor (injeção de falhas), debriefing com linha do tempo, painel da turma e certificado ==== */
+const trLS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const TR={on:null,hist:trLS.get('trHist',[]),user:trLS.get('trUser',null),lvl:trLS.get('trLvl','padrao'),tts:trLS.get('trTts',false),ins:false,par:{},pend:null};
+const TRL={guiado:{nome:'Guiado',desc:'dicas visíveis em cada objetivo, prazos 50 % maiores e sem evento inesperado',limK:1.5,dicas:'auto',fb:true,ev2:0},
+  padrao:{nome:'Padrão',desc:'dicas sob demanda (−5 pts cada), correção imediata e evento inesperado em metade das vezes',limK:1,dicas:'pedir',fb:true,ev2:.5},
+  aval:{nome:'Avaliação',desc:'sem dicas, correção só no final, prazos 25 % menores e sempre com evento inesperado',limK:.75,dicas:'nao',fb:false,ev2:1}};
+const trLv=()=>TRL[TR.lvl]||TRL.padrao;
+const trHM=x=>`${Math.floor(x)}:${String(Math.floor(x%1*60)).padStart(2,'0')}`;
 const trG=()=>(CUR&&CUR.G)||{};
 const trAck=re=>[...ALMS.values()].some(a=>a.ack&&re.test(a.msg));
 const trS3=()=>typeof S3!=='undefined'&&S3&&S3.sim&&S3.sim.eq&&S3.sim.eq['03BR001']?S3.sim:null;
 const trCamp=c=>{setCamp(c);const sc=$('#campSel');if(sc)sc.value=CAMP;const k=$('#kpiMGP');if(k)k._h='';try{mgpUpdate();}catch(e){}};
+const trShuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+function trSay(t){try{if(!TR.tts||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗]/g,''));u.lang='pt-BR';
+  const v=speechSynthesis.getVoices().find(v=>/^pt(-|_)BR/i.test(v.lang));if(v)u.voice=v;u.rate=1.03;speechSynthesis.speak(u);}catch(e){}}
+function trEv(k,t){const r=TR.on;if(r)r.ev.push({h:(ST.simT-r.t0)/3600,k,t});}
 const TRS={
  chuva:{nome:'Chuva forte · piezômetros da pilha (área 8)',dur:3,
   desc:'Tempestade sobre a pilha de rejeito filtrado. A poropressão sobe nos piezômetros da área 8 e os alarmes disparam.',
-  setup(s){SCEN.chuva.fn();pzSim('rise','dry');s.sand0=Math.max(1,trG().sand||0);},
-  obj:[{t:'Reconhecer o alarme do piezômetro',pts:20,lim:.5,ok:()=>trAck(/Piezômetro/),dica:'Abra o painel de alarmes e reconheça o alarme assim que ele aparecer.'},
-   {t:'Consultar a tendência do piezômetro (Indicadores › Geotecnia: clique na linha)',pts:15,lim:1,ok:()=>!!PZD,dica:'Clique na linha do piezômetro para ver o histórico, a taxa de subida e o FS.'},
-   {t:'Reduzir a deposição na pilha (desligar uma planta de filtragem da área 7)',pts:35,lim:1.5,ok:s=>!RUN.sandf||(trG().sand||0)<s.sand0*.8,dica:'Com a poropressão subindo, reduza ou desvie a deposição até o nível estabilizar.'},
+  comp:['Monitoramento geotécnico com piezômetros','Gestão de alarmes (ISA-18.2)','Resposta a evento de chuva intensa','Comunicação operacional com a geotecnia'],
+  setup(s){SCEN.chuva.fn();if(RAIN.storm)RAIN.storm.peak=s.par.peak||30;pzSim('rise','dry');s.sand0=Math.max(1,trG().sand||0);},
+  clean(s){if(s.e2tag){const p=PZ.find(q=>q.tag===s.e2tag);if(p)p.fault=false;}},
+  ev2:{t:'Um piezômetro da área 8 perdeu a comunicação no meio da chuva',fn(s){const L=PZ.filter(p=>p.a==='dry'&&!p.fault),p=L[Math.floor(Math.random()*L.length)];if(p){p.fault=true;s.e2tag=p.tag;}}},
+  obj:[{t:'Reconhecer o alarme do piezômetro',pts:20,lim:.5,ok:()=>trAck(/Piezômetro/),dica:'Abra o painel de alarmes (rodapé) e reconheça o alarme do piezômetro.'},
+   {t:'Consultar a tendência do piezômetro (Indicadores › Geotecnia: clique na linha)',pts:15,lim:1,ok:()=>!!PZD,dica:'Painel Indicadores › Geotecnia: clique na linha do piezômetro para ver histórico, taxa e FS.'},
+   {t:'Reduzir a deposição na pilha (desligar uma planta de filtragem da área 7)',pts:35,lim:1.5,ok:s=>!RUN.sandf||(trG().sand||0)<s.sand0*.8,dica:'Selecione a área 7 (filtragem) e desligue uma das plantas: menos rejeito e menos água na pilha.'},
+   {t:'Comunicar a situação pelo rádio',pts:15,at:.4,radio:true,q:{p:'Você confirmou a subida dos piezômetros da área 8. O que comunica pelo rádio, e para quem?',ops:['Para a geotecnia: “piezômetros da área 8 subindo e FS em queda; reduzi a deposição e peço inspeção do talude”','Para a manutenção: “troquem os piezômetros da área 8”','Para a mina: “aumentem a lavra para compensar”','Para ninguém: registro só no fim do turno'],c:0},dica:'Quem decide sobre a estrutura é a geotecnia: informe o que vê, o que já fez e o que precisa.'},
    {t:'Manter o FS do talude ≥ 1,3 até o fim',pts:30,keep:true,ok:()=>pzFSmin('dry')>=1.3,dica:'Agir cedo na deposição evita que o FS chegue ao nível crítico.'}]},
  instr:{nome:'Falha de instrumento · piezômetro',dur:1.5,
   desc:'Um piezômetro parou de atualizar a leitura. Descubra qual é e aplique a conduta correta.',
+  comp:['Diagnóstico de falha de instrumento','Leitura manual de contingência','Gestão de alarmes (ISA-18.2)','Acionamento da instrumentação'],
   setup(s){const i=Math.floor(Math.random()*PZ.length);PZ[i].fault=true;s.tag=PZ[i].tag;logEvent('Treinamento','Falha simulada em um piezômetro');try{evalAlarms();renderAlarms();}catch(e){}},
   clean(s){const p=PZ.find(q=>q.tag===s.tag);if(p)p.fault=false;},
-  /* leituras ao vivo no card (como na supervisão): o instrumento com falha fica com o valor parado e o tempo desde a última atualização crescendo */
+  ev2:{t:'Começou a chover: os piezômetros da cava passaram a subir',fn(){pzSim('rise','cava');}},
   panel(s){const age=Math.max(0,(ST.simT-s.t0)/60);return `<b>Leituras dos piezômetros · supervisão</b><table><tr><th>Tag</th><th class="n">Leitura</th><th class="n">Atualizado</th></tr>${PZ.map((p,i)=>{const fz=p.fault,v=fz?p.read:p.h+.015*Math.sin(ST.simT/53+i*1.7),ag=fz?age:(ST.simT/60+i*.37)%1;
     return `<tr><td>${p.tag}</td><td class="n">${fmt(v,2)} m</td><td class="n">${ag<1?'agora':'há '+fmt(ag,0)+' min'}</td></tr>`;}).join('')}</table><p class="hint">Compare os valores ao longo do tempo: qual instrumento parou de atualizar?</p>`;},
-  obj:[{t:'Reconhecer o alarme de leitura congelada',pts:25,lim:.5,ok:()=>trAck(/congelad/),dica:'O alarme IA indica falha do sensor, do cabo ou da comunicação.'},
-   {t:'Abrir o detalhe do piezômetro com falha',pts:25,lim:1,ok:s=>!!PZD&&PZD.tag===s.tag,dica:'Em Indicadores › Geotecnia, o instrumento com falha aparece marcado como “falha”.'},
+  obj:[{t:'Reconhecer o alarme de leitura congelada',pts:25,lim:.5,ok:()=>trAck(/congelad/),dica:'O alarme IA (falha de instrumento) aparece no painel de alarmes: reconheça-o.'},
+   {t:'Abrir o detalhe do piezômetro com falha',pts:25,lim:1,ok:s=>!!PZD&&PZD.tag===s.tag,dica:'Na tabela de leituras do card, veja qual não atualiza; abra esse piezômetro em Indicadores › Geotecnia.'},
+   {t:'Comunicar a falha pelo rádio',pts:15,at:.2,radio:true,q:{p:'Você identificou a leitura congelada. Qual comunicação fazer?',ops:['Para a instrumentação, com cópia à geotecnia: “piezômetro com leitura parada; iniciei a leitura manual de contingência”','Para a mina: “parem a lavra”','Para o laboratório: “refaçam as análises”','Nenhuma: o alarme já avisa todo mundo'],c:0},dica:'Instrumentação conserta; geotecnia precisa saber que a estrutura está sem leitura automática.'},
    {t:'Escolher a conduta correta',pts:50,q:{p:'Qual é a conduta correta para a leitura congelada?',ops:['Acionar a instrumentação e fazer leitura manual de contingência até a correção','Desconsiderar o alarme: o nível está estável','Parar toda a deposição e evacuar a área','Copiar a leitura do piezômetro vizinho para o sistema'],c:0},dica:'Sem leitura confiável, a estrutura fica sem monitoramento: leitura manual até o reparo.'}]},
  hp:{nome:'Sobrecarga do britador HP 400 (setor 3)',dur:1.5,need:trS3,
   desc:'O britador 03BR002 desarmou. O 03BR001 assume toda a carga da britagem primária e entra em sobrecarga.',
-  setup(s){const m=trS3();m.eq['03BR002'].on=false;m.eq['03BR002'].rev=(m.eq['03BR002'].rev||0)+1;S3OV={feed:Math.max(CUR.mine||0,4200)};s.ring0=m.eq['03BR001'].ring||0;logEvent('Treinamento','Desarme simulado do britador 03BR002');},
+  comp:['Operação do britador cônico HP 400','Resposta a desarme e sobrecarga','Segurança: causa do desarme e bloqueio (LOTO)','Comunicação com a manutenção e a sala de controle'],
+  setup(s){const m=trS3();m.eq['03BR002'].on=false;m.eq['03BR002'].rev=(m.eq['03BR002'].rev||0)+1;S3OV={feed:Math.max(CUR.mine||0,s.par.feed||4200)};s.ring0=m.eq['03BR001'].ring||0;logEvent('Treinamento','Desarme simulado do britador 03BR002');},
   clean(s){S3OV=null;const m=trS3();if(!m)return;m.eq['03BR002'].on=true;m.eq['03BR002'].rev=(m.eq['03BR002'].rev||0)+1;},
+  ev2:{t:'A umidade do minério subiu para 10 %: risco de colmatação das peneiras',fn(){S3OV=Object.assign(S3OV||{},{moist:10});}},
   obj:[{t:'Escolher a primeira ação',pts:40,q:{p:'O 03BR002 desarmou e o 03BR001 passou de 105 % de carga. Qual é a primeira ação?',ops:['Reduzir a alimentação do setor 3 (≈ 2.000 t/h) até a carga do HP 400 ficar abaixo de 100 %','Fechar a APF para aumentar a redução','Religar o 03BR002 sem verificar a causa do desarme','Manter a operação e aguardar'],c:0,fx:[m=>{S3OV=Object.assign(S3OV||{},{feed:2000});},m=>{S3OV=Object.assign(S3OV||{},{css:Math.max(13,P.css-4)});},null,null]},dica:'Com um britador a menos, a alimentação tem de cair na mesma proporção; religar sem verificar a causa é risco à segurança.'},
-   {t:'Carga do 03BR001 abaixo de 105 % em até 30 min',pts:30,lim:.5,ok:s=>{const m=trS3();if(!m)return false;const L=m.eq['03BR001'].load||0;if(L>1.05)s.ov=true;return !!s.ov&&L<=1.05;}/* só vale depois que a sobrecarga apareceu */,dica:'Sobrecarga prolongada aquece o óleo e desgasta o revestimento.'},
+   {t:'Carga do 03BR001 abaixo de 105 % em até 30 min',pts:30,lim:.5,ok:s=>{const m=trS3();if(!m)return false;const L=m.eq['03BR001'].load||0;if(L>1.05)s.ov=true;return !!s.ov&&L<=1.05;},dica:'Sobrecarga prolongada aquece o óleo e desgasta o revestimento.'},
+   {t:'Comunicar o desarme pelo rádio',pts:15,at:.15,radio:true,q:{p:'O que você comunica, e para quem, logo após estabilizar o britador?',ops:['Para a sala de controle e a manutenção: “03BR002 desarmou, causa a verificar; reduzi a alimentação do setor 3 para ~2.000 t/h”','Para a manutenção: “religuem o 03BR002 agora”','Para a mina: “parem a lavra”','Ninguém: o sistema avisa sozinho'],c:0},dica:'A manutenção precisa saber do desarme para investigar a causa; a sala precisa saber da redução de produção.'},
    {t:'Evitar sobrecarga prolongada (anel de ajuste preservado)',pts:30,keep:true,ok:s=>{const m=trS3();return !m||(m.eq['03BR001'].ring||0)-s.ring0<1;},dica:'Cada minuto acima de 105 % aumenta o risco de levantamento do anel de ajuste.'}]},
  cls:{nome:'Campanha CLS · sílica baixa',dur:6,
   desc:'A produção mudou para a campanha CLS. Ajuste a amina e a moagem para manter o concentrado dentro da especificação.',
+  comp:['Controle de qualidade do concentrado','Ajuste de reagentes (amina e amido)','Efeito da moagem na flotação','Comunicação com o laboratório'],
   setup(s){s.camp=CAMP;trCamp('CLS');},clean(s){trCamp(s.camp);},
+  ev2:{t:'O teor de Fe do minério que chega caiu 2 pontos',fn(){P.fe=Math.max(30,(+P.fe||40)-2);try{syncAll();}catch(e){}}},
   obj:[{t:'Responder ao limite da campanha',pts:20,q:{p:'Qual é o limite de SiO₂ médio do concentrado na campanha CLS?',ops:['1,25 %','1,90 %','2,50 %','0,80 %'],c:0},dica:'CLS: SiO₂ ≤ 1,25 % (máx. bi-horário 1,36 %) e Fe ≥ 66,58 %.'},
-   {t:'SiO₂ ≤ 1,25 % (tempo na faixa depois de 1 h de ajuste)',pts:50,frac:1,ok:()=>trG().siC>0&&trG().siC<=SPEC.siMax,dica:'Aumente a amina em 5–10 g/t ou reduza o P80 da moagem.'},
+   {t:'Comunicar a mudança de campanha pelo rádio',pts:15,at:.3,radio:true,q:{p:'Com a mudança para CLS, com quem você fala primeiro e o que pede?',ops:['Com o laboratório: “mudamos para CLS; preciso das análises bi-horárias de SiO₂ e Fe para ajustar a amina”','Com a mina: “mandem minério mais rico”','Com a pelotização: “reduzam a produção”','Com ninguém: o analisador resolve sozinho'],c:0},dica:'Sem análise frequente não há como ajustar a dosagem com segurança.'},
+   {t:'SiO₂ ≤ 1,25 % (tempo na faixa depois de 1 h de ajuste)',pts:50,frac:1,ok:()=>trG().siC>0&&trG().siC<=SPEC.siMax,dica:'Painel Controle de processo: aumente a amina em 5–10 g/t ou reduza o P80 da moagem.'},
    {t:'Fe ≥ 66,58 % (tempo na faixa depois de 1 h de ajuste)',pts:30,frac:1,ok:()=>trG().feC>=SPEC.feMin,dica:'Amina em excesso arrasta ferro para o rejeito: não exagere na dose.'}]}};
-/* QUESTIONÁRIO DO PROCESSO: 5 perguntas por tema (10 pontos cada), respondidas no painel do treinamento; [pergunta, alternativas, índice da correta, explicação] */
 const TQZ={
  chuva:[['O que o piezômetro mede?',['A pressão da água nos poros do maciço (nível piezométrico)','A umidade do ar sobre a pilha','O recalque da crista do talude','A vazão dos drenos de fundo'],0,'O piezômetro mede a poropressão: o nível de água dentro do maciço.'],
   ['Por que a chuva forte aumenta o risco no talude?',['A infiltração eleva a poropressão e reduz a resistência do solo, baixando o fator de segurança','A chuva compacta o rejeito e aumenta a estabilidade','A água esfria o maciço e trava os grãos','A chuva só afeta a estrada, não o talude'],0,'Mais água nos poros = menos tensão efetiva entre os grãos = menor resistência ao cisalhamento.'],
   ['No modelo, a partir de quantos metros acima do normal o piezômetro entra em nível de emergência?',['+2 m','+3,5 m','+5 m','+1 m'],2,'Níveis de controle: atenção +2 m, alerta +3,5 m, emergência +5 m.'],
   ['Qual é o limite crítico do fator de segurança (alarme P1) usado no simulador?',['FS < 2,0','FS < 1,3','FS < 1,0','FS < 1,8'],1,'FS < 1,5 gera alarme P2 e FS < 1,3 gera alarme P1 (crítico).'],
-  ['Ao ver subida rápida do nível piezométrico, qual a primeira ação?',['Aumentar a deposição para compactar a pilha','Desligar os piezômetros para evitar alarmes falsos','Avisar a geotecnia, aumentar a frequência de leitura e inspecionar drenos e talude','Esperar a chuva passar sem nenhuma ação'],2,'A comunicação imediata com a geotecnia e a inspeção de campo vêm primeiro.']],
+  ['Ao ver subida rápida do nível piezométrico, qual a primeira ação?',['Aumentar a deposição para compactar a pilha','Desligar os piezômetros para evitar alarmes falsos','Avisar a geotecnia, aumentar a frequência de leitura e inspecionar drenos e talude','Esperar a chuva passar sem nenhuma ação'],2,'A comunicação imediata com a geotecnia e a inspeção de campo vêm primeiro.'],
+  ['Contexto: às 14 h o PZ-08-02 marcava +1,2 m acima do normal e às 15 h marcava +2,4 m, com chuva contínua. Comando: qual a interpretação correta?',['Subiu 1,2 m/h: já passou do nível de atenção e a taxa é alta — tratar como alerta e comunicar a geotecnia','Ainda está abaixo do nível de emergência, então não é preciso agir','É erro de leitura, pois a chuva não afeta piezômetros','O piezômetro deve ser desligado até a chuva parar'],0,'+2 m já é atenção, e subida > 0,8 m/h gera alarme P1 de subida rápida.'],
+  ['Contexto: a poropressão sobe e o supervisor pede para “aliviar a pilha”. Comando: qual ação reduz a carga de água e de material sobre o talude?',['Aumentar a umidade da torta para compactar melhor','Reduzir ou desviar a deposição (menos plantas de filtragem alimentando a pilha)','Lançar mais material no pé do talude','Retirar os drenos para inspecioná-los'],1,'Menos deposição = menos carga e menos água nova entrando no maciço.'],
+  ['Contexto: durante a chuva, o FS calculado do talude caiu de 1,6 para 1,4. Comando: qual a classificação e a resposta adequada?',['FS acima de 1,0: estrutura segura, nenhuma ação','FS abaixo de 1,5 obriga a evacuar a usina inteira','FS abaixo de 1,5 (alarme P2): intensificar o monitoramento, restringir o acesso e preparar a redução da deposição','O FS não depende da poropressão'],2,'Abaixo de 1,5 é alarme P2; abaixo de 1,3 é P1 (crítico).']],
  instr:[['Uma leitura “congelada” no piezômetro indica principalmente:',['Que o nível está perfeitamente estável','Possível falha do sensor, do cabo ou da comunicação','Que a chuva parou','Que o talude está seguro'],1,'Valor parado enquanto os vizinhos variam é sinal de falha de instrumento.'],
   ['Como confirmar que é falha do instrumento e não estabilidade real?',['Comparar com os piezômetros vizinhos e o histórico, e fazer leitura manual','Reiniciar o simulador','Aumentar a deposição e observar','Ignorar até o próximo turno'],0,'A comparação com vizinhos, a tendência e a leitura manual confirmam a falha.'],
   ['Qual o tipo de alarme (ISA-18.2) usado no simulador para falha de instrumento?',['PAH (pressão alta)','LAL (nível baixo)','IA (alarme de instrumento)','TAH (temperatura alta)'],2,'O alarme IA indica problema no instrumento ou na comunicação.'],
   ['Enquanto o piezômetro estiver em falha, o correto é:',['Usar o último valor como válido','Manter leitura manual de contingência na frequência definida','Suspender o monitoramento da área','Copiar o valor do piezômetro vizinho'],1,'Sem leitura automática, a leitura manual garante o monitoramento.'],
-  ['Quem deve ser acionado para reparar o piezômetro?',['A equipe de instrumentação, com aviso à geotecnia','A operação da pelotização','O laboratório químico','Ninguém, ele volta sozinho'],0,'Instrumentação repara; geotecnia acompanha a segurança da estrutura.']],
+  ['Quem deve ser acionado para reparar o piezômetro?',['A equipe de instrumentação, com aviso à geotecnia','A operação da pelotização','O laboratório químico','Ninguém, ele volta sozinho'],0,'Instrumentação repara; geotecnia acompanha a segurança da estrutura.'],
+  ['Contexto: o PZ-09-03 mostra 8,20 m há 25 min, enquanto o PZ-09-02 e o PZ-09-04 oscilaram ±0,03 m no mesmo período. Comando: qual a conclusão mais provável?',['O maciço estabilizou apenas no PZ-09-03','Os vizinhos estão com falha','Leitura congelada no PZ-09-03: falha de instrumento ou de comunicação','É efeito normal da chuva'],2,'Um valor parado enquanto os vizinhos variam indica falha do instrumento.'],
+  ['Contexto: a instrumentação informa que o reparo levará 3 dias. Comando: como manter a segurança da estrutura nesse período?',['Desativar o alarme até o reparo','Leitura manual na frequência definida pela geotecnia, com registro e comparação com os vizinhos','Usar o último valor válido como leitura diária','Parar toda a usina até o reparo'],1,'A leitura manual de contingência mantém o monitoramento até o reparo.'],
+  ['Contexto: ao ver o alarme IA, o operador apenas o reconhece e segue o turno. Comando: pela boa prática de gestão de alarmes (ISA-18.2), o que faltou?',['Nada: reconhecer encerra o alarme','Excluir o alarme da lista','Aumentar o limite do alarme','Diagnosticar a causa e executar a ação prevista (acionar a instrumentação e fazer leitura manual)'],3,'Reconhecer não é resolver: todo alarme tem uma ação de resposta definida.']],
  hp:[['O que significa APF no britador cônico?',['Alimentação por fluxo','Abertura na posição fechada: menor distância entre o manto e o côncavo','Ajuste da pressão do filtro','Amperagem de partida forçada'],1,'A APF define o tamanho do produto e a carga do britador.'],
   ['Antes de partir o motor do HP 400 é obrigatório:',['Abrir a APF ao máximo','Ligar a bomba de lubrificação e estabelecer a pressão de óleo','Encher a câmara de minério','Desligar as peneiras'],1,'Sem óleo pressurizado nos mancais, o britador não pode partir.'],
   ['O movimento do anel de ajuste (levantamento) indica:',['Operação normal com carga baixa','Sobrecarga ou material não britável fazendo o alívio hidráulico atuar','Falta de energia','Excesso de lubrificação'],1,'O anel se move quando a força de britagem passa do limite do sistema hidráulico.'],
   ['Fechar a APF com o britador já em sobrecarga:',['Reduz a carga','Não muda nada','Aumenta a carga e piora a sobrecarga','Desliga o britador automaticamente'],2,'APF menor = mais redução = mais esforço; com sobrecarga, piora.'],
-  ['No circuito do setor 3, o material retido no 1º deck (> 25,4 mm) vai para:',['Os britadores cônicos HP 400','Os britadores Barmac','A pilha de produto','O espessador'],0,'Retido no 1º deck → HP 400; retido no 2º deck → Barmac; passante < 12,5 mm → produto.']],
+  ['No circuito do setor 3, o material retido no 1º deck (> 25,4 mm) vai para:',['Os britadores cônicos HP 400','Os britadores Barmac','A pilha de produto','O espessador'],0,'Retido no 1º deck → HP 400; retido no 2º deck → Barmac; passante < 12,5 mm → produto.'],
+  ['Contexto: com os dois HP 400 operando, cada um recebe ~700 t/h. Um deles desarma e a alimentação continua igual. Comando: qual a carga aproximada no que ficou?',['~700 t/h, pois a carga não muda','~1.400 t/h: quase o dobro, acima da capacidade (~800 t/h)','~350 t/h','Zero, pois o circuito para'],1,'A carga se redistribui: sem reduzir a alimentação, o britador que ficou entra em sobrecarga.'],
+  ['Contexto: o 03BR002 desarmou por pressão de óleo baixa. Comando: antes de religá-lo, o que deve ser feito?',['Religar imediatamente para recuperar a produção','Partir com a bomba desligada para testar','Verificar a unidade de lubrificação (nível, filtro, bomba), corrigir, rearmar e partir com pressão estabelecida','Fechar a APF e religar'],2,'Religar sem eliminar a causa repete o desarme e pode danificar os mancais.'],
+  ['Contexto: o eletricista vai trocar um componente do motor do HP 400. Comando: qual a sequência correta de bloqueio (LOTO)?',['Apertar a emergência e começar o serviço','Desligar pela sala de controle e iniciar','Colocar só a etiqueta, sem cadeado','Avisar a sala, parar o equipamento, abrir a seccionadora, aplicar cadeado e etiqueta e testar a partida (energia zero)'],3,'O teste de energia zero confirma que o bloqueio funcionou antes de iniciar o serviço.']],
  cls:[['Na flotação reversa do minério de ferro, o que flota?',['A hematita','O quartzo (sílica), coletado pela amina','A magnetita','Somente a água'],1,'Na flotação reversa, a ganga silicosa flota e o ferro afunda (concentrado).'],
   ['Qual é a função do amido na flotação?',['Coletar o quartzo','Deprimir os minerais de ferro','Aumentar a espuma','Corrigir a densidade da polpa'],1,'O amido deprime o ferro para que ele não flote junto com a sílica.'],
   ['Aumentar a dosagem de amina tende a:',['Aumentar a SiO₂ do concentrado','Reduzir a SiO₂, com risco de perder ferro no rejeito','Não ter efeito na qualidade','Aumentar o P80 da moagem'],1,'Amina em excesso arrasta ferro para a espuma (rejeito).'],
   ['Moer mais fino (P80 menor) ajuda a reduzir a sílica porque:',['Aumenta a liberação do quartzo em relação ao ferro','Reduz o consumo de energia','Aumenta a densidade da polpa','Diminui a quantidade de lama'],0,'Partículas mais liberadas são separadas com mais seletividade.'],
-  ['Por que é feita a deslamagem antes da flotação?',['Para aumentar a temperatura da polpa','Porque as lamas consomem reagentes e prejudicam a seletividade','Para aumentar o teor de sílica','Para engrossar o concentrado'],1,'Lamas (ultrafinos) adsorvem amina e amido e pioram a separação.']]};
-const trQzPts=r=>r.qz?r.qz.ans.filter((a,i)=>a!=null&&a===TQZ[r.k][i][2]).length*10:0;
-function trQzHTML(r){const Q=TQZ[r.k];if(!Q)return'';const z=r.qz,i=z.i;
-  if(i>=Q.length)return `<div class="trqz"><b>Questionário do processo · concluído</b><p>${trQzPts(r)/10} de ${Q.length} corretas (${trQzPts(r)} pts)</p></div>`;
+  ['Por que é feita a deslamagem antes da flotação?',['Para aumentar a temperatura da polpa','Porque as lamas consomem reagentes e prejudicam a seletividade','Para aumentar o teor de sílica','Para engrossar o concentrado'],1,'Lamas (ultrafinos) adsorvem amina e amido e pioram a separação.'],
+  ['Contexto: na campanha CLS o concentrado está com SiO₂ 1,45 % e Fe 66,9 %. Comando: qual ajuste é o mais indicado primeiro?',['Aumentar a amina em 5–10 g/t e acompanhar a análise seguinte','Reduzir a amina para subir o Fe','Aumentar o P80 da moagem','Não fazer nada, pois o Fe está bom'],0,'A SiO₂ está acima do limite; o Fe tem folga para um aumento moderado de amina.'],
+  ['Contexto: depois de aumentar muito a amina, a SiO₂ caiu para 0,9 %, mas o Fe no rejeito subiu bastante. Comando: o que está acontecendo?',['Falta de amido','Moagem grossa demais','Excesso de amina arrastando ferro para a espuma: recuar a dosagem até o ponto ótimo','É o comportamento ideal'],2,'Amina demais perde seletividade e leva ferro para o rejeito.'],
+  ['Contexto: a campanha mudou de CNS (SiO₂ ≤ 1,90 %) para CLS (≤ 1,25 %). Comando: qual o efeito esperado na recuperação mássica?',['Aumenta automaticamente','Tende a cair, pois a especificação mais rígida exige rejeitar mais material','Não muda','Depende só da chuva'],1,'Mais pureza no concentrado custa recuperação: parte do ferro vai junto com a sílica.']]};
+const trQ=r=>r.qz.sel.map(i=>TQZ[r.k][i]);
+const trQzPts=r=>r.qz?trQ(r).filter((q,i)=>r.qz.ans[i]===q[2]).length*10:0;
+function trQzHTML(r){const Q=trQ(r),z=r.qz,i=z.i,fb=trLv().fb;if(!Q.length)return'';
+  if(i>=Q.length)return `<div class="trqz"><b>Pós-teste do processo · concluído</b><p>${fb?`${trQzPts(r)/10} de ${Q.length} corretas (${trQzPts(r)} pts)`:'Respostas registradas: a correção sai no resultado.'}</p></div>`;
   const q=Q[i],a=z.ans[i];
-  return `<div class="trqz"><b>Questionário do processo · pergunta ${i+1} de ${Q.length}</b><p>${q[0]}</p>${z.ord[i].map(j=>`<button class="btn${a!=null&&j===q[2]?' ok':a===j?' bad':''}" data-qz="${j}"${a!=null?' disabled':''}>${q[1][j]}</button>`).join('')}
-    ${a!=null?`<p class="hint">${a===q[2]?'✓ Correto. ':'✗ Incorreto. '}${q[3]}</p><button class="btn pri" id="trQn">${i+1<Q.length?'Próxima pergunta →':'Concluir questionário'}</button>`:''}</div>`;}
-function trOpen(){let d=$('#trDlg');if(!d){d=document.createElement('div');d.id='trDlg';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
-   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trBrief(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;if(e.target.closest('#trLR')&&trRestore()){d.hidden=true;}const cb=e.target.closest('#trClr');if(cb){if(!cb.dataset.ok){cb.dataset.ok=1;cb.textContent='Confirmar: apagar tudo?';cb.style.borderColor='#ff5a4a';return;}TR.hist=[];try{localStorage.removeItem('trHist');}catch(x){}logEvent('Treinamento','Histórico de resultados apagado');trOpen();}});}
-  const H=TR.hist.slice(0,6);
-  d.innerHTML=`<div class="box" style="max-width:640px"><h3>Modo de treinamento</h3><p>Escolha um cenário. A simulação passa para 60× (1 h simulada = 1 min) e o painel do treinamento mostra os objetivos, o tempo e os pontos.</p>
-  <div class="trl">${Object.entries(TRS).map(([k,s])=>{const ok=!s.need||s.need();return `<div class="trc"><div><b>${s.nome}</b><span>${s.desc}</span><small>${s.obj.length} objetivos · ${(TQZ[k]||[]).length} perguntas sobre o processo · ${fmt(s.dur,1)} h simuladas</small></div><button class="btn" data-tr="${k}"${ok&&!TR.on?'':' disabled'}>${TR.on?'Em curso':ok?'Iniciar':'Indisponível'}</button></div>`;}).join('')}</div>
-  ${H.length?`<div class="row" style="justify-content:space-between;align-items:center;margin:12px 0 4px"><h4 style="margin:0">Últimos resultados</h4><button class="btn" id="trClr" title="Apaga o histórico de notas deste navegador">🗑 Limpar resultados</button></div><table class="alt"><tr><th>Data</th><th>Cenário</th><th class="n">Nota</th></tr>${H.map(h=>`<tr><td>${h.d}</td><td>${h.n}</td><td class="n"><b>${h.p}</b></td></tr>`).join('')}</table>`:''}
+  return `<div class="trqz"><b>Pós-teste do processo · pergunta ${i+1} de ${Q.length}</b><p>${q[0]}</p>${z.ord[i].map(j=>`<button class="btn${fb&&a!=null&&j===q[2]?' ok':fb&&a===j&&j!==q[2]?' bad':!fb&&a===j?' sel':''}" data-qz="${j}"${a!=null?' disabled':''}>${q[1][j]}</button>`).join('')}
+    ${a!=null?`<p class="hint">${fb?(a===q[2]?'✓ Correto. ':'✗ Incorreto. ')+q[3]:'Resposta registrada.'}</p><button class="btn pri" id="trQn">${i+1<Q.length?'Próxima pergunta →':'Concluir'}</button>`:''}</div>`;}
+/* IDENTIFICAÇÃO do treinando (fica neste navegador; vai junto com o resultado para o painel da turma) */
+function trWho(next){let d=$('#trWho');if(!d){d=document.createElement('div');d.id='trWho';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);}
+  const u=TR.user||{};d.innerHTML=`<div class="box" style="max-width:440px"><h3>Identificação do treinando</h3><p>Usada no resultado, no painel da turma e no certificado.</p>
+    <label class="trf">Nome completo *<input id="trWn" value="${esc(u.nome||'')}" maxlength="60" autocomplete="name"></label><label class="trf">Matrícula<input id="trWm" value="${esc(u.mat||'')}" maxlength="20"></label><label class="trf">Turma<input id="trWt" value="${esc(u.turma||'')}" maxlength="30" placeholder="ex.: Mineração 2026-1"></label>
+    <p class="hint" id="trWe"></p><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" id="trWx">Cancelar</button><button class="btn pri" id="trWok">Continuar</button></div></div>`;d.hidden=false;
+  d.querySelector('#trWx').onclick=()=>{d.hidden=true;};
+  d.querySelector('#trWok').onclick=()=>{const n=$('#trWn').value.trim();if(n.length<3){$('#trWe').textContent='Informe o nome (mínimo 3 letras).';return;}
+    TR.user={nome:n,mat:$('#trWm').value.trim(),turma:$('#trWt').value.trim()};trLS.set('trUser',TR.user);d.hidden=true;next&&next();};
+  setTimeout(()=>{const i=$('#trWn');if(i)i.focus();},50);}
+function trOpen(){if(!TR.user)return trWho(trOpen);
+  let d=$('#trDlg');if(!d){d=document.createElement('div');d.id='trDlg';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
+   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trBrief(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;if(e.target.closest('#trLR')&&trRestore()){d.hidden=true;}
+     if(e.target.closest('#trWhoB')){d.hidden=true;trWho(trOpen);}if(e.target.closest('#trTurB')){d.hidden=true;trTurma();}
+     if(e.target.closest('#trInsB')){TR.ins=!TR.ins;trInsPanel();trOpen();toast(TR.ins?'Modo instrutor ligado: o painel de falhas aparece durante o treinamento.':'Modo instrutor desligado.');}
+     const cb=e.target.closest('#trClr');if(cb){if(!cb.dataset.ok){cb.dataset.ok=1;cb.textContent='Confirmar: apagar tudo?';cb.style.borderColor='#ff5a4a';return;}TR.hist=[];try{localStorage.removeItem('trHist');}catch(x){}logEvent('Treinamento','Histórico de resultados apagado');trOpen();}});}
+  const H=TR.hist.slice(0,6),u=TR.user;
+  d.innerHTML=`<div class="box" style="max-width:700px"><h3>Modo de treinamento</h3>
+  <div class="trwho"><span>👤 <b>${esc(u.nome)}</b>${u.mat?` · mat. ${esc(u.mat)}`:''}${u.turma?` · ${esc(u.turma)}`:''}</span><button class="btn" id="trWhoB">Trocar</button></div>
+  <p>Escolha um cenário. Antes de começar você vê a situação na área, escolhe o nível e faz um pré-teste curto; durante o cenário, o painel mostra objetivos, tempo, rádio e o pós-teste.</p>
+  <div class="trl">${Object.entries(TRS).map(([k,s])=>{const ok=!s.need||s.need();return `<div class="trc"><div><b>${s.nome}</b><span>${s.desc}</span><small>${s.obj.length} objetivos · pré e pós-teste (5 perguntas de um banco de ${(TQZ[k]||[]).length}) · ${fmt(s.dur,1)} h simuladas</small></div><button class="btn" data-tr="${k}"${ok&&!TR.on?'':' disabled'}>${TR.on?'Em curso':ok?'Iniciar':'Indisponível'}</button></div>`;}).join('')}</div>
+  <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="trTurB">👥 Painel da turma</button><button class="btn${TR.ins?' pri':''}" id="trInsB" title="Para o instrutor: injetar falhas durante o treinamento">🎓 Modo instrutor: ${TR.ins?'ligado':'desligado'}</button></div>
+  ${H.length?`<div class="row" style="justify-content:space-between;align-items:center;margin:12px 0 4px"><h4 style="margin:0">Últimos resultados neste navegador</h4><button class="btn" id="trClr" title="Apaga o histórico de notas deste navegador">🗑 Limpar resultados</button></div><table class="alt"><tr><th>Data</th><th>Treinando</th><th>Cenário</th><th>Nível</th><th class="n">Pré → Pós</th><th class="n">Nota</th></tr>${H.map(h=>`<tr><td>${h.d}</td><td>${esc(h.nome||'–')}</td><td>${h.n}</td><td>${h.lvl||'–'}</td><td class="n">${h.pre!=null?h.pre+' → '+h.pos:'–'}</td><td class="n"><b>${h.p}</b></td></tr>`).join('')}</table>`:''}
   <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">${TR.snap&&!TR.on?'<button class="btn pri" id="trLR">↺ Voltar o processo ao normal</button>':''}<button class="btn" id="trX">Fechar</button></div></div>`;d.hidden=false;}
-/* BRIEFING do cenário: leva a câmera à área da ocorrência, captura a imagem real do simulador e mostra a situação (sinais, área, objetivos e tempo) */
-const TRB={chuva:{area:'dry',fx:'rain',local:'Pilha de rejeito filtrado · área 8',sit:'Uma tempestade de 30 mm/h cai sobre a pilha há mais de uma hora. A água infiltra no maciço e a poropressão começa a subir nos piezômetros da área 8. A deposição continua normal.',sinais:['⛈ Chuva forte · 30 mm/h','📈 Piezômetros 08-01 a 08-03 subindo','⚠ Alarme de poropressão (PAH)','🚛 Deposição em andamento']},
-  instr:{area:'dry',fx:'freeze',local:'Instrumentação geotécnica · piezômetros',sit:'Um dos piezômetros parou de atualizar a leitura: o valor ficou congelado enquanto os vizinhos variam. Sem leitura confiável, a estrutura fica sem monitoramento naquele ponto.',sinais:['❄ Leitura parada há vários minutos','⚠ Alarme de falha de instrumento (IA)','📡 Demais piezômetros normais']},
-  hp:{area:'crush',fx:'trip',local:'Setor 3 · britagem primária (HP 400)',sit:'O britador 03BR002 desarmou. Toda a britagem primária passou para o 03BR001, que entrou em sobrecarga: a carga passa de 105 % e o anel de ajuste começa a se mover.',sinais:['⛔ 03BR002 desarmado','🔥 03BR001 com carga acima de 105 %','⚠ Risco de levantamento do anel de ajuste','➡ Alimentação do setor 3 inalterada']},
-  cls:{area:'conc',fx:'spec',local:'Concentrador · flotação',sit:'A programação mudou a produção para a campanha CLS (sílica baixa). A especificação fica mais apertada e o concentrado atual está acima do novo limite de SiO₂.',sinais:['🎯 Nova meta: SiO₂ ≤ 1,25 %','📊 Fe mínimo 66,58 %','🧪 Dosagem de amina e moagem atuais da campanha CNS']}};
+/* BRIEFING: imagem real da área, sinais, nível de dificuldade, missão; parâmetros sorteados (variação do cenário) */
+const TRB={chuva:{area:'dry',fx:'rain',local:'Pilha de rejeito filtrado · área 8',par:()=>({peak:Math.round(24+Math.random()*14)}),sit:p=>`Uma tempestade de ${p.peak} mm/h cai sobre a pilha há mais de uma hora. A água infiltra no maciço e a poropressão começa a subir nos piezômetros da área 8. A deposição continua normal.`,sinais:p=>[`⛈ Chuva forte · ${p.peak} mm/h`,'📈 Piezômetros 08-01 a 08-03 subindo','⚠ Alarme de poropressão (PAH)','🚛 Deposição em andamento']},
+  instr:{area:'dry',fx:'freeze',local:'Instrumentação geotécnica · piezômetros',par:()=>({}),sit:()=>'Um dos piezômetros parou de atualizar a leitura: o valor ficou congelado enquanto os vizinhos variam. Sem leitura confiável, a estrutura fica sem monitoramento naquele ponto.',sinais:()=>['❄ Leitura parada há vários minutos','⚠ Alarme de falha de instrumento (IA)','📡 Demais piezômetros normais']},
+  hp:{area:'crush',fx:'trip',local:'Setor 3 · britagem primária (HP 400)',par:()=>({feed:Math.round((4100+Math.random()*400)/50)*50}),sit:p=>`O britador 03BR002 desarmou. Toda a britagem primária passou para o 03BR001, que entrou em sobrecarga com ${fmt(p.feed)} t/h chegando ao setor 3: a carga passa de 105 % e o anel de ajuste começa a se mover.`,sinais:p=>['⛔ 03BR002 desarmado','🔥 03BR001 com carga acima de 105 %','⚠ Risco de levantamento do anel de ajuste',`➡ Alimentação do setor 3: ${fmt(p.feed)} t/h`]},
+  cls:{area:'conc',fx:'spec',local:'Concentrador · flotação',par:()=>({}),sit:()=>'A programação mudou a produção para a campanha CLS (sílica baixa). A especificação fica mais apertada e o concentrado atual está acima do novo limite de SiO₂.',sinais:()=>['🎯 Nova meta: SiO₂ ≤ 1,25 %','📊 Fe mínimo 66,58 %','🧪 Dosagem de amina e moagem atuais da campanha CNS']}};
 function trSnap(area){try{if(area&&EQ[area]){enterArea(area);if(tween){camera.position.copy(tween.p1);controls.target.copy(tween.t1);tween=null;controls.update();}}
   if(HQ&&composer)composer.render(0);else renderer.render(scene,camera);const src=renderer.domElement,w=Math.min(960,src.width),c=document.createElement('canvas');c.width=w;c.height=Math.round(src.height*w/src.width);c.getContext('2d').drawImage(src,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.82);}catch(e){return '';}}
 const TR_IMG={};
-function trBrief(k){const s=TRS[k],b=TRB[k]||{};if(!s||TR.on)return;
+function trBrief(k){const s=TRS[k],b=TRB[k]||{};if(!s||TR.on)return;const p=TR.par[k]=b.par?b.par():{};
   let d=$('#trBrief');if(!d){d=document.createElement('div');d.id='trBrief';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
-    d.addEventListener('click',e=>{if(e.target.closest('#trBGo')){d.hidden=true;trStart(d.dataset.k);}else if(e.target.closest('#trBBack')){d.hidden=true;try{exitArea();}catch(x){}trOpen();}});}
-  d.dataset.k=k;d.innerHTML=`<div class="box trb"><div class="trbi"><img alt="Situação na área" id="trBImg"><div class="trfx ${b.fx||''}"></div><span class="trtag">Situação · ${esc(b.local||'')}</span>
-      <ul class="trsig">${(b.sinais||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
-    <div class="trbt"><h3>${s.nome}</h3><p>${b.sit||s.desc}</p><h4>Sua missão</h4><ol>${s.obj.map(o=>`<li>${o.t}${o.lim?` <small>(até ${Math.floor(o.lim)}:${String(Math.round(o.lim%1*60)).padStart(2,'0')} h)</small>`:''} <b>${o.pts} pts</b></li>`).join('')}</ol>
-      <p><b>+ ${(TQZ[k]||[]).length} perguntas sobre o processo</b> no painel do treinamento (10 pts cada).</p><p class="hint">Duração: ${fmt(s.dur,1)} h simuladas (1 h = 1 min). Pontos cheios dentro do prazo; metade depois do prazo.</p>
-      <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" id="trBBack">Voltar</button><button class="btn pri" id="trBGo">Começar treinamento</button></div></div></div>`;
-  d.hidden=false;requestAnimationFrame(()=>{const u=trSnap(b.area);TR_IMG[k]=u;const im=$('#trBImg');if(im&&u)im.src=u;});}
+    d.addEventListener('click',e=>{const k2=d.dataset.k;if(e.target.closest('#trBGo')){d.hidden=true;try{speechSynthesis.cancel();}catch(x){}trPre(k2);}else if(e.target.closest('#trBBack')){d.hidden=true;try{speechSynthesis.cancel();}catch(x){}try{exitArea();}catch(x){}trOpen();}
+      const lv=e.target.closest('[data-lv]');if(lv){TR.lvl=lv.dataset.lv;trLS.set('trLvl',TR.lvl);trBriefBody(k2);}
+      if(e.target.closest('#trTts')){TR.tts=!TR.tts;trLS.set('trTts',TR.tts);trBriefBody(k2);if(TR.tts){const bb=TRB[k2];trSay(TRS[k2].nome+'. '+bb.sit(TR.par[k2])+' '+bb.sinais(TR.par[k2]).join('. '));}else try{speechSynthesis.cancel();}catch(x){}}});}
+  d.dataset.k=k;trBriefBody(k);d.hidden=false;
+  requestAnimationFrame(()=>{const u=trSnap(b.area);TR_IMG[k]=u;const im=$('#trBImg');if(im&&u)im.src=u;});
+  trSay(s.nome+'. '+b.sit(p)+' '+b.sinais(p).join('. '));}
+function trBriefBody(k){const d=$('#trBrief'),s=TRS[k],b=TRB[k],p=TR.par[k],L=trLv(),img=TR_IMG[k]||'';
+  d.innerHTML=`<div class="box trb"><div class="trbi"><img alt="Situação na área" id="trBImg"${img?` src="${img}"`:''}><div class="trfx ${b.fx||''}"></div><span class="trtag">Situação · ${esc(b.local||'')}</span>
+      <ul class="trsig">${b.sinais(p).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="trbt"><h3>${s.nome}</h3><p>${b.sit(p)}</p>
+      <h4>Nível</h4><div class="trlv">${Object.entries(TRL).map(([id,v])=>`<button class="btn${TR.lvl===id?' pri':''}" data-lv="${id}">${v.nome}</button>`).join('')}</div><p class="hint" style="margin:4px 0 8px">${L.desc}.</p>
+      <h4>Sua missão</h4><ol>${s.obj.map(o=>`<li>${o.radio?'📻 ':''}${o.t}${o.lim?` <small>(até ${trHM(o.lim*L.limK)} h)</small>`:''} <b>${o.pts} pts</b></li>`).join('')}</ol>
+      <p><b>Pré-teste</b> (5 perguntas, diagnóstico, sem nota) antes de começar e <b>pós-teste</b> no painel (10 pts cada).</p><p class="hint">Duração: ${fmt(s.dur,1)} h simuladas (1 h = 1 min). Pontos cheios dentro do prazo; metade depois.</p>
+      <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap"><button class="btn" id="trTts" title="Narração por voz">${TR.tts?'🔊 Narração ligada':'🔇 Narração desligada'}</button><button class="btn" id="trBBack">Voltar</button><button class="btn pri" id="trBGo">Começar →</button></div></div></div>`;}
+/* PRÉ-TESTE: as mesmas 5 perguntas do pós-teste, sem correção (diagnóstico do conhecimento de entrada) */
+function trPre(k){const sel=trShuf((TQZ[k]||[]).map((_,i)=>i)).slice(0,5),Q=sel.map(i=>TQZ[k][i]);
+  TR.pend={k,sel,ord:Q.map(q=>trShuf([0,1,2,3])),pre:[],i:0};if(!Q.length)return trStart(k);
+  let d=$('#trPre');if(!d){d=document.createElement('div');d.id='trPre';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
+    d.addEventListener('click',e=>{const P=TR.pend;if(!P)return;const b=e.target.closest('[data-pa]');if(b){P.pre[P.i]=+b.dataset.pa;P.i++;}
+      if(e.target.closest('#trPskip'))P.i=99;if(P.i>=P.sel.length){d.hidden=true;trStart(P.k);}else trPreBody();});}
+  d.hidden=false;trPreBody();}
+function trPreBody(){const P=TR.pend,d=$('#trPre'),q=TQZ[P.k][P.sel[P.i]];
+  d.innerHTML=`<div class="box" style="max-width:620px"><h3>Pré-teste · pergunta ${P.i+1} de ${P.sel.length}</h3><p class="hint">Diagnóstico do que você já sabe. Não vale nota e a correção aparece só no resultado, comparada com o pós-teste.</p>
+    <p style="color:#fff">${q[0]}</p><div class="trpa">${P.ord[P.i].map(j=>`<button class="btn" data-pa="${j}">${q[1][j]}</button>`).join('')}</div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="trPskip">Pular pré-teste</button></div></div>`;}
 /* ESTADO ANTES DO TREINAMENTO: guardado no início do primeiro cenário e restaurado pelo botão "Voltar o processo ao normal" */
 function trSave(){let sm=null;try{sm=simSnap();}catch(e){}const m=trS3();
   return{sim:sm,speed,camp:CAMP,scen:($('#scenario')||{}).value,pz:PZ.map(p=>({h:p.h,boost:p.boost||0,fault:!!p.fault,read:p.read,rate:p.rate||0,hist:p.hist.slice()})),
@@ -7228,37 +7312,125 @@ function trRestore(){const S=TR.snap;if(!S||TR.on)return false;const t=ST.simT;S
   try{exitArea();}catch(e){}try{syncAll();}catch(e){}try{refreshEq(true);}catch(e){}try{evalAlarms();renderAlarms();}catch(e){}try{const k=$('#kpiMGP');if(k)k._h='';mgpUpdate();}catch(e){}
   TR.snap=null;logEvent('Treinamento','Processo restaurado ao estado de antes do treinamento');toast('Processo de volta ao normal (sem as alterações do treinamento).');return true;}
 function trStart(k){const s=TRS[k];if(!s||TR.on)return;if(!TR.snap)TR.snap=trSave();const sc=$('#scenario');if(sc&&sc.value!=='nominal'){sc.value='nominal';sc.dispatchEvent(new Event('change'));}
-  pzSim('reset');const st={k,s,t0:ST.simT,st:s.obj.map(()=>({done:false,fail:false,pts:0,inT:0,tot:0,ans:null})),qz:{i:0,ans:[],ord:(TQZ[k]||[]).map(q=>q[1].map((_,j)=>j).sort(()=>Math.random()-.5))}};s.setup(st);TR.on=st;
+  const P=TR.pend&&TR.pend.k===k?TR.pend:{sel:trShuf((TQZ[k]||[]).map((_,i)=>i)).slice(0,5),pre:[]};P.ord=P.ord||P.sel.map(()=>trShuf([0,1,2,3]));
+  pzSim('reset');const L=trLv(),st={k,s,lvl:TR.lvl,par:TR.par[k]||{},user:TR.user,t0:ST.simT,ev:[],hints:0,rev:[],st:s.obj.map(()=>({done:false,fail:false,pts:0,inT:0,tot:0,ans:null,at:null})),
+    qz:{i:0,ans:[],sel:P.sel,ord:P.ord},pre:P.pre||[],e2t:s.ev2&&Math.random()<L.ev2?s.dur*(.35+Math.random()*.3):null};
+  window.__TRON=st;s.setup(st);TR.on=st;TR.pend=null;
   const b=document.querySelector('#speedSeg button[data-s="60"]');if(b)b.click();if(paused){paused=false;}
-  logEvent('Treinamento',`Início: ${s.nome}`);toast('Treinamento iniciado: '+s.nome);trHud(true);clearInterval(TR.iv);TR.iv=setInterval(trTick,500);}
-function trTick(){const r=TR.on;if(!r)return;const h=(ST.simT-r.t0)/3600,dt=Math.max(0,h-(r.lh||0));r.lh=h;
-  r.s.obj.forEach((o,i)=>{const q=r.st[i];if(o.q)return;let v=false;try{v=!!o.ok(r);}catch(e){}
-    if(o.keep){if(!v)q.fail=true;}else if(o.frac){if(h>=1){q.tot+=dt;if(v)q.inT+=dt;}}else if(!q.done&&v){q.done=true;q.late=o.lim&&h>o.lim;q.pts=q.late?Math.round(o.pts/2):o.pts;}});
+  logEvent('Treinamento',`Início: ${s.nome} · nível ${L.nome} · ${TR.user?TR.user.nome:''}`);toast('Treinamento iniciado: '+s.nome);trSay('Treinamento iniciado. '+s.nome+'.');trHud(true);trInsPanel();clearInterval(TR.iv);TR.iv=setInterval(trTick,500);}
+function trTick(){const r=TR.on;if(!r)return;const h=(ST.simT-r.t0)/3600,dt=Math.max(0,h-(r.lh||0)),K=TRL[r.lvl].limK;r.lh=h;
+  r.s.obj.forEach((o,i)=>{const q=r.st[i];if(o.at&&h>=o.at&&!q.shown){q.shown=true;trEv('Rádio','Pedido de comunicação pelo rádio');trSay('Atenção: comunicação pelo rádio necessária.');}
+    if(o.q)return;let v=false;try{v=!!o.ok(r);}catch(e){}
+    if(o.keep){if(!v&&!q.fail){q.fail=true;q.at=h;trEv('Objetivo',`✗ ${o.t}`);}}else if(o.frac){if(h>=1){q.tot+=dt;if(v)q.inT+=dt;}}
+    else if(!q.done&&v){q.done=true;q.at=h;q.late=o.lim&&h>o.lim*K;q.pts=q.late?Math.round(o.pts/2):o.pts;trEv('Objetivo',`✓ ${o.t}${q.late?' (fora do prazo)':''}`);trSay('Objetivo concluído.');}});
+  if(r.e2t!=null&&!r.e2done&&h>=r.e2t){r.e2done=true;try{r.s.ev2.fn(r);}catch(e){}r.e2msg=r.s.ev2.t;trEv('Evento inesperado',r.s.ev2.t);toast('⚠ Evento inesperado: '+r.s.ev2.t);trSay('Evento inesperado. '+r.s.ev2.t);try{evalAlarms();renderAlarms();}catch(e){}}
   if(h>=r.s.dur)return trEnd();trHud();}
 function trPts(r,fin){return r.s.obj.map((o,i)=>{const q=r.st[i];if(o.keep)return q.fail?0:Math.round(o.pts*(fin||0));if(o.frac)return q.tot>0?Math.round(o.pts*q.inT/q.tot):0;return q.pts;});}
+function trHint(r){const i=r.s.obj.findIndex((o,j)=>{const q=r.st[j];return !q.done&&!q.fail&&!(o.at&&!q.shown)&&!r.rev.includes(j)&&!(o.frac&&(ST.simT-r.t0)/3600<1&&false);});
+  if(i<0){toast('Nenhuma dica disponível agora.');return;}r.rev.push(i);r.hints++;trEv('Dica',`Dica pedida: ${r.s.obj[i].t}`);trSay(r.s.obj[i].dica);}
 function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();return;}
   if(!e){e=document.createElement('div');e.id='trHud';e.innerHTML='<div class="trimg"><img alt="Situação"><div class="trfx2"></div><span></span></div><div class="trbody"></div>';document.body.appendChild(e);
-    e.addEventListener('click',ev=>{const a=ev.target.closest('[data-qa]');if(a){const [i,j]=a.dataset.qa.split('|').map(Number),o=TR.on.s.obj[i],q=TR.on.st[i];if(q.ans==null){q.ans=j;q.pts=j===o.q.c?o.pts:0;q.done=true;}
-        const fx=o.q.fx&&o.q.fx[j];if(fx&&trS3())fx(trS3());logEvent('Treinamento',`Resposta: ${o.q.ops[j]}`);trHud(true);}
-      const zb=ev.target.closest('[data-qz]');if(zb&&TR.on){const z=TR.on.qz;if(z.ans[z.i]==null){z.ans[z.i]=+zb.dataset.qz;logEvent('Treinamento',`Questionário ${z.i+1}: ${TQZ[TR.on.k][z.i][1][+zb.dataset.qz]}`);}trHud(true);}
-      if(ev.target.closest('#trQn')&&TR.on){TR.on.qz.i++;trHud(true);}
+    e.addEventListener('click',ev=>{const R=TR.on;if(!R)return;const a=ev.target.closest('[data-qa]');if(a){const [i,j]=a.dataset.qa.split('|').map(Number),o=R.s.obj[i],q=R.st[i];if(q.ans==null){q.ans=j;q.pts=j===o.q.c?o.pts:0;q.done=true;q.at=(ST.simT-R.t0)/3600;
+          const fx=o.q.fx&&o.q.fx[j];if(fx&&trS3())fx(trS3());trEv(o.radio?'Rádio':'Decisão',`${o.radio?'Comunicou':'Escolheu'}: ${o.q.ops[j]}`);}trHud(true);}
+      const zb=ev.target.closest('[data-qz]');if(zb){const z=R.qz;if(z.ans[z.i]==null){z.ans[z.i]=+zb.dataset.qz;trEv('Pós-teste',`Pergunta ${z.i+1} respondida`);}trHud(true);}
+      if(ev.target.closest('#trQn')){R.qz.i++;trHud(true);}
+      if(ev.target.closest('#trHintB')){trHint(R);trHud(true);}
+      if(ev.target.closest('#trTtsH')){TR.tts=!TR.tts;trLS.set('trTts',TR.tts);if(!TR.tts)try{speechSynthesis.cancel();}catch(x){}trHud(true);}
       if(ev.target.closest('#trEndB'))trEnd();if(ev.target.closest('.trh'))e.classList.toggle('min');});}
-  const h=(ST.simT-r.t0)/3600,P=trPts(r,false),hm=x=>`${Math.floor(x)}:${String(Math.floor(x%1*60)).padStart(2,'0')}`;
-  const li=r.s.obj.map((o,i)=>{const q=r.st[i],ic=o.keep?(q.fail?'✗':'…'):o.frac?(h<1?'…':`${Math.round(q.tot?q.inT/q.tot*100:0)} %`):q.done?(q.pts?'✓':'✗'):'○';
-    const quiz=o.q?`<div class="trq"><p>${o.q.p}</p>${o.q.ops.map((t,j)=>`<button class="btn${q.ans!=null&&j===o.q.c?' ok':q.ans===j?' bad':''}" data-qa="${i}|${j}">${t}</button>`).join('')}${q.ans!=null?`<p class="hint">${q.ans===o.q.c?'Correto. ':'Resposta incorreta. '}${o.dica}</p>`:''}</div>`:'';
-    return `<li class="${q.fail||(q.done&&!q.pts)?'bad':q.done||(o.keep&&!q.fail)?'ok':''}"><span class="ic">${ic}</span><span>${o.t}${o.lim?` <small>(até ${hm(o.lim)} h)</small>`:''}</span><b>${P[i]}/${o.pts}</b>${quiz}</li>`;}).join('');
-  const html=`<div class="trh" title="Clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h</em></div><ol>${li}</ol>${r.s.panel?`<div class="trpz">${r.s.panel(r)}</div>`:''}${trQzHTML(r)}<div class="row"><span>Pontos parciais: <b>${P.reduce((a,b)=>a+b,0)+trQzPts(r)}</b></span><button class="btn" id="trEndB">Encerrar</button></div>`;
-  const key=html.replace(/<em>.*?<\/em>/,'').replace(/<div class="trpz">[\s\S]*?<\/div>/,'');const ti=e.querySelector('.trimg'),tb=TRB[r.k]||{};if(ti._k!==r.k+r.t0){ti._k=r.k+r.t0;const u=TR_IMG[r.k];ti.hidden=!u;if(u)ti.querySelector('img').src=u;ti.querySelector('.trfx2').className='trfx2 '+(tb.fx||'');ti.querySelector('span').textContent='Situação · '+(tb.local||'');}
-  if(force||e._k!==key){e._k=key;e.querySelector('.trbody').innerHTML=html;}else{const m=e.querySelector('.trh em');if(m)m.textContent=`${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h`;const pz=e.querySelector('.trpz');if(pz&&r.s.panel)pz.innerHTML=r.s.panel(r);}}
-function trEnd(){const r=TR.on;if(!r)return;clearInterval(TR.iv);TR.on=null;const P=trPts(r,clamp((ST.simT-r.t0)/3600/r.s.dur,0,1)),QP=trQzPts(r),tot=P.reduce((a,b)=>a+b,0)+QP,max=r.s.obj.reduce((a,o)=>a+o.pts,0)+(TQZ[r.k]||[]).length*10,nota=Math.round(tot/max*100);
-  try{r.s.clean&&r.s.clean(r);}catch(e){}trHud();
+  const h=(ST.simT-r.t0)/3600,P=trPts(r,false),L=TRL[r.lvl],fb=L.fb;
+  const li=r.s.obj.map((o,i)=>{const q=r.st[i];if(o.at&&!q.shown)return `<li class="wait"><span class="ic">◌</span><span>${o.radio?'📻 ':''}${o.t} <small>(aguardando a situação)</small></span><b>–/${o.pts}</b></li>`;
+    const ic=o.keep?(q.fail?'✗':'…'):o.frac?(h<1?'…':`${Math.round(q.tot?q.inT/q.tot*100:0)} %`):q.done?(!fb&&o.q?'●':q.pts?'✓':'✗'):'○';
+    const quiz=o.q&&(o.at?q.shown:true)?`<div class="trq${o.radio?' radio':''}"><p>${o.radio?'📻 ':''}${o.q.p}</p>${o.q.ops.map((t,j)=>`<button class="btn${fb&&q.ans!=null&&j===o.q.c?' ok':fb&&q.ans===j&&j!==o.q.c?' bad':!fb&&q.ans===j?' sel':''}" data-qa="${i}|${j}"${q.ans!=null?' disabled':''}>${t}</button>`).join('')}${q.ans!=null?`<p class="hint">${fb?(q.ans===o.q.c?'Correto. ':'Resposta incorreta. ')+o.dica:'Resposta registrada.'}</p>`:''}</div>`:'';
+    const showD=!q.done&&!q.fail&&(L.dicas==='auto'||r.rev.includes(i));
+    return `<li class="${q.fail||(fb&&q.done&&!q.pts)?'bad':(fb||!o.q)&&(q.done||(o.keep&&!q.fail))?'ok':''}"><span class="ic">${ic}</span><span>${o.radio?'📻 ':''}${o.t}${o.lim?` <small>(até ${trHM(o.lim*L.limK)} h)</small>`:''}${showD?`<i class="trdica">💡 ${o.dica}</i>`:''}</span><b>${fb||!o.q?P[i]:'–'}/${o.pts}</b>${quiz}</li>`;}).join('');
+  const u=r.user||{},tot=P.reduce((a,b)=>a+b,0)+(fb?trQzPts(r):0)-(L.dicas==='pedir'?r.hints*5:0);
+  const html=`<div class="trh" title="Clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${trHM(Math.min(h,r.s.dur))} / ${trHM(r.s.dur)} h</em></div>
+    <div class="trmeta">👤 ${esc(u.nome||'')} · nível <b>${L.nome}</b>${r.hints?` · ${r.hints} dica(s)`:''}</div>
+    ${r.e2msg?`<div class="tre2">⚠ Evento inesperado: ${r.e2msg}</div>`:''}<ol>${li}</ol>${r.s.panel?`<div class="trpz">${r.s.panel(r)}</div>`:''}${trQzHTML(r)}
+    <div class="row"><span>Pontos parciais: <b>${Math.max(0,tot)}</b></span><span style="display:flex;gap:6px">${L.dicas==='pedir'?'<button class="btn" id="trHintB" title="Mostra a dica do próximo objetivo (−5 pts)">💡 Dica −5</button>':''}<button class="btn" id="trTtsH" title="Narração por voz">${TR.tts?'🔊':'🔇'}</button><button class="btn" id="trEndB">Encerrar</button></span></div>`;
+  const key=html.replace(/<em>.*?<\/em>/,'').replace(/<div class="trpz">[\s\S]*?<\/div>/,'');const ti=e.querySelector('.trimg'),tb=TRB[r.k]||{};if(ti._k!==r.k+r.t0){ti._k=r.k+r.t0;const im=TR_IMG[r.k];ti.hidden=!im;if(im)ti.querySelector('img').src=im;ti.querySelector('.trfx2').className='trfx2 '+(tb.fx||'');ti.querySelector('span').textContent='Situação · '+(tb.local||'');}
+  if(force||e._k!==key){e._k=key;e.querySelector('.trbody').innerHTML=html;}else{const m=e.querySelector('.trh em');if(m)m.textContent=`${trHM(Math.min(h,r.s.dur))} / ${trHM(r.s.dur)} h`;const pz=e.querySelector('.trpz');if(pz&&r.s.panel)pz.innerHTML=r.s.panel(r);}}
+/* RESULTADO + DEBRIEFING (revisão pós-ação): nota, objetivos com o tempo feito × prazo, pré × pós-teste, o que fez bem / o que melhorar, linha do tempo */
+function trEnd(){const r=TR.on;if(!r)return;clearInterval(TR.iv);TR.on=null;window.__TRON=null;const L=TRL[r.lvl],fin=clamp((ST.simT-r.t0)/3600/r.s.dur,0,1),P=trPts(r,fin),Q=trQ(r),QP=trQzPts(r),pen=L.dicas==='pedir'?r.hints*5:0;
+  const max=r.s.obj.reduce((a,o)=>a+o.pts,0)+Q.length*10,tot=Math.max(0,P.reduce((a,b)=>a+b,0)+QP-pen),nota=Math.round(tot/max*100);
+  const pre=Q.filter((q,i)=>r.pre[i]===q[2]).length,preN=r.pre.filter(x=>x!=null).length,pos=QP/10;
+  try{r.s.clean&&r.s.clean(r);}catch(e){}trHud();trInsPanel();
   const cls=nota>=85?'Excelente':nota>=70?'Bom':nota>=50?'Regular':'Precisa treinar mais';
-  TR.hist.unshift({d:new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}),n:r.s.nome,p:nota});TR.hist=TR.hist.slice(0,20);try{localStorage.setItem('trHist',JSON.stringify(TR.hist));}catch(e){}
-  logEvent('Treinamento',`Fim: ${r.s.nome} · nota ${nota} (${cls})`);
-  let d=$('#trRes');if(!d){d=document.createElement('div');d.id='trRes';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trRX'))d.hidden=true;if(e.target.closest('#trRN')){d.hidden=true;trOpen();}const rr=e.target.closest('#trRR');if(rr&&trRestore()){rr.disabled=true;rr.textContent='✓ Processo restaurado';}});}
-  d.innerHTML=`<div class="box" style="max-width:600px"><h3>Resultado do treinamento</h3><p>${r.s.nome}</p><div class="trn ${nota>=70?'ok':nota>=50?'warn':'crit'}"><b>${nota}</b><span>de 100 · ${cls}</span></div>
-  <table class="alt"><tr><th>Objetivo</th><th class="n">Pontos</th></tr>${r.s.obj.map((o,i)=>`<tr><td>${o.t}${P[i]<o.pts?`<br><small class="hint">${o.dica}</small>`:''}</td><td class="n"><b>${P[i]}</b>/${o.pts}</td></tr>`).join('')}${(TQZ[r.k]||[]).map((q,i)=>{const a=r.qz.ans[i],ok=a===q[2];return `<tr><td>Pergunta ${i+1}: ${q[0]}${ok?'':`<br><small class="hint">${a==null?'Não respondida. ':'Resposta errada. '}Correta: ${q[1][q[2]]}. ${q[3]}</small>`}</td><td class="n"><b>${ok?10:0}</b>/10</td></tr>`;}).join('')}</table>
-  <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn pri" id="trRR" title="Desfaz tudo o que o treinamento alterou: chuva, piezômetros, britadores, campanha, ajustes e velocidade">↺ Voltar o processo ao normal</button><button class="btn" id="trRN">Outro cenário</button><button class="btn" id="trRX">Fechar</button></div></div>`;d.hidden=false;}
+  const bem=[],mel=[];r.s.obj.forEach((o,i)=>{const q=r.st[i],lim=o.lim?o.lim*L.limK:null;
+    if(o.keep){(q.fail?mel:bem).push(q.fail?`${o.t}: não mantido (a partir de ${trHM(q.at||0)}). ${o.dica}`:o.t);return;}
+    if(o.frac){const f=q.tot?q.inT/q.tot:0;(f>=.8?bem:mel).push(`${o.t}: ${Math.round(f*100)} % do tempo na faixa${f<.8?'. '+o.dica:''}`);return;}
+    if(o.q){const ok=q.ans===o.q.c;(ok?bem:mel).push(ok?`${o.radio?'Comunicação':'Decisão'} correta: ${o.q.ops[o.q.c]}`:`${o.t}: ${q.ans==null?'não respondido':'resposta errada'}. Correto: ${o.q.ops[o.q.c]}. ${o.dica}`);return;}
+    if(q.done&&!q.late)bem.push(`${o.t} em ${trHM(q.at)}${lim?` (prazo ${trHM(lim)})`:''}`);else mel.push(`${o.t}: ${q.done?`feito em ${trHM(q.at)}, fora do prazo de ${trHM(lim)}`:'não realizado'}. ${o.dica}`);});
+  if(pos>=4)bem.push(`Domínio do processo no pós-teste: ${pos}/5`);else mel.push(`Pós-teste ${pos}/5: revise as explicações das perguntas erradas abaixo`);
+  if(preN&&pos>pre)bem.push(`Ganho de aprendizagem: pré-teste ${pre}/5 → pós-teste ${pos}/5`);
+  if(r.hints>2)mel.push(`Foram usadas ${r.hints} dicas: tente o nível Padrão sem pedir dicas`);else if(L.dicas!=='auto'&&!r.hints)bem.push('Concluiu sem pedir dicas');
+  if(r.e2done)(r.ev.some(x=>x.k!=='Evento inesperado'&&x.h>r.e2t)?bem:mel).push(`Evento inesperado durante o cenário: ${r.s.ev2.t}`);
+  const u=r.user||{},res={d:new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}),n:r.s.nome,p:nota,nome:u.nome,lvl:L.nome,pre:preN?pre:null,pos};
+  TR.hist.unshift(res);TR.hist=TR.hist.slice(0,30);trLS.set('trHist',TR.hist);
+  logEvent('Treinamento',`Fim: ${r.s.nome} · ${u.nome||''} · nota ${nota} (${cls})`);trSay(`Treinamento encerrado. Nota ${nota}. ${cls}.`);
+  const erros=Q.map((q,i)=>r.qz.ans[i]===q[2]?null:q[0].replace(/^Contexto:[^.]*\.\s*Comando:\s*/,'').slice(0,60)).filter(Boolean);
+  TR.last={r,res,nota,cls,u};trSend(r,nota,cls,pre,preN,pos,erros);
+  let d=$('#trRes');if(!d){d=document.createElement('div');d.id='trRes';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trRX'))d.hidden=true;if(e.target.closest('#trRN')){d.hidden=true;trOpen();}
+    const rr=e.target.closest('#trRR');if(rr&&trRestore()){rr.disabled=true;rr.textContent='✓ Processo restaurado';}if(e.target.closest('#trCertB'))trCert();});}
+  const tl=r.ev.slice().sort((a,b)=>a.h-b.h).slice(0,80);
+  d.innerHTML=`<div class="box trres" style="max-width:760px"><h3>Resultado e debriefing</h3><p>${r.s.nome} · 👤 ${esc(u.nome||'')}${u.turma?' · '+esc(u.turma):''} · nível ${L.nome}</p>
+  <div class="trn ${nota>=70?'ok':nota>=50?'warn':'crit'}"><b>${nota}</b><span>de 100 · ${cls}${pen?` · −${pen} pts de dicas`:''}</span></div>
+  <div class="trpp"><div><small>Pré-teste</small><b>${preN?pre+'/5':'–'}</b></div><span>→</span><div><small>Pós-teste</small><b>${pos}/5</b></div><div><small>Ganho</small><b>${preN?(pos-pre>=0?'+':'')+(pos-pre):'–'}</b></div><div><small>Dicas</small><b>${r.hints}</b></div></div>
+  <div class="trbm"><div><h4>✓ O que você fez bem</h4><ul>${bem.map(x=>`<li>${x}</li>`).join('')||'<li>—</li>'}</ul></div><div><h4>↗ O que melhorar</h4><ul>${mel.map(x=>`<li>${x}</li>`).join('')||'<li>Nada a apontar. Excelente!</li>'}</ul></div></div>
+  <details><summary>Objetivos e pontos</summary><table class="alt"><tr><th>Objetivo</th><th class="n">Feito em</th><th class="n">Prazo</th><th class="n">Pontos</th></tr>${r.s.obj.map((o,i)=>{const q=r.st[i];return `<tr><td>${o.radio?'📻 ':''}${o.t}</td><td class="n">${q.at!=null&&(q.done)?trHM(q.at):'–'}</td><td class="n">${o.lim?trHM(o.lim*L.limK):'–'}</td><td class="n"><b>${P[i]}</b>/${o.pts}</td></tr>`;}).join('')}</table></details>
+  <details${L.fb?'':' open'}><summary>Pós-teste: correção (${pos}/5)</summary><table class="alt">${Q.map((q,i)=>{const a=r.qz.ans[i],ok=a===q[2],pa=r.pre[i];return `<tr><td>${i+1}. ${q[0]}<br><small class="hint">${ok?'✓ ':'✗ '}${a==null?'Não respondida. ':ok?'':'Sua resposta: '+q[1][a]+'. '}Correta: ${q[1][q[2]]}. ${q[3]}${preN?` · pré-teste: ${pa===q[2]?'acertou':'errou'}`:''}</small></td><td class="n"><b>${ok?10:0}</b>/10</td></tr>`;}).join('')}</table></details>
+  <details><summary>Linha do tempo (${tl.length} eventos)</summary><table class="alt trtl">${tl.map(x=>`<tr><td class="n">${trHM(x.h)}</td><td>${esc(x.k)}</td><td>${esc(x.t)}</td></tr>`).join('')||'<tr><td>Sem eventos.</td></tr>'}</table></details>
+  <p class="hint" id="trSendSt">Enviando o resultado para o painel da turma…</p>
+  <div class="row" style="justify-content:flex-end;gap:8px;margin-top:8px;flex-wrap:wrap">${nota>=70?'<button class="btn pri" id="trCertB">📜 Certificado</button>':''}<button class="btn pri" id="trRR" title="Desfaz tudo o que o treinamento alterou: chuva, piezômetros, britadores, campanha, ajustes e velocidade">↺ Voltar o processo ao normal</button><button class="btn" id="trRN">Outro cenário</button><button class="btn" id="trRX">Fechar</button></div></div>`;d.hidden=false;}
+/* PAINEL DA TURMA: os resultados vão para a planilha de registros (tipo "Treinamento") e voltam no painel; sem conexão, fica só o histórico deste navegador */
+const trGS=(fn,...a)=>new Promise((ok,bad)=>{try{google.script.run.withSuccessHandler(ok).withFailureHandler(bad)[fn](...a);}catch(e){bad(e);}});
+function trSend(r,nota,cls,pre,preN,pos,erros){const u=r.user||{};
+  const desc=`Nota ${nota} | Nível ${TRL[r.lvl].nome} | Pré ${preN?pre:'-'}/5 → Pós ${pos}/5 | Dicas ${r.hints} | Turma ${u.turma||'-'} | Matrícula ${u.mat||'-'} | Erros: ${erros.join('; ')||'nenhum'}`;
+  const st=m=>{const e=$('#trSendSt');if(e)e.textContent=m;};
+  trGS('inspRegistrar',{etapa:0,area:'treinamento',tipo:'Treinamento',severidade:cls,local:r.s.nome,descricao:desc,operador:u.nome||'',tempo:new Date().toLocaleString('pt-BR')})
+    .then(()=>st('✓ Resultado enviado para o painel da turma.')).catch(()=>st('Sem conexão com o servidor: o resultado ficou salvo só neste navegador.'));}
+function trTurma(){let d=$('#trTur');if(!d){d=document.createElement('div');d.id='trTur';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
+    d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trTx'))d.hidden=true;if(e.target.closest('#trTb')){d.hidden=true;trOpen();}});d.addEventListener('input',e=>{if(e.target.id==='trTf')trTurmaBody(d._rows,d._src);});}
+  d.hidden=false;d.innerHTML='<div class="box" style="max-width:860px"><h3>Painel da turma</h3><p class="hint">Carregando os resultados…</p></div>';
+  const loc=()=>TR.hist.map(h=>({data:h.d,nome:h.nome||'–',turma:(TR.user&&TR.user.turma)||'',cen:h.n,nota:h.p,lvl:h.lvl||'–',pre:h.pre,pos:h.pos,dicas:null,erros:[]}));
+  trGS('inspListar','treinamento').then(rows=>{const R=(rows||[]).map(v=>{const g=(re)=>{const m=String(v.descricao||'').match(re);return m?m[1].trim():'';};
+      return{data:v.data,nome:v.operador,turma:g(/Turma ([^|]*)/),cen:v.local,nota:+g(/Nota (\d+)/)||0,lvl:g(/Nível ([^|]*)/),pre:g(/Pré (\d)\//)===''?null:+g(/Pré (\d)\//),pos:+g(/Pós (\d)\//)||0,dicas:+g(/Dicas (\d+)/)||0,erros:g(/Erros: (.*)$/).split(';').map(x=>x.trim()).filter(x=>x&&x!=='nenhum')};});
+    d._rows=R.length?R:loc();d._src=R.length?'servidor':'local';trTurmaBody(d._rows,d._src);})
+   .catch(()=>{d._rows=loc();d._src='local';trTurmaBody(d._rows,d._src);});}
+function trTurmaBody(rows,src){const d=$('#trTur'),fv=(($('#trTf')||{}).value||'').toLowerCase(),R=(rows||[]).filter(x=>!fv||String(x.turma+' '+x.nome).toLowerCase().includes(fv));
+  const by={};R.forEach(x=>{(by[x.cen]=by[x.cen]||[]).push(x);});const avg=a=>a.length?Math.round(a.reduce((s,x)=>s+x,0)/a.length):0;
+  const gains=R.filter(x=>x.pre!=null).map(x=>x.pos-x.pre),err={};R.forEach(x=>x.erros.forEach(t=>{err[t]=(err[t]||0)+1;}));const topE=Object.entries(err).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  d.innerHTML=`<div class="box" style="max-width:860px"><h3>Painel da turma</h3><p class="hint">${src==='servidor'?'Resultados de todos os treinandos (planilha de registros, tipo “Treinamento”).':'Sem conexão com o servidor: mostrando só os resultados deste navegador.'}</p>
+   <label class="trf" style="max-width:320px">Filtrar por turma ou nome<input id="trTf" value="${esc(fv)}" placeholder="ex.: Mineração 2026-1"></label>
+   <div class="trpp"><div><small>Treinamentos</small><b>${R.length}</b></div><div><small>Nota média</small><b>${avg(R.map(x=>x.nota))}</b></div><div><small>Ganho médio pré → pós</small><b>${gains.length?(avg(gains)>=0?'+':'')+(gains.reduce((a,b)=>a+b,0)/gains.length).toFixed(1):'–'}</b></div><div><small>Aprovados (≥ 70)</small><b>${R.filter(x=>x.nota>=70).length}</b></div></div>
+   <div class="trbm"><div><h4>Média por cenário</h4><ul>${Object.entries(by).map(([k,a])=>`<li>${esc(k)}: <b>${avg(a.map(x=>x.nota))}</b> (${a.length})</li>`).join('')||'<li>—</li>'}</ul></div><div><h4>Perguntas mais erradas</h4><ul>${topE.map(([t,n])=>`<li>${esc(t)}… <b>${n}×</b></li>`).join('')||'<li>—</li>'}</ul></div></div>
+   <table class="alt"><tr><th>Data</th><th>Treinando</th><th>Turma</th><th>Cenário</th><th>Nível</th><th class="n">Pré → Pós</th><th class="n">Dicas</th><th class="n">Nota</th></tr>${R.slice(0,40).map(x=>`<tr><td>${esc(x.data)}</td><td>${esc(x.nome)}</td><td>${esc(x.turma||'–')}</td><td>${esc(x.cen)}</td><td>${esc(x.lvl)}</td><td class="n">${x.pre!=null?x.pre+' → '+x.pos:'–'}</td><td class="n">${x.dicas!=null?x.dicas:'–'}</td><td class="n"><b style="color:${x.nota>=70?'#2fbf71':x.nota>=50?'#ffd24a':'#ff5a4a'}">${x.nota}</b></td></tr>`).join('')||'<tr><td colspan="8">Nenhum resultado ainda.</td></tr>'}</table>
+   <div class="row" style="justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn" id="trTb">Voltar</button><button class="btn" id="trTx">Fechar</button></div></div>`;
+  const f=$('#trTf');if(f&&fv){f.focus();f.setSelectionRange(f.value.length,f.value.length);}}
+/* MODO INSTRUTOR: injeta falhas durante o treinamento para avaliar a reação do treinando (tudo aparece na linha do tempo) */
+const TRI=[['trip','Desarmar o britador 03BR001',()=>{const m=trS3();if(!m)return false;const e=m.eq['03BR001'];e.on=false;e.trip='desarme injetado pelo instrutor';e.rev=(e.rev||0)+1;}],
+  ['cord','Puxar o cordão de emergência da 03TC001',()=>{const m=trS3();if(!m||!m.belts)return false;const b=m.belts['03TC001'];b.cord=true;b.on=false;b.trip='cordão de emergência acionado';}],
+  ['rain','Chuva forte agora',()=>{Object.assign(RAIN,{on:true,modo:'eventos',int:1.3,storm:{t0:ST.ct,dur:2*3600,peak:35},soak:.4,stack:.35,yard:.3});}],
+  ['pz','Falha em um piezômetro',()=>{const L=PZ.filter(p=>!p.fault),p=L[Math.floor(Math.random()*L.length)];if(!p)return false;p.fault=true;}],
+  ['sio2','Sílica alta (amina caiu)',()=>{P.amine=Math.max(10,(+P.amine||60)-25);try{syncAll();}catch(e){}}],
+  ['pump','Parada do mineroduto',()=>{RUN.pump=0;try{refreshEq(true);}catch(e){}}]];
+function trInsPanel(){let p=$('#trIns');if(!(TR.ins&&TR.on)){if(p)p.remove();return;}
+  if(!p){p=document.createElement('div');p.id='trIns';document.body.appendChild(p);p.addEventListener('click',e=>{const b=e.target.closest('[data-ti]');if(!b||!TR.on)return;const it=TRI.find(x=>x[0]===b.dataset.ti);
+    if(it&&it[2]()!==false){trEv('Instrutor',`Falha injetada: ${it[1]}`);logEvent('Instrutor',it[1]);toast('Instrutor: '+it[1]);try{evalAlarms();renderAlarms();}catch(x){}b.disabled=true;b.textContent='✓ '+it[1];}else toast('Indisponível neste momento.');});}
+  p.innerHTML=`<b>🎓 Instrutor · injetar falha</b>${TRI.map(([id,t])=>`<button class="btn" data-ti="${id}">${t}</button>`).join('')}<small>As falhas entram na linha do tempo do debriefing. “Voltar o processo ao normal” desfaz tudo.</small>`;}
+/* CERTIFICADO (nota ≥ 70): página para imprimir ou salvar em PDF */
+function trCert(){const L=TR.last;if(!L)return;const {r,nota,cls,u}=L,dt=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Certificado</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Georgia,serif;color:#1d2430;margin:0}
+  .c{border:6px double #9a6b1f;padding:34px 48px;min-height:160mm;box-sizing:border-box;text-align:center}h1{font:700 30px Georgia;letter-spacing:.12em;margin:6px 0 2px;color:#7a5216}.s{font:14px Arial;color:#555}
+  .n{font:700 30px Georgia;margin:22px 0 6px;border-bottom:1px solid #999;display:inline-block;padding:0 30px 4px}p{font:15px/1.6 Arial;margin:8px auto;max-width:820px}ul{display:inline-block;text-align:left;font:14px/1.6 Arial;margin:6px 0}
+  .f{display:flex;justify-content:space-around;margin-top:40px;font:13px Arial}.f div{border-top:1px solid #333;padding-top:6px;min-width:220px}</style></head><body><div class="c">
+  <div class="s">SIMULADOR MINERÁRIO HEMATECH · MODELO DIDÁTICO</div><h1>CERTIFICADO DE TREINAMENTO OPERACIONAL</h1><div class="n">${esc(u.nome||'')}</div>
+  <p>${u.mat?`Matrícula ${esc(u.mat)} · `:''}${u.turma?`Turma ${esc(u.turma)} · `:''}concluiu o cenário <b>${r.s.nome}</b> no nível <b>${TRL[r.lvl].nome}</b>, com nota <b>${nota}</b> (${cls}), em ${dt}.</p>
+  <p><b>Competências desenvolvidas</b></p><ul>${(r.s.comp||[]).map(c=>`<li>${c}</li>`).join('')}</ul>
+  <div class="f"><div>${esc(u.nome||'Treinando')}</div><div>Instrutor responsável</div></div></div></body></html>`;
+  let d=$('#trCert');if(!d){d=document.createElement('div');d.id='trCert';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trCx'))d.hidden=true;if(e.target.closest('#trCp')){const f=$('#trCf');try{f.contentWindow.focus();f.contentWindow.print();}catch(x){toast('Use Ctrl+P na página do certificado.');}}});}
+  d.innerHTML=`<div class="box" style="max-width:980px;width:96vw"><h3>Certificado</h3><iframe id="trCf" title="Certificado" style="width:100%;height:62vh;border:0;border-radius:8px;background:#fff"></iframe><div class="row" style="justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn pri" id="trCp">🖨 Imprimir / salvar PDF</button><button class="btn" id="trCx">Fechar</button></div></div>`;
+  d.hidden=false;$('#trCf').srcdoc=html;}
 $('#trBtn').addEventListener('click',()=>{if(TR.on){const e=$('#trHud');if(e)e.classList.remove('min');toast('Treinamento em curso: veja o painel à esquerda.');}else trOpen();});
 // trava: o operador só altera a própria área; as demais ficam só para visualização
 function operLock(){if(!OPER.area)return;
