@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022201821';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022201821';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022202104';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022202104';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -99,27 +99,32 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       parts.forEach((t, i) => { const u = new SpeechSynthesisUtterance(t.trim()); u.lang = 'pt-BR'; if (v) u.voice = v; u.rate = .96; u.pitch = 1.03; if (i === parts.length - 1) u.onend = u.onerror = () => onend && onend(); S.speak(u); }); },
     stop() { try { speechSynthesis.cancel(); } catch (e) { /* */ } } };
   try { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); } catch (e) { /* */ }
+  /* VOZ NATURAL GRAVADA (neural, Francisca): explicações fixas tocam o áudio gravado; o texto gerado na hora pelo Assistente usa a melhor voz do navegador */
+  let AU = null; const recOn = () => { try { const v = localStorage.getItem('s3voice'); return !v || v === '__rec'; } catch (e) { return true; } };
+  const stopAll = () => { VZ.stop(); if (AU) { AU.pause(); AU = null; } };
+  const playRec = (k, onend) => { stopAll(); try { AU = new Audio('audio/expl/' + k + '.mp3'); AU.onended = () => onend && onend(); AU.onerror = () => { AU = null; VZ.speak(EXPL[k], onend); }; AU.play().catch(() => { AU = null; VZ.speak(EXPL[k], onend); }); } catch (e) { VZ.speak(EXPL[k], onend); } };
+  const sayEx = (onend) => { if (exK && exTxt === EXPL[exK] && recOn()) playRec(exK, onend); else { if (AU) { AU.pause(); AU = null; } VZ.speak(exTxt, onend); } };
   /* caixa de explicação: texto do item + ouvir/parar + explicação do Assistente com os valores atuais + escolha da voz */
   const ex = document.createElement('div'); ex.className = 's3exp'; ex.hidden = true; document.body.appendChild(ex); let exK = null, exTxt = '';
   const valOf = (k) => { const v = el.querySelector('#' + k + 'v') || el.querySelector('#pS_' + k); return v ? v.textContent.trim() : ''; };
   const nameOf = (k) => { const b = el.querySelector(`.spk[data-spk="${k}"]`); return b ? b.parentElement.textContent.replace('🔊', '').replace(/\s+/g, ' ').trim().replace(valOf(k), '').trim() : k; };
   const exRender = (busy) => { const V = VZ.list(), cur = VZ.pick(); ex.innerHTML = `<div class="h"><b>🔊 ${esc(nameOf(exK))}</b><button data-x title="Fechar">×</button></div>${valOf(exK) ? `<small>Valor atual: <b>${esc(valOf(exK))}</b></small>` : ''}
       <p>${esc(exTxt)}</p><div class="r"><button data-play>▶ Ouvir</button><button data-stop>■ Parar</button><button data-ai class="pri"${busy ? ' disabled' : ''}>${busy ? 'Assistente explicando…' : '🧠 Explicar com o Assistente (valores atuais)'}</button></div>
-      ${V.length ? `<label>Voz <select data-voz>${V.sort((a, b) => VZ.rank(b) - VZ.rank(a)).map((v) => `<option${cur && v.name === cur.name ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>` : '<small>Nenhuma voz em português instalada neste navegador.</small>'}`; };
+      <label>Voz <select data-voz><option value="__rec"${recOn() ? ' selected' : ''}>Francisca · voz natural (gravada)</option>${V.sort((a, b) => VZ.rank(b) - VZ.rank(a)).map((v) => `<option${!recOn() && cur && v.name === cur.name ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>${recOn() ? '<small>A explicação do Assistente, criada na hora, usa a melhor voz do navegador.</small>' : ''}`; };
   const openEx = (k, b) => { exK = k; exTxt = EXPL[k] || ''; const r = b.getBoundingClientRect(), pr = el.getBoundingClientRect(); ex.style.left = Math.min(innerWidth - 380, pr.right + 10) + 'px'; ex.style.top = Math.max(70, Math.min(innerHeight - 320, r.top - 10)) + 'px';
-    exRender(false); ex.hidden = false; el.querySelectorAll('.spk.on').forEach((x) => x.classList.remove('on')); b.classList.add('on'); VZ.speak(exTxt, () => b.classList.remove('on')); };
+    exRender(false); ex.hidden = false; el.querySelectorAll('.spk.on').forEach((x) => x.classList.remove('on')); b.classList.add('on'); sayEx(() => b.classList.remove('on')); };
   ex.addEventListener('click', async (e) => { const b = el.querySelector(`.spk[data-spk="${exK}"]`);
-    if (e.target.closest('[data-x]')) { VZ.stop(); ex.hidden = true; b && b.classList.remove('on'); return; }
-    if (e.target.closest('[data-play]')) { b && b.classList.add('on'); VZ.speak(exTxt, () => b && b.classList.remove('on')); return; }
-    if (e.target.closest('[data-stop]')) { VZ.stop(); b && b.classList.remove('on'); return; }
+    if (e.target.closest('[data-x]')) { stopAll(); ex.hidden = true; b && b.classList.remove('on'); return; }
+    if (e.target.closest('[data-play]')) { b && b.classList.add('on'); sayEx(() => b && b.classList.remove('on')); return; }
+    if (e.target.closest('[data-stop]')) { stopAll(); b && b.classList.remove('on'); return; }
     if (e.target.closest('[data-ai]')) { exRender(true); try {
         const q = `EXPLICAÇÃO DIDÁTICA PARA TREINAMENTO (não é diagnóstico): explique para um operador em formação, em até 6 frases simples e faladas, a importância de "${nameOf(exK)}" no processo do setor 3 (peneiramento e britagem): como afeta produção, granulometria do produto, energia, desgaste e segurança${valOf(exK) ? `, e o que o valor atual (${valOf(exK)}) indica em relação aos demais dados` : ''}. Diga o que acontece se aumentar ou diminuir. Escreva a explicação inteira no campo "resumo", sem listas.`;
         const r = await call('aiAnalyze', [{ modo: 'gemeo3', escopo: 'Área 3 · Peneiramento e britagem', pergunta: q, contexto: ctxAst() }]);
         exTxt = String((r && r.resumo) || '').trim() || exTxt; logEv('Assistente', `Explicação: ${nameOf(exK)}`); } catch (err) { exTxt = (EXPL[exK] || '') + ' (Assistente indisponível agora: ' + String(err.message || err).slice(0, 80) + ')'; }
-      exRender(false); b && b.classList.add('on'); VZ.speak(exTxt, () => b && b.classList.remove('on')); }
+      exRender(false); b && b.classList.add('on'); if (AU) { AU.pause(); AU = null; } VZ.speak(exTxt, () => b && b.classList.remove('on')); }
   });
-  ex.addEventListener('change', (e) => { const s2 = e.target.closest('[data-voz]'); if (s2) { try { localStorage.setItem('s3voice', s2.value); } catch (x) { /* */ } VZ.speak('Esta é a voz escolhida para as explicações.'); } });
-  el.addEventListener('click', (e) => { const b = e.target.closest('.spk'); if (!b) return; e.stopPropagation(); e.preventDefault(); if (exK === b.dataset.spk && !ex.hidden) { VZ.stop(); ex.hidden = true; b.classList.remove('on'); return; } openEx(b.dataset.spk, b); }, true);
+  ex.addEventListener('change', (e) => { const s2 = e.target.closest('[data-voz]'); if (s2) { try { localStorage.setItem('s3voice', s2.value); } catch (x) { /* */ } exRender(false); if (s2.value === '__rec' && exK) playRec(exK); else { stopAll(); VZ.speak('Esta é a voz escolhida para as explicações.'); } } });
+  el.addEventListener('click', (e) => { const b = e.target.closest('.spk'); if (!b) return; e.stopPropagation(); e.preventDefault(); if (exK === b.dataset.spk && !ex.hidden) { stopAll(); ex.hidden = true; b.classList.remove('on'); return; } openEx(b.dataset.spk, b); }, true);
   el.querySelectorAll('.s3sec>h5').forEach((h) => h.addEventListener('click', () => {
     const s = h.parentElement, k = s.dataset.k; s.classList.toggle('open');
     open = s.classList.contains('open') ? [...new Set([...open, k])] : open.filter((x) => x !== k); save(); render(true); allBtn();
