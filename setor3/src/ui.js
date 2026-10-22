@@ -1,12 +1,13 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261022121322';
-import { buildEqScreen } from './eqscreen.js?v=20261022121322';
-import { buildTour } from './tour.js?v=20261022121322';
-import { logEv } from './sim.js?v=20261022121322';
-import { SIM_URL } from './api.js?v=20261022121322';
-import { buildRiskMap } from './riskmap.js?v=20261022121322';
+import { buildPanels } from './panels.js?v=20261022183526';
+import { buildEqScreen } from './eqscreen.js?v=20261022183526';
+import { buildTraining } from './training.js?v=20261022183526';
+import { buildTour } from './tour.js?v=20261022183526';
+import { logEv } from './sim.js?v=20261022183526';
+import { SIM_URL } from './api.js?v=20261022183526';
+import { buildRiskMap } from './riskmap.js?v=20261022183526';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -50,7 +51,7 @@ const CSS = `
 export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [], pick = [], pickRoot = null }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.getElementById('ui');
-  root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3back" style="background:#1f63b3;color:#fff" title="Ir para o simulador sem fechar o gêmeo">◀ Simulador</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
+  root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><button id="s3trn" style="background:#2c6fd6;color:#fff" title="Treinamento em primeira pessoa: LOTO, cordão de emergência, Barmac e ronda de inspeção">🎓 Treinamento</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3back" style="background:#1f63b3;color:#fff" title="Ir para o simulador sem fechar o gêmeo">◀ Simulador</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
    <div class="s3lv" id="s3lv" hidden><button data-lv="2">Piso dos alimentadores (+14 m)</button><button data-lv="1">Piso das peneiras (+7,5 m)</button><button data-lv="0">Térreo</button></div>
    <div class="s3help" id="s3help">Arraste para girar · role para aproximar · <b>Caminhar</b>: W A S D ou setas, Shift corre, arraste para olhar. Clique numa etiqueta para ver o equipamento.</div>
    <div class="s3joy" id="s3joy"><i></i></div><div class="s3info" id="s3info" hidden></div>
@@ -104,6 +105,8 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   let tPanel = 0;
   eqs = buildEqScreen(root, sim, { fm, stTxt, logEv });
   window.__s3openEq = (t) => eqs.open(t);
+  const trn = buildTraining({ root, scene: pickRoot && pickRoot.parent, camera, setCam, setWalk: (on, lv) => { setWalk(on, lv); try { refreshWalk(); } catch (e) { /* */ } }, eqs, logEv });
+  $('#s3trn').addEventListener('click', () => trn.open());
   // clicar num item dos painéis: a câmera vai até o equipamento (ou fluxo), destaca-o no 3D e abre a tela dele
   const scene3 = pickRoot && pickRoot.parent; let hl = null, hlT = 0;
   const FLOWS = { '@circ': { look: [55, 5, 6], pos: [44, 14, 22], txt: 'Carga circulante: britado volta às peneiras pela correia de retorno', box: [[46, 0, 1], [64, 19, 13]] },
@@ -153,7 +156,7 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
     joy,
     update() {
       if (hl && performance.now() - hlT > 5000) { scene3.remove(hl); hl = null; } else if (hl) hl.material.opacity = .55 + .45 * Math.sin(performance.now() / 160);
-      tPanel += 1; if (tPanel % 15 === 0) panel(); risk.update(); panels.update(tPanel); eqs.update(); const nowT = performance.now(); tour.update(Math.min(.1, (nowT - (this._lt || nowT)) / 1000)); this._lt = nowT;
+      tPanel += 1; if (tPanel % 15 === 0) panel(); risk.update(); panels.update(tPanel); eqs.update(); trn.update(); const nowT = performance.now(); tour.update(Math.min(.1, (nowT - (this._lt || nowT)) / 1000)); this._lt = nowT;
       for (const { L, d } of flowEls) { v.copy(L.pos).project(camera); const fd = camera.position.distanceTo(L.pos); const vis = showTags && v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && (L.kind === 'area' || fd < 110) && !hidden(L.pos, null); d.style.display = vis ? 'block' : 'none'; if (vis) { d.style.left = (v.x * .5 + .5) * innerWidth + 'px'; d.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; if (tPanel % 15 === 0) d.textContent = L.text(sim.kpi); } }
       for (const { h, d } of tags) {
         v.copy(h.pos).project(camera);

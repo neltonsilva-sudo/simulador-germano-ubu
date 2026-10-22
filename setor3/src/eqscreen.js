@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261022121322';
-import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022121322';
+import { call } from './api.js?v=20261022183526';
+import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022183526';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -187,5 +187,5 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
   function open(t) { feeder = /AL/.test(t); tag = /^03TC/.test(t) ? t : t.replace('AL', 'PN'); if (!sim.eq[tag] && !(sim.belts && sim.belts[tag])) return false; el.hidden = false; render(); markSel(tag); return true; }
   function close() { el.hidden = true; tag = null; markSel(null); }
   let k = 0;
-  return { open, close, isOpen: () => !el.hidden, update() { if (++k % 20 === 0) { render(); checkRep(); } } };
+  return { open, close, tag: () => (el.hidden ? null : tag), isOpen: () => !el.hidden, update() { if (++k % 20 === 0) { render(); checkRep(); } } };
 }

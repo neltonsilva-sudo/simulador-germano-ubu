@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 7 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261022121322';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261022183526';
 
 const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
 export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova
@@ -19,7 +19,8 @@ const CAP = { pn: 1500, cone: 800, vsi: 690 };   // Barmac 9100: 690 t/h (aposti
 let VSI_RR = 2.1;
 export const vsiTip = (rpm) => rpm * Math.PI * .99 / 60;   // rotor Ø ≈ 0,99 m
 export const sim = {
-  feed: 3800, capNom: 4200, css: 20, rpm: 1450, casc: 10,   // Barmac: rotação do rotor (rpm) e cascata (% desviada do rotor) — manual B9100SE
+  feed: 2500, capNom: 2800, css: 20,   // C3 (apostila): 2.500 t/h de ROM na britagem do setor 3
+  rpm: 1450, casc: 10,   // Barmac: rotação do rotor (rpm) e cascata (% desviada do rotor) — manual B9100SE
   wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},                                                      // tag → {k, on, w (desgaste %), ...valores}
   kpi: {},
@@ -59,12 +60,17 @@ export function perms(t) {
   return P;
 }
 const syncEq = (t, c) => { if (sim.eq[t] && sim.cmdEq) sim.cmdEq(t, c); };
+// estado de comando completo (desarme, bloqueio, seletor, emergência, óleo, tampas, cordão, alinhamento) espelhado no simulador
+export const ctlOf = (t) => { const o = itemOf(t); if (!o) return null; return o.k === 'tc' ? { on: !!o.on, trip: o.trip || null, lock: !!o.lock, mode: o.mode, es: !!o.es, cord: !!o.cord, align: +(+o.align || 0).toFixed(1) }
+  : { on: !!o.on, trip: o.trip || null, lock: !!o.lock, mode: o.mode, es: !!o.es, lube: o.lube, choke: !!o.choke, lid: o.lid, guard: o.guard }; };
+export const syncCtl = (t) => { if (sim.cmdCtl && itemOf(t)) sim.cmdCtl(t, ctlOf(t)); };
 function halt(t, why) { const o = itemOf(t); if (!o) return; const was = o.on; o.on = false; if (o.k === 'vsi' && was) o.coast = 25;
-  if (why) { o.trip = why; logEv('Desarme', `${t}: ${why}`); } if (was) syncEq(t, { on: false }); }
+  if (why) { o.trip = why; logEv('Desarme', `${t}: ${why}`); } if (was) syncEq(t, { on: false }); syncCtl(t); }
 // comandos (src: 'R' sala de controle, 'L' botoeira no campo) → { ok, msg }
 export function cmd(t, a, src = 'R', v = 0) {
   const o = itemOf(t); if (!o) return { ok: false, msg: 'tag inexistente' };
-  const no = (m) => { logEv('Comando negado', `${t}: ${m}`); return { ok: false, msg: m }; }, yes = (m) => { logEv('Comando', `${t}: ${m}${src === 'L' ? ' (campo)' : ''}`); return { ok: true, msg: m }; };
+  const no = (m) => { logEv('Comando negado', `${t}: ${m}`); sim.lastNo = { tag: t, a, msg: m, rt: sim.rt || 0, locked: !!o.lock }; (sim.denied = sim.denied || []).push(sim.lastNo); return { ok: false, msg: m }; },
+    yes = (m) => { logEv('Comando', `${t}: ${m}${src === 'L' ? ' (campo)' : ''}`); setTimeout(() => syncCtl(t), 0); return { ok: true, msg: m }; };
   switch (a) {
     case 'start': { if (o.on) return no('já está operando');
       if (o.mode !== src) return no(src === 'R' ? 'seletor em LOCAL: a partida é feita na botoeira do campo (ou passe o seletor para REMOTO)' : 'seletor em REMOTO: passe o seletor para LOCAL para ligar pela botoeira, ou ligue pela sala de controle');
