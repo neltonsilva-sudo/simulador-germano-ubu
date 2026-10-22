@@ -3511,7 +3511,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022201821';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022202408';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7183,7 +7183,7 @@ const trS3=()=>typeof S3!=='undefined'&&S3&&S3.sim&&S3.sim.eq&&S3.sim.eq['03BR00
 const trCamp=c=>{setCamp(c);const sc=$('#campSel');if(sc)sc.value=CAMP;const k=$('#kpiMGP');if(k)k._h='';try{mgpUpdate();}catch(e){}};
 const trShuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 /* voz mais humana: melhor voz pt-BR instalada (Natural/Online › Premium/Aprimorada › Google › demais) ou a escolhida no gêmeo; fala frase a frase */
-function trVoice(){try{const V=speechSynthesis.getVoices().filter(v=>/^pt(-|_)BR/i.test(v.lang)||/portugu[eê]s.*brasil/i.test(v.name)),p=localStorage.getItem('s3voice'),rk=n=>/natural|neural/i.test(n)?6:/online/i.test(n)?5:/premium|enhanced|aprimorad/i.test(n)?4:/google/i.test(n)?3:/luciana|francisca|thalita|antonio|felipe|daniel/i.test(n)?2:1;
+function trVoice(){try{const FEM=/luciana|francisca|thalita|maria|fernanda|vit[oó]ria|leila|helo[ií]sa|raquel|let[ií]cia|yara|manuela|brenda|elza|giovanna|flo\b|sandy|shelley|grandma|google/i,V=speechSynthesis.getVoices().filter(v=>(/^pt(-|_)BR/i.test(v.lang)||/portugu[eê]s.*brasil/i.test(v.name))&&FEM.test(v.name)),p=localStorage.getItem('s3voice'),rk=n=>/natural|neural/i.test(n)?6:/online/i.test(n)?5:/premium|enhanced|aprimorad/i.test(n)?4:/google/i.test(n)?3:/luciana|francisca|thalita|antonio|felipe|daniel/i.test(n)?2:1;
   return(p&&V.find(v=>v.name===p))||V.sort((a,b)=>rk(b.name)-rk(a.name))[0]||null;}catch(e){return null;}}
 function trSay(t){try{if(!TR.tts||!window.speechSynthesis)return;const v=trVoice(),txt=String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗]/g,'').replace(/\s+/g,' '),parts=txt.match(/[^.!?;]+[.!?;]?/g)||[txt];
   parts.forEach(x=>{const u=new SpeechSynthesisUtterance(x.trim());u.lang='pt-BR';if(v)u.voice=v;u.rate=.96;u.pitch=1.03;speechSynthesis.speak(u);});}catch(e){}}

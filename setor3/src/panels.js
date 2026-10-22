@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022202104';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022202104';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022202407';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022202407';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -92,7 +92,8 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     cK: 'A cascata desvia parte da alimentação por fora do rotor do Barmac, provocando choque de rocha com rocha. Ela alivia a potência e permite ajustar a granulometria do produto sem parar o britador.' };
   /* VOZ MAIS HUMANA: escolhe a melhor voz pt-BR instalada (Natural/Online do Edge e Windows › Premium/Aprimorada do Mac › Google › demais),
      fala frase a frase com pausas naturais; o usuário pode escolher a voz (guardada neste navegador) */
-  const VZ = { list() { try { return speechSynthesis.getVoices().filter((v) => /^pt(-|_)BR/i.test(v.lang) || /portugu[eê]s.*brasil/i.test(v.name)); } catch (e) { return []; } },
+  const FEM = /luciana|francisca|thalita|maria|fernanda|vit[oó]ria|leila|helo[ií]sa|raquel|let[ií]cia|yara|manuela|brenda|elza|giovanna|flo\b|sandy|shelley|grandma|google/i;   // só vozes femininas
+  const VZ = { list() { try { return speechSynthesis.getVoices().filter((v) => (/^pt(-|_)BR/i.test(v.lang) || /portugu[eê]s.*brasil/i.test(v.name)) && FEM.test(v.name)); } catch (e) { return []; } },
     rank(v) { const n = v.name; return /natural|neural/i.test(n) ? 6 : /online/i.test(n) ? 5 : /premium|enhanced|aprimorad/i.test(n) ? 4 : /google/i.test(n) ? 3 : /luciana|francisca|thalita|antonio|felipe|daniel/i.test(n) ? 2 : 1; },
     pick() { const V = this.list(); let p = null; try { p = localStorage.getItem('s3voice'); } catch (e) { /* */ } return (p && V.find((v) => v.name === p)) || V.slice().sort((a, b) => this.rank(b) - this.rank(a))[0] || null; },
     speak(text, onend) { const S = window.speechSynthesis; if (!S) { onend && onend(); return; } S.cancel(); const v = this.pick(), parts = String(text).replace(/\s+/g, ' ').match(/[^.!?;]+[.!?;]?/g) || [String(text)];
@@ -100,9 +101,9 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     stop() { try { speechSynthesis.cancel(); } catch (e) { /* */ } } };
   try { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); } catch (e) { /* */ }
   /* VOZ NATURAL GRAVADA (neural, Francisca): explicações fixas tocam o áudio gravado; o texto gerado na hora pelo Assistente usa a melhor voz do navegador */
-  let AU = null; const recOn = () => { try { const v = localStorage.getItem('s3voice'); return !v || v === '__rec'; } catch (e) { return true; } };
+  let AU = null; const recV = () => { try { return localStorage.getItem('s3voice') || '__rec'; } catch (e) { return '__rec'; } }, recOn = () => /^__rec/.test(recV());
   const stopAll = () => { VZ.stop(); if (AU) { AU.pause(); AU = null; } };
-  const playRec = (k, onend) => { stopAll(); try { AU = new Audio('audio/expl/' + k + '.mp3'); AU.onended = () => onend && onend(); AU.onerror = () => { AU = null; VZ.speak(EXPL[k], onend); }; AU.play().catch(() => { AU = null; VZ.speak(EXPL[k], onend); }); } catch (e) { VZ.speak(EXPL[k], onend); } };
+  const playRec = (k, onend) => { stopAll(); try { AU = new Audio((recV() === '__recT' ? 'audio/expl_thalita/' : 'audio/expl/') + k + '.mp3'); AU.onended = () => onend && onend(); AU.onerror = () => { AU = null; VZ.speak(EXPL[k], onend); }; AU.play().catch(() => { AU = null; VZ.speak(EXPL[k], onend); }); } catch (e) { VZ.speak(EXPL[k], onend); } };
   const sayEx = (onend) => { if (exK && exTxt === EXPL[exK] && recOn()) playRec(exK, onend); else { if (AU) { AU.pause(); AU = null; } VZ.speak(exTxt, onend); } };
   /* caixa de explicação: texto do item + ouvir/parar + explicação do Assistente com os valores atuais + escolha da voz */
   const ex = document.createElement('div'); ex.className = 's3exp'; ex.hidden = true; document.body.appendChild(ex); let exK = null, exTxt = '';
@@ -110,7 +111,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const nameOf = (k) => { const b = el.querySelector(`.spk[data-spk="${k}"]`); return b ? b.parentElement.textContent.replace('🔊', '').replace(/\s+/g, ' ').trim().replace(valOf(k), '').trim() : k; };
   const exRender = (busy) => { const V = VZ.list(), cur = VZ.pick(); ex.innerHTML = `<div class="h"><b>🔊 ${esc(nameOf(exK))}</b><button data-x title="Fechar">×</button></div>${valOf(exK) ? `<small>Valor atual: <b>${esc(valOf(exK))}</b></small>` : ''}
       <p>${esc(exTxt)}</p><div class="r"><button data-play>▶ Ouvir</button><button data-stop>■ Parar</button><button data-ai class="pri"${busy ? ' disabled' : ''}>${busy ? 'Assistente explicando…' : '🧠 Explicar com o Assistente (valores atuais)'}</button></div>
-      <label>Voz <select data-voz><option value="__rec"${recOn() ? ' selected' : ''}>Francisca · voz natural (gravada)</option>${V.sort((a, b) => VZ.rank(b) - VZ.rank(a)).map((v) => `<option${!recOn() && cur && v.name === cur.name ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>${recOn() ? '<small>A explicação do Assistente, criada na hora, usa a melhor voz do navegador.</small>' : ''}`; };
+      <label>Voz <select data-voz><option value="__rec"${recV() === '__rec' ? ' selected' : ''}>Francisca · voz natural (gravada)</option><option value="__recT"${recV() === '__recT' ? ' selected' : ''}>Thalita · voz natural expressiva (gravada)</option>${V.sort((a, b) => VZ.rank(b) - VZ.rank(a)).map((v) => `<option${!recOn() && cur && v.name === cur.name ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>${recOn() ? '<small>A explicação do Assistente, criada na hora, usa a melhor voz do navegador.</small>' : ''}`; };
   const openEx = (k, b) => { exK = k; exTxt = EXPL[k] || ''; const r = b.getBoundingClientRect(), pr = el.getBoundingClientRect(); ex.style.left = Math.min(innerWidth - 380, pr.right + 10) + 'px'; ex.style.top = Math.max(70, Math.min(innerHeight - 320, r.top - 10)) + 'px';
     exRender(false); ex.hidden = false; el.querySelectorAll('.spk.on').forEach((x) => x.classList.remove('on')); b.classList.add('on'); sayEx(() => b.classList.remove('on')); };
   ex.addEventListener('click', async (e) => { const b = el.querySelector(`.spk[data-spk="${exK}"]`);
@@ -123,7 +124,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
         exTxt = String((r && r.resumo) || '').trim() || exTxt; logEv('Assistente', `Explicação: ${nameOf(exK)}`); } catch (err) { exTxt = (EXPL[exK] || '') + ' (Assistente indisponível agora: ' + String(err.message || err).slice(0, 80) + ')'; }
       exRender(false); b && b.classList.add('on'); if (AU) { AU.pause(); AU = null; } VZ.speak(exTxt, () => b && b.classList.remove('on')); }
   });
-  ex.addEventListener('change', (e) => { const s2 = e.target.closest('[data-voz]'); if (s2) { try { localStorage.setItem('s3voice', s2.value); } catch (x) { /* */ } exRender(false); if (s2.value === '__rec' && exK) playRec(exK); else { stopAll(); VZ.speak('Esta é a voz escolhida para as explicações.'); } } });
+  ex.addEventListener('change', (e) => { const s2 = e.target.closest('[data-voz]'); if (s2) { try { localStorage.setItem('s3voice', s2.value); } catch (x) { /* */ } exRender(false); if (/^__rec/.test(s2.value) && exK) playRec(exK); else { stopAll(); VZ.speak('Esta é a voz escolhida para as explicações.'); } } });
   el.addEventListener('click', (e) => { const b = e.target.closest('.spk'); if (!b) return; e.stopPropagation(); e.preventDefault(); if (exK === b.dataset.spk && !ex.hidden) { stopAll(); ex.hidden = true; b.classList.remove('on'); return; } openEx(b.dataset.spk, b); }, true);
   el.querySelectorAll('.s3sec>h5').forEach((h) => h.addEventListener('click', () => {
     const s = h.parentElement, k = s.dataset.k; s.classList.toggle('open');
