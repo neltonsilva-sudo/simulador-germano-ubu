@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 7 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261021200856';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261021213242';
 
 const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
 export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova
@@ -15,8 +15,12 @@ export function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null;
   e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false, wf: Math.min(m.w0 != null ? m.w0 : e.w, MNT_W) };
   e.w = e.lastMnt.wf; e.mnt = null; return e.lastMnt; }            // t de material por troca de revestimento/deck (ilustrativo)
 const CAP = { pn: 1500, cone: 800, vsi: 690 };   // Barmac 9100: 690 t/h (apostila C3); HP 400: 260–854 t/h com cascata                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
+// Barmac B9100SE (manual Metso): velocidade de saída 50–85 m/s ∝ rotação; a cascata reduz a redução (material só choca rocha-rocha) e alivia potência
+let VSI_RR = 2.1;
+export const vsiTip = (rpm) => rpm * Math.PI * .99 / 60;   // rotor Ø ≈ 0,99 m
 export const sim = {
-  feed: 3800, capNom: 4200, css: 20, wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
+  feed: 3800, capNom: 4200, css: 20, rpm: 1450, casc: 10,   // Barmac: rotação do rotor (rpm) e cascata (% desviada do rotor) — manual B9100SE
+  wi: 12, f12: .55, p80: null, tcld: 100, moist: 8, fe: 40, si: 42, running: true, t: 0, log: [], hist: [], sync: false,
   eq: {},                                                      // tag → {k, on, w (desgaste %), ...valores}
   kpi: {},
 };
@@ -47,7 +51,7 @@ export function circSolve(css, f12, e2, e1) {
     r1 += .5 * (r1n - r1); r2 += .5 * (r2n - r2); prod = 1 - r1 - r2;
     // F80 da alimentação do Barmac = retido no 2º deck (faixa −25,4 +12,5 mm + finos mal classificados)
     const R2 = (x) => (x <= D2 ? e1 * (1 - e2) * mix(x) : x <= D1 ? e1 * ((1 - e2) * pB + mix(x) - pB) : e1 * ((1 - e2) * pB + pA - pB)) / Math.max(1e-6, e1 * ((1 - e2) * pB + pA - pB));
-    F80v = bisSim(R2, .8, .5, D1); vsi = rrSim(F80v / 2.1, 1.1);
+    F80v = bisSim(R2, .8, .5, D1); vsi = rrSim(F80v / VSI_RR, 1.1);
   }
   const pA = mix(D1), pB = mix(D2);
   const R1 = (x) => (x <= D1 ? (1 - e1) * mix(x) : (1 - e1) * pA + mix(x) - pA) / Math.max(1e-6, 1 - e1 * pA);
@@ -78,7 +82,7 @@ export function circSolve2(css, f12, e2, e1) {
     const [p1, o1] = screenB(S1, SRC.d1, e1); toCone = o1;
     const [p2, o2] = screenB(p1, SRC.d2, e2); uS1 = p2; mid = o2;
     coneP = crushB(sumB(toCone), hp);
-    vsiFeed = addB(mid, vsiOver); F80v = p80B(vsiFeed); vsi = rrSim(F80v / 2.1, 1.1);
+    vsiFeed = addB(mid, vsiOver); F80v = p80B(vsiFeed); vsi = rrSim(F80v / VSI_RR, 1.1);
     Bscr = crushB(sumB(vsiFeed), vsi);                                        // peneiras do Barmac
     const [pb, ob] = screenB(Bscr, SRC.d2, e2); uB = pb; vsiOver = ob;
   }
@@ -98,6 +102,7 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
   // frações retidas e carga circulante saem do balanço granulométrico (circSolve) com a eficiência média atual das peneiras
   const e2 = clamp((sim._effM || 92) / 100, .4, .99), e1 = Math.min(.99, e2 + .04);
+  VSI_RR = 2.1 * Math.pow(clamp(sim.rpm, 900, 2100) / 1450, 1.6) * (1 - .55 * clamp(sim.casc, 0, 50) / 100) / (1 - .55 * .10);
   const CS = circSolve2(sim.css, sim.f12, e2, e1), r1 = CS.r1, r2 = CS.r2;
   const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
   const wet = Math.max(0, sim.moist - 9);                       // minério úmido: peneiramento menos eficiente (colmatação)
@@ -117,6 +122,10 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
     e.kw = !run ? 0 : e.k === 'pn' ? 45 + 20 * e.load : e.k === 'cone' ? 160 + 230 * e.load + (18 - sim.css) * 4 : 180 + 380 * e.load;
     e.vib = !run ? 0 : (e.k === 'pn' ? 2.6 : 2.3) + Math.max(0, e.load - .9) * 7 + e.w / 100 * 3 + hum;
     e.oil = !run ? 26 : 38 + 18 * e.load + e.w * .05;
+    if (e.k === 'vsi') { const v = vsiTip(sim.rpm); e.tip = run ? v : 0; e.kw = !run ? 0 : (140 + 330 * e.load * (1 - .4 * sim.casc / 100)) * Math.pow(v / 75, 2);
+      e.tA = !run ? 30 : 52 + 30 * e.load * Math.pow(v / 75, 2) + hum * 2; e.tB = e.tA + 1.5 + Math.sin(sim.t / 40) * .8; e.tBr = !run ? 28 : 46 + 22 * e.load + e.w * .08 + Math.max(0, e.vib - 4) * 3; }
+    if (e.k === 'cone') { if (e.n2 == null) e.n2 = 83 - Math.random() * 3; e.n2 = Math.max(55, e.n2 - dt * speed / 86400 * .12); e.oilP = !run ? 0 : 1.9 + .6 * e.load - e.w * .004 - Math.max(0, e.oil - 55) * .02;
+      e.ring = (e.ring || 0) + (run && e.load > 1.05 ? dt * speed / 3600 * (e.load - 1.05) * 20 : 0); }
     e.eff = e.k === 'pn' && run ? clamp(94 - Math.max(0, e.load - .9) * 55 - e.w * .05 - wet * 6, 50, 97) : 0;
     if (run) e.w = Math.min(100, e.w + e.flow * dt * speed / 3600 / LIFE[e.k] * 100);
     e.tons = (e.tons || 0) + (run ? e.flow * dt * speed / 3600 : 0); e.hrs = (e.hrs || 0) + (run ? dt * speed / 3600 : 0);
@@ -130,6 +139,11 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
     // VIDA ÚTIL RESTANTE (RSL, h de operação): até o limite de troca (95 % de desgaste), encurtada por vibração e sobrecarga
     e.rsl = e.w >= 95 ? 0 : run ? (95 - e.w) / (e.flow / LIFE[e.k] * 100) * (1 - .5 * pv) * (1 - .3 * pl) : Infinity;
     e.st = e.mnt ? 'mnt' : !e.on ? 'off' : (e.w >= 95 || e.vib >= 11 || e.load > 1.25) ? 'crit' : (e.w >= 85 || e.vib >= 7.1 || e.oil >= 65 || e.load > 1.05 || (e.k === 'pn' && e.eff < 80)) ? 'warn' : 'ok';
+    if (e.k === 'cone' && e.n2 < 75) alarms.push({ tag, st: e.n2 < 65 ? 'crit' : 'warn', why: `pré-carga N₂ dos acumuladores ${e.n2.toFixed(0)} bar (nominal 83 bar) — recarregar` });
+    if (e.k === 'cone' && run && e.oilP < 1.4) alarms.push({ tag, st: 'warn', why: `pressão do óleo baixa ${e.oilP.toFixed(1)} bar — verificar filtro e bomba` });
+    if (e.k === 'cone' && e.ring > 1) alarms.push({ tag, st: e.ring > 3 ? 'crit' : 'warn', why: `movimento do anel de ajuste (${e.ring.toFixed(1)} ocorrências) — sobrecarga: abrir a APF ou reduzir a alimentação` });
+    if (e.k === 'vsi' && run && Math.max(e.tA, e.tB) > 95) alarms.push({ tag, st: 'warn', why: `VOCS: temperatura de motor ${Math.max(e.tA, e.tB).toFixed(0)} °C` });
+    if (e.k === 'vsi' && run && e.tBr > 80) alarms.push({ tag, st: e.tBr > 90 ? 'crit' : 'warn', why: `VOCS: temperatura dos mancais ${e.tBr.toFixed(0)} °C — engraxar/verificar cartucho` });
     if (e.st === 'warn' || e.st === 'crit') alarms.push({ tag, st: e.st, why: [e.load > 1.05 ? `sobrecarga ${Math.round(e.load * 100)} %` : '', e.vib >= 7.1 ? `vibração ${e.vib.toFixed(1)} mm/s` : '', e.w >= 85 ? `desgaste ${Math.round(e.w)} %` : '', e.k === 'pn' && run && e.eff < 80 ? `eficiência ${Math.round(e.eff)} %` : ''].filter(Boolean).join(', ') });
     kw += e.kw;
   }

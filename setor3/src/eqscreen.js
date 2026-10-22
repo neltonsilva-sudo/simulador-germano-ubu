@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261021200856';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261021200856';
+import { call } from './api.js?v=20261021213242';
+import { MNT, startMnt, finishMnt } from './sim.js?v=20261021213242';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -48,8 +48,11 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     const S = SPEC[e.k], run = e.on && e.flow > 0, amp = run ? e.kw / (1.732 * KV[e.k] * .88 * .95) : 0;
     const cls = (v, w, c) => (v >= c ? 'crit' : v >= w ? 'warn' : '');
     const extra = e.k === 'pn' ? `<div class="${run && e.eff < 80 ? 'warn' : ''}"><b>${run ? fm(e.eff) + ' %' : '–'}</b><span>Eficiência de peneiramento</span></div><div><b>${run ? '16,0 Hz' : '0'}</b><span>Frequência de vibração</span></div>`
-      : e.k === 'cone' ? `<div><b>${fm(sim.css)} mm</b><span>APF (abertura)</span></div><div><b>${run ? fm(55 + 70 * e.load + (20 - sim.css) * 1.5) + ' bar' : '–'}</b><span>Pressão hidráulica</span></div>`
-        : `<div><b>${run ? '1.450 rpm' : '0'}</b><span>Rotação do rotor</span></div><div><b>${run ? '≈ 75 m/s' : '–'}</b><span>Velocidade na ponta</span></div>`;
+      : e.k === 'cone' ? `<div><b>${fm(sim.css)} mm</b><span>APF (abertura)</span></div><div><b>${run ? fm(55 + 70 * e.load + (20 - sim.css) * 1.5) + ' bar' : '–'}</b><span>Pressão hidráulica</span></div>
+          <div class="${run && e.oilP < 1.4 ? 'warn' : ''}"><b>${run ? fm(e.oilP, 1) + ' bar' : '–'}</b><span>Pressão do óleo de lubrificação</span></div><div class="${e.n2 < 65 ? 'crit' : e.n2 < 75 ? 'warn' : ''}"><b>${fm(e.n2 || 83)} bar</b><span>Pré-carga N₂ dos acumuladores (nominal 83 · 6 acumuladores)</span></div>
+          <div class="${e.ring > 3 ? 'crit' : e.ring > 1 ? 'warn' : ''}"><b>${fm(e.ring || 0, 1)}</b><span>Movimentos do anel de ajuste (sobrecarga)</span></div>`
+        : `<div><b>${run ? fm(sim.rpm) + ' rpm' : '0'}</b><span>Rotação do rotor</span></div><div><b>${run ? fm(e.tip || 0) + ' m/s' : '–'}</b><span>Velocidade na ponta (faixa 50–85)</span></div><div><b>${fm(sim.casc)} %</b><span>Cascata (desvio do rotor)</span></div>
+          <div class="${run && Math.max(e.tA, e.tB) > 95 ? 'warn' : ''}"><b>${run ? fm(e.tA) + ' / ' + fm(e.tB) + ' °C' : '–'}</b><span>VOCS · motores A / B</span></div><div class="${run && e.tBr > 90 ? 'crit' : run && e.tBr > 80 ? 'warn' : ''}"><b>${run ? fm(e.tBr) + ' °C' : '–'}</b><span>VOCS · mancais (cartucho)</span></div>`;
     const K = sim.kpi, share = e.k === 'pn' ? `${fm(e.flow)} de ${fm(K.T)} t/h da alimentação das peneiras` : e.k === 'cone' ? `${fm(e.flow)} de ${fm(K.T * K.r1)} t/h do retido no 1º deck` : `${fm(e.flow)} de ${fm(K.T * K.r2)} t/h do retido no 2º deck`;
     const wcol = e.w >= 95 ? '#ff5a4a' : e.w >= 85 ? '#ffb020' : '#2fbf71';
     // EFICIÊNCIA do equipamento (mesmo cálculo da seção "Eficiência do processo")
@@ -74,6 +77,10 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <p class="n">${share}. Partidas na sessão: ${e.starts || 0}.</p>
       ${effBlock}
       <h4>Tendência</h4><canvas id="eqC"></canvas><p class="n">Linha tracejada: alerta de vibração (7,1 mm/s).</p>
+      ${(() => { const CK = { pn: [['Diária', 'Inspeção visual dos decks, telas e molas'], ['Semanal', 'Vibradores: temperatura e lubrificação'], ['30 dias', 'Aperto dos parafusos e inspeção estrutural']],
+          cone: [['Diária', 'Pressão do óleo e área de descarga (material depositado)'], ['Semanal', 'Lubrificar a rosca do anel de ajuste e do bojo'], ['30 dias', 'Pré-carga de N₂ dos acumuladores (83 bar)'], ['Troca de revestimento', 'Inspecionar revestimento da carcaça e proteções do braço']],
+          vsi: [['Diária', 'Pontas do rotor (fixação e desgaste) e camada de rocha'], ['Semanal', 'Engraxar o cartucho do mancal; anteparos da cascata'], ['30 dias', 'Placas de desgaste, anel/tubo de alimentação e placas-guia']] }[e.k] || [];
+        e.ck = e.ck || {}; return `<h4>Checklist de manutenção (manuais Metso)</h4><div class="ckl">${CK.map(([f, t], j) => `<label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;font-size:12px"><input type="checkbox" data-ck="${j}" ${e.ck[j] ? 'checked' : ''}><span><b>${f}</b> · ${t}${e.ck[j] ? ` <i style="color:#7fe08a">feito ${e.ck[j]}</i>` : ''}</span></label>`).join('')}</div>`; })()}
       <h4>Manutenção</h4><div class="g"><div><b style="color:${wcol}">${fm(e.w)} %</b><span>Desgaste ${e.k === 'pn' ? 'do deck' : e.k === 'vsi' ? 'das pontas do rotor' : 'dos revestimentos'}</span></div><div><b>${isFinite(e.left) ? (e.left > 48 ? '≈ ' + fm(e.left / 24) + ' dias' : '≈ ' + fm(e.left) + ' h') : '–'}</b><span>Troca prevista</span></div>
         <div class="${hcl}"><b style="color:${hcol}">${e.health == null ? '–' : e.health + ' / 100'}</b><span>Saúde do ativo · ${hTxt}</span></div><div class="${isFinite(e.rsl) && e.rsl < 24 * 7 ? 'warn' : ''}"><b>${rslTxt}</b><span>Vida útil restante (RSL, até 95 % de desgaste)</span></div></div>
       <div class="bar"><i style="width:${Math.min(100, e.w)}%;background:${wcol}"></i></div>
@@ -84,6 +91,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       : `<div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button class="mnt" data-a="mnt" title="Desliga, bloqueia a partida, coloca os alarmes fora de serviço e executa o plano de manutenção">Manutenção</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`}<p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
     chart(el.querySelector('#eqC'), e);
     el.querySelector('.x').onclick = close;
+    el.querySelectorAll('[data-ck]').forEach((c) => c.onchange = () => { const e2 = sim.eq[tag]; e2.ck = e2.ck || {}; const j = c.dataset.ck; if (c.checked) { e2.ck[j] = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); if (e2.k === 'cone' && /N₂/.test(c.parentElement.textContent)) e2.n2 = 83; if (e2.k === 'cone' && /descarga/.test(c.parentElement.textContent)) e2.ring = 0; logEv('Manutenção', `${tag}: ${c.parentElement.textContent.split('·')[1].trim()} — registrado`); } else delete e2.ck[j]; render(); });
     el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'mnt') { startMnt(e); logEv('Manutenção', `${tag} em manutenção: desligado e bloqueado (plano de ${MNT[e.k].h} h)`); sim.cmdEq && sim.cmdEq(tag, { mnt: true }); render(); return; }
       if (b.dataset.a === 'mfin') { const r = finishMnt(tag, e, true); if (r) r.sent = true; sim.cmdEq && sim.cmdEq(tag, { mnt: false }); render(); checkRep(); return; }
       if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });

@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261021200856';
-import { startMnt, finishMnt } from './sim.js?v=20261021200856';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261021213242';
+import { startMnt, finishMnt } from './sim.js?v=20261021213242';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -76,7 +76,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   // estado vindo do simulador: canal local (mesmo site) ou servidor (sites diferentes)
   let viaBC = 0, srvBusy = false;
   const applyState = (d) => { lastSync = performance.now(); if (isFinite(d.night) && window.__s3setNight) { window.__nightExt = Date.now(); window.__s3setNight(d.night); } const was = sim.sync; sim.sync = true; if (!was && pend.length) { pend.forEach((x) => { const t = x.eqCmd && x.eqCmd.tag; if (t) (sim._lock = sim._lock || {})[t] = performance.now() + 20000; }); setTimeout(flushPend, 0); }
-    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
+    if (isFinite(d.mine)) sim.feed = d.mine; if (isFinite(d.css)) sim.css = d.css; if (isFinite(d.vsiRpm)) sim.rpm = d.vsiRpm; if (isFinite(d.vsiCasc)) sim.casc = d.vsiCasc; if (isFinite(d.tcld)) sim.tcld = d.tcld; if (isFinite(d.moist)) sim.moist = d.moist; if (typeof d.running === 'boolean') sim.running = d.running; if (isFinite(d.fe)) sim.fe = d.fe; if (isFinite(d.p80)) sim.p80 = d.p80; const lk = sim._lock || {}, now = performance.now();
     /* desgaste e liga/desliga de cada equipamento vêm do simulador (fonte única), exceto logo depois de um comando dado aqui */
     if (d.eq) for (const t in d.eq) { const e = sim.eq[t], q = d.eq[t]; if (!e || !q || (lk[t] || 0) > now || (q.rev || 0) < (e.rev || 0)) continue; e.rev = q.rev || 0; if (isFinite(q.w)) e.w = q.w; if (typeof q.on === 'boolean') e.on = q.on; if (q.mnt && !e.mnt) startMnt(e); else if (q.mnt === false && e.mnt) { const r = finishMnt(t, e); if (r) r.sent = true; } if (e.mnt && isFinite(q.mh)) e.mnt.h = Math.max(e.mnt.h || 0, q.mh); }
     const stale = (t) => (lk[t] || 0) > now || (d.eq && d.eq[t] && (d.eq[t].rev || 0) < (sim.eq[t].rev || 0));
@@ -99,9 +99,14 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     <div class="ctl"><div class="r"><span>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai. Alerta amarelo a partir de 8,5 % (ou quando sobe rápido) e vermelho a partir de 9,5 %.</small></div>
     <div class="ctl"><div class="r"><span>Finos do ROM (&lt; 12,5 mm)</span><b id="cRv"></b></div><input type="range" id="cR" min="30" max="85" step="1"><small>[adotado] Fração do ROM (&lt; 150 mm) que já chega abaixo de 12,5 mm. Itabirito friável: quanto mais fino, menor a carga circulante e a energia de britagem.</small></div>
     <div class="ctl"><div class="r"><span>Wi do minério (Bond)</span><b id="cWv"></b></div><input type="range" id="cW" min="6" max="20" step=".5"><small>Índice de trabalho de laboratório; referência para a eficiência energética dos britadores (Wi ÷ Wio).</small></div>
+    <div class="ctl"><div class="r"><span>Barmac · rotação do rotor</span><b id="cPv"></b></div><input type="range" id="cP" min="1000" max="1640" step="10"><small>Manual B9100SE: mais rotação = maior velocidade na ponta (50–85 m/s), produto mais fino e mais potência.</small></div>
+    <div class="ctl"><div class="r"><span>Barmac · cascata</span><b id="cKv"></b></div><input type="range" id="cK" min="0" max="40" step="1"><small>Parte da alimentação que desvia do rotor (choque rocha-rocha): alivia a potência e engrossa o produto — ajuste fino da curva granulométrica.</small></div>
     <button class="go" id="cRun"></button>`;
   const cF = $('#cF'), cC = $('#cC'), cT = $('#cT'), cM = $('#cM'), cR = $('#cR'), cW = $('#cW');
   cR.oninput = () => { sim.f12 = +cR.value / 100; }; cR.onchange = () => logEv('Ajuste', `Finos do ROM < 12,5 mm = ${fm(sim.f12 * 100)} %`);
+  const cP = $('#cP'), cK = $('#cK');
+  cP.oninput = () => { sim.rpm = +cP.value; send({ vsiRpm: sim.rpm }); }; cP.onchange = () => logEv('Ajuste', `Rotação dos Barmac = ${fm(sim.rpm)} rpm`);
+  cK.oninput = () => { sim.casc = +cK.value; send({ vsiCasc: sim.casc }); }; cK.onchange = () => logEv('Ajuste', `Cascata dos Barmac = ${fm(sim.casc)} %`);
   cW.oninput = () => { sim.wi = +cW.value; }; cW.onchange = () => logEv('Ajuste', `Wi do minério = ${fm(sim.wi, 1)} kWh/t`);
   cF.oninput = () => { sim.feed = +cF.value; }; cF.onchange = () => logEv('Ajuste', `Alimentação nova ${fm(sim.feed)} t/h`);
   cC.oninput = () => { sim.css = +cC.value; send({ css: sim.css }); }; cC.onchange = () => logEv('Ajuste', `APF dos HP 400 = ${sim.css} mm`);
@@ -253,8 +258,9 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
       chart(cv[1], [{ n: 'carga circulante', c: '#ffd24a', f: (h) => h.circ }], 'Carga circulante', '%');
       chart(cv[2], [{ n: 'potência', c: '#c792ea', f: (h) => h.kw }], 'Potência total', 'kW'); }
     if (on('ctl') || force) {
+      if (document.activeElement !== cP) cP.value = sim.rpm; if (document.activeElement !== cK) cK.value = sim.casc;
       if (document.activeElement !== cF) cF.value = sim.feed; if (document.activeElement !== cC) cC.value = sim.css; if (document.activeElement !== cT) cT.value = sim.tcld; if (document.activeElement !== cM) cM.value = sim.moist; if (document.activeElement !== cR) cR.value = Math.round(sim.f12 * 100); if (document.activeElement !== cW) cW.value = sim.wi;
-      $('#cFv').textContent = fm(sim.feed) + ' t/h'; $('#cCv').textContent = sim.css + ' mm'; $('#cTv').textContent = fm(sim.tcld) + ' %'; $('#cMv').textContent = fm(sim.moist, 1) + ' %'; $('#cRv').textContent = fm(sim.f12 * 100) + ' %'; $('#cWv').textContent = fm(sim.wi, 1) + ' kWh/t';
+      $('#cFv').textContent = fm(sim.feed) + ' t/h'; $('#cCv').textContent = sim.css + ' mm'; $('#cTv').textContent = fm(sim.tcld) + ' %'; $('#cMv').textContent = fm(sim.moist, 1) + ' %'; $('#cRv').textContent = fm(sim.f12 * 100) + ' %'; $('#cWv').textContent = fm(sim.wi, 1) + ' kWh/t'; $('#cPv').textContent = fm(sim.rpm) + ' rpm · ' + fm(sim.rpm * Math.PI * .99 / 60) + ' m/s'; $('#cKv').textContent = fm(sim.casc) + ' %';
       cF.disabled = cM.disabled = sync; $('#cFn').textContent = sync ? 'Vem da lavra no simulador (sincronizado). APF, TCLD e partir/parar daqui comandam o simulador.' : 'Vazão de ROM que a TCLD entrega ao setor. Limitada pela velocidade da TCLD.';
       $('#cRun').textContent = sim.running ? 'Parar o circuito' : 'Partir o circuito'; $('#cRun').style.background = sim.running ? '#c0392b' : '#1f8a5b'; }
     if (on('flu') || force) { const fe = sim.fe, si = sim.si;
