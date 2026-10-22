@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261021213242';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021213242';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261021214118';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021214118';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -87,6 +87,14 @@ function sheaveGeo(r, w, n) { const pts = [[0, -w / 2], [r * .3, -w / 2], [r * .
 export function buildCrushers(scene, M) {
   const g = new THREE.Group(); scene.add(g);
   const spin = [], beacons = {}, hot = [], streams = [], belts = [], rings = [];
+  // correia em V do acionamento do HP 400 com marcas transversais (o movimento aparece pela janela de tela da proteção)
+  const vbTexC = (() => { const c = document.createElement('canvas'); c.width = 16; c.height = 64; const x = c.getContext('2d'); x.fillStyle = '#1b1b1b'; x.fillRect(0, 0, 16, 64); x.fillStyle = '#5a5a58'; x.fillRect(0, 0, 16, 9); x.fillStyle = '#c8b46a'; x.fillRect(0, 30, 16, 4);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
+  const vbMatC = new THREE.MeshStandardMaterial({ map: vbTexC, roughness: .8, metalness: 0 }), vbDrive = [];
+  // raios e marca de tinta nas polias (polias lisas não mostram a rotação)
+  const sheaveMarksC = (o, r) => { for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2, sp = new THREE.Mesh(new THREE.BoxGeometry(r * 1.6, .24, .05), M.steelDk || M.greyDk); sp.rotation.y = a; o.add(sp); }
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * .28, r * .28, .26, 16), M.steelDk || M.greyDk); o.add(hub);
+    const mk = new THREE.Mesh(new THREE.BoxGeometry(r * .5, .25, .07), new THREE.MeshStandardMaterial({ color: 0xffd24a, emissive: 0x332200 })); mk.position.x = r * .62; o.add(mk); };
   const rockGeo = new THREE.DodecahedronGeometry(.09); const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3(1, 1, 1), p4 = new THREE.Vector3();
   const stream = (tag, x, z, y0, y1) => { const n = 46, im = new THREE.InstancedMesh(rockGeo, M.ore, n); g.add(im); streams.push({ tag, im, x, z, y0, y1, d: Array.from({ length: n }, () => ({ u: Math.random(), x: (Math.random() - .5) * .45, z: (Math.random() - .5) * .45 })) }); };
   const bc = () => { const m = new THREE.Mesh(new THREE.SphereGeometry(.16, 16, 12), new THREE.MeshStandardMaterial({ color: 0x5ff0ff, emissive: 0x5ff0ff, emissiveIntensity: 4 })); m.userData.keep = true; return m; };
@@ -289,10 +297,11 @@ export function buildCrushers(scene, M) {
     cyl(DG, .27, .27, .2, mBeige, 1.86, yS, 0, 28).rotation.z = Math.PI / 2; cyl(DG, .05, .05, .3, mChrome, 2.06, yS, 0, 12).rotation.z = Math.PI / 2;
     for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; bolt(DG, 1.45, yS + Math.cos(a) * .25, Math.sin(a) * .25, 1, 0, 0, .02, M.steelDk); }
     beam(DG, V(1.86, BF, 0), V(1.86, yS - .2, 0), .14, mBase);
-    const sv = new THREE.Mesh(sheaveGeo(.44, .2, 5), M.greyDk); sv.rotation.z = Math.PI / 2; sv.position.set(2.2, yS, 0); sv.userData.keep = true; sh(sv); DG.add(sv); spin.push({ tag: c.tag, o: sv, ax: 'x', w: 9 });
-    const mv = new THREE.Mesh(sheaveGeo(.17, .2, 5), M.greyDk); mv.rotation.z = Math.PI / 2; mv.position.set(2.2, yM, zM); mv.userData.keep = true; sh(mv); DG.add(mv); spin.push({ tag: c.tag, o: mv, ax: 'x', w: 24 });
+    const sv = new THREE.Mesh(sheaveGeo(.44, .2, 5), M.greyDk); sv.rotation.z = Math.PI / 2; sv.position.set(2.2, yS, 0); sv.userData.keep = true; sh(sv); DG.add(sv); sheaveMarksC(sv, .44); spin.push({ tag: c.tag, o: sv, ax: 'y', w: 9 });
+    const mv = new THREE.Mesh(sheaveGeo(.17, .2, 5), M.greyDk); mv.rotation.z = Math.PI / 2; mv.position.set(2.2, yM, zM); mv.userData.keep = true; sh(mv); DG.add(mv); sheaveMarksC(mv, .17); spin.push({ tag: c.tag, o: mv, ax: 'y', w: 24 });
     // correias (trechos retos tangentes)
-    for (const s2 of [-1, 1]) { const dz = zM, dy = yM - yS, L = Math.hypot(dz, dy), nz = -dy / L * s2, ny = dz / L * s2; beam(DG, V(2.2, yS + ny * .42, nz * .42), V(2.2, yM + ny * .16, zM + nz * .16), .05, M.belt || M.black); }
+    for (const s2 of [-1, 1]) { const dz = zM, dy = yM - yS, L = Math.hypot(dz, dy), nz = -dy / L * s2, ny = dz / L * s2; const bm = beam(DG, V(2.2, yS + ny * .42, nz * .42), V(2.2, yM + ny * .16, zM + nz * .16), .05, vbMatC); vbDrive.push({ tag: c.tag }); }
+    vbTexC.repeat.set(1, 8);
     const C2 = [[0, yS, .6], [zM, yM, .36]], gx = (o) => { o.rotation.y = -Math.PI / 2; return o; };
     const rim = sh(new THREE.Mesh((() => { const s0 = hullShape(C2); s0.holes.push(new THREE.Path(hullShape(C2, .035).getPoints().reverse())); return extr(s0, .34); })(), M.yellow)); gx(rim); rim.position.set(2.2, 0, 0); DG.add(rim);
     // mapeamento: shape (x = z local, y = y) — rotação -90° em y leva x→+z
@@ -310,6 +319,12 @@ export function buildCrushers(scene, M) {
     for (let k = 0; k < 20; k++) { const a = k / 20 * TAU; if (Math.sin(a) < -.75) continue; const f = box(DG, .76, .07, .014, M.motor, 1.55, yM + Math.sin(a) * .32, zM + Math.cos(a) * .32); f.rotation.x = Math.PI / 2 - a; }
     cyl(DG, .33, .33, .05, M.motor, 1.97, yM, zM, 36).rotation.z = Math.PI / 2;
     cyl(DG, .34, .32, .2, M.motor, 1.07, yM, zM, 36).rotation.z = Math.PI / 2; const gr = new THREE.Mesh(new THREE.CircleGeometry(.3, 32), M.black); gr.position.set(.965, yM, zM); gr.rotation.y = -Math.PI / 2; DG.add(gr);
+    { /* ventoinha do motor girando atrás da grade (grade em anéis vazados) */ gr.material = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: .7 }); gr.position.x = .985;
+      const fan = new THREE.Group(); fan.position.set(.958, yM, zM); DG.add(fan); const bm = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: .5, roughness: .45 });
+      for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(.01, .25, .07), bm); bl.position.set(0, Math.cos(k / 6 * Math.PI * 2) * .14, Math.sin(k / 6 * Math.PI * 2) * .14); bl.rotation.x = -k / 6 * Math.PI * 2; bl.rotation.y = .5; fan.add(bl); }
+      spin.push({ tag: c.tag, o: fan, ax: 'x', w: 30 });
+      for (const rr of [.1, .18, .26]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, .01, 4, 40), M.yellow); ring.position.set(.944, yM, zM); ring.rotation.y = Math.PI / 2; DG.add(ring); }
+      for (let k = 0; k < 4; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(.01, .58, .014), M.yellow); sp.position.set(.944, yM, zM); sp.rotation.x = k * Math.PI / 4; DG.add(sp); } }
     cbox(DG, .3, .2, .26, M.motor, 1.65, yM + .4, zM, .02); cyl(DG, .05, .05, .07, mChrome, 2.08, yM, zM, 10).rotation.z = Math.PI / 2;
     for (const s2 of [-1, 1]) for (const ox of [1.25, 1.85]) { cbox(DG, .12, .16, .1, M.motor, ox, .6, zM + s2 * .24, .01); bolt(DG, ox, .54, zM + s2 * .29, 0, 1, 0, .02, M.steelDk); }
     const lb = new THREE.Mesh(new THREE.PlaneGeometry(.26, .2), mLblA); lb.position.set(2.377, yS - .5, zM * .45); lb.rotation.y = Math.PI / 2; DG.add(lb);
@@ -562,6 +577,7 @@ export function buildCrushers(scene, M) {
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
     const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 };
     for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w; }
+    { const anyOn = vbDrive.some((v) => { const e = E[v.tag] || { on: true, flow: 1 }; return e.on && e.flow > 0; }); if (anyOn) vbTexC.offset.y -= dt * 3.2; }
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); }
     for (const st of streams) { const e = E[st.tag] || { on: true, flow: 1, load: .7 }, run = e.on && e.flow > 0; st.im.visible = run; if (!run) continue;
       const k = .6 + Math.min(1.2, e.load); for (let i = 0; i < st.d.length; i++) { const d = st.d[i]; d.u += dt * 1.4 * k; if (d.u > 1) d.u -= 1; p4.set(st.x + d.x, st.y0 + (st.y1 - st.y0) * d.u * d.u, st.z + d.z); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.setScalar(1); m4.compose(p4, q4, s4); st.im.setMatrixAt(i, m4); } st.im.instanceMatrix.needsUpdate = true; }
