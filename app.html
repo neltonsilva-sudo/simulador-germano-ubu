@@ -3282,7 +3282,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261021215924';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261021220342';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3573,7 +3573,7 @@ function terrainMesh(W,D,SX,SZ,cx,cz,hole){
       for(let k=0;k<5000;k++){const v=rnd();x.fillStyle=v<.5?`rgba(40,28,22,${.08+rnd()*.2})`:`rgba(255,250,240,${.06+rnd()*.14})`;x.fillRect(rnd()*w,rnd()*h,1+rnd()*2.5,1+rnd()*2.5);}
       for(let k=0;k<16;k++){const v0=rnd()*h,amp=2+rnd()*8,ph=rnd()*6,dk=rnd()<.7;x.strokeStyle=dk?`rgba(60,40,30,${.12+rnd()*.16})`:`rgba(255,248,236,${.1+rnd()*.12})`;x.lineWidth=3+rnd()*5;
         for(const off of [0,14+rnd()*6]){x.beginPath();for(let u=0;u<=w;u+=8){const v=v0+off+Math.sin(u/w*Math.PI*2*(1+(k%3))+ph)*amp;u?x.lineTo(u,v):x.moveTo(u,v);}x.stroke();}}},{rep:[1,1]});
-    const pitMat=new THREE.MeshStandardMaterial({vertexColors:true,map:pitTex,roughness:.95,metalness:0});wetify(pitMat);
+    const pitMat=new THREE.MeshStandardMaterial({vertexColors:true,map:pitTex,roughness:.95,metalness:0,color:0x8a8a8a,envMapIntensity:.4});/* mais escura, como a cava do gêmeo */wetify(pitMat);
     const pm=new THREE.Mesh(g,pitMat);pm.receiveShadow=true;pm.castShadow=true;pm.name='pitMesh';root.add(pm);}
   const dt2=detailTex.clone();dt2.needsUpdate=true;dt2.repeat.set(160,140);
   const ot=new THREE.Mesh(terrainMesh(2200,1900,220,190,150,0,true),new THREE.MeshStandardMaterial({vertexColors:true,map:dt2,roughness:.97,metalness:0}));ot.receiveShadow=true;root.add(ot);window.__wetify(ot.material);
@@ -3818,7 +3818,14 @@ const MQ=(()=>{
       if(rem<=st&&!tk.full){tk.a=S.aL;tk.st='wait';S.passes=0;}else tk.a+=st;
       if(tk.full&&rem<PI){tk.full=false;setLoad(tk,0);}}/* descarga no britador fora da cava: volta vazio */
     place(tk.g,tk.a,d,1);}
-  function drive(tk,dt){if(tk.mode==='load'){loadStep(tk,dt);return;}tk.a+=tk.dir*tk.v*dt/tk.d;tk.phase=tk.a/(2*PI);place(tk.g,tk.a,tk.d,tk.dir);}
+  /* caminhões seguem a rampa espiral (MINA3.pts): descem vazios e sobem carregados, vai-e-volta; sem rampa, voltam ao anel da berma */
+  function drive(tk,dt){if(tk.mode==='load'){loadStep(tk,dt);return;}
+    const R=typeof MINA3!=='undefined'&&MINA3&&MINA3.pts&&MINA3.pts.length>4?MINA3.pts:null;
+    if(!R){tk.a+=tk.dir*tk.v*dt/tk.d;tk.phase=tk.a/(2*PI);place(tk.g,tk.a,tk.d,tk.dir);return;}
+    if(tk.u==null){tk.u=(tk.a/(2*PI)%1+1)%1*(R.length-1);tk.sg=tk.dir>0?1:-1;}
+    tk.u+=tk.sg*dt*tk.v*.55;const n=R.length-1;if(tk.u>=n){tk.u=n;tk.sg=-1;}if(tk.u<=0){tk.u=0;tk.sg=1;}
+    const i=Math.min(n-1,Math.floor(tk.u)),f=tk.u-i,pa=R[i],pb=R[i+1],x=pa.x+(pb.x-pa.x)*f,z=pa.z+(pb.z-pa.z)*f;
+    tk.g.position.set(x,H(x,z)-MINE.position.y,z);const hx=(pb.x-pa.x)*tk.sg,hz=(pb.z-pa.z)*tk.sg;if(Math.abs(hx)+Math.abs(hz)>1e-4)tk.g.rotation.y=Math.atan2(hx,hz)-PI/2;}
   function step(dt){
     if(typeof RUN!=='undefined'&&!RUN.mine){S.sp.forEach(m=>m.visible=false);return;}
     {const e=S.ex,lt=S.lt,ready=lt&&lt.st==='wait'&&S.passes<4;let t=S.tau+dt,sw;if(t>=3&&S.tau<=3&&!ready)t=3;if(t>=10)t-=10;S.tau=t;
