@@ -489,7 +489,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 @media (max-width:860px){.hxW>span{font-size:23px}.hxS{font-size:8px;letter-spacing:.22em}}
 .brandH{font-weight:800;letter-spacing:.06em;background:linear-gradient(90deg,#ffd24a,#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent}
 #trHud{position:fixed;left:16px;bottom:64px;width:360px;max-width:calc(100vw - 32px);max-height:74vh;overflow:auto;z-index:25;background:rgba(12,20,28,.88);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:10px 12px;color:#fff;font-size:12.5px;box-shadow:0 16px 40px rgba(0,0,0,.45)}
-#trHud .trh{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;cursor:pointer}#trHud .trh b{color:#ffb23d}#trHud .trh span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#trHud .trh em{font-style:normal;font-variant-numeric:tabular-nums;color:#cfe3ee}
+#trHud .trh{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;cursor:grab;touch-action:none;user-select:none}#trHud .trh b{color:#ffb23d}#trHud .trh span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#trHud .trh em{font-style:normal;font-variant-numeric:tabular-nums;color:#cfe3ee}
 #trHud.min ol,#trHud.min .row{display:none}#trHud ol{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}#trHud li{display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:start;line-height:1.35}#trHud li small{color:#9fb3bf}
 #trHud .ic{text-align:center;font-weight:700;color:#9fb3bf}#trHud li.ok .ic{color:#2fbf71}#trHud li.bad .ic{color:#ff5a4a}#trHud .trq{grid-column:2/4;display:grid;gap:4px}#trHud .trq p{margin:2px 0;color:#e6f0f5}#trHud .trq .btn{text-align:left;white-space:normal;height:auto;padding:5px 8px;font-size:12px}#trHud .trq .btn.ok{border-color:#2fbf71;background:rgba(47,191,113,.18)}#trHud .trq .btn.bad{border-color:#ff5a4a;background:rgba(255,90,74,.16)}
 #trHud .row{display:flex;justify-content:space-between;align-items:center}
@@ -3484,7 +3484,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022172501';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022173055';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7336,7 +7336,12 @@ function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();ret
       if(ev.target.closest('#trQn')){R.qz.i++;trHud(true);}
       if(ev.target.closest('#trHintB')){trHint(R);trHud(true);}
       if(ev.target.closest('#trTtsH')){TR.tts=!TR.tts;trLS.set('trTts',TR.tts);if(!TR.tts)try{speechSynthesis.cancel();}catch(x){}trHud(true);}
-      if(ev.target.closest('#trEndB'))trEnd();if(ev.target.closest('.trh'))e.classList.toggle('min');});}
+      if(ev.target.closest('#trEndB'))trEnd();if(ev.target.closest('.trh')&&!e._moved)e.classList.toggle('min');e._moved=false;});
+    /* arrastar pelo cabeçalho; sem arrasto, o card se posiciona ao lado do painel de controle quando ele está aberto */
+    e.addEventListener('pointerdown',ev=>{if(!ev.target.closest('.trh'))return;const r0=e.getBoundingClientRect(),x0=ev.clientX,y0=ev.clientY;e._moved=false;
+      const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(Math.abs(dx)+Math.abs(dy)>5){e._moved=true;e._drag=true;e.style.left=clamp(r0.left+dx,0,innerWidth-80)+'px';e.style.top=clamp(r0.top+dy,0,innerHeight-60)+'px';e.style.bottom='auto';}};
+      const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);};addEventListener('pointermove',mv);addEventListener('pointerup',up);});}
+  if(!e._drag){const lp=$('#left'),open=lp&&!lp.classList.contains('collapsed')&&lp.offsetParent!==null,x=open?Math.round(lp.getBoundingClientRect().right+12):16;if(e._x!==x){e._x=x;e.style.left=x+'px';}}
   const h=(ST.simT-r.t0)/3600,P=trPts(r,false),L=TRL[r.lvl],fb=L.fb;
   const li=r.s.obj.map((o,i)=>{const q=r.st[i];if(o.at&&!q.shown)return `<li class="wait"><span class="ic">◌</span><span>${o.radio?'📻 ':''}${o.t} <small>(aguardando a situação)</small></span><b>–/${o.pts}</b></li>`;
     const ic=o.keep?(q.fail?'✗':'…'):o.frac?(h<1?'…':`${Math.round(q.tot?q.inT/q.tot*100:0)} %`):q.done?(!fb&&o.q?'●':q.pts?'✓':'✗'):'○';
@@ -7344,7 +7349,7 @@ function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();ret
     const showD=!q.done&&!q.fail&&(L.dicas==='auto'||r.rev.includes(i));
     return `<li class="${q.fail||(fb&&q.done&&!q.pts)?'bad':(fb||!o.q)&&(q.done||(o.keep&&!q.fail))?'ok':''}"><span class="ic">${ic}</span><span>${o.radio?'📻 ':''}${o.t}${o.lim?` <small>(até ${trHM(o.lim*L.limK)} h)</small>`:''}${showD?`<i class="trdica">💡 ${o.dica}</i>`:''}</span><b>${fb||!o.q?P[i]:'–'}/${o.pts}</b>${quiz}</li>`;}).join('');
   const u=r.user||{},tot=P.reduce((a,b)=>a+b,0)+(fb?trQzPts(r):0)-(L.dicas==='pedir'?r.hints*5:0);
-  const html=`<div class="trh" title="Clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${trHM(Math.min(h,r.s.dur))} / ${trHM(r.s.dur)} h</em></div>
+  const html=`<div class="trh" title="Arraste para mover · clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${trHM(Math.min(h,r.s.dur))} / ${trHM(r.s.dur)} h</em></div>
     <div class="trmeta">👤 ${esc(u.nome||'')} · nível <b>${L.nome}</b>${r.hints?` · ${r.hints} dica(s)`:''}</div>
     ${r.e2msg?`<div class="tre2">⚠ Evento inesperado: ${r.e2msg}</div>`:''}<ol>${li}</ol>${r.s.panel?`<div class="trpz">${r.s.panel(r)}</div>`:''}${trQzHTML(r)}
     <div class="row"><span>Pontos parciais: <b>${Math.max(0,tot)}</b></span><span style="display:flex;gap:6px">${L.dicas==='pedir'?'<button class="btn" id="trHintB" title="Mostra a dica do próximo objetivo (−5 pts)">💡 Dica −5</button>':''}<button class="btn" id="trTtsH" title="Narração por voz">${TR.tts?'🔊':'🔇'}</button><button class="btn" id="trEndB">Encerrar</button></span></div>`;
