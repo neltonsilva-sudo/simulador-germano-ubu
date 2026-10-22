@@ -488,6 +488,13 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 .hxS{font:700 9.5px/1 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.3em;color:#f3f7fa;text-transform:uppercase;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.7)}
 @media (max-width:860px){.hxW>span{font-size:23px}.hxS{font-size:8px;letter-spacing:.22em}}
 .brandH{font-weight:800;letter-spacing:.06em;background:linear-gradient(90deg,#ffd24a,#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent}
+#trHud{position:fixed;left:16px;bottom:64px;width:360px;max-width:calc(100vw - 32px);max-height:62vh;overflow:auto;z-index:25;background:rgba(12,20,28,.88);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:10px 12px;color:#fff;font-size:12.5px;box-shadow:0 16px 40px rgba(0,0,0,.45)}
+#trHud .trh{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;cursor:pointer}#trHud .trh b{color:#ffb23d}#trHud .trh span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#trHud .trh em{font-style:normal;font-variant-numeric:tabular-nums;color:#cfe3ee}
+#trHud.min ol,#trHud.min .row{display:none}#trHud ol{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}#trHud li{display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:start;line-height:1.35}#trHud li small{color:#9fb3bf}
+#trHud .ic{text-align:center;font-weight:700;color:#9fb3bf}#trHud li.ok .ic{color:#2fbf71}#trHud li.bad .ic{color:#ff5a4a}#trHud .trq{grid-column:2/4;display:grid;gap:4px}#trHud .trq p{margin:2px 0;color:#e6f0f5}#trHud .trq .btn{text-align:left;white-space:normal;height:auto;padding:5px 8px;font-size:12px}#trHud .trq .btn.ok{border-color:#2fbf71;background:rgba(47,191,113,.18)}#trHud .trq .btn.bad{border-color:#ff5a4a;background:rgba(255,90,74,.16)}
+#trHud .row{display:flex;justify-content:space-between;align-items:center}
+#trDlg .trl{display:grid;gap:8px}#trDlg .trc{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}#trDlg .trc div{display:grid;gap:3px}#trDlg .trc span{color:var(--muted);font-size:12.5px;line-height:1.4}#trDlg .trc small{color:#9fb3bf}#trDlg .trc .btn{flex:0 0 auto}
+#trRes .trn{display:flex;align-items:baseline;gap:10px;margin:6px 0 12px}#trRes .trn b{font-size:44px;font-family:var(--f-disp)}#trRes .trn.ok b{color:#2fbf71}#trRes .trn.warn b{color:#ffd24a}#trRes .trn.crit b{color:#ff5a4a}
 </style>
 
 <div id="app">
@@ -514,7 +521,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
       <div class="seg" id="todSeg" role="group" aria-label="Iluminação"><div class="dd"><button type="button" class="ddbtn" aria-haspopup="true" aria-expanded="false" title="Turno (iluminação)">Turno <b class="ddv"></b> ▾</button><div class="ddmenu" role="menu"><button data-t="day" aria-pressed="false">Dia</button><button data-t="dusk" aria-pressed="false">Entardecer</button><button data-t="night" aria-pressed="false">Noite</button></div></div><button data-t="cycle" aria-pressed="true">Ciclo real</button></div>
       <button class="btn" id="engBtn" title="Gêmeo digital: geometalurgia, previsão, reconciliação, sensores virtuais, modelos avançados, calibração e dados reais">Gêmeo digital</button>
       <button class="btn" id="aiBtn" title="Análise do processo com Simulação">Assistente de Simulação</button>
-            <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button><button class="btn" id="exitBtn" title="Encerrar a sessão e voltar à tela de acesso">⏻ Sair</button>
+            <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button><button class="btn" id="trBtn" title="Modo de treinamento: cenários com objetivos, tempo e pontuação">Treinamento</button><button class="btn" id="exitBtn" title="Encerrar a sessão e voltar à tela de acesso">⏻ Sair</button>
     </div>
   </header>
 
@@ -3282,7 +3289,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261021221043';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261021221740';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3953,7 +3960,7 @@ const trucks=[];
   // ramp stacker
 }
 /* ---------- 2 TCLD ---------- */
-const BPIT=conveyor(V3(-80.5,.4,-28.6),V3(-70,4.6,-19.5),1,{yellow:true});/* acima do talude da cava, contínua até a transferência para a TCLD */
+const BPIT=conveyor(V3(-75.6,.5,-22.9),V3(-70,4.6,-19.5),1,{yellow:true});/* começa na crista da cava (sem trecho suspenso sobre as bancadas) *//* acima do talude da cava, contínua até a transferência para a TCLD */
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
 /* ---- Setor 3 · estrutura do gêmeo digital (mesmo modelo do gêmeo imersivo, em escala reduzida, embutido via window.Setor3) ---- */
@@ -6873,6 +6880,77 @@ const canEdit=k=>!OPER.area||(CMETA[k]?CTRL_STAGE[k]===OPER.area:unitArea(k)===O
 function qrSVG(text,px){if(typeof qrcode==='undefined')return '<p class="hint">Gerador de QR indisponível (sem internet).</p>';const q=qrcode(0,'M');q.addData(text);q.make();const n=q.getModuleCount(),m=4,s=(n+2*m);let d='';
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c+m} ${r+m}h1v1h-1z`;return `<svg viewBox="0 0 ${s} ${s}" width="${px}" height="${px}" shape-rendering="crispEdges" style="background:#fff;border-radius:6px"><path d="${d}" fill="#000"/></svg>`;}
 function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e);}e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600);}
+/* ==== Modo de treinamento: cenários guiados com objetivos, tempo simulado, perguntas de decisão e pontuação ==== */
+const TR={on:null,hist:(()=>{try{return JSON.parse(localStorage.getItem('trHist')||'[]');}catch(e){return [];}})()};
+const trG=()=>(CUR&&CUR.G)||{};
+const trAck=re=>[...ALMS.values()].some(a=>a.ack&&re.test(a.msg));
+const trS3=()=>typeof S3!=='undefined'&&S3&&S3.sim&&S3.sim.eq&&S3.sim.eq['03BR001']?S3.sim:null;
+const trCamp=c=>{setCamp(c);const sc=$('#campSel');if(sc)sc.value=CAMP;const k=$('#kpiMGP');if(k)k._h='';try{mgpUpdate();}catch(e){}};
+const TRS={
+ chuva:{nome:'Chuva forte · piezômetros da pilha (área 8)',dur:3,
+  desc:'Tempestade sobre a pilha de rejeito filtrado. A poropressão sobe nos piezômetros da área 8 e os alarmes disparam.',
+  setup(s){SCEN.chuva.fn();pzSim('rise','dry');s.sand0=Math.max(1,trG().sand||0);},
+  obj:[{t:'Reconhecer o alarme do piezômetro',pts:20,lim:.5,ok:()=>trAck(/Piezômetro/),dica:'Abra o painel de alarmes e reconheça o alarme assim que ele aparecer.'},
+   {t:'Consultar a tendência do piezômetro (Indicadores › Geotecnia: clique na linha)',pts:15,lim:1,ok:()=>!!PZD,dica:'Clique na linha do piezômetro para ver o histórico, a taxa de subida e o FS.'},
+   {t:'Reduzir a deposição na pilha (desligar uma planta de filtragem da área 7)',pts:35,lim:1.5,ok:s=>!RUN.sandf||(trG().sand||0)<s.sand0*.8,dica:'Com a poropressão subindo, reduza ou desvie a deposição até o nível estabilizar.'},
+   {t:'Manter o FS do talude ≥ 1,3 até o fim',pts:30,keep:true,ok:()=>pzFSmin('dry')>=1.3,dica:'Agir cedo na deposição evita que o FS chegue ao nível crítico.'}]},
+ instr:{nome:'Falha de instrumento · piezômetro',dur:1.5,
+  desc:'Um piezômetro parou de atualizar a leitura. Descubra qual é e aplique a conduta correta.',
+  setup(s){const i=Math.floor(Math.random()*PZ.length);PZ[i].fault=true;s.tag=PZ[i].tag;logEvent('Treinamento','Falha simulada em um piezômetro');try{evalAlarms();renderAlarms();}catch(e){}},
+  clean(s){const p=PZ.find(q=>q.tag===s.tag);if(p)p.fault=false;},
+  obj:[{t:'Reconhecer o alarme de leitura congelada',pts:25,lim:.5,ok:()=>trAck(/congelad/),dica:'O alarme IA indica falha do sensor, do cabo ou da comunicação.'},
+   {t:'Abrir o detalhe do piezômetro com falha',pts:25,lim:1,ok:s=>!!PZD&&PZD.tag===s.tag,dica:'Em Indicadores › Geotecnia, o instrumento com falha aparece marcado como “falha”.'},
+   {t:'Escolher a conduta correta',pts:50,q:{p:'Qual é a conduta correta para a leitura congelada?',ops:['Acionar a instrumentação e fazer leitura manual de contingência até a correção','Desconsiderar o alarme: o nível está estável','Parar toda a deposição e evacuar a área','Copiar a leitura do piezômetro vizinho para o sistema'],c:0},dica:'Sem leitura confiável, a estrutura fica sem monitoramento: leitura manual até o reparo.'}]},
+ hp:{nome:'Sobrecarga do britador HP 400 (setor 3)',dur:1.5,need:trS3,
+  desc:'O britador 03BR002 desarmou. O 03BR001 assume toda a carga da britagem primária e entra em sobrecarga.',
+  setup(s){const m=trS3();s.feed=m.feed;s.css=m.css;m.eq['03BR002'].on=false;m.feed=Math.max(m.feed,4200);s.ring0=m.eq['03BR001'].ring||0;logEvent('Treinamento','Desarme simulado do britador 03BR002');},
+  clean(s){const m=trS3();if(!m)return;m.eq['03BR002'].on=true;m.feed=s.feed;m.css=s.css;},
+  obj:[{t:'Escolher a primeira ação',pts:40,q:{p:'O 03BR002 desarmou e o 03BR001 passou de 105 % de carga. Qual é a primeira ação?',ops:['Reduzir a alimentação do setor 3 até a carga do HP 400 ficar abaixo de 100 %','Fechar a APF para aumentar a redução','Religar o 03BR002 sem verificar a causa do desarme','Manter a operação e aguardar'],c:0,fx:[m=>{m.feed=2900;},m=>{m.css=Math.max(13,m.css-4);},null,null]},dica:'Com um britador a menos, a alimentação tem de cair na mesma proporção; religar sem verificar a causa é risco à segurança.'},
+   {t:'Carga do 03BR001 abaixo de 105 % em até 30 min',pts:30,lim:.5,ok:()=>{const m=trS3();return m&&(m.eq['03BR001'].load||0)<=1.05;},dica:'Sobrecarga prolongada aquece o óleo e desgasta o revestimento.'},
+   {t:'Evitar sobrecarga prolongada (anel de ajuste preservado)',pts:30,keep:true,ok:s=>{const m=trS3();return !m||(m.eq['03BR001'].ring||0)-s.ring0<1;},dica:'Cada minuto acima de 105 % aumenta o risco de levantamento do anel de ajuste.'}]},
+ cls:{nome:'Campanha CLS · sílica baixa',dur:6,
+  desc:'A produção mudou para a campanha CLS. Ajuste a amina e a moagem para manter o concentrado dentro da especificação.',
+  setup(s){s.camp=CAMP;trCamp('CLS');},clean(s){trCamp(s.camp);},
+  obj:[{t:'Responder ao limite da campanha',pts:20,q:{p:'Qual é o limite de SiO₂ médio do concentrado na campanha CLS?',ops:['1,25 %','1,90 %','2,50 %','0,80 %'],c:0},dica:'CLS: SiO₂ ≤ 1,25 % (máx. bi-horário 1,36 %) e Fe ≥ 66,58 %.'},
+   {t:'SiO₂ ≤ 1,25 % (tempo na faixa depois de 1 h de ajuste)',pts:50,frac:1,ok:()=>trG().siC>0&&trG().siC<=SPEC.siMax,dica:'Aumente a amina em 5–10 g/t ou reduza o P80 da moagem.'},
+   {t:'Fe ≥ 66,58 % (tempo na faixa depois de 1 h de ajuste)',pts:30,frac:1,ok:()=>trG().feC>=SPEC.feMin,dica:'Amina em excesso arrasta ferro para o rejeito: não exagere na dose.'}]}};
+function trOpen(){let d=$('#trDlg');if(!d){d=document.createElement('div');d.id='trDlg';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
+   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trStart(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;});}
+  const H=TR.hist.slice(0,6);
+  d.innerHTML=`<div class="box" style="max-width:640px"><h3>Modo de treinamento</h3><p>Escolha um cenário. A simulação passa para 60× (1 h simulada = 1 min) e o painel do treinamento mostra os objetivos, o tempo e os pontos.</p>
+  <div class="trl">${Object.entries(TRS).map(([k,s])=>{const ok=!s.need||s.need();return `<div class="trc"><div><b>${s.nome}</b><span>${s.desc}</span><small>${s.obj.length} objetivos · ${fmt(s.dur,1)} h simuladas</small></div><button class="btn" data-tr="${k}"${ok&&!TR.on?'':' disabled'}>${TR.on?'Em curso':ok?'Iniciar':'Indisponível'}</button></div>`;}).join('')}</div>
+  ${H.length?`<h4 style="margin:12px 0 4px">Últimos resultados</h4><table class="alt"><tr><th>Data</th><th>Cenário</th><th class="n">Nota</th></tr>${H.map(h=>`<tr><td>${h.d}</td><td>${h.n}</td><td class="n"><b>${h.p}</b></td></tr>`).join('')}</table>`:''}
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="trX">Fechar</button></div></div>`;d.hidden=false;}
+function trStart(k){const s=TRS[k];if(!s||TR.on)return;const sc=$('#scenario');if(sc&&sc.value!=='nominal'){sc.value='nominal';sc.dispatchEvent(new Event('change'));}
+  pzSim('reset');const st={k,s,t0:ST.simT,st:s.obj.map(()=>({done:false,fail:false,pts:0,inT:0,tot:0,ans:null}))};s.setup(st);TR.on=st;
+  const b=document.querySelector('#speedSeg button[data-s="60"]');if(b)b.click();if(paused){paused=false;}
+  logEvent('Treinamento',`Início: ${s.nome}`);toast('Treinamento iniciado: '+s.nome);trHud(true);clearInterval(TR.iv);TR.iv=setInterval(trTick,500);}
+function trTick(){const r=TR.on;if(!r)return;const h=(ST.simT-r.t0)/3600,dt=Math.max(0,h-(r.lh||0));r.lh=h;
+  r.s.obj.forEach((o,i)=>{const q=r.st[i];if(o.q)return;let v=false;try{v=!!o.ok(r);}catch(e){}
+    if(o.keep){if(!v)q.fail=true;}else if(o.frac){if(h>=1){q.tot+=dt;if(v)q.inT+=dt;}}else if(!q.done&&v){q.done=true;q.late=o.lim&&h>o.lim;q.pts=q.late?Math.round(o.pts/2):o.pts;}});
+  if(h>=r.s.dur)return trEnd();trHud();}
+function trPts(r,fin){return r.s.obj.map((o,i)=>{const q=r.st[i];if(o.keep)return q.fail?0:Math.round(o.pts*(fin||0));if(o.frac)return q.tot>0?Math.round(o.pts*q.inT/q.tot):0;return q.pts;});}
+function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();return;}
+  if(!e){e=document.createElement('div');e.id='trHud';document.body.appendChild(e);
+    e.addEventListener('click',ev=>{const a=ev.target.closest('[data-qa]');if(a){const [i,j]=a.dataset.qa.split('|').map(Number),o=TR.on.s.obj[i],q=TR.on.st[i];if(q.ans==null){q.ans=j;q.pts=j===o.q.c?o.pts:0;q.done=true;}
+        const fx=o.q.fx&&o.q.fx[j];if(fx&&trS3())fx(trS3());logEvent('Treinamento',`Resposta: ${o.q.ops[j]}`);trHud(true);}
+      if(ev.target.closest('#trEndB'))trEnd();if(ev.target.closest('.trh'))e.classList.toggle('min');});}
+  const h=(ST.simT-r.t0)/3600,P=trPts(r,false),hm=x=>`${Math.floor(x)}:${String(Math.floor(x%1*60)).padStart(2,'0')}`;
+  const li=r.s.obj.map((o,i)=>{const q=r.st[i],ic=o.keep?(q.fail?'✗':'…'):o.frac?(h<1?'…':`${Math.round(q.tot?q.inT/q.tot*100:0)} %`):q.done?(q.pts?'✓':'✗'):'○';
+    const quiz=o.q?`<div class="trq"><p>${o.q.p}</p>${o.q.ops.map((t,j)=>`<button class="btn${q.ans!=null&&j===o.q.c?' ok':q.ans===j?' bad':''}" data-qa="${i}|${j}">${t}</button>`).join('')}${q.ans!=null?`<p class="hint">${q.ans===o.q.c?'Correto. ':'Resposta incorreta. '}${o.dica}</p>`:''}</div>`:'';
+    return `<li class="${q.fail||(q.done&&!q.pts)?'bad':q.done||(o.keep&&!q.fail)?'ok':''}"><span class="ic">${ic}</span><span>${o.t}${o.lim?` <small>(até ${hm(o.lim)} h)</small>`:''}</span><b>${P[i]}/${o.pts}</b>${quiz}</li>`;}).join('');
+  const html=`<div class="trh" title="Clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h</em></div><ol>${li}</ol><div class="row"><span>Pontos parciais: <b>${P.reduce((a,b)=>a+b,0)}</b></span><button class="btn" id="trEndB">Encerrar</button></div>`;
+  const key=html.replace(/<em>.*?<\/em>/,'');if(force||e._k!==key){e._k=key;e.innerHTML=html;}else{const m=e.querySelector('.trh em');if(m)m.textContent=`${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h`;}}
+function trEnd(){const r=TR.on;if(!r)return;clearInterval(TR.iv);TR.on=null;const P=trPts(r,clamp((ST.simT-r.t0)/3600/r.s.dur,0,1)),tot=P.reduce((a,b)=>a+b,0),max=r.s.obj.reduce((a,o)=>a+o.pts,0),nota=Math.round(tot/max*100);
+  try{r.s.clean&&r.s.clean(r);}catch(e){}trHud();
+  const cls=nota>=85?'Excelente':nota>=70?'Bom':nota>=50?'Regular':'Precisa treinar mais';
+  TR.hist.unshift({d:new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}),n:r.s.nome,p:nota});TR.hist=TR.hist.slice(0,20);try{localStorage.setItem('trHist',JSON.stringify(TR.hist));}catch(e){}
+  logEvent('Treinamento',`Fim: ${r.s.nome} · nota ${nota} (${cls})`);
+  let d=$('#trRes');if(!d){d=document.createElement('div');d.id='trRes';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trRX'))d.hidden=true;if(e.target.closest('#trRN')){d.hidden=true;trOpen();}});}
+  d.innerHTML=`<div class="box" style="max-width:600px"><h3>Resultado do treinamento</h3><p>${r.s.nome}</p><div class="trn ${nota>=70?'ok':nota>=50?'warn':'crit'}"><b>${nota}</b><span>de 100 · ${cls}</span></div>
+  <table class="alt"><tr><th>Objetivo</th><th class="n">Pontos</th></tr>${r.s.obj.map((o,i)=>`<tr><td>${o.t}${P[i]<o.pts?`<br><small class="hint">${o.dica}</small>`:''}</td><td class="n"><b>${P[i]}</b>/${o.pts}</td></tr>`).join('')}</table>
+  <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" id="trRN">Outro cenário</button><button class="btn" id="trRX">Fechar</button></div></div>`;d.hidden=false;}
+$('#trBtn').addEventListener('click',()=>{if(TR.on){const e=$('#trHud');if(e)e.classList.remove('min');toast('Treinamento em curso: veja o painel à esquerda.');}else trOpen();});
 // trava: o operador só altera a própria área; as demais ficam só para visualização
 function operLock(){if(!OPER.area)return;
   for(const k in CMETA){const ok=canEdit(k);for(const el of [$('#in-'+k),$('#d-in-'+k)]){if(!el)continue;if(!ok){el.disabled=true;el.closest('.ctl,.dctl,div')&&el.closest('.ctl,.dctl,div').classList.add('locked');}}}
