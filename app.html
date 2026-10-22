@@ -3446,7 +3446,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022122244';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022122412';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3971,7 +3971,7 @@ const MQ=(()=>{
     for(let k=0;k<26;k++){const a=aC+(rr()*2-1)*span*1.25,d=dR(kL,.2+rr()*.2),x=P0.x+d*Math.cos(a),z=P0.z+d*Math.sin(a),s=.02+rr()*.04;lump(MINE,s,x,H(x,z)-MINE.position.y+s*.25,z,Math.floor(rr()*6));}/* material rolado no piso de carga */}
   {const g=inst(PR.dozer,MINE),pl=inst(PR.dLoad,g);pl.position.x=4.6;g.scale.setScalar(K);S.dz={g,pl,u:4,a0:-PI/2-1.15,d:dR(Math.min(2,kL-1),.2)};place(g,S.dz.a0,S.dz.d,1);}
   const SPM=new THREE.MeshBasicMaterial({map:ctex(128,64,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(235,242,248,.95)');g.addColorStop(1,'rgba(235,242,248,0)');x.fillStyle=g;x.beginPath();x.moveTo(0,h/2-2);x.lineTo(w,2);x.lineTo(w,h-2);x.lineTo(0,h/2+2);x.closePath();x.fill();
-    for(let i=0;i<300;i++){const u=rr(),v=(rr()-.5)*(.08+u*.9);x.fillStyle=`rgba(255,255,255,${(.6*(1-u)).toFixed(2)})`;x.fillRect(u*w,h/2+v*h,1.5,1.5);}}),transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide});
+    for(let i=0;i<300;i++){const u=rr(),v=(rr()-.5)*(.08+u*.9);x.fillStyle=`rgba(255,255,255,${(.6*(1-u)).toFixed(2)})`;x.fillRect(u*w,h/2+v*h,1.5,1.5);}}),transparent:true,opacity:.18,depthWrite:false,side:THREE.DoubleSide});/* leque d'água do caminhão-pipa bem sutil */
   const TN=90,trail=new THREE.InstancedMesh(new THREE.CircleGeometry(1,14).rotateX(-PI/2),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3,metalness:0,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),TN);
   trail.frustumCulled=false;trail.receiveShadow=true;trail.count=0;MINE.add(trail);const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_s=V3(.42,1,.42),_p=V3(),WET=new THREE.Color(0x3a2214),DRY=new THREE.Color(0x7a5034);
   for(let j=0;j<TN;j++)trail.setColorAt(j,DRY);
@@ -4105,7 +4105,7 @@ const MINA3=(()=>{const P0=PITS[0],cx=P0.x,cz=P0.z,R=P0.r,B=P0.b,DIR=1;
   dust.onBeforeRender=(rd,sc,cam)=>{const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;
     rd.getDrawingBufferSize(vb);dm.uniforms.uK.value=vb.y/(2*Math.tan((cam.fov||50)*Math.PI/360));
     const on=typeof RUN==='undefined'||RUN.mine;
-    if(on&&dt>0){acc+=dt;while(acc>.09){acc-=.09;
+    if(false&&on&&dt>0){acc+=dt;while(acc>.09){acc-=.09;/* poeira dos caminhões e do ponto de carga desligada (formava manchas embaçadas) */
       (typeof trucks!=='undefined'?trucks:[]).forEach(tk=>{if(rnd()<.55){const g=tk.g,c=Math.cos(g.rotation.y),s=Math.sin(g.rotation.y);spawn(g.position.x-1.7*c,g.position.y+.35,g.position.z+1.7*s,false);}});
       if(rnd()<.45)spawn(end.x,Hs(end.x,end.z)-my()+.3,end.z,true);}}
     const tt=now/1000;
