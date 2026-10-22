@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261021214328';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261021214328';
+import { SCREENS, LV } from './layout.js?v=20261021215024';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261021215024';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral
@@ -237,6 +237,7 @@ class Inst {
 }
 const rod = (p, a, b, r, mat) => beam(p, a, b, r, mat, true);
 
+const SPIN_S = [];   // cardãs dos vibradores (giram com a peneira ligada)
 export function buildScreens(scene, M) {
   const g = new THREE.Group(); scene.add(g);
   const vib = [], beacons = {}, hot = [], flows = [];
@@ -390,7 +391,7 @@ export function buildScreens(scene, M) {
     const shaft = cyl(ex, .05, .05, 3.42, M.greyDk, -.16, .9, 0, 12); shaft.rotation.z = Math.PI / 2;
     // cardãs curtos entre as carcaças: flanges parafusados + cruzeta
     for (const gx of [-.76, 0, .76]) { for (const dx of [-.045, .045]) { const fl = cyl(ex, .09, .09, .022, M.greyDk, gx + dx, .9, 0, 16); fl.rotation.z = Math.PI / 2; for (let k = 0; k < 6; k++) { const a = k / 6 * 6.283; bb.add(ex, gx + dx * 1.35, .9 + Math.cos(a) * .065, Math.sin(a) * .065, Math.sign(dx), 0, 0, .8); } }
-      box(ex, .05, .15, .05, M.greyDk, gx, .9, 0); box(ex, .05, .05, .15, M.greyDk, gx, .9, 0); }
+      { const cz = new THREE.Group(); cz.userData.keep = true; cz.position.set(gx, .9, 0); ex.add(cz); box(cz, .05, .15, .05, M.greyDk, 0, 0, 0); box(cz, .05, .05, .15, M.greyDk, 0, 0, 0); box(cz, .03, .03, .2, Yel, 0, 0, 0); SPIN_S.push({ tag, o: cz }); } }
     const brg = cyl(ex, .12, .12, .13, M.greyDk, -1.56, .9, 0, 18); brg.rotation.z = Math.PI / 2;
     box(ex, .16, .32, .3, M.greyDk, -1.56, .72, 0);
     const fl0 = cyl(ex, .1, .1, .03, M.greyDk, -1.86, .9, 0, 16); fl0.rotation.z = Math.PI / 2;
@@ -551,6 +552,7 @@ export function buildScreens(scene, M) {
   // grãos que passam pela tela: andam, afundam no leito perto do ponto de passagem e renascem na alimentação
   const passing = (f, im, P, n, dt, t, k, sk) => { for (let i = 0; i < n; i++) { const p = P[i]; adv(p, dt, k); if (p.s > p.pass) { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4) + .2; p.s = S0 + rnd(.3); p.x = (rnd(2) - 1) * f.xLim(p); } const sink = Math.min(1, Math.max(0, (p.s - (p.pass - .3)) / .3)) * (p.r * 1.6 + .02) + p.r * sk; place(im, i, p, t, k, sink, f.hw); } im.count = n; im.instanceMatrix.needsUpdate = true; };
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
+    { const E = S ? S.eq : {}; for (const c of SPIN_S) { const e = E[c.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) c.o.rotation.x += dt * 100; } }
     const E = S ? S.eq : {}; dt = Math.min(dt, .1);
     // umidade alta (> 9 %): minério mais escuro, mais brilhante (molhado) e escoando mais devagar
     const wf = S && S.moist != null ? Math.min(1, Math.max(0, (S.moist - 9) / 2.5)) : 0, wetK = 1 - .4 * wf, wd = 1 - .42 * wf;

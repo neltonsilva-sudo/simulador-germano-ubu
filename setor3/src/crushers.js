@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261021214328';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021214328';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261021215024';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021215024';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -320,7 +320,7 @@ export function buildCrushers(scene, M) {
     cyl(DG, .33, .33, .05, M.motor, 1.97, yM, zM, 36).rotation.z = Math.PI / 2;
     cyl(DG, .34, .32, .2, M.motor, 1.07, yM, zM, 36).rotation.z = Math.PI / 2; const gr = new THREE.Mesh(new THREE.CircleGeometry(.3, 32), M.black); gr.position.set(.965, yM, zM); gr.rotation.y = -Math.PI / 2; DG.add(gr);
     { /* ventoinha do motor girando atrás da grade (grade em anéis vazados) */ gr.material = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: .7 }); gr.position.x = .985;
-      const fan = new THREE.Group(); fan.position.set(.958, yM, zM); DG.add(fan); const bm = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: .5, roughness: .45 });
+      const fan = new THREE.Group(); fan.userData.keep = true; fan.position.set(.958, yM, zM); DG.add(fan); const bm = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: .5, roughness: .45 });
       for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(.01, .25, .07), bm); bl.position.set(0, Math.cos(k / 6 * Math.PI * 2) * .14, Math.sin(k / 6 * Math.PI * 2) * .14); bl.rotation.x = -k / 6 * Math.PI * 2; bl.rotation.y = .5; fan.add(bl); }
       spin.push({ tag: c.tag, o: fan, ax: 'x', w: 30 });
       for (const rr of [.1, .18, .26]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, .01, 4, 40), M.yellow); ring.position.set(.944, yM, zM); ring.rotation.y = Math.PI / 2; DG.add(ring); }
@@ -440,6 +440,9 @@ export function buildCrushers(scene, M) {
       cyl(T, .5, .5, .05, mMotG, mx, yP + .275, mz, 40);                                // flange
       cyl(T, .44, .44, .1, mMotG, mx, yP + .35, mz, 40);
       lathe(T, [[.48, yP + .4], [.49, yP + .46], [.48, yP + .66], [.43, yP + .8], [.32, yP + .9], [.16, yP + .95], [0, yP + .96]], mDome, 48).position.set(mx, 0, mz);
+      { const fz = new THREE.Group(); fz.userData.keep = true; fz.position.set(mx, yP + .975, mz); T.add(fz); for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(.3, .02, .07), M.steelDk || M.greyDk); bl.position.x = .13; const arm = new THREE.Group(); arm.rotation.y = k / 6 * TAU; arm.add(bl); fz.add(arm); }
+        const mk = new THREE.Mesh(new THREE.BoxGeometry(.12, .025, .05), M.yellow); mk.position.x = .2; fz.add(mk); spin.push({ tag: c.tag, o: fz, ax: 'y', w: 25, rpm: true });
+        for (const rr of [.12, .22, .3]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, .009, 4, 36), M.yellow); ring.position.set(mx, yP + 1.0, mz); ring.rotation.x = Math.PI / 2; T.add(ring); } }
       cbox(T, .22, .28, .22, mMotG, mx + s * .5, gT + .5, mz, .02);                    // caixa de ligação
       beam(T, V(mx + s * .5, gT + .36, mz), V(mx + s * .62, gT + .02, mz + .3), .025, M.hose, true);
     }
@@ -576,7 +579,7 @@ export function buildCrushers(scene, M) {
   g.children.forEach((c) => { if (c.userData.pickTag) pick.push({ tag: c.userData.pickTag, box: new THREE.Box3().setFromObject(c) }); });
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
     const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 };
-    for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w; }
+    for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w * (s.rpm && S ? (S.rpm || 1450) / 1450 : 1); }
     { const anyOn = vbDrive.some((v) => { const e = E[v.tag] || { on: true, flow: 1 }; return e.on && e.flow > 0; }); if (anyOn) vbTexC.offset.y -= dt * 3.2; }
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); }
     for (const st of streams) { const e = E[st.tag] || { on: true, flow: 1, load: .7 }, run = e.on && e.flow > 0; st.im.visible = run; if (!run) continue;

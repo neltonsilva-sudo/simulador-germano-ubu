@@ -7,8 +7,8 @@
 // Minério: leito contínuo (finos) + pedras de granulometria variada por correia (InstancedMesh, só a translação é atualizada),
 // derramamento acumulado sob cabeças, caudas e transferências, e poeira leve nas quedas.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261021214328';
-import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261021214328';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261021215024';
+import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261021215024';
 
 const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
 // pedrisco facetado (icosaedro sem subdivisão), deslocamento coerente por posição (não abre as faces)
@@ -39,6 +39,7 @@ function moundGeoF(k) {
   g.computeVertexNormals(); return g;
 }
 
+const DRUMS_F = [];   // tambores de cabeça/cauda (giram com a correia)
 export function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
   const belts = [], labels = [], embed = !!opt.embed;
@@ -114,6 +115,9 @@ export function buildFlows(scene, M, opt = {}) {
     // tambores revestidos (a lona envolve), eixo, mancais e chapas de apoio
     for (const zz of [Z0, Z1]) {
       const dr = new THREE.Mesh(flatU(new THREE.CylinderGeometry(r, r, w + .12, 22)), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, yc, zz); dr.castShadow = true; grp.add(dr);
+      for (const sy of [-1, 1]) { for (let k = 0; k < 3; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(r * 1.7, .02, .06), M.steelDk || M.greyDk); sp.position.y = sy * (w / 2 + .065); sp.rotation.y = k * Math.PI / 3; dr.add(sp); }
+        const mk = new THREE.Mesh(new THREE.BoxGeometry(r * .55, .025, .07), M.yellow); mk.position.set(r * .5, sy * (w / 2 + .07), 0); dr.add(mk); }
+      dr.userData.keep = true; DRUMS_F.push({ o: dr, w: 2.2 / r });
       const wr = new THREE.Mesh(flatU(new THREE.CylinderGeometry(r + .014, r + .014, w, 22)), M.belt); wr.rotation.z = Math.PI / 2; wr.position.set(0, yc, zz); grp.add(wr);
       const ax = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.055, .055, w + .95, 10)), M.steel); ax.rotation.z = Math.PI / 2; ax.position.set(0, yc, zz); grp.add(ax);
       for (const s of [-1, 1]) { box(grp, .2, .2, .3, M.greyDk, s * (hw + .4), yc, zz); box(grp, .26, .05, .4, M.steelDk, s * (hw + .4), yc - .12, zz); box(grp, .06, .62, 1.1, M.steelDk, s * (hw + .24), yc + .02, zz + (zz > 0 ? -.35 : .35)); }
@@ -286,6 +290,7 @@ export function buildFlows(scene, M, opt = {}) {
     update(dt, t, S, cam) {
       const K = S && S.kpi ? S.kpi : { F: 3800, T: 6300, prod: 3800, r1: .2, r2: .2 };
       dt = Math.min(Math.max(dt || 0, 0), .25);
+      if ((K.F || 0) > 0) for (const d of DRUMS_F) d.o.rotation.x += dt * d.w;
       let useFr = false;
       if (cam && cam.isCamera) { pmF.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); fr.setFromProjectionMatrix(pmF); useFr = true; }
       for (const b of belts) {

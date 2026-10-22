@@ -1827,6 +1827,7 @@ class Inst {
 }
 const rod = (p, a, b, r, mat) => beam(p, a, b, r, mat, true);
 
+const SPIN_S = [];
 function buildScreens(scene, M) {
   const g = new THREE.Group(); scene.add(g);
   const vib = [], beacons = {}, hot = [], flows = [];
@@ -1974,7 +1975,7 @@ function buildScreens(scene, M) {
     const shaft = cyl(ex, .05, .05, 3.42, M.greyDk, -.16, .9, 0, 12); shaft.rotation.z = Math.PI / 2;
 
     for (const gx of [-.76, 0, .76]) { for (const dx of [-.045, .045]) { const fl = cyl(ex, .09, .09, .022, M.greyDk, gx + dx, .9, 0, 16); fl.rotation.z = Math.PI / 2; for (let k = 0; k < 6; k++) { const a = k / 6 * 6.283; bb.add(ex, gx + dx * 1.35, .9 + Math.cos(a) * .065, Math.sin(a) * .065, Math.sign(dx), 0, 0, .8); } }
-      box(ex, .05, .15, .05, M.greyDk, gx, .9, 0); box(ex, .05, .05, .15, M.greyDk, gx, .9, 0); }
+      { const cz = new THREE.Group(); cz.userData.keep = true; cz.position.set(gx, .9, 0); ex.add(cz); box(cz, .05, .15, .05, M.greyDk, 0, 0, 0); box(cz, .05, .05, .15, M.greyDk, 0, 0, 0); box(cz, .03, .03, .2, Yel, 0, 0, 0); SPIN_S.push({ tag, o: cz }); } }
     const brg = cyl(ex, .12, .12, .13, M.greyDk, -1.56, .9, 0, 18); brg.rotation.z = Math.PI / 2;
     box(ex, .16, .32, .3, M.greyDk, -1.56, .72, 0);
     const fl0 = cyl(ex, .1, .1, .03, M.greyDk, -1.86, .9, 0, 16); fl0.rotation.z = Math.PI / 2;
@@ -2128,6 +2129,7 @@ function buildScreens(scene, M) {
 
   const passing = (f, im, P, n, dt, t, k, sk) => { for (let i = 0; i < n; i++) { const p = P[i]; adv(p, dt, k); if (p.s > p.pass) { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4) + .2; p.s = S0 + rnd(.3); p.x = (rnd(2) - 1) * f.xLim(p); } const sink = Math.min(1, Math.max(0, (p.s - (p.pass - .3)) / .3)) * (p.r * 1.6 + .02) + p.r * sk; place(im, i, p, t, k, sink, f.hw); } im.count = n; im.instanceMatrix.needsUpdate = true; };
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
+    { const E = S ? S.eq : {}; for (const c of SPIN_S) { const e = E[c.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) c.o.rotation.x += dt * 100; } }
     const E = S ? S.eq : {}; dt = Math.min(dt, .1);
 
     const wf = S && S.moist != null ? Math.min(1, Math.max(0, (S.moist - 9) / 2.5)) : 0, wetK = 1 - .4 * wf, wd = 1 - .42 * wf;
@@ -2480,7 +2482,7 @@ function buildCrushers(scene, M) {
     cyl(DG, .33, .33, .05, M.motor, 1.97, yM, zM, 36).rotation.z = Math.PI / 2;
     cyl(DG, .34, .32, .2, M.motor, 1.07, yM, zM, 36).rotation.z = Math.PI / 2; const gr = new THREE.Mesh(new THREE.CircleGeometry(.3, 32), M.black); gr.position.set(.965, yM, zM); gr.rotation.y = -Math.PI / 2; DG.add(gr);
     { /* ventoinha do motor girando atrás da grade (grade em anéis vazados) */ gr.material = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: .7 }); gr.position.x = .985;
-      const fan = new THREE.Group(); fan.position.set(.958, yM, zM); DG.add(fan); const bm = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: .5, roughness: .45 });
+      const fan = new THREE.Group(); fan.userData.keep = true; fan.position.set(.958, yM, zM); DG.add(fan); const bm = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: .5, roughness: .45 });
       for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(.01, .25, .07), bm); bl.position.set(0, Math.cos(k / 6 * Math.PI * 2) * .14, Math.sin(k / 6 * Math.PI * 2) * .14); bl.rotation.x = -k / 6 * Math.PI * 2; bl.rotation.y = .5; fan.add(bl); }
       spin.push({ tag: c.tag, o: fan, ax: 'x', w: 30 });
       for (const rr of [.1, .18, .26]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, .01, 4, 40), M.yellow); ring.position.set(.944, yM, zM); ring.rotation.y = Math.PI / 2; DG.add(ring); }
@@ -2599,6 +2601,9 @@ function buildCrushers(scene, M) {
       cyl(T, .5, .5, .05, mMotG, mx, yP + .275, mz, 40);
       cyl(T, .44, .44, .1, mMotG, mx, yP + .35, mz, 40);
       lathe(T, [[.48, yP + .4], [.49, yP + .46], [.48, yP + .66], [.43, yP + .8], [.32, yP + .9], [.16, yP + .95], [0, yP + .96]], mDome, 48).position.set(mx, 0, mz);
+      { const fz = new THREE.Group(); fz.userData.keep = true; fz.position.set(mx, yP + .975, mz); T.add(fz); for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(.3, .02, .07), M.steelDk || M.greyDk); bl.position.x = .13; const arm = new THREE.Group(); arm.rotation.y = k / 6 * TAU; arm.add(bl); fz.add(arm); }
+        const mk = new THREE.Mesh(new THREE.BoxGeometry(.12, .025, .05), M.yellow); mk.position.x = .2; fz.add(mk); spin.push({ tag: c.tag, o: fz, ax: 'y', w: 25, rpm: true });
+        for (const rr of [.12, .22, .3]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, .009, 4, 36), M.yellow); ring.position.set(mx, yP + 1.0, mz); ring.rotation.x = Math.PI / 2; T.add(ring); } }
       cbox(T, .22, .28, .22, mMotG, mx + s * .5, gT + .5, mz, .02);
       beam(T, V(mx + s * .5, gT + .36, mz), V(mx + s * .62, gT + .02, mz + .3), .025, M.hose, true);
     }
@@ -2731,7 +2736,7 @@ function buildCrushers(scene, M) {
   g.children.forEach((c) => { if (c.userData.pickTag) pick.push({ tag: c.userData.pickTag, box: new THREE.Box3().setFromObject(c) }); });
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
     const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 };
-    for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w; }
+    for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w * (s.rpm && S ? (S.rpm || 1450) / 1450 : 1); }
     { const anyOn = vbDrive.some((v) => { const e = E[v.tag] || { on: true, flow: 1 }; return e.on && e.flow > 0; }); if (anyOn) vbTexC.offset.y -= dt * 3.2; }
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); }
     for (const st of streams) { const e = E[st.tag] || { on: true, flow: 1, load: .7 }, run = e.on && e.flow > 0; st.im.visible = run; if (!run) continue;
@@ -2782,6 +2787,7 @@ function moundGeoF(k) {
   g.computeVertexNormals(); return g;
 }
 
+const DRUMS_F = [];
 function buildFlows(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
   const belts = [], labels = [], embed = !!opt.embed;
@@ -2856,6 +2862,9 @@ function buildFlows(scene, M, opt = {}) {
 
     for (const zz of [Z0, Z1]) {
       const dr = new THREE.Mesh(flatU(new THREE.CylinderGeometry(r, r, w + .12, 22)), M.greyDk); dr.rotation.z = Math.PI / 2; dr.position.set(0, yc, zz); dr.castShadow = true; grp.add(dr);
+      for (const sy of [-1, 1]) { for (let k = 0; k < 3; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(r * 1.7, .02, .06), M.steelDk || M.greyDk); sp.position.y = sy * (w / 2 + .065); sp.rotation.y = k * Math.PI / 3; dr.add(sp); }
+        const mk = new THREE.Mesh(new THREE.BoxGeometry(r * .55, .025, .07), M.yellow); mk.position.set(r * .5, sy * (w / 2 + .07), 0); dr.add(mk); }
+      dr.userData.keep = true; DRUMS_F.push({ o: dr, w: 2.2 / r });
       const wr = new THREE.Mesh(flatU(new THREE.CylinderGeometry(r + .014, r + .014, w, 22)), M.belt); wr.rotation.z = Math.PI / 2; wr.position.set(0, yc, zz); grp.add(wr);
       const ax = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.055, .055, w + .95, 10)), M.steel); ax.rotation.z = Math.PI / 2; ax.position.set(0, yc, zz); grp.add(ax);
       for (const s of [-1, 1]) { box(grp, .2, .2, .3, M.greyDk, s * (hw + .4), yc, zz); box(grp, .26, .05, .4, M.steelDk, s * (hw + .4), yc - .12, zz); box(grp, .06, .62, 1.1, M.steelDk, s * (hw + .24), yc + .02, zz + (zz > 0 ? -.35 : .35)); }
@@ -3025,6 +3034,7 @@ function buildFlows(scene, M, opt = {}) {
     update(dt, t, S, cam) {
       const K = S && S.kpi ? S.kpi : { F: 3800, T: 6300, prod: 3800, r1: .2, r2: .2 };
       dt = Math.min(Math.max(dt || 0, 0), .25);
+      if ((K.F || 0) > 0) for (const d of DRUMS_F) d.o.rotation.x += dt * d.w;
       let useFr = false;
       if (cam && cam.isCamera) { pmF.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); fr.setFromProjectionMatrix(pmF); useFr = true; }
       for (const b of belts) {
@@ -3266,7 +3276,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261021214315';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261021215011';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
