@@ -7,8 +7,8 @@
 // Minério: leito contínuo (finos) + pedras de granulometria variada por correia (InstancedMesh, só a translação é atualizada),
 // derramamento acumulado sob cabeças, caudas e transferências, e poeira leve nas quedas.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261022121108';
-import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261022121108';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261022121322';
+import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261022121322';
 
 const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
 // pedrisco facetado (icosaedro sem subdivisão), deslocamento coerente por posição (não abre as faces)

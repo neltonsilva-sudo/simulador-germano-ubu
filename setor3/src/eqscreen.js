@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261022121108';
-import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022121108';
+import { call } from './api.js?v=20261022121322';
+import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022121322';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -78,6 +78,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <div class="lprow"><button class="sel${o.mode === 'L' ? ' l' : ''}" data-c="mode" title="Seletor local/remoto">${o.mode === 'L' ? 'LOCAL' : 'REMOTO'}</button>
         <button class="pb gr" data-c="start" title="Liga (botão verde)">I</button><button class="pb rd" data-c="stop" title="Desliga (botão vermelho)">O</button>
         <button class="es${o.es ? ' in' : ''}" data-c="${o.es ? 'release' : 'estop'}" title="${o.es ? 'Girar para destravar' : 'Parada de emergência'}">${o.es ? 'GIRAR' : 'EMERG.'}</button><button class="pb bl" data-c="reset" title="Rearme">R</button></div>
+      <p class="n">${o.mode === 'R' ? '🔁 Seletor em <b>REMOTO</b>: o botão I não liga daqui — a partida é pela sala de controle (botão “Ligar” no fim desta tela). Para ligar pela botoeira, clique no seletor e passe para <b>LOCAL</b>.' : '🔧 Seletor em <b>LOCAL</b>: liga e desliga por esta botoeira; a sala de controle não consegue partir o equipamento.'} O botão O e a emergência param em qualquer posição.${o.trip ? ' Depois de um desarme, aperte <b>R</b> (rearme) antes de ligar.' : ''}</p>
       ${o.trip ? `<p class="n w">Desarme: ${o.trip}</p>` : ''}${m ? `<p class="n ${m.ok ? 'g' : 'w'}">${m.ok ? '✓' : '✗'} ${m.msg}</p>` : ''}
       <details${okP ? '' : ' open'}><summary>Permissivos de partida (${P.filter((p) => p[1]).length}/${P.length})</summary>${P.map((p) => `<div class="pm ${p[1] ? 'ok' : 'no'}">${p[1] ? '✓' : '✗'} ${p[0]}</div>`).join('')}</details>
       <div class="lprow">${lk ? `<button data-c="unlock">Retirar bloqueio</button>` : L ? '' : `<button data-c="lotoAsk">Aplicar bloqueio (LOTO)</button>`}</div>

@@ -3208,7 +3208,7 @@ function cmd(t, a, src = 'R', v = 0) {
   const no = (m) => { logEv('Comando negado', `${t}: ${m}`); return { ok: false, msg: m }; }, yes = (m) => { logEv('Comando', `${t}: ${m}${src === 'L' ? ' (campo)' : ''}`); return { ok: true, msg: m }; };
   switch (a) {
     case 'start': { if (o.on) return no('já está operando');
-      if (o.mode !== src) return no(src === 'R' ? 'seletor em LOCAL: a partida é feita na botoeira do campo' : 'seletor em REMOTO: a partida é feita pela sala de controle');
+      if (o.mode !== src) return no(src === 'R' ? 'seletor em LOCAL: a partida é feita na botoeira do campo (ou passe o seletor para REMOTO)' : 'seletor em REMOTO: passe o seletor para LOCAL para ligar pela botoeira, ou ligue pela sala de controle');
       const bad = perms(t).filter((p) => !p[1]); if (bad.length) return no('permissivo ausente: ' + bad.map((p) => p[0]).join('; '));
       o.on = true; o.st0 = sim.rt || 0; syncEq(t, { on: true }); return yes('partida'); }
     case 'stop': if (!o.on) return no('já está parado'); if (src === 'R' && o.mode !== 'R') return no('seletor em LOCAL: pare pela botoeira'); halt(t); return yes('parada');
@@ -3446,7 +3446,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022120845';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022121322';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */

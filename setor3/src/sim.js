@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 7 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261022121108';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261022121322';
 
 const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
 export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova
@@ -67,7 +67,7 @@ export function cmd(t, a, src = 'R', v = 0) {
   const no = (m) => { logEv('Comando negado', `${t}: ${m}`); return { ok: false, msg: m }; }, yes = (m) => { logEv('Comando', `${t}: ${m}${src === 'L' ? ' (campo)' : ''}`); return { ok: true, msg: m }; };
   switch (a) {
     case 'start': { if (o.on) return no('já está operando');
-      if (o.mode !== src) return no(src === 'R' ? 'seletor em LOCAL: a partida é feita na botoeira do campo' : 'seletor em REMOTO: a partida é feita pela sala de controle');
+      if (o.mode !== src) return no(src === 'R' ? 'seletor em LOCAL: a partida é feita na botoeira do campo (ou passe o seletor para REMOTO)' : 'seletor em REMOTO: passe o seletor para LOCAL para ligar pela botoeira, ou ligue pela sala de controle');
       const bad = perms(t).filter((p) => !p[1]); if (bad.length) return no('permissivo ausente: ' + bad.map((p) => p[0]).join('; '));
       o.on = true; o.st0 = sim.rt || 0; syncEq(t, { on: true }); return yes('partida'); }
     case 'stop': if (!o.on) return no('já está parado'); if (src === 'R' && o.mode !== 'R') return no('seletor em LOCAL: pare pela botoeira'); halt(t); return yes('parada');
