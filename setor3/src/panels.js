@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022184347';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022184347';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022195940';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022195940';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -85,7 +85,7 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   try { bc = new BroadcastChannel('setor3-sync'); bc.onmessage = (m) => { const d = m.data || {}; if (d.type !== 'state') return; viaBC = performance.now(); applyState(d); }; } catch (e) { bc = null; }
   // sem canal local recente: busca o estado no servidor a cada 6 s (estado com até 30 s de idade)
   setInterval(() => { if (performance.now() - viaBC < 6000 || srvBusy || document.hidden) return; srvBusy = true;
-    call('syncGet', ['state', getToken()], 1).then((r) => { srvBusy = false; if (r && r.d && Date.now() - r.t < 30000) applyState(r.d); }).catch(() => { srvBusy = false; }); }, 6000);
+    call('syncGet', ['state', getToken()], 1).then((r) => { srvBusy = false; if (r && r.d && Date.now() - r.t < 30000) applyState(r.d); }).catch(() => { srvBusy = false; }); }, 15000);   // a cada 15 s (alivia o servidor; no mesmo navegador usa o canal local)
   const pend = []; /* comandos de equipamento dados sem ligação com o simulador: enviados quando a ligação voltar */
   const send = (set) => { if (!sim.sync) { if (set && (set.eqCmd || set.ctl)) { pend.push(set); if (pend.length > 30) pend.shift(); } return; } if (bc && performance.now() - viaBC < 6000) bc.postMessage({ type: 'set', set }); else call('syncPost', ['cmd', set, getToken()], 2).catch(() => {}); };
   const flushPend = () => { if (!pend.length || !sim.sync) return; const L = pend.splice(0); L.forEach((x) => { const t = x.eqCmd && x.eqCmd.tag; if (t) (sim._lock = sim._lock || {})[t] = performance.now() + 20000; send(x); }); logEv('Integração', `${L.length} comando(s) de equipamento enviados ao simulador após a reconexão`); };

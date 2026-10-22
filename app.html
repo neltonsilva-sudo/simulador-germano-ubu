@@ -3511,7 +3511,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022183526';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022195940';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -6179,7 +6179,7 @@ function tw3Calc(){const V={};if(!S3)return TW3.v=V;const al=(S3.sim.kpi.alarms|
   for(const [tag,e] of Object.entries(S3.sim.eq)){const on=e.on&&e.flow>0;V[tag]={tag,tipo:TW3_TIPO[e.k],k:e.k,w:e.w,on,flow:e.flow||0,load:e.load||0,eff:e.eff||0,blind:0,vib:e.vib||0,oil:e.oil||0,kw:e.kw||0,rpm:on&&e.k==='vsi'?1450:0,css:P.css,hyd:on?55+70*(e.load||0)+(20-P.css)*1.5:0,left:e.left,health:e.health,rsl:e.rsl,st:e.st,why:((al.find(a=>a.tag===tag)||{}).why)||(e.on?'':'desligado')};}
   return TW3.v=V;}
 /* sincronização com o gêmeo imersivo aberto em outra aba (mesma origem: site do GitHub) */
-let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{const d=m.data||{};
+let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{const d=m.data||{};window.__s3bcT=performance.now();/* gêmeo na mesma máquina: dispensa o servidor */
   /* botão Sair do gêmeo: volta o simulador para a visão geral */
   if(d.type==='focus'){try{window.focus();}catch(e){}toast('Gêmeo do setor 3 continua aberto e sincronizado na outra aba.');return;}
   if(d.type==='exit'){try{if(AREA)exitArea();const fv=document.querySelector('#viewSeg [data-v=free]');if(fv&&fv.getAttribute('aria-pressed')!=='true')fv.click();flyTo(homeP(),homeT(),1.4);window.focus();}catch(e){}return;}
@@ -6196,7 +6196,7 @@ function s3ApplySet(q){if(!q)return;
 /* integração pelo servidor (sites diferentes): publica o estado da área 3 e busca comandos do gêmeo, por até 3 h depois de abrir o gêmeo */
 let TW3_REMOTE=(()=>{try{return +localStorage.getItem('tw3Remote')||0;}catch(e){return 0;}})(),S3SRVt=0,S3SRVbusy=false;
 function s3State(){const s=S3.sim;return{type:'state',vsiRpm:s.rpm,vsiCasc:s.casc,night:(()=>{try{return +todState().L.toFixed(2);}catch(e){return 0;}})(),mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,eq:Object.fromEntries(Object.entries(s.eq).map(([t,e])=>[t,{w:+(+e.w||0).toFixed(2),on:!!e.on,mnt:!!e.mnt,mh:e.mnt?+(e.mnt.h||0).toFixed(2):0,rev:e.rev||0,ctl:{trip:e.trip||null,lock:!!e.lock,mode:e.mode,es:!!e.es,lube:e.lube,lid:e.lid,guard:e.guard}}])),belts:Object.fromEntries(Object.entries(s.belts||{}).map(([t,b])=>[t,{on:!!b.on,cord:!!b.cord,trip:b.trip||null,align:+(+b.align||0).toFixed(1)}])),alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))};}
-function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REMOTE>3*3600e3)return;const now=performance.now();if(now-S3SRVt<6000)return;S3SRVt=now;
+function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REMOTE>3*3600e3)return;const now=performance.now();if(window.__s3bcT&&now-window.__s3bcT<20000)return;/* gêmeo no mesmo navegador: sincroniza pelo canal local, sem carregar o servidor */if(now-S3SRVt<(document.hidden?30000:15000))return;S3SRVt=now;
   const tok=(typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'';S3SRVbusy=true;const done=()=>{S3SRVbusy=false;};
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
