@@ -7,8 +7,8 @@
 // Minério: leito contínuo (finos) + pedras de granulometria variada por correia (InstancedMesh, só a translação é atualizada),
 // derramamento acumulado sob cabeças, caudas e transferências, e poeira leve nas quedas.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261021215924';
-import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261021215924';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261022114903';
+import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261022114903';
 
 const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
 // pedrisco facetado (icosaedro sem subdivisão), deslocamento coerente por posição (não abre as faces)
@@ -52,8 +52,10 @@ export function buildFlows(scene, M, opt = {}) {
   const DRY = [[.62, .42, .32], [.55, .37, .29], [.5, .4, .36], [.68, .48, .36]];
   const col = new THREE.Color(), setCol = (im, i, pal) => { const k = pal[(rnd() * pal.length) | 0], j = .82 + rnd() * .3; im.setColorAt(i, col.setRGB(k[0] * j, k[1] * j, k[2] * j)); };
   // granulometria por correia: [nº pedras/m, escala mín, máx, nº grãos/m, escala grão mín, máx, espessura do leito]
-  const GRADE = { F: [8, .05, .14, 20, .02, .04, .09], T: [8, .05, .13, 20, .02, .04, .09], R1: [12, .045, .11, 8, .022, .04, .07],
-    R2: [12, .03, .065, 16, .018, .032, .07], P: [3, .02, .035, 34, .011, .022, .06] };
+  // escala real (diâmetro ≈ 1,8 × escala): alimentação ≤ 150 mm; retido do 1º deck (HP 400) 25–150 mm; −25,4 +12,5 mm (Barmac); produto < 12,5 mm
+  // camada densa (cascalho contínuo) + blocos maiores na alimentação
+  const GRADE = { F: [34, .025, .085, 70, .008, .02, .09], T: [34, .025, .085, 70, .008, .02, .09], R1: [30, .02, .085, 50, .008, .016, .07],
+    R2: [95, .0075, .014, 95, .005, .008, .07], P: [65, .0035, .007, 95, .0025, .004, .06] };
   const dens0 = LOW ? .5 : 1;
   // instâncias estáticas compartilhadas por todas as correias (roletes, rolos de impacto, cavaletes, pedras derramadas)
   const ROLL = [], IMP = [], FRM = [], SPILL = [];

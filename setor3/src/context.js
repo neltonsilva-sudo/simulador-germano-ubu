@@ -4,10 +4,10 @@
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 // Regra de vizinhança: nada do entorno a menos de ~25 m das paredes do setor 3 (x 0–64, z 0–24), exceto correias e estradas.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261021215924';
-import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261021215924';
-import { mergeStatic } from './merge.js?v=20261021215924';
-import { HIGH } from './render.js?v=20261021215924';
+import { B } from './layout.js?v=20261022114903';
+import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261022114903';
+import { mergeStatic } from './merge.js?v=20261022114903';
+import { HIGH } from './render.js?v=20261022114903';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
@@ -314,7 +314,7 @@ export function buildContext(scene, M, root) {
   function belt(a, b, w = 1.4, o = {}) {
     const d = new THREE.Vector3().subVectors(b, a), L = d.length(), grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); g.add(grp); grp.lookAt(b);
     box(grp, w + .4, .35, L, C.aco, 0, 0, 0); box(grp, w, .08, L, C.correia, 0, .2, 0);
-    const n = Math.max(2, Math.floor(L * 1.4)), im = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.18), C.minerio, n); grp.add(im);
+    const n = Math.max(2, Math.floor(L * 1.4)), im = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.18), C.minerio, n); im.frustumCulled = false; grp.add(im);
     const m4 = new THREE.Matrix4(); for (let i = 0; i < n; i++) { m4.makeTranslation((Math.random() - .5) * w * .5, .35, -L / 2 + (i + Math.random()) * L / n); im.setMatrixAt(i, m4); }
     anim.push({ belt: im, L, w, n, off: Math.random() * 10 });
     const hw = w / 2 + .35, dep = o.dep ?? 1.3, np = Math.max(1, Math.round(L / 3));
@@ -368,7 +368,7 @@ export function buildContext(scene, M, root) {
     box(bm, 2.0, .22, L - z0, C.aco, 0, .15, (L + z0) / 2); box(bm, 1.3, .06, L - z0, C.correia, 0, .3, (L + z0) / 2);
     for (let z = z0 + .5; z < L; z += 1.5) box(bm, 1.7, .1, .12, galv, 0, .3, z);                      // cavaletes dos roletes
     const bo = new THREE.Group(); bo.position.set(0, .0, (L + z0) / 2); bm.add(bo);
-    const nb = Math.floor((L - z0) * 1.4), ib = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.18), C.minerio, nb); bo.add(ib); anim.push({ belt: ib, L: L - z0, w: 1.1, n: nb, off: 0 });
+    const nb = Math.floor((L - z0) * 1.4), ib = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.18), C.minerio, nb); ib.frustumCulled = false; bo.add(ib); anim.push({ belt: ib, L: L - z0, w: 1.1, n: nb, off: 0 });
     box(bm, .9, .07, L - 1, C.grade, hw + .5, -.05, (L - 1) / 2); railing(bm, V(hw + .95, -.05, 0), V(hw + .95, -.05, L - 1), C.amarelo, 1.0);
     const hp = new THREE.Mesh(flatU(new THREE.CylinderGeometry(.55, .55, 1.6, 20)), C.aco); hp.rotation.z = Math.PI / 2; hp.position.set(0, .1, L); bm.add(hp);
     box(bm, 2.0, 1.3, 2.4, galv, 0, .75, L + .2); box(bm, 1.6, 1.5, 1.3, C.chute, 0, -.75, L + .9);
