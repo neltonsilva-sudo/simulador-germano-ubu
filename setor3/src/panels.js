@@ -1,11 +1,12 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022202407';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022202407';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022202948';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022202948';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
 // vêm do simulador; APF, TCLD e partir/parar alterados aqui voltam para o simulador.
 
 const CSS = `
+.s3exp .exim{margin:6px 0 4px;position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.15)}.s3exp .exim img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.s3exp .exim figcaption{position:absolute;left:6px;bottom:6px;background:rgba(10,16,24,.8);border-radius:6px;padding:2px 7px;font-size:11px;color:#ffd24a}.s3exp{max-height:calc(100vh - 80px);overflow:auto}
 .s3exp{position:fixed;z-index:30;width:360px;max-width:92vw;background:rgba(12,22,34,.97);border:1px solid rgba(92,198,220,.5);border-radius:12px;padding:10px 12px;color:#fff;font:13px system-ui;box-shadow:0 14px 40px rgba(0,0,0,.5)}.s3exp .h{display:flex;justify-content:space-between;align-items:center;gap:8px}.s3exp .h b{color:#9fdcf0}.s3exp p{margin:6px 0;line-height:1.5}.s3exp small{color:#9fb0bd}.s3exp small b{color:#ffd24a}
 .s3exp .r{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.s3exp button{border:1px solid rgba(255,255,255,.2);background:#1f3a5c;color:#fff;border-radius:6px;padding:4px 9px;font:600 12px system-ui;cursor:pointer}.s3exp button.pri{background:#2c6fd6}.s3exp button:disabled{opacity:.6}.s3exp label{display:flex;gap:6px;align-items:center;font-size:12px;color:#cfd8de}.s3exp select{flex:1;background:#0b1622;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px}
 .s3acc .spk{display:inline-grid;place-items:center;width:22px;height:22px;margin:0 6px 0 0;padding:0;border:1px solid rgba(92,198,220,.45);border-radius:50%;background:rgba(92,198,220,.12);font-size:11px;line-height:1;cursor:pointer;vertical-align:middle;flex:0 0 auto}.s3acc .spk:hover{background:rgba(92,198,220,.3)}.s3acc .spk.on{background:#ffb23d;border-color:#ffb23d;animation:s3spk 1s ease-in-out infinite}@keyframes s3spk{50%{box-shadow:0 0 0 5px rgba(255,178,61,.25)}}
@@ -105,14 +106,32 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const stopAll = () => { VZ.stop(); if (AU) { AU.pause(); AU = null; } };
   const playRec = (k, onend) => { stopAll(); try { AU = new Audio((recV() === '__recT' ? 'audio/expl_thalita/' : 'audio/expl/') + k + '.mp3'); AU.onended = () => onend && onend(); AU.onerror = () => { AU = null; VZ.speak(EXPL[k], onend); }; AU.play().catch(() => { AU = null; VZ.speak(EXPL[k], onend); }); } catch (e) { VZ.speak(EXPL[k], onend); } };
   const sayEx = (onend) => { if (exK && exTxt === EXPL[exK] && recOn()) playRec(exK, onend); else { if (AU) { AU.pause(); AU = null; } VZ.speak(exTxt, onend); } };
+  /* IMAGEM DO ITEM: vista 3D real do equipamento/área descrita, capturada da própria cena (câmera posicionada por item; em cache) */
+  const VIEWS = { cF: [[72, 12, -18], [56, 8, -10], 'Chegada do ROM pela TCLD'], cT: [[72, 12, -18], [56, 8, -10], 'Transportador de longa distância (TCLD)'], cC: [[61.5, 2.3, 10], [59.3, 3.35, 5.5], 'Britador cônico HP 400'],
+    cM: [[26, 19.6, 5.2], [22, 17.4, 2.4], 'Minério na correia de distribuição'], cR: [[26, 19.6, 5.2], [22, 17.4, 2.4], 'Minério na correia de distribuição'], cW: [[26, 19.6, 5.2], [22, 17.4, 2.4], 'Minério na correia de distribuição'],
+    cP: [[60.5, 1.6, 23.4], [61, 2.2, 17.5], 'Britador Barmac (VSI)'], cK: [[60.5, 1.6, 23.4], [61, 2.2, 17.5], 'Britador Barmac (VSI)'],
+    ast: [[-10, 40, 72], [32, 3, 10], 'Setor 3 · visão geral'], pi: [[11.7, 8.85, 17.6], [9, 9.2, 12.5], 'Peneiras banana (pontos de inspeção)'], ctl: [[1.5, 13.2, 19.5], [15, 8.6, 6.5], 'Prédio do peneiramento'],
+    ind: [[-10, 40, 72], [32, 3, 10], 'Setor 3 · visão geral'], gran: [[48, 2.6, 24.5], [53, 1.2, 20.6], 'Correia de produto < 12,5 mm'], efic: [[47.5, 1.55, 1.6], [59, 1.6, 8.5], 'Britagem primária (HP 400)'],
+    tend: [[1.5, 13.2, 19.5], [15, 8.6, 6.5], 'Prédio do peneiramento'], flu: [[-10, 40, 72], [32, 3, 10], 'Fluxos do setor 3'], eq: [[47.0, 1.55, 12.4], [48.4, 1.25, 10.5], 'Botoeira de campo (comando local)'],
+    al: [[61.5, 2.3, 10], [59.3, 3.35, 5.5], 'Equipamento em alarme'], qr: [[1.5, 13.2, 19.5], [15, 8.6, 6.5], 'Área 3 · peneiramento e britagem'], prob: [[11.7, 8.85, 17.6], [9, 9.2, 12.5], 'Peneiras'],
+    insp: [[12, 15.4, 16], [12, 10.8, 6], 'Peneiras vistas do piso dos alimentadores'] };
+  const IMGC = {};
+  const snapView = (k) => { if (IMGC[k]) return IMGC[k]; const T = window.__twin, V = VIEWS[k]; if (!T || !V) return '';
+    const c = T.camera, p0 = c.position.clone(), q0 = c.quaternion.clone(), f0 = c.fov;
+    try { c.position.set(...V[0]); c.lookAt(new c.position.constructor(...V[1])); c.fov = 58; c.updateProjectionMatrix(); c.updateMatrixWorld();
+      if (T.composer) T.composer.render(0); else T.renderer.render(T.scene, c);
+      const src = T.renderer.domElement, w = 520, h = Math.round(w * 9 / 16), cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const sw = src.width, sh = src.height, ch = Math.min(sh, sw * 9 / 16); cv.getContext('2d').drawImage(src, 0, (sh - ch) / 2, sw, ch, 0, 0, w, h); IMGC[k] = cv.toDataURL('image/jpeg', .82);
+    } catch (e) { IMGC[k] = ''; } finally { c.position.copy(p0); c.quaternion.copy(q0); c.fov = f0; c.updateProjectionMatrix(); c.updateMatrixWorld(); }
+    return IMGC[k]; };
   /* caixa de explicação: texto do item + ouvir/parar + explicação do Assistente com os valores atuais + escolha da voz */
   const ex = document.createElement('div'); ex.className = 's3exp'; ex.hidden = true; document.body.appendChild(ex); let exK = null, exTxt = '';
   const valOf = (k) => { const v = el.querySelector('#' + k + 'v') || el.querySelector('#pS_' + k); return v ? v.textContent.trim() : ''; };
   const nameOf = (k) => { const b = el.querySelector(`.spk[data-spk="${k}"]`); return b ? b.parentElement.textContent.replace('🔊', '').replace(/\s+/g, ' ').trim().replace(valOf(k), '').trim() : k; };
-  const exRender = (busy) => { const V = VZ.list(), cur = VZ.pick(); ex.innerHTML = `<div class="h"><b>🔊 ${esc(nameOf(exK))}</b><button data-x title="Fechar">×</button></div>${valOf(exK) ? `<small>Valor atual: <b>${esc(valOf(exK))}</b></small>` : ''}
+  const exRender = (busy) => { const V = VZ.list(), cur = VZ.pick(); const im = IMGC[exK]; ex.innerHTML = `<div class="h"><b>🔊 ${esc(nameOf(exK))}</b><button data-x title="Fechar">×</button></div>${im ? `<figure class="exim"><img src="${im}" alt="${esc(VIEWS[exK][2])}"><figcaption>${esc(VIEWS[exK][2])}</figcaption></figure>` : ''}${valOf(exK) ? `<small>Valor atual: <b>${esc(valOf(exK))}</b></small>` : ''}
       <p>${esc(exTxt)}</p><div class="r"><button data-play>▶ Ouvir</button><button data-stop>■ Parar</button><button data-ai class="pri"${busy ? ' disabled' : ''}>${busy ? 'Assistente explicando…' : '🧠 Explicar com o Assistente (valores atuais)'}</button></div>
       <label>Voz <select data-voz><option value="__rec"${recV() === '__rec' ? ' selected' : ''}>Francisca · voz natural (gravada)</option><option value="__recT"${recV() === '__recT' ? ' selected' : ''}>Thalita · voz natural expressiva (gravada)</option>${V.sort((a, b) => VZ.rank(b) - VZ.rank(a)).map((v) => `<option${!recOn() && cur && v.name === cur.name ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>${recOn() ? '<small>A explicação do Assistente, criada na hora, usa a melhor voz do navegador.</small>' : ''}`; };
-  const openEx = (k, b) => { exK = k; exTxt = EXPL[k] || ''; const r = b.getBoundingClientRect(), pr = el.getBoundingClientRect(); ex.style.left = Math.min(innerWidth - 380, pr.right + 10) + 'px'; ex.style.top = Math.max(70, Math.min(innerHeight - 320, r.top - 10)) + 'px';
+  const openEx = (k, b) => { exK = k; exTxt = EXPL[k] || ''; snapView(k); const r = b.getBoundingClientRect(), pr = el.getBoundingClientRect(); ex.style.left = Math.min(innerWidth - 380, pr.right + 10) + 'px'; ex.style.top = Math.max(70, Math.min(innerHeight - 520, r.top - 10)) + 'px';
     exRender(false); ex.hidden = false; el.querySelectorAll('.spk.on').forEach((x) => x.classList.remove('on')); b.classList.add('on'); sayEx(() => b.classList.remove('on')); };
   ex.addEventListener('click', async (e) => { const b = el.querySelector(`.spk[data-spk="${exK}"]`);
     if (e.target.closest('[data-x]')) { stopAll(); ex.hidden = true; b && b.classList.remove('on'); return; }
