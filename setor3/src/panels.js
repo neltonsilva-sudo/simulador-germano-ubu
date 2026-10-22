@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022203550';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022203550';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022204058';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022204058';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -98,13 +98,13 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
     rank(v) { const n = v.name; return /natural|neural/i.test(n) ? 6 : /online/i.test(n) ? 5 : /premium|enhanced|aprimorad/i.test(n) ? 4 : /google/i.test(n) ? 3 : /luciana|francisca|thalita|antonio|felipe|daniel/i.test(n) ? 2 : 1; },
     pick() { const V = this.list(); let p = null; try { p = localStorage.getItem('s3voice'); } catch (e) { /* */ } return (p && V.find((v) => v.name === p)) || V.slice().sort((a, b) => this.rank(b) - this.rank(a))[0] || null; },
     speak(text, onend) { const S = window.speechSynthesis; if (!S) { onend && onend(); return; } S.cancel(); const v = this.pick(), parts = String(text).replace(/\s+/g, ' ').match(/[^.!?;]+[.!?;]?/g) || [String(text)];
-      parts.forEach((t, i) => { const u = new SpeechSynthesisUtterance(t.trim()); u.lang = 'pt-BR'; if (v) u.voice = v; u.rate = .96; u.pitch = 1.03; if (i === parts.length - 1) u.onend = u.onerror = () => onend && onend(); S.speak(u); }); },
+      parts.forEach((t, i) => { const u = new SpeechSynthesisUtterance(t.trim()); u.lang = 'pt-BR'; if (v) u.voice = v; u.rate = .88; u.pitch = .96; u.volume = .85;   /* fala mais suave */ if (i === parts.length - 1) u.onend = u.onerror = () => onend && onend(); S.speak(u); }); },
     stop() { try { speechSynthesis.cancel(); } catch (e) { /* */ } } };
   try { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); } catch (e) { /* */ }
   /* VOZ NATURAL GRAVADA (neural, Francisca): explicações fixas tocam o áudio gravado; o texto gerado na hora pelo Assistente usa a melhor voz do navegador */
   let AU = null; const recV = () => { try { return localStorage.getItem('s3voice') || '__rec'; } catch (e) { return '__rec'; } }, recOn = () => /^__rec/.test(recV());
   const stopAll = () => { VZ.stop(); if (AU) { AU.pause(); AU = null; } };
-  const playRec = (k, onend) => { stopAll(); try { AU = new Audio((recV() === '__recT' ? 'audio/expl_thalita/' : 'audio/expl/') + k + '.mp3'); AU.onended = () => onend && onend(); AU.onerror = () => { AU = null; VZ.speak(EXPL[k], onend); }; AU.play().catch(() => { AU = null; VZ.speak(EXPL[k], onend); }); } catch (e) { VZ.speak(EXPL[k], onend); } };
+  const playRec = (k, onend) => { stopAll(); try { AU = new Audio((recV() === '__recT' ? 'audio/expl_thalita/' : 'audio/expl/') + k + '.mp3?v=2'); AU.volume = .85; AU.onended = () => onend && onend(); AU.onerror = () => { AU = null; VZ.speak(EXPL[k], onend); }; AU.play().catch(() => { AU = null; VZ.speak(EXPL[k], onend); }); } catch (e) { VZ.speak(EXPL[k], onend); } };
   const sayEx = (onend) => { if (exK && exTxt === EXPL[exK] && recOn()) playRec(exK, onend); else { if (AU) { AU.pause(); AU = null; } VZ.speak(exTxt, onend); } };
   /* IMAGEM DO ITEM: vista 3D real do equipamento/área descrita, capturada da própria cena (câmera posicionada por item; em cache) */
   const VIEWS = { cF: [[72, 12, -18], [56, 8, -10], 'Chegada do ROM pela TCLD'], cT: [[72, 12, -18], [56, 8, -10], 'Transportador de longa distância (TCLD)'], cC: [[61.5, 2.3, 10], [59.3, 3.35, 5.5], 'Britador cônico HP 400'],
