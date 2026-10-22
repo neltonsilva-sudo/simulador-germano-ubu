@@ -1,12 +1,12 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261022183526';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261022183526';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261022183526';
-import { buildUI } from './ui.js?v=20261022183526';
-import { gate } from './gate.js?v=20261022183526';
-import { buildContext } from './context.js?v=20261022183526';
+import { B, LV, CAMS } from './layout.js?v=20261022184347';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261022184347';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261022184347';
+import { buildUI } from './ui.js?v=20261022184347';
+import { gate } from './gate.js?v=20261022184347';
+import { buildContext } from './context.js?v=20261022184347';
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -67,7 +67,7 @@ function setWalk(on, lv) {
 }
 const hotspots = S3.hotspots;
 stepSim(0);
-const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, pick: S3.pick, pickRoot: S3.group, getWalk: () => ({ walk, level }), CAMS, sim, flowLabels: parts.flows.labels || [] });
+const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, pick: S3.pick, pickRoot: S3.group, fieldBtns: (parts.field && parts.field.btns) || [], getWalk: () => ({ walk, level }), CAMS, sim, flowLabels: parts.flows.labels || [] });
 
 function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); composer && composer.setSize(innerWidth, innerHeight); }
 addEventListener('resize', resize); resize();

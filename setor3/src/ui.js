@@ -1,15 +1,16 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261022183526';
-import { buildEqScreen } from './eqscreen.js?v=20261022183526';
-import { buildTraining } from './training.js?v=20261022183526';
-import { buildTour } from './tour.js?v=20261022183526';
-import { logEv } from './sim.js?v=20261022183526';
-import { SIM_URL } from './api.js?v=20261022183526';
-import { buildRiskMap } from './riskmap.js?v=20261022183526';
+import { buildPanels } from './panels.js?v=20261022184347';
+import { buildEqScreen } from './eqscreen.js?v=20261022184347';
+import { buildTraining } from './training.js?v=20261022184347';
+import { buildTour } from './tour.js?v=20261022184347';
+import { logEv, cmd, itemOf } from './sim.js?v=20261022184347';
+import { SIM_URL } from './api.js?v=20261022184347';
+import { buildRiskMap } from './riskmap.js?v=20261022184347';
 
 const CSS = `
+.s3flash{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:20;padding:8px 14px;border-radius:10px;font:600 13px system-ui;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:80vw}.s3flash.ok{background:rgba(31,138,91,.95)}.s3flash.no{background:rgba(160,40,30,.95)}
 #ui [hidden]{display:none!important}
 /* arrastar sobre a régua ou o 3D não deve selecionar texto (fica a seleção azul) */
 .s3bar,.s3bar *,.s3tag,.s3flow,.s3help,canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -48,7 +49,7 @@ const CSS = `
 @media (max-width:860px){.s3op{top:auto;bottom:70px;right:8px;width:min(330px,calc(100vw - 16px));max-height:45vh}.s3bar{top:8px;left:8px;right:8px}.s3card small{display:none}.s3card b{font-size:12px}.s3joy{bottom:150px}}
 `;
 
-export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [], pick = [], pickRoot = null }) {
+export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [], pick = [], pickRoot = null, fieldBtns = [] }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.getElementById('ui');
   root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><button id="s3trn" style="background:#2c6fd6;color:#fff" title="Treinamento em primeira pessoa: LOTO, cordão de emergência, Barmac e ronda de inspeção">🎓 Treinamento</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3back" style="background:#1f63b3;color:#fff" title="Ir para o simulador sem fechar o gêmeo">◀ Simulador</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
@@ -137,8 +138,17 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
       for (const q of pick) { const b = q.box; if (p.x > b.min.x - .3 && p.x < b.max.x + .3 && p.y > b.min.y - .3 && p.y < b.max.y + .3 && p.z > b.min.z - .3 && p.z < b.max.z + .3) { const v = (b.max.x - b.min.x) * (b.max.y - b.min.y) * (b.max.z - b.min.z); if (v < bv) { bv = v; best = q; } } }
       if (best) return best.tag; } return null; };
   canvas.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
-  canvas.addEventListener('pointerup', (e) => { if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return; const t = pickAt(e); if (t) eqs.open(t); });
-  let hoverT = 0; canvas.addEventListener('pointermove', (e) => { if (e.buttons || performance.now() - hoverT < 120) return; hoverT = performance.now(); canvas.style.cursor = pickAt(e) ? 'pointer' : ''; });
+  // botões das botoeiras no 3D: clique executa o comando real (comando local, como no campo)
+  const fRay = new THREE.Raycaster(), fN = new THREE.Vector2();
+  const fieldHit = (ev) => { if (!fieldBtns.length) return null; const r = canvas.getBoundingClientRect(); fN.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); fRay.setFromCamera(fN, camera);
+    const h = fRay.intersectObjects(fieldBtns, false)[0]; return h && h.distance < 25 ? h.object : null; };
+  const flashEl = document.createElement('div'); flashEl.className = 's3flash'; flashEl.hidden = true; root.appendChild(flashEl);
+  const flash = (m, ok) => { flashEl.textContent = m; flashEl.className = 's3flash ' + (ok ? 'ok' : 'no'); flashEl.hidden = false; clearTimeout(flashEl._t); flashEl._t = setTimeout(() => { flashEl.hidden = true; }, 3800); };
+  const fieldAct = (m) => { const { tag, act, press } = m.userData, o = itemOf(tag); if (!o) return; const a = act === 'es' ? (o.es ? 'release' : 'estop') : act; const r = cmd(tag, a, 'L');
+    if (press && act !== 'es' && act !== 'mode') { press.position.z -= .007; setTimeout(() => { press.position.z += .007; }, 170); }
+    flash(`${tag} · ${r.ok ? '✓' : '✗'} ${r.msg}`, r.ok); eqs.open(tag); };
+  canvas.addEventListener('pointerup', (e) => { if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return; const fb = fieldHit(e); if (fb) { fieldAct(fb); return; } const t = pickAt(e); if (t) eqs.open(t); });
+  let hoverT = 0; canvas.addEventListener('pointermove', (e) => { if (e.buttons || performance.now() - hoverT < 120) return; hoverT = performance.now(); canvas.style.cursor = fieldHit(e) || pickAt(e) ? 'pointer' : ''; });
   function panel() { if (infoTag && !$('#s3info').hidden) renderInfo(); }
   // joystick (celular)
   const joy = { f: 0, s: 0 }; const jz = $('#s3joy'), knob = jz.querySelector('i');
