@@ -3282,7 +3282,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261021220342';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261021221043';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3539,8 +3539,8 @@ function terrainMesh(W,D,SX,SZ,cx,cz,hole){
   {/* A1: malha polar fina da cava PITS[0] (mesma H): anéis concentrados nas faces → taludes íngremes e bermas planas, sem serrilhado da grade de 1 m.
       Material próprio (técnica do gêmeo, área 1): faces com faixas horizontais fortes de itabirito (vermelho-ferrugem, cinza-azulado, creme, hematita escura) levemente inclinadas,
       escorrimentos verticais; bermas cinza-claras empoeiradas com trilhas de pneu (textura); fundo com lama avermelhada e sump úmido. Tons escuros/saturados para o sol não lavar. */
-    const P0=PITS[0],RO=P0.r+P0.rim,NA=320,rad=[RO],AL=ALT(P0.x);
-    for(let s=1;s<=10;s++)rad.push(RO-P0.rim*s/10);
+    const P0=PITS[0],RO=P0.r+.35,NA=320,rad=[RO],AL=ALT(P0.x);/* termina logo após a crista: a borda é do terreno (evita anel e serrilhado) */
+    for(let s=1;s<=3;s++)rad.push(RO-.35*s/3);
     const FR=[.06,.16,.28,.4,.52,.62,.68,.71,.74,.77,.8,.83,.86,.89,.92,.95,.975,1];
     for(let k=0;k<P0.b;k++)for(const f of FR){const d=P0.r*(1-(k+f)/P0.b);if(d<rad[rad.length-1]-.01)rad.push(Math.max(.02,d));}
     const NR=rad.length,NV=NR*(NA+1),pp=new Float32Array(NV*3),cc=new Float32Array(NV*3),uv=new Float32Array(NV*2),idx=[],mt=new Float32Array(NV*3);
@@ -3553,7 +3553,7 @@ function terrainMesh(W,D,SX,SZ,cx,cz,hole){
     const PAL=[0x6e2410,0x3c4656,0xa8865e,0x3a2420,0x7c3a18,0x4e5560,0x8e5a24,0x5a1c0e,0xb49470].map(v=>new THREE.Color(v));
     const DUST=new THREE.Color(0xb3a596),MUD=new THREE.Color(0x4a2618),SUMP=new THREE.Color(0x2e1610),c=new THREE.Color(),c2=new THREE.Color();
     for(let o=0;o<NV;o++){const q=mt[o*3],d=mt[o*3+1],h=mt[o*3+2],hr=h-AL,x=pp[o*3],z=pp[o*3+2],ny=N.getY(o),jq=q*Math.max(d,4);
-      if(d>=P0.r-.02){const k=colAt(x,z,h);c.copy(k);if(d<P0.r+1.2){c2.copy(DUST).multiplyScalar(.95);c.lerp(c2,sstep(P0.r+1.2,P0.r,d)*.6);}}
+      if(d>=P0.r-.02){const k=colAt(x,z,h);c.copy(k);if(d<P0.r+1.2){c2.copy(DUST).multiplyScalar(.95);c.lerp(c2,sstep(P0.r+1.2,P0.r,d)*.6);}c.multiplyScalar(1+sstep(P0.r,P0.r+2.5,d)*1.15);}/* fora da cava: compensa o tom escuro do material para casar com o terreno (sem anel cinza) */
       else{const t=(1-d/P0.r)*P0.b,kb=Math.floor(t);
         /* estrato pela cota, levemente inclinado e ondulado; a mesma camada atravessa as bancadas */
         const bv=(hr+.9*Math.sin(q+.7)+.35*Math.sin(q*3+1.1)+(fbm(x*.35,z*.35,2)-.5)*.5)/.62,bi=Math.floor(bv),bf=bv-bi;
