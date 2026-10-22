@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261021214118';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021214118';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261021214328';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261021214328';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -297,8 +297,8 @@ export function buildCrushers(scene, M) {
     cyl(DG, .27, .27, .2, mBeige, 1.86, yS, 0, 28).rotation.z = Math.PI / 2; cyl(DG, .05, .05, .3, mChrome, 2.06, yS, 0, 12).rotation.z = Math.PI / 2;
     for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; bolt(DG, 1.45, yS + Math.cos(a) * .25, Math.sin(a) * .25, 1, 0, 0, .02, M.steelDk); }
     beam(DG, V(1.86, BF, 0), V(1.86, yS - .2, 0), .14, mBase);
-    const sv = new THREE.Mesh(sheaveGeo(.44, .2, 5), M.greyDk); sv.rotation.z = Math.PI / 2; sv.position.set(2.2, yS, 0); sv.userData.keep = true; sh(sv); DG.add(sv); sheaveMarksC(sv, .44); spin.push({ tag: c.tag, o: sv, ax: 'y', w: 9 });
-    const mv = new THREE.Mesh(sheaveGeo(.17, .2, 5), M.greyDk); mv.rotation.z = Math.PI / 2; mv.position.set(2.2, yM, zM); mv.userData.keep = true; sh(mv); DG.add(mv); sheaveMarksC(mv, .17); spin.push({ tag: c.tag, o: mv, ax: 'y', w: 24 });
+    const sv = new THREE.Mesh(sheaveGeo(.44, .2, 5), M.greyDk); sv.rotation.z = Math.PI / 2; sv.position.set(2.2, yS, 0); sv.userData.keep = true; sh(sv); DG.add(sv); sheaveMarksC(sv, .44); spin.push({ tag: c.tag, o: sv, ax: 'x', w: 9 });
+    const mv = new THREE.Mesh(sheaveGeo(.17, .2, 5), M.greyDk); mv.rotation.z = Math.PI / 2; mv.position.set(2.2, yM, zM); mv.userData.keep = true; sh(mv); DG.add(mv); sheaveMarksC(mv, .17); spin.push({ tag: c.tag, o: mv, ax: 'x', w: 24 });
     // correias (trechos retos tangentes)
     for (const s2 of [-1, 1]) { const dz = zM, dy = yM - yS, L = Math.hypot(dz, dy), nz = -dy / L * s2, ny = dz / L * s2; const bm = beam(DG, V(2.2, yS + ny * .42, nz * .42), V(2.2, yM + ny * .16, zM + nz * .16), .05, vbMatC); vbDrive.push({ tag: c.tag }); }
     vbTexC.repeat.set(1, 8);
