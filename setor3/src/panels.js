@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022114903';
-import { startMnt, finishMnt } from './sim.js?v=20261022114903';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022120845';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort } from './sim.js?v=20261022120845';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
@@ -51,7 +51,7 @@ const CSS = `
 @media (max-width:860px){.s3acc{top:auto;bottom:150px;left:8px;width:min(400px,calc(100vw - 16px));max-height:42vh}}
 `;
 
-const SECS = [['ast', 'Assistente de Processo'], ['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['efic', 'Eficiência do processo'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Equipamentos'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
+const SECS = [['ast', 'Assistente de Processo'], ['pi', 'Pontos de inspeção'], ['ctl', 'Controles e ajustes'], ['ind', 'Indicadores em tempo real'], ['gran', 'Curva granulométrica'], ['efic', 'Eficiência do processo'], ['tend', 'Tendências'], ['flu', 'Fluxos · entradas e saídas'], ['eq', 'Sala de controle · comando e sequência'], ['al', 'Alarmes e eventos'], ['qr', 'QR Code da área'], ['prob', 'Problemas detectados'], ['insp', 'Registro de inspeção']];
 
 export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -271,10 +271,15 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
         <tr><td>Britado → retorno às peneiras</td><td class="n">${fm((K.ret ?? (K.T - K.prod)))}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr>
         <tr class="grp"><td colspan="4">Saídas</td></tr><tr><td>Produto &lt; 12,5 mm → pilha de regularização</td><td class="n">${fm(K.prod)}</td><td class="n">${fm(fe, 1)}</td><td class="n">${fm(si, 1)}</td></tr></table>
         <p style="color:#9fb0bd;margin:6px 0 0">A britagem só reduz o tamanho: os teores entram e saem iguais. Balanço: entra ${fm(K.F)} t/h = sai ${fm(K.prod)} t/h${K.limited ? ' (alimentação limitada pela britagem)' : ''}.</p>`; }
-    if (on('eq') || force) {
-      $('#pB_eq').innerHTML = `<table><tr><th>Tag</th><th>Estado</th><th class="n">Carga</th><th class="n">Vibr.</th><th class="n">Desg.</th><th class="n">Saúde</th><th></th></tr>${Object.entries(E).map(([tag, e]) => `<tr><td><a data-i="${tag}">${tag}</a></td><td><span class="st ${e.st}"></span>${stTxt[e.st]}</td><td class="n">${e.on ? fm(e.load * 100) + ' %' : '–'}</td><td class="n">${e.on && e.flow > 0 ? fm(e.vib, 1) : '–'}</td><td class="n">${fm(e.w)} %</td><td class="n" style="color:${e.health == null ? '#9fb0bd' : e.health < 50 ? '#ff6b5b' : e.health < 75 ? '#ffb020' : '#2fbf71'}">${e.health == null ? '–' : e.health}</td><td><button data-t="${tag}">${e.on ? 'Desligar' : 'Ligar'}</button></td></tr>`).join('')}</table>`;
-      el.querySelectorAll('#pB_eq [data-t]').forEach((b) => b.onclick = () => { const e = E[b.dataset.t]; e.on = !e.on; logEv('Comando', `${b.dataset.t} ${e.on ? 'ligado' : 'desligado'}`); render(true); });
-      el.querySelectorAll('#pB_eq [data-i]').forEach((a) => a.onclick = () => openInfo(a.dataset.i)); }
+    if (on('eq') || force) {   /* SALA DE CONTROLE: comando remoto, sequência de partida/parada e permissivos de cada item */
+      const NMK = { pn: 'Peneira', cone: 'HP 400', vsi: 'Barmac' }, S = sim.seq;
+      $('#pB_eq').innerHTML = `<div class="row" style="gap:6px;margin:4px 0 6px"><button data-sq="start"${S ? ' disabled' : ''}>▶ Partida sequencial</button><button data-sq="stop"${S ? ' disabled' : ''}>■ Parada sequencial</button>${S ? '<button data-sq="abort">Interromper</button>' : ''}</div>
+        <p class="hint" style="margin:0 0 6px">${esc(S ? S.msg : sim.seqMsg || 'Partida de jusante para montante: 03TC005 → 03TC002/003 → peneiras → 03TC001 → 03TC004 → HP 400 e Barmac → 03TC006. Parada no sentido inverso.')}${sim.ctlMsg ? `<br><b style="color:${sim.ctlMsg.ok ? '#7fe0a8' : '#ff8a7a'}">${sim.ctlMsg.ok ? '✓' : '✗'} ${esc(sim.ctlMsg.t)}: ${esc(sim.ctlMsg.msg)}</b>` : ''}</p>
+        <table><tr><th>Tag</th><th>Estado</th><th>Modo</th><th class="n">Perm.</th><th class="n">Carga</th><th></th></tr>${SEQ.map((tag) => { const o = itemOf(tag), P = perms(tag), np = P.filter((q) => q[1]).length, stC = o.trip || o.es || o.cord ? 'crit' : o.on ? 'ok' : 'off';
+          return `<tr><td><a data-i="${tag}">${tag}</a><br><small style="color:#9fb0bd">${o.k === 'tc' ? esc(o.nome) : NMK[o.k]}</small></td><td><span class="st ${stC}"></span>${o.mnt ? 'manutenção' : o.lock ? '🔒 bloqueado' : o.trip ? 'desarmado' : o.on ? 'operando' : 'parado'}</td><td>${o.mode === 'L' ? '<b style="color:#ffd24a">L</b>' : 'R'}</td><td class="n" title="${esc(P.filter((q) => !q[1]).map((q) => q[0]).join('; ') || 'todos atendidos')}" style="color:${np === P.length ? '#7fe0a8' : '#ff8a7a'}">${np}/${P.length}</td><td class="n">${o.k !== 'tc' && o.on ? fm(o.load * 100) + ' %' : o.k === 'tc' && o.on ? fm(o.spd) + ' %' : '–'}</td><td><button data-t="${tag}">${o.on ? 'Desligar' : 'Ligar'}</button></td></tr>`; }).join('')}</table>`;
+      el.querySelectorAll('#pB_eq [data-t]').forEach((b) => b.onclick = () => { const t = b.dataset.t, r = cmd(t, itemOf(t).on ? 'stop' : 'start', 'R'); sim.ctlMsg = Object.assign({ t }, r); render(true); });
+      el.querySelectorAll('#pB_eq [data-sq]').forEach((b) => b.onclick = () => { const q = b.dataset.sq; sim.seqMsg = ''; if (q === 'abort') seqAbort('pelo operador'); else seq(q); render(true); });
+      el.querySelectorAll('#pB_eq [data-i]').forEach((a) => a.onclick = () => { const t = a.dataset.i; if (sim.eq[t]) openInfo(t); else if (window.__s3openEq) window.__s3openEq(t); }); }
     const XA = (sim.sync && sim.extAl) || [], xaHTML = XA.map((a) => `<div class="al ${a.sev === 'crit' ? 'crit' : 'warn'}"><b>Simulador</b> · ${esc(a.msg)}</div>`).join('');
     if (on('al') || force) $('#pB_al').innerHTML = xaHTML + (K.alarms.length || XA.length ? (K.alarms.length ? K.alarms.map((a) => `<div class="al ${a.st}"><b>${a.tag}</b> · ${a.why}</div>`).join('') : '') : '<div style="color:#2fbf71">Sem alarmes ativos.</div>') +
       `<div style="margin-top:8px;color:#9fb0bd;font-weight:600">Eventos</div>${sim.log.slice(0, 30).map((v) => `<div class="ev">${v.h} · <b>${v.tipo}</b> · ${v.txt}</div>`).join('') || '<div class="ev">Nenhum evento ainda.</div>'}`;

@@ -1,21 +1,22 @@
 // Montagem completa do setor 3 num grupo (usada pelo gêmeo imersivo e pelo simulador, que a embute em escala reduzida).
 import * as THREE from 'three';
-import { buildMaterials } from './mats.js?v=20261022114903';
-import { buildBuilding } from './building.js?v=20261022114903';
-import { buildScreens } from './screens.js?v=20261022114903';
-import { buildCrushers } from './crushers.js?v=20261022114903';
-import { buildFlows } from './flows.js?v=20261022114903';
-import { mergeStatic } from './merge.js?v=20261022114903';
-import { sim, stepSim } from './sim.js?v=20261022114903';
+import { buildMaterials } from './mats.js?v=20261022120845';
+import { buildBuilding } from './building.js?v=20261022120845';
+import { buildScreens } from './screens.js?v=20261022120845';
+import { buildCrushers } from './crushers.js?v=20261022120845';
+import { buildFlows } from './flows.js?v=20261022120845';
+import { buildField } from './field.js?v=20261022120845';
+import { mergeStatic } from './merge.js?v=20261022120845';
+import { sim, stepSim } from './sim.js?v=20261022120845';
 
 export function buildSetor3(opt = {}) {
   const root = new THREE.Group(); root.name = 'setor3';
   const M = buildMaterials(opt);
   const parts = {};
-  for (const [k, fn] of Object.entries({ building: buildBuilding, screens: buildScreens, crushers: buildCrushers, flows: buildFlows })) {
+  for (const [k, fn] of Object.entries({ building: buildBuilding, screens: buildScreens, crushers: buildCrushers, flows: buildFlows, field: buildField })) {
     try { parts[k] = fn(root, M, opt) || {}; } catch (e) { console.error('setor3: falha ao montar', k, e); parts[k] = {}; }
   }
-  const pick = [parts.screens, parts.crushers].flatMap((p) => p.pick || []);
+  const pick = [parts.screens, parts.crushers, parts.field].flatMap((p) => p.pick || []);
   const stats = opt.merge === false ? null : mergeStatic(root);
   // normais nulas (triângulos degenerados) viram NaN no shader e o bloom espalha blocos pretos: troca por (0, 1, 0)
   root.traverse((o) => { const n = o.geometry && o.geometry.attributes && o.geometry.attributes.normal; if (!n) return; const A = n.array; let fx = 0;

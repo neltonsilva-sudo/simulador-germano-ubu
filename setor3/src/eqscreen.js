@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261022114903';
-import { MNT, startMnt, finishMnt } from './sim.js?v=20261022114903';
+import { call } from './api.js?v=20261022120845';
+import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022120845';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -17,6 +17,18 @@ const CSS = `
 .s3eq .act{display:flex;gap:8px;padding:12px 14px 14px}.s3eq .act button{flex:1;border:0;border-radius:8px;padding:8px;font:700 12px system-ui;cursor:pointer;color:#fff;background:#1f3a5c}
 .s3eq .act button.on{background:#c0392b}.s3eq .act button.off{background:#1f8a5b}.s3eq .act button.mnt{background:#2c6fd6}.s3eq .act button:disabled{opacity:.45;cursor:not-allowed}.s3eq .chip.mnt{background:#2c6fd6;color:#fff;border-color:#2c6fd6}.s3eq .act button.mntp{flex:3;position:relative;overflow:hidden;background:#13294d;padding:6px 8px;text-align:left;cursor:default;opacity:1}.s3eq .mntp .bar{position:absolute;left:0;top:0;bottom:0;width:var(--p);background:linear-gradient(90deg,#2c6fd6,#58a6ff);transition:width .4s}.s3eq .mntp b,.s3eq .mntp small{position:relative;display:block}.s3eq .mntp small{font:500 10.5px/1.25 system-ui;opacity:.95;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .s3mrep{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(3,10,20,.55);backdrop-filter:blur(3px)}.s3mrep .bx{width:min(520px,92vw);max-height:86vh;overflow:auto;background:rgba(10,24,44,.97);border:1px solid #2c6fd6;border-radius:12px;padding:16px 18px;color:#fff;font:13px/1.5 system-ui;box-shadow:0 20px 60px rgba(0,0,0,.6)}.s3mrep h3{margin:0 0 4px;font-size:17px;color:#7fb8ff}.s3mrep table{width:100%;border-collapse:collapse;margin:8px 0}.s3mrep td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.08)}.s3mrep td:last-child{text-align:right;font-weight:700}.s3mrep ul{margin:6px 0 10px;padding-left:4px;list-style:none}.s3mrep li::before{content:'✓ ';color:#3ad07a;font-weight:700}.s3mrep .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}.s3mrep button{border:0;border-radius:8px;padding:8px 14px;font:700 12px system-ui;color:#fff;background:#1f3a5c;cursor:pointer}.s3mrep button.on{background:#1f8a5b}.s3eq p.n{margin:4px 14px 0;color:#9fb0bd;font-size:11.5px}
+.s3eq .lpx{margin:0 14px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}.s3eq .lpx.bt{background:linear-gradient(#3a4148,#2a3036);border-color:#59626b}
+.s3eq .lprow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0}.s3eq .lprow b{font:600 12.5px ui-monospace,Menlo,monospace;color:#fff}
+.s3eq .lprow button{border:1px solid rgba(255,255,255,.18);background:#1f3a5c;color:#fff;border-radius:6px;padding:5px 8px;font:600 11.5px system-ui;cursor:pointer}.s3eq .lprow button:disabled{opacity:.4;cursor:not-allowed}
+.s3eq .lprow button.rd{background:#8c2a20}.s3eq .lprow button.gr2{background:#1f8a5b}
+.s3eq .lmp{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#cfd6dc;margin-right:6px}.s3eq .lmp i{width:12px;height:12px;border-radius:50%;background:#2b2f33;border:2px solid #555;box-shadow:inset 0 -2px 3px rgba(0,0,0,.5)}
+.s3eq .lmp.on i{background:var(--c);border-color:#ddd;box-shadow:0 0 8px var(--c)}
+.s3eq .lprow .pb{width:38px;height:38px;border-radius:50%;font:800 15px system-ui;border:3px solid #1b1b1b;box-shadow:0 3px 0 #111,inset 0 2px 3px rgba(255,255,255,.35)}.s3eq .lprow .pb:active{transform:translateY(2px);box-shadow:0 1px 0 #111}
+.s3eq .lprow .pb.gr{background:#1fa060}.s3eq .lprow .pb.rd{background:#c8261b}.s3eq .lprow .pb.bl{background:#2a63c9}
+.s3eq .lprow .es{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ff6b5b,#b3140a 70%);border:5px solid #ffd21f;font:800 10px system-ui;box-shadow:0 4px 0 #6b0a03}.s3eq .lprow .es.in{transform:translateY(3px);box-shadow:0 1px 0 #6b0a03;filter:brightness(.8)}
+.s3eq .lprow .sel{background:#111;border:2px solid #888;border-radius:6px;font:800 11px ui-monospace,monospace;padding:8px 7px}.s3eq .lprow .sel.l{color:#ffd24a}
+.s3eq .lpx p.n{margin:4px 0 0}.s3eq details{margin:6px 0 2px;font-size:11.5px;color:#cfd6dc}.s3eq summary{cursor:pointer;color:#9fdcf0}.s3eq .pm{padding:1px 0}.s3eq .pm.ok{color:#7fe0a8}.s3eq .pm.no{color:#ff8a7a}
+.s3eq .n.w{color:#ffb070}.s3eq .n.g{color:#7fe0a8}.s3eq .loto{margin-top:6px;padding:8px;border-radius:6px;background:rgba(255,210,74,.08);border:1px dashed #ffd24a;font-size:12px;color:#fff;display:grid;gap:4px}
 @media (max-width:860px){.s3eq{top:70px;max-height:calc(100vh - 240px)}}
 `;
 
@@ -43,9 +55,52 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     const y71 = pt + (H - pt - pb) * (1 - 7.1 / mv); x.strokeStyle = 'rgba(255,176,32,.6)'; x.setLineDash([4 * dpr, 3 * dpr]); x.beginPath(); x.moveTo(pl, y71); x.lineTo(W, y71); x.stroke(); x.setLineDash([]);
     for (const [k, c, m] of [['flow', '#5cc6dc', mf], ['vib', '#ffb070', mv]]) { x.strokeStyle = c; x.lineWidth = 1.7 * dpr; x.beginPath(); h.forEach((q, i) => { const X = sx(q.t), Y = pt + (H - pt - pb) * (1 - q[k] / m); i ? x.lineTo(X, Y) : x.moveTo(X, Y); }); x.stroke(); }
   }
+  // BOTOEIRA DE CAMPO e painéis locais (funcionais): seletor local/remoto, liga, desliga, emergência, rearme, permissivos, LOTO e painéis próprios do equipamento
+  const MSG = {}, LOTO = {};
+  const LOTO_STEPS = ['Avisar a sala de controle e parar o equipamento', 'Abrir a chave seccionadora no CCM', 'Colocar o cadeado e a etiqueta pessoal', 'Tentar a partida na botoeira (teste de energia zero)'];
+  function lp(t, o) {
+    const P = perms(t), okP = P.every((p) => p[1]), m = MSG[t], L = LOTO[t], lk = !!o.lock;
+    const lamp = (on, c, txt) => `<span class="lmp${on ? ' on' : ''}" style="--c:${c}"><i></i>${txt}</span>`;
+    let spec = '';
+    if (o.k === 'cone') spec = `<h4>Unidade de lubrificação e painel hidráulico</h4><div class="lpx">
+        <div class="lprow">${lamp(o.lube, '#2fbf71', 'Bomba de óleo')}${lamp(o.lube && o.lubeT >= 5, '#2fbf71', 'Pressão OK')}<b>${fm(o.oilP || 0, 1)} bar · ${fm(o.oil)} °C</b></div>
+        <div class="lprow"><button data-c="lube">${o.lube ? 'Desligar bomba' : 'Ligar bomba'}</button><button data-c="clear"${o.choke ? '' : ' disabled'}>Limpeza da câmara</button><button data-c="css" data-v="-1">APF −</button><b>${fm(sim.css)} mm</b><button data-c="css" data-v="1">APF +</button></div>
+        <p class="n">${o.choke ? '⚠ Câmara afogada: faça a limpeza hidráulica com o britador parado e depois rearme.' : 'A bomba precisa estar ligada ≥ 5 s (pressão estabelecida) antes da partida do motor; sem pressão o britador desarma em 3 s.'}${o.clearT ? ' Limpeza em andamento…' : ''}</p></div>`;
+    if (o.k === 'vsi') spec = `<h4>Proteções intertravadas</h4><div class="lpx"><div class="lprow">${lamp(o.lid, '#2fbf71', 'Tampa fechada')}${lamp(o.guard, '#2fbf71', 'Proteção das correias')}${lamp(o.coast > 0 || o.on, '#ffb020', o.coast > 0 ? `Rotor parando (${Math.ceil(o.coast)} s)` : 'Rotor girando')}</div>
+        <div class="lprow"><button data-c="lid">${o.lid ? 'Abrir tampa de inspeção' : 'Fechar tampa'}</button><button data-c="guard">${o.guard ? 'Abrir proteção das correias' : 'Fechar proteção'}</button></div>
+        <p class="n">Só abre com o rotor parado e o bloqueio aplicado; aberta, impede a partida.</p></div>`;
+    if (o.k === 'tc') spec = `<h4>Dispositivos de campo da correia</h4><div class="lpx"><div class="lprow">${lamp(!o.cord, '#2fbf71', o.cord ? 'Cordão ACIONADO' : 'Cordão rearmado')}${lamp(o.align < 10, o.align >= 10 ? '#ffb020' : '#2fbf71', `Desalinhamento ${fm(o.align, 1)}°`)}${lamp(o.spd > 80, '#2fbf71', `Velocidade ${fm(o.spd)} %`)}</div>
+        <div class="bar"><i style="width:${Math.min(100, o.align / 20 * 100)}%;background:${o.align >= 20 ? '#ff5a4a' : o.align >= 10 ? '#ffb020' : '#2fbf71'}"></i></div>
+        <div class="lprow"><button data-c="cord" class="rd">Puxar cordão de emergência</button><button data-c="cordReset"${o.cord ? '' : ' disabled'}>Rearmar chave do cordão</button><button data-c="align">Ajustar roletes (alinhar)</button></div>
+        <p class="n">Chave de desalinhamento: alarme a 10° e parada a 20°. O cordão trava até ser rearmado no campo. Ajuste dos roletes só com a correia parada e bloqueada.</p></div>`;
+    return `<h4>Botoeira de campo (comando local)</h4><div class="lpx bt">
+      <div class="lprow">${lamp(o.on, '#ff4b3a', 'Ligado')}${lamp(!o.on && okP, '#2fbf71', 'Pronto p/ partir')}${lamp(!!o.trip || !!o.es, '#ffb020', 'Falha / desarme')}${lk ? lamp(true, '#ffd24a', '🔒 Bloqueado') : ''}</div>
+      <div class="lprow"><button class="sel${o.mode === 'L' ? ' l' : ''}" data-c="mode" title="Seletor local/remoto">${o.mode === 'L' ? 'LOCAL' : 'REMOTO'}</button>
+        <button class="pb gr" data-c="start" title="Liga (botão verde)">I</button><button class="pb rd" data-c="stop" title="Desliga (botão vermelho)">O</button>
+        <button class="es${o.es ? ' in' : ''}" data-c="${o.es ? 'release' : 'estop'}" title="${o.es ? 'Girar para destravar' : 'Parada de emergência'}">${o.es ? 'GIRAR' : 'EMERG.'}</button><button class="pb bl" data-c="reset" title="Rearme">R</button></div>
+      ${o.trip ? `<p class="n w">Desarme: ${o.trip}</p>` : ''}${m ? `<p class="n ${m.ok ? 'g' : 'w'}">${m.ok ? '✓' : '✗'} ${m.msg}</p>` : ''}
+      <details${okP ? '' : ' open'}><summary>Permissivos de partida (${P.filter((p) => p[1]).length}/${P.length})</summary>${P.map((p) => `<div class="pm ${p[1] ? 'ok' : 'no'}">${p[1] ? '✓' : '✗'} ${p[0]}</div>`).join('')}</details>
+      <div class="lprow">${lk ? `<button data-c="unlock">Retirar bloqueio</button>` : L ? '' : `<button data-c="lotoAsk">Aplicar bloqueio (LOTO)</button>`}</div>
+      ${L && !lk ? `<div class="loto"><b>Bloqueio de energia (LOTO)</b>${LOTO_STEPS.map((s, j) => `<label><input type="checkbox" data-lk="${j}"${L[j] ? ' checked' : ''}> ${j + 1}. ${s}</label>`).join('')}<div class="lprow"><button data-c="lotoX">Cancelar</button><button class="gr2" data-c="lock"${L.every(Boolean) ? '' : ' disabled'}>Confirmar bloqueio</button></div></div>` : ''}
+    </div>${spec}`;
+  }
+  function bindLp(t) {
+    el.querySelectorAll('[data-c]').forEach((b) => b.onclick = (ev) => { ev.stopPropagation(); const c = b.dataset.c;
+      if (c === 'lotoAsk') { LOTO[t] = LOTO_STEPS.map(() => false); render(); return; } if (c === 'lotoX') { delete LOTO[t]; render(); return; }
+      if (c === 'lock' && itemOf(t).on) { MSG[t] = { ok: false, msg: 'passo 1: pare o equipamento antes de bloquear' }; render(); return; }
+      const r = cmd(t, c, 'L', +b.dataset.v || 0); MSG[t] = r; if (c === 'lock' && r.ok) delete LOTO[t]; render(); });
+    el.querySelectorAll('[data-lk]').forEach((c) => c.onchange = () => { if (LOTO[t]) LOTO[t][+c.dataset.lk] = c.checked; render(); });
+  }
+  function renderBelt() {
+    const o = sim.belts[tag]; if (!o) return; const st = o.trip || o.es || o.cord ? 'crit' : o.align >= 10 ? 'warn' : o.on ? 'ok' : 'off';
+    el.innerHTML = `<div class="hd"><h3>Transportador de correia ${tag}<span class="chip ${st}">${o.on ? 'operando' : o.trip ? 'desarmado' : 'parado'}</span><button class="x" aria-label="Fechar">×</button></h3><small>${o.nome}</small></div>
+      ${lp(tag, o)}<div class="act"><button class="${o.on ? 'on' : 'off'}" data-a="rtog">Sala de controle: ${o.on ? 'Desligar' : 'Ligar'}</button></div>`;
+    el.querySelector('.x').onclick = close; bindLp(tag);
+    el.querySelector('[data-a="rtog"]').onclick = () => { MSG[tag] = cmd(tag, o.on ? 'stop' : 'start', 'R'); render(); };
+  }
   function render() {
-    if (!tag || el.hidden) return; const e = sim.eq[tag]; if (!e) return;
-    const S = SPEC[e.k], run = e.on && e.flow > 0, amp = run ? e.kw / (1.732 * KV[e.k] * .88 * .95) : 0;
+    if (!tag || el.hidden) return; if (sim.belts && sim.belts[tag]) return renderBelt(); const e = sim.eq[tag]; if (!e) return;
+    const S = SPEC[e.k], run = e.on && e.flow > 0, ts = e.st0 != null ? (sim.rt || 0) - e.st0 : 99, amp = (run ? e.kw / (1.732 * KV[e.k] * .88 * .95) : 0) * (e.on && ts < 4 ? 6 - 5 * ts / 4 : 1);   /* pico de partida ≈ 6× In por ~4 s */
     const cls = (v, w, c) => (v >= c ? 'crit' : v >= w ? 'warn' : '');
     const extra = e.k === 'pn' ? `<div class="${run && e.eff < 80 ? 'warn' : ''}"><b>${run ? fm(e.eff) + ' %' : '–'}</b><span>Eficiência de peneiramento</span></div><div><b>${run ? '16,0 Hz' : '0'}</b><span>Frequência de vibração</span></div>`
       : e.k === 'cone' ? `<div><b>${fm(sim.css)} mm</b><span>APF (abertura)</span></div><div><b>${run ? fm(55 + 70 * e.load + (20 - sim.css) * 1.5) + ' bar' : '–'}</b><span>Pressão hidráulica</span></div>
@@ -67,7 +122,7 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
     const rslTxt = !isFinite(e.rsl) ? '–' : e.rsl <= 0 ? 'trocar já' : e.rsl > 48 ? '≈ ' + fm(e.rsl / 24) + ' dias' : '≈ ' + fm(e.rsl) + ' h';
     const hp = e.hParts || {}, hWhy = H == null ? '' : `Saúde = 100 − desgaste ${fm(hp.desgaste)} − vibração ${fm(hp.vibracao)} − temperatura ${fm(hp.temperatura)} − sobrecarga ${fm(hp.sobrecarga)} pontos.`;
     el.innerHTML = `<div class="hd"><h3>${feeder ? 'Alimentador ' + tag.replace('PN', 'AL') + ' → ' : ''}${NOME[e.k]} ${tag}<span class="chip ${e.st}">${stTxt[e.st]}</span><button class="x" aria-label="Fechar">×</button></h3><small>${S.modelo}</small>${feeder ? `<div style="color:#9fdcf0;font-size:11.5px;margin-top:4px">Alimentador ${tag.replace('PN', 'AL')} (correia dosadora no piso +14 m) alimentando a peneira ${tag}.</div>` : ''}</div>
-      <h4>Funcionamento</h4><div class="g">
+      ${lp(tag, e)}<h4>Funcionamento</h4><div class="g">
         <div><b>${run ? 'Operando' : e.on ? 'Sem carga' : 'Desligado'}</b><span>Estado</span></div>${(() => { const pN = e.k === 'pn' ? 65 : e.k === 'cone' ? 390 + (18 - sim.css) * 4 : 560, r = e.kw / pN; return `<div class="${run ? cls(r * 100, 105, 125) : ''}"><b>${fm(e.kw)} kW</b><span>Potência · nominal ${fm(pN)} kW (carga 100 %)${run && r > 1.05 ? ` · <b>${fm(r * 100)} %</b>` : ''}</span></div>`; })()}
         <div><b>${fm(amp)} A</b><span>Corrente estimada (${String(KV[e.k]).replace('.', ',')} kV)</span></div><div class="${cls(e.vib, 7.1, 11)}"><b>${run ? fm(e.vib, 1) + ' mm/s' : '–'}</b><span>Vibração (ISO 10816-3)</span></div>
         <div class="${cls(e.oil, 65, 75)}"><b>${fm(e.oil)} °C</b><span>${e.k === 'pn' ? 'Mancais dos vibradores' : 'Óleo de lubrificação'}</span></div>${extra}</div>
@@ -88,13 +143,13 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <h4>Especificação técnica (ilustrativa)</h4><table>${S.itens.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
       ${e.mnt ? (() => { const M = MNT[e.k], p = Math.min(1, (e.mnt.h || 0) / (e.mnt.dur || M.h)), i = Math.min(M.at.length - 1, Math.floor(p * M.at.length));
         return `<div class="act"><button class="off" disabled title="Partida bloqueada durante a manutenção" style="flex:0 0 56px;padding:8px 4px">🔒<br>Ligar</button><button class="mntp" style="--p:${(p * 100).toFixed(1)}%" title="${M.at.map((x, j) => (j < i ? '✓ ' : j === i ? '▶ ' : '· ') + x).join('\n')}"><span class="bar"></span><b>🔧 Manutenção ${fm(p * 100)} %</b><small>Etapa ${i + 1}/${M.at.length} · ${M.at[i]} · ${fm(e.mnt.h || 0, 1)} de ${fm(e.mnt.dur || M.h)} h</small></button><button class="mnt" data-a="mfin" title="Encerra a manutenção agora e mostra o relatório" style="flex:0 0 72px;padding:8px 4px">Concluir</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`; })()
-      : `<div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog">${e.on ? 'Desligar' : 'Ligar'}</button><button class="mnt" data-a="mnt" title="Desliga, bloqueia a partida, coloca os alarmes fora de serviço e executa o plano de manutenção">Manutenção</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`}<p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
+      : `<div class="act"><button class="${e.on ? 'on' : 'off'}" data-a="tog" title="Comando remoto (sala de controle)">${e.on ? 'Desligar' : 'Ligar'}</button><button class="mnt" data-a="mnt" title="Desliga, bloqueia a partida, coloca os alarmes fora de serviço e executa o plano de manutenção">Manutenção</button><button data-a="wear">Registrar troca</button><button data-a="os"${OSST[tag] && OSST[tag].busy ? ' disabled' : ''}>${OSST[tag] && OSST[tag].busy ? 'Registrando…' : 'Gerar OS simulada'}</button></div>`}<p class="n" id="osMsg">${(OSST[tag] && OSST[tag].msg) || ''}</p>`;
     chart(el.querySelector('#eqC'), e);
-    el.querySelector('.x').onclick = close;
+    el.querySelector('.x').onclick = close; bindLp(tag);
     el.querySelectorAll('[data-ck]').forEach((c) => c.onchange = () => { const e2 = sim.eq[tag]; e2.ck = e2.ck || {}; const j = c.dataset.ck; if (c.checked) { e2.ck[j] = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); if (e2.k === 'cone' && /N₂/.test(c.parentElement.textContent)) e2.n2 = 83; if (e2.k === 'cone' && /descarga/.test(c.parentElement.textContent)) e2.ring = 0; logEv('Manutenção', `${tag}: ${c.parentElement.textContent.split('·')[1].trim()} — registrado`); } else delete e2.ck[j]; render(); });
-    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'mnt') { startMnt(e); logEv('Manutenção', `${tag} em manutenção: desligado e bloqueado (plano de ${MNT[e.k].h} h)`); sim.cmdEq && sim.cmdEq(tag, { mnt: true }); render(); return; }
+    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => { if (b.dataset.a === 'os') { gerarOS(tag, e, b); return; } if (b.dataset.a === 'mnt') { if (!e.lock) { MSG[tag] = { ok: false, msg: 'aplique o bloqueio (LOTO) na botoeira antes de iniciar a manutenção' }; render(); return; } startMnt(e); logEv('Manutenção', `${tag} em manutenção: desligado e bloqueado (plano de ${MNT[e.k].h} h)`); sim.cmdEq && sim.cmdEq(tag, { mnt: true }); render(); return; }
       if (b.dataset.a === 'mfin') { const r = finishMnt(tag, e, true); if (r) r.sent = true; sim.cmdEq && sim.cmdEq(tag, { mnt: false }); render(); checkRep(); return; }
-      if (b.dataset.a === 'tog') { e.on = !e.on; logEv('Comando', `${tag} ${e.on ? 'ligado' : 'desligado'}`); sim.cmdEq && sim.cmdEq(tag, { on: e.on }); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
+      if (b.dataset.a === 'tog') { MSG[tag] = cmd(tag, e.on ? 'stop' : 'start', 'R'); } else { e.w = 0; logEv('Manutenção', `${tag}: troca registrada`); sim.cmdEq && sim.cmdEq(tag, { troca: true }); } render(); });
   }
   // ORDEM DE SERVIÇO SIMULADA: gravada na mesma planilha do registro de inspeção (tipo "OS simulada")
   const OSST = {};   // situação da OS por equipamento (a tela é redesenhada a cada ~0,3 s)
@@ -125,10 +180,10 @@ export function buildEqScreen(root, sim, { fm, stTxt, logEv }) {
       <div class="row"><button data-r="x">Fechar</button><button class="on" data-r="on">Ligar o equipamento</button></div></div>`;
     root.appendChild(d); const cl = () => d.remove();
     d.querySelector('[data-r="x"]').onclick = cl; d.addEventListener('click', (ev) => { if (ev.target === d) cl(); });
-    d.querySelector('[data-r="on"]').onclick = () => { if (e && !e.mnt) { e.on = true; logEv('Comando', `${r.tag} ligado após a manutenção`); sim.cmdEq && sim.cmdEq(r.tag, { on: true }); } cl(); render(); };
+    d.querySelector('[data-r="on"]').onclick = () => { if (e && !e.mnt) MSG[r.tag] = cmd(r.tag, 'start', 'R'); cl(); render(); };
     logEv('Manutenção', `${r.tag}: manutenção concluída em ${fm(r.h, 1)} h · ${r.pecas} trocadas · desgaste ${fm(r.w0)} % → ${fm(r.wf != null ? r.wf : 25)} %`); }
   function checkRep() { for (const t in sim.eq) { const r = sim.eq[t].lastMnt; if (r && !r.sent) { r.sent = true; if (!r.early) sim.cmdEq && sim.cmdEq(t, { mnt: false }); } if (r && !r.shown) { r.shown = true; showRep(r); } } }
-  function open(t) { feeder = /AL/.test(t); tag = t.replace('AL', 'PN'); if (!sim.eq[tag]) return false; el.hidden = false; render(); markSel(tag); return true; }
+  function open(t) { feeder = /AL/.test(t); tag = /^03TC/.test(t) ? t : t.replace('AL', 'PN'); if (!sim.eq[tag] && !(sim.belts && sim.belts[tag])) return false; el.hidden = false; render(); markSel(tag); return true; }
   function close() { el.hidden = true; tag = null; markSel(null); }
   let k = 0;
   return { open, close, isOpen: () => !el.hidden, update() { if (++k % 20 === 0) { render(); checkRep(); } } };

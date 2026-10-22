@@ -1,12 +1,12 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261022114903';
-import { buildEqScreen } from './eqscreen.js?v=20261022114903';
-import { buildTour } from './tour.js?v=20261022114903';
-import { logEv } from './sim.js?v=20261022114903';
-import { SIM_URL } from './api.js?v=20261022114903';
-import { buildRiskMap } from './riskmap.js?v=20261022114903';
+import { buildPanels } from './panels.js?v=20261022120845';
+import { buildEqScreen } from './eqscreen.js?v=20261022120845';
+import { buildTour } from './tour.js?v=20261022120845';
+import { logEv } from './sim.js?v=20261022120845';
+import { SIM_URL } from './api.js?v=20261022120845';
+import { buildRiskMap } from './riskmap.js?v=20261022120845';
 
 const CSS = `
 #ui [hidden]{display:none!important}
@@ -103,6 +103,7 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   const flowEls = flowLabels.map((L) => { const d = document.createElement('div'); d.className = 's3flow ' + L.kind; try { d.textContent = L.text(sim.kpi); } catch (e) { /* sem dados ainda */ } root.appendChild(d); return { L, d }; });
   let tPanel = 0;
   eqs = buildEqScreen(root, sim, { fm, stTxt, logEv });
+  window.__s3openEq = (t) => eqs.open(t);
   // clicar num item dos painéis: a câmera vai até o equipamento (ou fluxo), destaca-o no 3D e abre a tela dele
   const scene3 = pickRoot && pickRoot.parent; let hl = null, hlT = 0;
   const FLOWS = { '@circ': { look: [55, 5, 6], pos: [44, 14, 22], txt: 'Carga circulante: britado volta às peneiras pela correia de retorno', box: [[46, 0, 1], [64, 19, 13]] },

@@ -1,7 +1,7 @@
 // Modelo de processo do circuito fechado de britagem e peneiramento (Usina II, pelo TCC):
 // alimentação nova F → 7 peneiras banana 2 decks; retido 1º deck → cônicos HP 400; retido 2º deck → Barmac; produto < 12,5 mm.
 // O retido volta às peneiras: alimentação das peneiras = F / (1 − r), com r = fração retida (1º + 2º deck).
-import { SCREENS, CRUSHERS } from './layout.js?v=20261022114903';
+import { SCREENS, CRUSHERS } from './layout.js?v=20261022120845';
 
 const LIFE = { pn: 7.5e6, cone: 3.6e6, vsi: 1.5e6 };   // ×3 (desgaste mais lento, pedido do usuário)
 export const MNT_W = 25;   // desgaste após a manutenção (%): recondicionamento, não peça nova
@@ -13,7 +13,7 @@ export const MNT = {
 export function startMnt(e) { e.mnt = { h: 0, dur: MNT[e.k].h, w0: e.w, h0: e.health, f0: e.flow || 0 }; e.on = false; }
 export function finishMnt(tag, e, early) { const m = e.mnt; if (!m) return null; const M = MNT[e.k];
   e.lastMnt = { tag, k: e.k, h: m.h || 0, dur: m.dur || M.h, w0: m.w0, h0: m.h0, early: !!early, pecas: M.pecas, at: M.at, prox: m.f0 > 0 ? LIFE[e.k] / m.f0 : null, shown: false, logged: false, wf: Math.min(m.w0 != null ? m.w0 : e.w, MNT_W) };
-  e.w = e.lastMnt.wf; e.mnt = null; return e.lastMnt; }            // t de material por troca de revestimento/deck (ilustrativo)
+  e.w = e.lastMnt.wf; e.mnt = null; e.lock = null;   /* fim da manutenção: o executante retira o cadeado */ return e.lastMnt; }            // t de material por troca de revestimento/deck (ilustrativo)
 const CAP = { pn: 1500, cone: 800, vsi: 690 };   // Barmac 9100: 690 t/h (apostila C3); HP 400: 260–854 t/h com cascata                 // t/h por equipamento [referência]: HP 400 e Barmac B9100SE em britagem de minério (catálogo, faixa típica); Britagem 01: Omnicone 1560 ≤ 350 t/h, Barmac B9000XHD ≤ 500 t/h
 // Barmac B9100SE (manual Metso): velocidade de saída 50–85 m/s ∝ rotação; a cascata reduz a redução (material só choca rocha-rocha) e alivia potência
 let VSI_RR = 2.1;
@@ -31,6 +31,94 @@ CRUSHERS.cones.forEach((c) => { sim.eq[c.tag] = { k: 'cone', on: true, w: saved[
 CRUSHERS.vsi.forEach((c) => { sim.eq[c.tag] = { k: 'vsi', on: true, w: saved[c.tag] ?? W0[c.tag] ?? 40 }; });
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// ---------- COMANDO E INTERTRAVAMENTOS (prática de britagem: partida de jusante para montante, parada no sentido inverso)
+// correias: cordão de emergência (trava até rearme no campo), chave de desalinhamento (alarme 10°, parada 20°) e chave de velocidade;
+// HP 400: bomba de lubrificação com pressão estabelecida antes do motor, desarme por pressão baixa; Barmac: tampa de inspeção e proteção das correias em V intertravadas
+export const BELTS = { '03TC005': 'Produto < 12,5 mm → pilha', '03TC002': 'Retido 1º deck → silos do HP 400', '03TC003': 'Retido 2º deck → silos do Barmac', '03TC001': 'Distribuição sobre as peneiras',
+  '03TC004': 'Retorno dos britadores → distribuição', '03TC006': 'Alimentação nova (chegada da TCLD)' };
+sim.belts = {}; for (const [t, n] of Object.entries(BELTS)) sim.belts[t] = { k: 'tc', nome: n, on: true, mode: 'R', cord: false, align: 2 + Math.random() * 3, spd: 100 };
+for (const e of Object.values(sim.eq)) { e.mode = 'R'; if (e.k === 'cone') { e.lube = true; e.lubeT = 99; } if (e.k === 'vsi') { e.lid = true; e.guard = true; e.coast = 0; } }
+const anyOn = (k) => Object.values(sim.eq).some((e) => e.k === k && e.on);
+const bOn = (t) => !!(sim.belts[t] && sim.belts[t].on);
+export const SEQ = ['03TC005', '03TC002', '03TC003', ...SCREENS.tags, '03TC001', '03TC004', ...CRUSHERS.cones.map((c) => c.tag), ...CRUSHERS.vsi.map((c) => c.tag), '03TC006'];
+export const itemOf = (t) => sim.eq[t] || sim.belts[t] || null;
+// intertravamento de processo: o que precisa estar operando a jusante (se parar, o equipamento desarma)
+function ilk(t, o) {
+  if (o.k === 'pn') return [['03TC005', bOn('03TC005')], ['03TC002', bOn('03TC002')], ['03TC003', bOn('03TC003')]];
+  if (o.k === 'cone' || o.k === 'vsi') return [['03TC004', bOn('03TC004')]];
+  return { '03TC001': [['peneira', anyOn('pn')]], '03TC004': [['03TC001', bOn('03TC001')]], '03TC006': [['03TC001', bOn('03TC001')]] }[t] || [];
+}
+// permissivos de partida: [texto, ok]
+export function perms(t) {
+  const o = itemOf(t); if (!o) return [];
+  const P = [['Sem bloqueio de energia (LOTO)', !o.lock && !o.mnt], ['Desarme rearmado', !o.trip], ['Botão de emergência destravado', !o.es]];
+  for (const [n, ok] of ilk(t, o)) P.push([n === 'peneira' ? 'Ao menos uma peneira operando (jusante)' : `Correia ${n} operando (jusante)`, ok]);
+  if (o.k === 'cone') P.push(['Bomba de lubrificação ligada', !!o.lube], ['Pressão de óleo estabelecida (≥ 5 s de bomba)', !!o.lube && o.lubeT >= 5], ['Câmara desobstruída', !o.choke]);
+  if (o.k === 'vsi') P.push(['Tampa de inspeção fechada', !!o.lid], ['Proteção das correias em V fechada', !!o.guard]);
+  if (o.k === 'tc') P.push(['Cordão de emergência rearmado', !o.cord], ['Alinhamento da correia < 20°', o.align < 20]);
+  return P;
+}
+const syncEq = (t, c) => { if (sim.eq[t] && sim.cmdEq) sim.cmdEq(t, c); };
+function halt(t, why) { const o = itemOf(t); if (!o) return; const was = o.on; o.on = false; if (o.k === 'vsi' && was) o.coast = 25;
+  if (why) { o.trip = why; logEv('Desarme', `${t}: ${why}`); } if (was) syncEq(t, { on: false }); }
+// comandos (src: 'R' sala de controle, 'L' botoeira no campo) → { ok, msg }
+export function cmd(t, a, src = 'R', v = 0) {
+  const o = itemOf(t); if (!o) return { ok: false, msg: 'tag inexistente' };
+  const no = (m) => { logEv('Comando negado', `${t}: ${m}`); return { ok: false, msg: m }; }, yes = (m) => { logEv('Comando', `${t}: ${m}${src === 'L' ? ' (campo)' : ''}`); return { ok: true, msg: m }; };
+  switch (a) {
+    case 'start': { if (o.on) return no('já está operando');
+      if (o.mode !== src) return no(src === 'R' ? 'seletor em LOCAL: a partida é feita na botoeira do campo' : 'seletor em REMOTO: a partida é feita pela sala de controle');
+      const bad = perms(t).filter((p) => !p[1]); if (bad.length) return no('permissivo ausente: ' + bad.map((p) => p[0]).join('; '));
+      o.on = true; o.st0 = sim.rt || 0; syncEq(t, { on: true }); return yes('partida'); }
+    case 'stop': if (!o.on) return no('já está parado'); if (src === 'R' && o.mode !== 'R') return no('seletor em LOCAL: pare pela botoeira'); halt(t); return yes('parada');
+    case 'estop': o.es = true; if (o.on) halt(t, 'botão de emergência acionado'); else o.trip = 'botão de emergência acionado'; return yes('EMERGÊNCIA acionada');
+    case 'release': o.es = false; return yes('botão de emergência destravado (girar para soltar)');
+    case 'reset': if (o.es) return no('destrave o botão de emergência antes de rearmar'); if (o.cord) return no('rearme o cordão de emergência no campo'); if (o.k === 'tc' && o.align >= 20) return no('corrija o alinhamento da correia');
+      if (o.choke) return no('faça a limpeza da câmara antes de rearmar'); o.trip = null; return yes('rearmado');
+    case 'mode': if (o.on && src !== 'L') return no('o seletor fica na botoeira do campo'); o.mode = o.mode === 'R' ? 'L' : 'R'; return yes(`seletor em ${o.mode === 'R' ? 'REMOTO' : 'LOCAL'}`);
+    case 'lock': if (o.on) return no('pare o equipamento antes de bloquear'); if (o.k === 'vsi' && o.coast > 0) return no('rotor ainda girando: aguarde a parada total'); o.lock = { t: Date.now() }; return yes('bloqueio aplicado (seccionadora aberta, cadeado e etiqueta)');
+    case 'unlock': if (o.mnt) return no('conclua a manutenção antes de retirar o bloqueio'); o.lock = null; return yes('bloqueio retirado');
+    case 'lube': if (o.k !== 'cone') return no('sem unidade de lubrificação'); o.lube = !o.lube; o.lubeT = 0; return yes(o.lube ? 'bomba de lubrificação ligada' : 'bomba de lubrificação desligada');
+    case 'clear': if (o.k !== 'cone') return no('sem sistema de limpeza'); if (o.on) return no('a limpeza da câmara é feita com o britador parado'); if (!o.choke) return no('câmara já está desobstruída'); o.clearT = sim.rt; return yes('limpeza hidráulica da câmara iniciada');
+    case 'css': if (o.k !== 'cone') return no('sem ajuste de APF'); sim.css = clamp(sim.css + (+v || 0), 13, 30); return yes(`APF ajustada para ${sim.css} mm`);
+    case 'lid': case 'guard': if (o.k !== 'vsi') return no('sem proteção intertravada'); if (o.on || o.coast > 0) return no('rotor girando: aguarde a parada total para abrir');
+      if (o[a] && !o.lock) return no('aplique o bloqueio (LOTO) antes de abrir'); o[a] = !o[a]; return yes(`${a === 'lid' ? 'tampa de inspeção' : 'proteção das correias em V'} ${o[a] ? 'fechada' : 'aberta'}`);
+    case 'cord': if (o.k !== 'tc') return no('sem cordão de emergência'); o.cord = true; if (o.on) halt(t, 'cordão de emergência acionado'); else o.trip = 'cordão de emergência acionado'; return yes('cordão de emergência puxado');
+    case 'cordReset': o.cord = false; return yes('chave do cordão rearmada no campo');
+    case 'align': if (o.on) return no('pare a correia para ajustar os roletes'); if (!o.lock) return no('aplique o bloqueio (LOTO) antes de intervir na correia'); o.align = 2; return yes('roletes ajustados: correia alinhada');
+  }
+  return no('comando desconhecido');
+}
+// sequência automática pela sala de controle (itens em REMOTO; bloqueados ou em manutenção ficam de fora)
+export function seq(dir) { if (sim.seq) return { ok: false, msg: 'sequência já em andamento' }; const L = dir === 'start' ? SEQ.slice() : SEQ.slice().reverse();
+  sim.seq = { dir, L, i: 0, t: sim.rt || 0, msg: dir === 'start' ? 'Partida sequencial iniciada' : 'Parada sequencial iniciada' }; logEv('Sequência', sim.seq.msg); return { ok: true }; }
+export function seqAbort(why) { if (!sim.seq) return; logEv('Sequência', 'interrompida: ' + why); sim.seq = null; sim.seqMsg = 'Sequência interrompida: ' + why; }
+function seqStep() { const S = sim.seq; if (!S || sim.rt - S.t < 1.6) return; S.t = sim.rt;
+  while (S.i < S.L.length) { const t = S.L[S.i], o = itemOf(t); S.i++;
+    if (S.dir === 'start') { if (o.on || o.lock || o.mnt) continue; if (o.mode !== 'R') { seqAbort(`${t} em LOCAL`); return; }
+      if (o.k === 'cone' && !o.lube) { o.lube = true; o.lubeT = 0; logEv('Sequência', `${t}: bomba de lubrificação ligada`); }
+      if (o.k === 'cone' && o.lubeT < 5) { S.i--; S.msg = `${t}: aguardando pressão de óleo`; return; }
+      const r = cmd(t, 'start', 'R'); if (!r.ok) { seqAbort(`${t} — ${r.msg}`); return; } S.msg = `${t} partiu (${S.i}/${S.L.length})`; return; }
+    if (!o.on) continue; if (o.mode !== 'R') { seqAbort(`${t} em LOCAL`); return; } cmd(t, 'stop', 'R'); S.msg = `${t} parou (${S.i}/${S.L.length})`; return; }
+  sim.seqMsg = (S.dir === 'start' ? 'Partida' : 'Parada') + ' sequencial concluída'; logEv('Sequência', sim.seqMsg); sim.seq = null; }
+// a cada passo: tempos de bomba, limpeza, parada do rotor, desalinhamento e intertravamentos
+function ctlStep() {   /* tempos em segundos reais (independem da taxa de quadros) */
+  const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000, dt = sim._rt0 ? Math.min(.5, now - sim._rt0) : 0; sim._rt0 = now; sim.rt = (sim.rt || 0) + dt;
+  seqStep();
+  for (const [t, e] of Object.entries(sim.eq)) {
+    if (e.k === 'cone') { e.lubeT = e.lube ? (e.lubeT || 0) + dt : 0;
+      if (e.on && !e.lube) { e._lp = (e._lp || 0) + dt; if (e._lp > 3) halt(t, 'pressão do óleo de lubrificação baixa'); } else e._lp = 0;
+      if (e.on && e.load > 1.2) { e._ch = (e._ch || 0) + dt; if (e._ch > 20) { e.choke = true; halt(t, 'câmara afogada (sobrecarga contínua)'); } } else e._ch = 0;
+      if (e.clearT && sim.rt - e.clearT > 5) { e.clearT = 0; e.choke = false; logEv('Comando', `${t}: câmara desobstruída`); } }
+    if (e.k === 'vsi' && e.coast > 0) e.coast = Math.max(0, e.coast - dt);
+  }
+  for (const [t, b] of Object.entries(sim.belts)) {
+    if (b.on) { b.align = clamp(b.align + (Math.random() - .5) * dt * .6 + (sim.moist > 9 ? dt * .04 : 0) - (b.align > 6 ? dt * .03 : 0), 0, 25); b.spd = Math.min(100, (sim.rt - (b.st0 ?? -99)) / 3 * 100); }
+    else b.spd = Math.max(0, b.spd - dt * 40);
+    if (b.on && b.align >= 20) halt(t, 'chave de desalinhamento: 20° (parada)');
+  }
+  for (const t of SEQ) { const o = itemOf(t); if (!o.on) continue; const f = ilk(t, o).find((q) => !q[1]); if (f) halt(t, `intertravamento: ${f[0] === 'peneira' ? 'peneiras paradas' : f[0] + ' parada'}`); }
+}
 // ---------- circuito fechado com balanço de massa e granulometria coerentes (Rosin–Rammler truncada, % passante acumulado)
 // Fontes: [real] dissertação Figueiredo (UFMG, 2019) — Britagem 01 de Germano: ROM < 150 mm, decks de 30 mm e 12,5 mm,
 // produto < 12,5 mm; [TCC] Usina II: 8 peneiras banana, HP 400 + Barmac; [adotado] finos do ROM, inclinações das curvas,
@@ -97,17 +185,17 @@ let REF = null;   // referência (APF 20 mm, ROM padrão, peneiras 92 %) para o 
 export function logEv(tipo, txt) { const d = new Date(); sim.log.unshift({ h: d.toLocaleTimeString('pt-BR'), tipo, txt }); if (sim.log.length > 120) sim.log.pop(); }
 let lastSave = 0;
 export function stepSim(dt, speed = 60) {                       // speed: segundos simulados por segundo real (desgaste)
-  sim.t += dt;
+  sim.t += dt; ctlStep();
   const E = sim.eq, on = (k) => Object.values(E).filter((e) => e.k === k && e.on).length;
   const nPN = on('pn'), nC = on('cone'), nV = on('vsi');
   // frações retidas e carga circulante saem do balanço granulométrico (circSolve) com a eficiência média atual das peneiras
   const e2 = clamp((sim._effM || 92) / 100, .4, .99), e1 = Math.min(.99, e2 + .04);
   VSI_RR = 2.1 * Math.pow(clamp(sim.rpm, 900, 2100) / 1450, 1.6) * (1 - .55 * clamp(sim.casc, 0, 50) / 100) / (1 - .55 * .10);
   const CS = circSolve2(sim.css, sim.f12, e2, e1), r1 = CS.r1, r2 = CS.r2;
-  const F = sim.running && nPN > 0 ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
+  const F = sim.running && nPN > 0 && bOn('03TC006') && bOn('03TC001') ? Math.min(sim.feed, 6000 * sim.tcld / 100) : 0;
   const wet = Math.max(0, sim.moist - 9);                       // minério úmido: peneiramento menos eficiente (colmatação)
   // sem britagem disponível o retido não fecha o circuito: alimentação limitada
-  const cap1 = nC * CAP.cone, cap2 = nV * CAP.vsi;
+  const cap1 = bOn('03TC002') ? nC * CAP.cone : 0, cap2 = bOn('03TC003') ? nV * CAP.vsi : 0;
   let T = F * CS.tF;                                            // alimentação somada das peneiras (primárias + britagem + Barmac)
   const lim = Math.min(cap1 > 0 ? cap1 / r1 : 0, cap2 > 0 ? cap2 / r2 : 0) * 1.15;
   const limited = T > lim; if (limited) T = lim;
@@ -124,7 +212,7 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
     e.oil = !run ? 26 : 38 + 18 * e.load + e.w * .05;
     if (e.k === 'vsi') { const v = vsiTip(sim.rpm); e.tip = run ? v : 0; e.kw = !run ? 0 : (140 + 330 * e.load * (1 - .4 * sim.casc / 100)) * Math.pow(v / 75, 2);
       e.tA = !run ? 30 : 52 + 30 * e.load * Math.pow(v / 75, 2) + hum * 2; e.tB = e.tA + 1.5 + Math.sin(sim.t / 40) * .8; e.tBr = !run ? 28 : 46 + 22 * e.load + e.w * .08 + Math.max(0, e.vib - 4) * 3; }
-    if (e.k === 'cone') { if (e.n2 == null) e.n2 = 83 - Math.random() * 3; e.n2 = Math.max(55, e.n2 - dt * speed / 86400 * .12); e.oilP = !run ? 0 : 1.9 + .6 * e.load - e.w * .004 - Math.max(0, e.oil - 55) * .02;
+    if (e.k === 'cone') { if (e.n2 == null) e.n2 = 83 - Math.random() * 3; e.n2 = Math.max(55, e.n2 - dt * speed / 86400 * .12); e.oilP = !e.lube ? 0 : !run ? 1.7 : 1.9 + .6 * e.load - e.w * .004 - Math.max(0, e.oil - 55) * .02;
       e.ring = (e.ring || 0) + (run && e.load > 1.05 ? dt * speed / 3600 * (e.load - 1.05) * 20 : 0); }
     e.eff = e.k === 'pn' && run ? clamp(94 - Math.max(0, e.load - .9) * 55 - e.w * .05 - wet * 6, 50, 97) : 0;
     if (run) e.w = Math.min(100, e.w + e.flow * dt * speed / 3600 / LIFE[e.k] * 100);
@@ -147,6 +235,10 @@ export function stepSim(dt, speed = 60) {                       // speed: segund
     if (e.st === 'warn' || e.st === 'crit') alarms.push({ tag, st: e.st, why: [e.load > 1.05 ? `sobrecarga ${Math.round(e.load * 100)} %` : '', e.vib >= 7.1 ? `vibração ${e.vib.toFixed(1)} mm/s` : '', e.w >= 85 ? `desgaste ${Math.round(e.w)} %` : '', e.k === 'pn' && run && e.eff < 80 ? `eficiência ${Math.round(e.eff)} %` : ''].filter(Boolean).join(', ') });
     kw += e.kw;
   }
+  // correias e desarmes pendentes
+  for (const [t, b] of Object.entries(sim.belts)) { if (b.align >= 10 && b.align < 20) alarms.push({ tag: t, st: 'warn', why: `desalinhamento ${b.align.toFixed(0)}° (alarme 10°, parada 20°) — ajustar roletes` });
+    if (b.cord) alarms.push({ tag: t, st: 'crit', why: 'cordão de emergência acionado — rearmar no campo' }); }
+  for (const t of SEQ) { const o = itemOf(t); if (o.trip && !o.on) alarms.push({ tag: t, st: 'crit', why: `desarmado: ${o.trip} — rearmar` }); else if (o.es) alarms.push({ tag: t, st: 'crit', why: 'botão de emergência travado' }); }
   // UMIDADE DO ROM: alerta antecipado de colmatação (amarelo a partir de 8,5 % ou subindo; vermelho a partir de 9,5 %)
   if (!sim._mh) sim._mh = [];
   const mh = sim._mh; if (!mh.length || sim.t - mh[mh.length - 1].t >= 2) { mh.push({ t: sim.t, m: sim.moist }); while (mh.length && sim.t - mh[0].t > 120) mh.shift(); }
