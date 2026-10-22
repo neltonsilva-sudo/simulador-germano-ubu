@@ -495,6 +495,21 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trHud .row{display:flex;justify-content:space-between;align-items:center}
 #trDlg .trl{display:grid;gap:8px}#trDlg .trc{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}#trDlg .trc div{display:grid;gap:3px}#trDlg .trc span{color:var(--muted);font-size:12.5px;line-height:1.4}#trDlg .trc small{color:#9fb3bf}#trDlg .trc .btn{flex:0 0 auto}
 #trRes .trn{display:flex;align-items:baseline;gap:10px;margin:6px 0 12px}#trRes .trn b{font-size:44px;font-family:var(--f-disp)}#trRes .trn.ok b{color:#2fbf71}#trRes .trn.warn b{color:#ffd24a}#trRes .trn.crit b{color:#ff5a4a}
+#trBrief .box.trb{max-width:900px;display:grid;grid-template-columns:1.25fr 1fr;gap:16px;padding:14px}
+#trBrief .trbi{position:relative;border-radius:10px;overflow:hidden;min-height:300px;background:#0b1622}#trBrief .trbi img{width:100%;height:100%;object-fit:cover;display:block;min-height:300px}
+#trBrief .trtag{position:absolute;left:10px;top:10px;background:rgba(10,16,24,.78);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 9px;font-size:12px;color:#ffb23d;font-weight:700}
+#trBrief .trsig{position:absolute;left:10px;bottom:10px;right:10px;margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}#trBrief .trsig li{background:rgba(10,16,24,.82);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:4px 10px;font-size:12px;color:#fff}
+#trBrief .trfx{position:absolute;inset:0;pointer-events:none}
+#trBrief .trfx.rain{background:linear-gradient(rgba(20,30,45,.38),rgba(20,30,45,.38)),repeating-linear-gradient(105deg,rgba(210,225,240,.0) 0 9px,rgba(210,225,240,.38) 9px 10px,rgba(210,225,240,0) 10px 23px);background-size:auto,60px 60px;animation:trRain .5s linear infinite}
+@keyframes trRain{to{background-position:0 0,-14px 60px}}
+#trBrief .trfx.freeze{box-shadow:inset 0 0 0 3px rgba(120,200,255,.6),inset 0 0 60px rgba(120,200,255,.35)}
+#trBrief .trfx.trip{box-shadow:inset 0 0 0 3px rgba(255,70,50,.7),inset 0 0 80px rgba(255,60,40,.4);animation:trPulse 1.1s ease-in-out infinite}
+@keyframes trPulse{50%{box-shadow:inset 0 0 0 3px rgba(255,70,50,.25),inset 0 0 30px rgba(255,60,40,.15)}}
+#trBrief .trfx.spec{box-shadow:inset 0 0 0 3px rgba(255,178,61,.6),inset 0 0 60px rgba(255,178,61,.25)}
+#trBrief .trbt h3{margin:0 0 6px}#trBrief .trbt p{margin:0 0 10px}#trBrief .trbt h4{margin:6px 0 4px;color:#ffb23d;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+#trBrief .trbt ol{margin:0 0 8px;padding-left:18px;display:grid;gap:4px;font-size:13px;line-height:1.4}#trBrief .trbt ol b{color:#ffb23d;font-weight:600;white-space:nowrap}#trBrief .trbt ol small{color:#9fb3bf}
+#trBrief .btn.pri{background:#1f8a5b;border-color:#2fbf71;color:#fff}
+@media (max-width:760px){#trBrief .box.trb{grid-template-columns:1fr}#trBrief .trbi,#trBrief .trbi img{min-height:200px}}
 </style>
 
 <div id="app">
@@ -3446,7 +3461,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022122847';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022140041';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7133,12 +7148,28 @@ const TRS={
    {t:'SiO₂ ≤ 1,25 % (tempo na faixa depois de 1 h de ajuste)',pts:50,frac:1,ok:()=>trG().siC>0&&trG().siC<=SPEC.siMax,dica:'Aumente a amina em 5–10 g/t ou reduza o P80 da moagem.'},
    {t:'Fe ≥ 66,58 % (tempo na faixa depois de 1 h de ajuste)',pts:30,frac:1,ok:()=>trG().feC>=SPEC.feMin,dica:'Amina em excesso arrasta ferro para o rejeito: não exagere na dose.'}]}};
 function trOpen(){let d=$('#trDlg');if(!d){d=document.createElement('div');d.id='trDlg';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
-   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trStart(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;});}
+   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trBrief(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;});}
   const H=TR.hist.slice(0,6);
   d.innerHTML=`<div class="box" style="max-width:640px"><h3>Modo de treinamento</h3><p>Escolha um cenário. A simulação passa para 60× (1 h simulada = 1 min) e o painel do treinamento mostra os objetivos, o tempo e os pontos.</p>
   <div class="trl">${Object.entries(TRS).map(([k,s])=>{const ok=!s.need||s.need();return `<div class="trc"><div><b>${s.nome}</b><span>${s.desc}</span><small>${s.obj.length} objetivos · ${fmt(s.dur,1)} h simuladas</small></div><button class="btn" data-tr="${k}"${ok&&!TR.on?'':' disabled'}>${TR.on?'Em curso':ok?'Iniciar':'Indisponível'}</button></div>`;}).join('')}</div>
   ${H.length?`<h4 style="margin:12px 0 4px">Últimos resultados</h4><table class="alt"><tr><th>Data</th><th>Cenário</th><th class="n">Nota</th></tr>${H.map(h=>`<tr><td>${h.d}</td><td>${h.n}</td><td class="n"><b>${h.p}</b></td></tr>`).join('')}</table>`:''}
   <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="trX">Fechar</button></div></div>`;d.hidden=false;}
+/* BRIEFING do cenário: leva a câmera à área da ocorrência, captura a imagem real do simulador e mostra a situação (sinais, área, objetivos e tempo) */
+const TRB={chuva:{area:'dry',fx:'rain',local:'Pilha de rejeito filtrado · área 8',sit:'Uma tempestade de 30 mm/h cai sobre a pilha há mais de uma hora. A água infiltra no maciço e a poropressão começa a subir nos piezômetros da área 8. A deposição continua normal.',sinais:['⛈ Chuva forte · 30 mm/h','📈 Piezômetros 08-01 a 08-03 subindo','⚠ Alarme de poropressão (PAH)','🚛 Deposição em andamento']},
+  instr:{area:'dry',fx:'freeze',local:'Instrumentação geotécnica · piezômetros',sit:'Um dos piezômetros parou de atualizar a leitura: o valor ficou congelado enquanto os vizinhos variam. Sem leitura confiável, a estrutura fica sem monitoramento naquele ponto.',sinais:['❄ Leitura parada há vários minutos','⚠ Alarme de falha de instrumento (IA)','📡 Demais piezômetros normais']},
+  hp:{area:'crush',fx:'trip',local:'Setor 3 · britagem primária (HP 400)',sit:'O britador 03BR002 desarmou. Toda a britagem primária passou para o 03BR001, que entrou em sobrecarga: a carga passa de 105 % e o anel de ajuste começa a se mover.',sinais:['⛔ 03BR002 desarmado','🔥 03BR001 com carga acima de 105 %','⚠ Risco de levantamento do anel de ajuste','➡ Alimentação do setor 3 inalterada']},
+  cls:{area:'conc',fx:'spec',local:'Concentrador · flotação',sit:'A programação mudou a produção para a campanha CLS (sílica baixa). A especificação fica mais apertada e o concentrado atual está acima do novo limite de SiO₂.',sinais:['🎯 Nova meta: SiO₂ ≤ 1,25 %','📊 Fe mínimo 66,58 %','🧪 Dosagem de amina e moagem atuais da campanha CNS']}};
+function trSnap(area){try{if(area&&EQ[area]){enterArea(area);if(tween){camera.position.copy(tween.p1);controls.target.copy(tween.t1);tween=null;controls.update();}}
+  if(HQ&&composer)composer.render(0);else renderer.render(scene,camera);return renderer.domElement.toDataURL('image/jpeg',.86);}catch(e){return '';}}
+function trBrief(k){const s=TRS[k],b=TRB[k]||{};if(!s||TR.on)return;
+  let d=$('#trBrief');if(!d){d=document.createElement('div');d.id='trBrief';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
+    d.addEventListener('click',e=>{if(e.target.closest('#trBGo')){d.hidden=true;trStart(d.dataset.k);}else if(e.target.closest('#trBBack')){d.hidden=true;try{exitArea();}catch(x){}trOpen();}});}
+  d.dataset.k=k;d.innerHTML=`<div class="box trb"><div class="trbi"><img alt="Situação na área" id="trBImg"><div class="trfx ${b.fx||''}"></div><span class="trtag">Situação · ${esc(b.local||'')}</span>
+      <ul class="trsig">${(b.sinais||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="trbt"><h3>${s.nome}</h3><p>${b.sit||s.desc}</p><h4>Sua missão</h4><ol>${s.obj.map(o=>`<li>${o.t}${o.lim?` <small>(até ${Math.floor(o.lim)}:${String(Math.round(o.lim%1*60)).padStart(2,'0')} h)</small>`:''} <b>${o.pts} pts</b></li>`).join('')}</ol>
+      <p class="hint">Duração: ${fmt(s.dur,1)} h simuladas (1 h = 1 min). Pontos cheios dentro do prazo; metade depois do prazo.</p>
+      <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" id="trBBack">Voltar</button><button class="btn pri" id="trBGo">Começar treinamento</button></div></div></div>`;
+  d.hidden=false;requestAnimationFrame(()=>{const u=trSnap(b.area);const im=$('#trBImg');if(im&&u)im.src=u;});}
 function trStart(k){const s=TRS[k];if(!s||TR.on)return;const sc=$('#scenario');if(sc&&sc.value!=='nominal'){sc.value='nominal';sc.dispatchEvent(new Event('change'));}
   pzSim('reset');const st={k,s,t0:ST.simT,st:s.obj.map(()=>({done:false,fail:false,pts:0,inT:0,tot:0,ans:null}))};s.setup(st);TR.on=st;
   const b=document.querySelector('#speedSeg button[data-s="60"]');if(b)b.click();if(paused){paused=false;}
