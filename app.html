@@ -3446,7 +3446,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022121322';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022122244';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3709,7 +3709,7 @@ function terrainMesh(W,D,SX,SZ,cx,cz,hole){
     for(let k=0;k<P0.b;k++)for(const f of FR){const d=P0.r*(1-(k+f)/P0.b);if(d<rad[rad.length-1]-.01)rad.push(Math.max(.02,d));}
     const NR=rad.length,NV=NR*(NA+1),pp=new Float32Array(NV*3),cc=new Float32Array(NV*3),uv=new Float32Array(NV*2),idx=[],mt=new Float32Array(NV*3);
     for(let i=0;i<NR;i++)for(let j=0;j<=NA;j++){const q=j/NA*Math.PI*2,d=rad[i],x=P0.x+d*Math.cos(q),z=P0.z+d*Math.sin(q),o=i*(NA+1)+j;let h=H(x,z);
-      const t=(1-d/P0.r)*P0.b,fr=t-Math.floor(t);if(d<P0.r&&fr>.74&&fr<.97)h+=(hash2(i*7.1,(j%NA)*13.3)-.5)*.22;/* face rugosa (desmonte) */
+      const t=(1-d/P0.r)*P0.b,fr=t-Math.floor(t);if(d<P0.r&&fr>.74&&fr<.97)h+=(hash2(i*7.1,(j%NA)*13.3)-.5)*.1;/* face rugosa (desmonte); menor para não criar dentes borrados */
       pp[o*3]=x;pp[o*3+1]=h;pp[o*3+2]=z;mt[o*3]=q;mt[o*3+1]=d;mt[o*3+2]=h;uv[o*2]=q*Math.max(d,4)/5;uv[o*2+1]=(d-h*.35)/5;}
     for(let i=0;i<NR-1;i++)for(let j=0;j<NA;j++){const a=i*(NA+1)+j,b=a+1,c=a+NA+1,d=c+1;idx.push(a,c,b,b,c,d);}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pp,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
@@ -3957,6 +3957,18 @@ const MQ=(()=>{
     const dT=dR(kL,.54),Ru=11.6*K,dr=S.dS-dT,T=Math.sqrt(Math.max(.05,Ru*Ru-dr*dr)),aB=S.aS+T/dT;S.aL=aB+1.5*K/dT;
     const bx=dT*Math.cos(aB)-S.dS*Math.cos(S.aS),bz=dT*Math.sin(aB)-S.dS*Math.sin(S.aS),lx=bx*Math.cos(S.aS)+bz*Math.sin(S.aS),lz=-bx*Math.sin(S.aS)+bz*Math.cos(S.aS);
     S.thT=Math.atan2(-lz,lx);S.thD=-Math.sign(S.thT)*.25;pose(S.ex,PO.D1,PO.C,.64);up.rotation.y=S.thD+(S.thT-S.thD)*.5;}
+  {/* FRENTE DE LAVRA (ponto de carga): pilha de minério desmontado encostada no pé da face, de onde a escavadeira tira a carga;
+      blocos de vários tamanhos na superfície e finos escuros na base */
+    const NU=28,NV=10,aC=S.aS+.03,span=.38,pos=[],col=[],idx=[],dB=dR(kL,.2),yB=H(P0.x+dB*Math.cos(aC),P0.z+dB*Math.sin(aC))-MINE.position.y,cO=new THREE.Color(),hAt=(u,v)=>.85*Math.pow(Math.max(0,1-u*u),.6)*Math.pow(Math.max(0,1-v),1.25);
+    for(let i=0;i<=NU;i++)for(let j=0;j<=NV;j++){const u=i/NU*2-1,v=j/NV,a=aC+u*span,d=dR(kL,.012+v*.2),x=P0.x+d*Math.cos(a),z=P0.z+d*Math.sin(a);
+      const h=hAt(u,v)*(1+.25*(fbm(x*3.1,z*3.1,2)-.5))+(rr()-.5)*.025;pos.push(x,yB+Math.max(0,h)+.012,z);
+      cO.setHex(OREC[Math.floor(rr()*OREC.length)]).lerp(_c.setHex(0x4a2416),.45).multiplyScalar(.42+rr()*.3);col.push(cO.r,cO.g,cO.b);}
+    for(let i=0;i<NU;i++)for(let j=0;j<NV;j++){const a=i*(NV+1)+j,b=a+1,c=a+NV+1,d=c+1;idx.push(a,b,c,b,d,c);}
+    const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));pg.setAttribute('color',new THREE.Float32BufferAttribute(col,3));pg.setIndex(idx);pg.computeVertexNormals();
+    const pm=new THREE.Mesh(pg,std(0xffffff,0,.97,{vertexColors:true,side:THREE.DoubleSide}));pm.receiveShadow=true;pm.castShadow=true;MINE.add(pm);
+    for(let k=0;k<110;k++){const u=(rr()*2-1)*.95,v=Math.pow(rr(),1.4)*.95,a=aC+u*span,d=dR(kL,.012+v*.2),x=P0.x+d*Math.cos(a),z=P0.z+d*Math.sin(a),s=.025+Math.pow(rr(),2.2)*.11;
+      lump(MINE,s,x,yB+hAt(u,v)*.95+s*.3,z,Math.floor(rr()*6));}
+    for(let k=0;k<26;k++){const a=aC+(rr()*2-1)*span*1.25,d=dR(kL,.2+rr()*.2),x=P0.x+d*Math.cos(a),z=P0.z+d*Math.sin(a),s=.02+rr()*.04;lump(MINE,s,x,H(x,z)-MINE.position.y+s*.25,z,Math.floor(rr()*6));}/* material rolado no piso de carga */}
   {const g=inst(PR.dozer,MINE),pl=inst(PR.dLoad,g);pl.position.x=4.6;g.scale.setScalar(K);S.dz={g,pl,u:4,a0:-PI/2-1.15,d:dR(Math.min(2,kL-1),.2)};place(g,S.dz.a0,S.dz.d,1);}
   const SPM=new THREE.MeshBasicMaterial({map:ctex(128,64,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(235,242,248,.95)');g.addColorStop(1,'rgba(235,242,248,0)');x.fillStyle=g;x.beginPath();x.moveTo(0,h/2-2);x.lineTo(w,2);x.lineTo(w,h-2);x.lineTo(0,h/2+2);x.closePath();x.fill();
     for(let i=0;i<300;i++){const u=rr(),v=(rr()-.5)*(.08+u*.9);x.fillStyle=`rgba(255,255,255,${(.6*(1-u)).toFixed(2)})`;x.fillRect(u*w,h/2+v*h,1.5,1.5);}}),transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide});
@@ -4018,7 +4030,10 @@ const MINA3=(()=>{const P0=PITS[0],cx=P0.x,cz=P0.z,R=P0.r,B=P0.b,DIR=1;
       for(const off of [0,26+rnd()*8]){x.beginPath();for(let v=0;v<=h;v+=8){const u=u0+off+Math.sin(v/h*Math.PI*2*(1+(k%2))+ph)*amp;v?x.lineTo(u,v):x.moveTo(u,v);}x.stroke();}}
     for(let k=0;k<14000;k++){x.fillStyle=rnd()<.5?`rgba(80,46,28,${rnd()*.25})`:`rgba(170,152,134,${rnd()*.18})`;x.fillRect(rnd()*w,rnd()*h,1+rnd()*2,1+rnd()*2);}});
   const roadMat=std(0xffffff,0,.96,{map:roadTex});
-  const leiraMat=std(0x4c2c1e,0,.95),fillMat=std(0x5a3424,0,.97),canalMat=std(0x3b2116,.05,.35),
+  /* cascalho com blocos e manchas (as leiras, o aterro da rampa e a canaleta eram lisos e pareciam borrados) */
+  const gravTex=cvTex(256,256,(x,w,h)=>{x.fillStyle='#bdbdbd';x.fillRect(0,0,w,h);for(let k=0;k<420;k++){x.fillStyle=rnd()<.5?`rgba(40,26,20,${.08+rnd()*.18})`:`rgba(255,246,236,${.05+rnd()*.12})`;x.beginPath();x.ellipse(rnd()*w,rnd()*h,2+rnd()*9,2+rnd()*7,rnd()*3,0,Math.PI*2);x.fill();}
+    for(let k=0;k<9000;k++){x.fillStyle=rnd()<.55?`rgba(30,20,16,${rnd()*.35})`:`rgba(255,250,244,${rnd()*.25})`;x.fillRect(rnd()*w,rnd()*h,1+rnd()*2.2,1+rnd()*2.2);}});
+  const leiraMat=std(0x6a4636,0,.95,{map:gravTex}),fillMat=std(0x5e3c2c,0,.97,{map:gravTex}),canalMat=std(0x3b2116,.05,.35,{map:gravTex}),
     waterMat=std(0x6b2e1c,.35,.06,{transparent:true,opacity:.95}),mudMat=std(0x3e2217,0,.45);
   /* malha em faixa: rows = seções transversais (V3[]) de mesmo tamanho; v ao longo (comprimento/vs) */
   const ribbon=(rows,mat,vs=3,parent=root)=>{const m=rows[0].length,pos=[],uv=[],idx=[];let acc=0;
@@ -4085,7 +4100,7 @@ const MINA3=(()=>{const P0=PITS[0],cx=P0.x,cz=P0.z,R=P0.r,B=P0.b,DIR=1;
   const dust=new THREE.Points(gd,dm);dust.frustumCulled=false;dust.renderOrder=3;MINE.add(dust);
   const my=()=>MINE.position.y,end=pts[pts.length-1];let last=performance.now(),acc=0;const vb=new THREE.Vector2();
   const spawn=(x,y,z,big)=>{for(let i=NA;i<N;i++){const p=P[i];if(p.life<1)continue;p.life=0;p.dur=2.6+rnd()*2.2;pos[i*3]=x+(rnd()-.5)*.6;pos[i*3+1]=y;pos[i*3+2]=z+(rnd()-.5)*.6;
-      p.vx=.25+(rnd()-.5)*.3;p.vy=.25+rnd()*.3;p.vz=.12+(rnd()-.5)*.3;p.s0=big?1.4:.9;p.s1=big?4.2:3;p.a=big?.36:.28;return;}};
+      p.vx=.25+(rnd()-.5)*.3;p.vy=.25+rnd()*.3;p.vz=.12+(rnd()-.5)*.3;p.s0=big?1.0:.7;p.s1=big?2.6:1.8;p.a=big?.2:.14;return;}};
   for(let i=0;i<NA;i++){const p=P[i],q=rnd()*Math.PI*2,d=rnd()*R*.8;pos[i*3]=cx+Math.cos(q)*d;pos[i*3+2]=cz+Math.sin(q)*d;pos[i*3+1]=-P0.d*.55+rnd()*P0.d*.6;p.ph=rnd()*6;}
   dust.onBeforeRender=(rd,sc,cam)=>{const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;
     rd.getDrawingBufferSize(vb);dm.uniforms.uK.value=vb.y/(2*Math.tan((cam.fov||50)*Math.PI/360));
@@ -4094,7 +4109,7 @@ const MINA3=(()=>{const P0=PITS[0],cx=P0.x,cz=P0.z,R=P0.r,B=P0.b,DIR=1;
       (typeof trucks!=='undefined'?trucks:[]).forEach(tk=>{if(rnd()<.55){const g=tk.g,c=Math.cos(g.rotation.y),s=Math.sin(g.rotation.y);spawn(g.position.x-1.7*c,g.position.y+.35,g.position.z+1.7*s,false);}});
       if(rnd()<.45)spawn(end.x,Hs(end.x,end.z)-my()+.3,end.z,true);}}
     const tt=now/1000;
-    for(let i=0;i<NA;i++){const p=P[i];pos[i*3]+=Math.sin(tt*.05+p.ph)*.004;pos[i*3+2]+=Math.cos(tt*.04+p.ph)*.004;al[i]=.07+.03*Math.sin(tt*.3+p.ph);sz[i]=9+3*Math.sin(tt*.2+p.ph*2);}
+    for(let i=0;i<NA;i++){const p=P[i];pos[i*3]+=Math.sin(tt*.05+p.ph)*.004;pos[i*3+2]+=Math.cos(tt*.04+p.ph)*.004;al[i]=0;sz[i]=0;/* névoa da cava desligada: deixava manchas embaçadas */}
     for(let i=NA;i<N;i++){const p=P[i];if(p.life>=1){al[i]=0;continue;}p.life=Math.min(1,p.life+dt/p.dur);pos[i*3]+=p.vx*dt;pos[i*3+1]+=p.vy*dt;pos[i*3+2]+=p.vz*dt;p.vy*=.985;
       al[i]=p.a*Math.sin(Math.PI*p.life);sz[i]=p.s0+(p.s1-p.s0)*Math.sqrt(p.life);}
     gd.attributes.position.needsUpdate=gd.attributes.aA.needsUpdate=gd.attributes.aS.needsUpdate=true;};
@@ -4117,7 +4132,15 @@ const trucks=[];
   // ramp stacker
 }
 /* ---------- 2 TCLD ---------- */
-const BPIT=conveyor(V3(-75.6,.5,-22.9),V3(-70,4.6,-19.5),1,{yellow:true});/* começa na crista da cava (sem trecho suspenso sobre as bancadas) *//* acima do talude da cava, contínua até a transferência para a TCLD */
+const BPIT=conveyor(V3(-75.6,.5,-22.9),V3(-70,4.6,-19.5),1,{yellow:true});
+{/* moega de basculamento na crista: muro de contenção para os caminhões, tremonha de aço com minério e alimentador sobre a cauda da correia de bancada */
+  const p=LP(V3(-76.37,0,-23.37)),g=new THREE.Group();g.position.copy(p);g.rotation.y=-Math.atan2(-19.5+22.9,-70+75.6);root.add(g);
+  const hm=new THREE.Mesh(new THREE.CylinderGeometry(1.15,.45,1.1,4,1,true),(MAT.yellow||MAT.frame).clone());hm.rotation.y=Math.PI/4;hm.position.set(.2,1.55,0);hm.material.side=THREE.DoubleSide;hm.castShadow=true;g.add(hm);
+  const ore=new THREE.Mesh(new THREE.ConeGeometry(.78,.55,9),MAT.ore);ore.position.set(.2,1.95,0);ore.castShadow=true;g.add(ore);
+  for(const sx of[-.55,.95])for(const sz of[-.6,.6])box(.16,1.05,.16,MAT.frame,sx,.52,sz,g);box(1.7,.08,1.5,MAT.frame,.2,1.0,0,g);
+  const cm=std(0x8a8279,0,.9);box(.16,.95,2.6,cm,-1.05,.48,0,g);box(1.5,.12,2.6,cm,-1.85,.06,0,g);/* muro de basculamento e plataforma */
+  box(.25,.25,2.6,MAT.yellow||MAT.frame,-1.05,1.02,0,g);/* batente das rodas */
+  box(1.2,.18,.7,MAT.frame,.85,.92,0,g);/* alimentador sob a tremonha */}/* começa na crista da cava (sem trecho suspenso sobre as bancadas) *//* acima do talude da cava, contínua até a transferência para a TCLD */
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
 /* ---- Setor 3 · estrutura do gêmeo digital (mesmo modelo do gêmeo imersivo, em escala reduzida, embutido via window.Setor3) ---- */
