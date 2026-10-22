@@ -3446,7 +3446,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022122412';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022122847';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4133,14 +4133,52 @@ const trucks=[];
 }
 /* ---------- 2 TCLD ---------- */
 const BPIT=conveyor(V3(-75.6,.5,-22.9),V3(-70,4.6,-19.5),1,{yellow:true});
-{/* moega de basculamento na crista: muro de contenção para os caminhões, tremonha de aço com minério e alimentador sobre a cauda da correia de bancada */
-  const p=LP(V3(-76.37,0,-23.37)),g=new THREE.Group();g.position.copy(p);g.rotation.y=-Math.atan2(-19.5+22.9,-70+75.6);root.add(g);
-  const hm=new THREE.Mesh(new THREE.CylinderGeometry(1.15,.45,1.1,4,1,true),(MAT.yellow||MAT.frame).clone());hm.rotation.y=Math.PI/4;hm.position.set(.2,1.55,0);hm.material.side=THREE.DoubleSide;hm.castShadow=true;g.add(hm);
-  const ore=new THREE.Mesh(new THREE.ConeGeometry(.78,.55,9),MAT.ore);ore.position.set(.2,1.95,0);ore.castShadow=true;g.add(ore);
-  for(const sx of[-.55,.95])for(const sz of[-.6,.6])box(.16,1.05,.16,MAT.frame,sx,.52,sz,g);box(1.7,.08,1.5,MAT.frame,.2,1.0,0,g);
-  const cm=std(0x8a8279,0,.9);box(.16,.95,2.6,cm,-1.05,.48,0,g);box(1.5,.12,2.6,cm,-1.85,.06,0,g);/* muro de basculamento e plataforma */
-  box(.25,.25,2.6,MAT.yellow||MAT.frame,-1.05,1.02,0,g);/* batente das rodas */
-  box(1.2,.18,.7,MAT.frame,.85,.92,0,g);/* alimentador sob a tremonha */}/* começa na crista da cava (sem trecho suspenso sobre as bancadas) *//* acima do talude da cava, contínua até a transferência para a TCLD */
+/* PONTO DE COLETA · lavra por correias (modelo da Samarco no complexo de Alegria, pioneira no Brasil): britador móvel sobre esteiras
+   alimentado na frente de lavra da crista pela pá carregadeira → transportador de ligação móvel (também sobre esteiras) → carro-moega
+   na cauda da correia de bancada → TCLD. Sem caminhões nesse trecho (truckless). */
+const PCOLL=(()=>{const g=new THREE.Group();g.position.copy(LP(V3(-75.6,0,-22.9)));g.rotation.y=-Math.atan2(3.4,5.6);root.add(g);
+  const Y=std(0xe3a01e,.25,.55),Gy=std(0x41474e,.45,.6),Dk=std(0x1b1d20,.3,.85),St=MAT.frame,OR=MAT.ore,PI=Math.PI;
+  const yd=Y.clone();yd.side=THREE.DoubleSide;
+  const crawler=(x,z,L,w,gap)=>{for(const s of[-1,1]){box(w,.2,L,Dk,x+s*gap,.1,z,g);for(let k=0;k<Math.round(L/.18);k++)box(w+.02,.035,.06,Gy,x+s*gap,.205,z-L/2+.09+k*.18,g);}};
+  /* britador móvel (LT): esteiras, chassi, tremonha de alimentação, britador de mandíbulas com volantes, unidade de força e correia de descarga */
+  const LX=-.65,LZ=7.2;crawler(LX,LZ,3.3,.24,.36);box(.9,.24,3.7,Gy,LX,.33,LZ,g);
+  const hp=new THREE.Mesh(new THREE.CylinderGeometry(.82,.36,.62,4,1,true),yd);hp.rotation.y=PI/4;hp.position.set(LX,1.05,LZ+1.25);hp.castShadow=true;g.add(hp);
+  for(const sx of[-.3,.3])for(const sz of[.95,1.55])box(.07,.5,.07,St,LX+sx,.65,LZ+sz,g);
+  const hore=new THREE.Mesh(new THREE.ConeGeometry(.6,.38,9),OR);hore.position.set(LX,1.32,LZ+1.25);g.add(hore);
+  box(.72,.62,.85,Y,LX,.76,LZ+.15,g);box(.5,.3,.6,Gy,LX,.95,LZ+.15,g);/* britador de mandíbulas */
+  const fw=[];for(const s of[-1,1]){const f=cyl(.3,.3,.07,Dk,LX+s*.42,.82,LZ+.05,g,18);f.rotation.z=PI/2;fw.push(f);for(let k=0;k<4;k++){const sp=box(.075,.5,.05,Gy,0,0,0,f);sp.rotation.y=k*PI/4;}}
+  box(.82,.5,1.05,Y,LX,.6,LZ-1.05,g);box(.6,.18,.5,Gy,LX,.94,LZ-1.2,g);cyl(.05,.05,.35,Dk,LX+.25,1.15,LZ-1.35,g,8);/* unidade de força e escapamento */
+  box(.32,.3,.32,Gy,LX-.36,.9,LZ-.5,g);/* cabine/painel de comando local */
+  g.updateMatrixWorld(true);const W=(x,y,z)=>g.localToWorld(V3(x,y,z));
+  /* correia leve dos equipamentos móveis: estrutura amarela, lona, roletes e minério britado (≤ 150 mm) andando sobre ela */
+  const BELTM=std(0x24272b,.1,.9);
+  function lbelt(a,b,w){const d=V3().subVectors(b,a),L=d.length(),q=new THREE.Group();q.position.copy(a);g.add(q);q.lookAt(g.localToWorld(b.clone()));
+    box(w+.12,.12,L,Y,0,-.08,L/2,q);box(w,.03,L,BELTM,0,.0,L/2,q);for(let z=.2;z<L;z+=.35)cyl(.025,.025,w+.06,Gy,0,-.02,z,q,8).rotation.z=PI/2;
+    const n=Math.round(L*7),rk=[];for(let k=0;k<n;k++){const s=.025+Math.random()*.035,o=mesh(new THREE.DodecahedronGeometry(s,0),OR,(Math.random()-.5)*w*.6,.03+s*.4,k/n*L,q);o.rotation.set(k,k*2,k*3);rk.push(o);}
+    return{update(dt,flow,run){const on=run&&flow>1;for(const o of rk){o.visible=on;if(on){o.position.z+=dt*.9;if(o.position.z>L)o.position.z-=L;}}}};}
+  const dis=lbelt(V3(LX,.42,LZ-.25),V3(LX,.78,LZ-2.35),.42);/* correia de descarga do britador móvel */
+  /* transportador de ligação móvel (LL) sobre esteiras: recebe a descarga e sobe até o carro-moega */
+  crawler(LX*.55,2.9,1.3,.2,.26);box(.6,.2,1.4,Gy,LX*.55,.3,2.9,g);
+  const link=lbelt(V3(LX,.72,LZ-2.55),V3(-.02,1.3,.45),.5);
+  for(const t of[.3,.62]){const x=LX+(-.02-LX)*t,y=.72+(1.3-.72)*t,z=LZ-2.55+(.45-LZ+2.55)*t;for(const o of[-.18,.18])beam(W(x+o,.38,z),W(x+o,y-.14,z),.05,St,root);}
+  /* carro-moega sobre a cauda da correia de bancada */
+  const cm=new THREE.Mesh(new THREE.CylinderGeometry(.5,.27,.42,4,1,true),yd);cm.rotation.y=PI/4;cm.position.set(0,.95,.25);g.add(cm);
+  for(const sx of[-.32,.32])for(const sz of[-.05,.55])box(.06,.75,.06,St,sx,.4,sz,g);box(.8,.06,.8,St,0,.72,.25,g);
+  /* frente de lavra na crista: pilha de minério desmontado + pá carregadeira em ciclo (pilha → tremonha) */
+  const PZ=LZ+3.9,pile=new THREE.Mesh(new THREE.SphereGeometry(1.15,18,10,0,PI*2,0,PI/2),OR);pile.scale.set(1.2,.5,.9);pile.position.set(LX-.1,0,PZ+.5);pile.castShadow=pile.receiveShadow=true;g.add(pile);
+  for(let k=0;k<40;k++){const a=Math.random()*PI*2,r=Math.sqrt(Math.random())*1.2,s=.04+Math.pow(Math.random(),2)*.12;const o=mesh(new THREE.DodecahedronGeometry(s,0),OR,LX-.1+Math.cos(a)*r*1.2,Math.max(.02,.55*(1-r*r/1.45))+s*.3,PZ+.5+Math.sin(a)*r*.9,g);o.rotation.set(a,k,a*2);}
+  const ld=new THREE.Group();g.add(ld);box(.52,.32,.95,Y,0,.42,0,ld);box(.4,.34,.34,Gy,0,.78,.12,ld);box(.36,.24,.3,MAT.glass,0,.8,-.02,ld);
+  for(const sx of[-1,1])for(const sz of[-.3,.32]){const w=cyl(.19,.19,.13,Dk,sx*.3,.19,sz,ld,14);w.rotation.z=PI/2;}
+  const arm=new THREE.Group();arm.position.set(0,.55,-.42);ld.add(arm);for(const sx of[-.2,.2])box(.06,.06,.62,Gy,sx,0,-.31,arm);
+  const bk=new THREE.Group();bk.position.set(0,0,-.62);arm.add(bk);box(.66,.24,.22,Gy,0,0,-.08,bk);const bko=box(.58,.08,.16,OR,0,.14,-.08,bk);
+  let ph=0;return{step(dt,flow,run){if(!run)return;ph=(ph+dt*.09)%1;
+    /* ciclo: 0–.35 vai à pilha · .35–.5 enche · .5–.85 vai à tremonha erguendo a caçamba · .85–1 descarrega */
+    const z0=LZ+2.15,z1=PZ-.75,e=f=>f*f*(3-2*f);let z,lift,tilt,full;
+    if(ph<.35){z=z0+(z1-z0)*e(ph/.35);lift=.1;tilt=0;full=false;}else if(ph<.5){z=z1;lift=0;tilt=-.4*Math.sin((ph-.35)/.15*PI);full=true;}
+    else if(ph<.85){const f=e((ph-.5)/.35);z=z1+(z0-z1)*f;lift=.1+.9*f;tilt=0;full=true;}else{z=z0;lift=1;tilt=.9*Math.sin((ph-.85)/.15*PI);full=ph<.93;}
+    ld.position.set(LX,0,z);ld.rotation.y=0;arm.rotation.x=-lift*.75;bk.rotation.x=lift*.75+tilt;bko.visible=full;
+    for(const f of fw)f.rotation.x+=dt*9;dis.update(dt,flow,run);link.update(dt,flow,run);}};})();
+/* começa na crista da cava (sem trecho suspenso sobre as bancadas) *//* acima do talude da cava, contínua até a transferência para a TCLD */
 /* ---------- 3 Screening + crushing ---------- */
 const CRU=grp(-82,2);
 /* ---- Setor 3 · estrutura do gêmeo digital (mesmo modelo do gêmeo imersivo, em escala reduzida, embutido via window.Setor3) ---- */
@@ -5651,7 +5689,7 @@ function frame(){
   // animations
   trucks.forEach((tk,i)=>{if(!RUN.mine){return;}MQ.drive(tk,dt);});// caminhões nas bermas (altura por H(x,z), o grupo MINE já está na cota do planalto) e o do ciclo de carga
   MQ.step(dt);// escavadeira carregando, trator de esteira e caminhão-pipa (bloco MINA-AGENTE-2)
-  {const sp=clamp(.7+c.mine/Math.max(1,P.feedC*2)*.3,.7,1);MINE.userData.pile.scale.setScalar(sp);MINE.userData.pile.position.y=2.25*sp;}BPIT.update(dt,c.mine,RUN.mine);
+  {const sp=clamp(.7+c.mine/Math.max(1,P.feedC*2)*.3,.7,1);MINE.userData.pile.scale.setScalar(sp);MINE.userData.pile.position.y=2.25*sp;}BPIT.update(dt,c.mine,RUN.mine);PCOLL.step(dt,c.mine,RUN.mine);
   TCLD.update(dt,c.mine,RUN.tcld);B34.update(dt,c.mine,RUN.crush);B45.update(dt,G.F,RUN.conc);B78.update(dt,G.sand,RUN.sandf);
   const pr=clamp(Math.cbrt(ST.stockPile/200000),.3,1.12);pileMesh.scale.set(pr,pr,pr);
   if(RUN.crush)PILE.userData.stacker.rotation.y=Math.sin(t*.06)*.18;
