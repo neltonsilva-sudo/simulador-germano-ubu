@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261021215351';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261021215351';
+import { SCREENS, LV } from './layout.js?v=20261021215924';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261021215924';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral
@@ -408,7 +408,10 @@ export function buildScreens(scene, M) {
     const sft = cyl(mo, .035, .035, .12, M.greyDk, .38, 0, 0, 10); sft.rotation.z = Math.PI / 2;
     for (const [xx, r, L] of [[.33, .25, .06], [.0, .26, .64], [-.33, .25, .05], [-.44, .29, .2]]) { const c = cyl(mo, r, r, L, Mot, xx, 0, 0, 28); c.rotation.z = Math.PI / 2; }
     for (let k = 0; k < 30; k++) { const th = k / 30 * Math.PI * 2; if (Math.abs(Math.sin(th) + 1) < .18) continue; const f = box(mo, .6, .045, .012, Mot, 0, Math.sin(th) * .282, Math.cos(th) * .282); f.rotation.x = Math.PI / 2 - th; }
-    const grille = new THREE.Mesh(new THREE.CircleGeometry(.27, 28), M.black); grille.rotation.y = -Math.PI / 2; grille.position.x = -.545; mo.add(grille);
+    const grille = new THREE.Mesh(new THREE.CircleGeometry(.27, 28), M.black); grille.rotation.y = -Math.PI / 2; grille.position.x = -.5; mo.add(grille);
+    { /* ventoinha do motor do vibrador girando atrás da grade */ const fz = new THREE.Group(); fz.userData.keep = true; fz.position.x = -.525; mo.add(fz); const bm = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: .5, roughness: .45 });
+      for (let k = 0; k < 7; k++) { const arm = new THREE.Group(); arm.rotation.x = k / 7 * Math.PI * 2; const bl = new THREE.Mesh(new THREE.BoxGeometry(.012, .2, .06), bm); bl.position.y = .12; bl.rotation.y = .5; arm.add(bl); fz.add(arm); }
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .03, 12), Yel); hub.rotation.z = Math.PI / 2; fz.add(hub); SPIN_S.push({ tag, o: fz, w: 35 }); }
     for (const r of [.08, .15, .22]) { const tr = new THREE.Mesh(new THREE.TorusGeometry(r, .009, 6, 32), Mot); tr.rotation.y = Math.PI / 2; tr.position.x = -.547; mo.add(tr); }
     for (let k = 0; k < 6; k++) { const bar = box(mo, .012, .5, .018, Mot, -.548, 0, 0); bar.rotation.x = k / 6 * Math.PI; }
     for (const xx of [.25, -.22]) box(mo, .12, .1, .62, Mot, xx, -.29, 0);
@@ -552,7 +555,7 @@ export function buildScreens(scene, M) {
   // grãos que passam pela tela: andam, afundam no leito perto do ponto de passagem e renascem na alimentação
   const passing = (f, im, P, n, dt, t, k, sk) => { for (let i = 0; i < n; i++) { const p = P[i]; adv(p, dt, k); if (p.s > p.pass) { p.pass = S0 + (TOT - S0) * .95 * Math.pow(Math.random(), 1.4) + .2; p.s = S0 + rnd(.3); p.x = (rnd(2) - 1) * f.xLim(p); } const sink = Math.min(1, Math.max(0, (p.s - (p.pass - .3)) / .3)) * (p.r * 1.6 + .02) + p.r * sk; place(im, i, p, t, k, sink, f.hw); } im.count = n; im.instanceMatrix.needsUpdate = true; };
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
-    { const E = S ? S.eq : {}; for (const c of SPIN_S) { const e = E[c.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) c.o.rotation.x += dt * 100; } }
+    { const E = S ? S.eq : {}; for (const c of SPIN_S) { const e = E[c.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) c.o.rotation.x += dt * (c.w || 100); } }
     const E = S ? S.eq : {}; dt = Math.min(dt, .1);
     // umidade alta (> 9 %): minério mais escuro, mais brilhante (molhado) e escoando mais devagar
     const wf = S && S.moist != null ? Math.min(1, Math.max(0, (S.moist - 9) / 2.5)) : 0, wetK = 1 - .4 * wf, wd = 1 - .42 * wf;

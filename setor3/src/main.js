@@ -1,12 +1,12 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261021215351';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261021215351';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261021215351';
-import { buildUI } from './ui.js?v=20261021215351';
-import { gate } from './gate.js?v=20261021215351';
-import { buildContext } from './context.js?v=20261021215351';
+import { B, LV, CAMS } from './layout.js?v=20261021215924';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261021215924';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261021215924';
+import { buildUI } from './ui.js?v=20261021215924';
+import { gate } from './gate.js?v=20261021215924';
+import { buildContext } from './context.js?v=20261021215924';
 gate();
 
 const Q = new URLSearchParams(location.search);
