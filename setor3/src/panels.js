@@ -1,11 +1,15 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261022195940';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022195940';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261022201821';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261022201821';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida
 // vêm do simulador; APF, TCLD e partir/parar alterados aqui voltam para o simulador.
 
 const CSS = `
+.s3exp{position:fixed;z-index:30;width:360px;max-width:92vw;background:rgba(12,22,34,.97);border:1px solid rgba(92,198,220,.5);border-radius:12px;padding:10px 12px;color:#fff;font:13px system-ui;box-shadow:0 14px 40px rgba(0,0,0,.5)}.s3exp .h{display:flex;justify-content:space-between;align-items:center;gap:8px}.s3exp .h b{color:#9fdcf0}.s3exp p{margin:6px 0;line-height:1.5}.s3exp small{color:#9fb0bd}.s3exp small b{color:#ffd24a}
+.s3exp .r{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.s3exp button{border:1px solid rgba(255,255,255,.2);background:#1f3a5c;color:#fff;border-radius:6px;padding:4px 9px;font:600 12px system-ui;cursor:pointer}.s3exp button.pri{background:#2c6fd6}.s3exp button:disabled{opacity:.6}.s3exp label{display:flex;gap:6px;align-items:center;font-size:12px;color:#cfd8de}.s3exp select{flex:1;background:#0b1622;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px}
+.s3acc .spk{display:inline-grid;place-items:center;width:22px;height:22px;margin:0 6px 0 0;padding:0;border:1px solid rgba(92,198,220,.45);border-radius:50%;background:rgba(92,198,220,.12);font-size:11px;line-height:1;cursor:pointer;vertical-align:middle;flex:0 0 auto}.s3acc .spk:hover{background:rgba(92,198,220,.3)}.s3acc .spk.on{background:#ffb23d;border-color:#ffb23d;animation:s3spk 1s ease-in-out infinite}@keyframes s3spk{50%{box-shadow:0 0 0 5px rgba(255,178,61,.25)}}
+.s3acc .ctl .r span{display:inline-flex;align-items:center}
 .s3gd{position:fixed;right:12px;top:64px;bottom:12px;width:min(600px,48vw);z-index:40;overflow:auto;background:rgba(9,22,40,.96);border:1px solid rgba(92,198,220,.45);border-radius:12px;color:#e8f1f7;font:12.5px/1.45 system-ui;box-shadow:0 18px 50px rgba(0,0,0,.55);backdrop-filter:blur(8px)}
 .s3gd .hd{position:sticky;top:0;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(9,22,40,.98);border-bottom:1px solid rgba(255,255,255,.08);z-index:1}.s3gd .hd h3{margin:0;font-size:15px;flex:1;color:#ffd24a}.s3gd .hd button{border:0;background:#1f3a5c;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:700}
 .s3gd .bd{padding:10px 14px 16px}.s3gd h4{margin:14px 0 6px;color:#ffd24a;font-size:12px;letter-spacing:.06em;text-transform:uppercase}.s3gd .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.s3gd .kp div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 9px}.s3gd .kp b{display:block;font:700 15px ui-monospace,monospace;color:#9fe6f5}.s3gd .kp span{font-size:10.5px;color:#c8d6e2}.s3gd .kp div.warn b{color:#ffb020}
@@ -60,9 +64,62 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
   const el = document.createElement('div'); el.className = 's3acc'; root.appendChild(el);
   setInterval(() => el.classList.toggle('s3off'), 500); /* pisca das bolinhas com problema (independe do redesenho do painel) */
   el.innerHTML = `<div class="top"><span class="dn">3</span><b>Peneiramento e britagem</b><span class="sync" id="pSync">sem simulador</span><button id="pAll">Fechar todos</button></div>` +
-    SECS.map(([k, t]) => `<section class="s3sec${open.includes(k) ? ' open' : ''}" data-k="${k}"><h5><i>▶</i>${t}<em id="pS_${k}"></em></h5><div id="pB_${k}"></div></section>`).join('');
+    SECS.map(([k, t]) => `<section class="s3sec${open.includes(k) ? ' open' : ''}" data-k="${k}"><h5><i>▶</i><button class="spk" data-spk="${k}" title="Ouvir a explicação" aria-label="Ouvir a explicação de ${t}">🔊</button>${t}<em id="pS_${k}"></em></h5><div id="pB_${k}"></div></section>`).join('');
   const $ = (s) => el.querySelector(s);
   const save = () => { try { localStorage.setItem('setor3.acc2', JSON.stringify(open)); } catch (e) { /* sem armazenamento */ } };
+  /* EXPLICAÇÃO FALADA: o ícone 🔊 antes de cada título e de cada controle lê a importância do item no processo */
+  const EXPL = {
+    ast: 'O Assistente de Processo analisa os indicadores, a eficiência, a granulometria e os alarmes do setor e sugere ações. Use-o para entender o que está limitando a produção e o que ajustar primeiro.',
+    pi: 'Os pontos de inspeção são os equipamentos que o operador acompanha na ronda: peneiras, britadores e alimentadores. Cada um mostra eficiência, carga, desgaste e saúde. A bolinha vermelha piscando indica o que precisa de atenção imediata.',
+    ctl: 'Controles e ajustes são as variáveis que o operador manipula para equilibrar produção, qualidade do produto e consumo de energia: alimentação, abertura dos britadores, velocidade da correia e parâmetros do Barmac.',
+    ind: 'Os indicadores em tempo real mostram o que entra e o que sai do setor: alimentação, produção, carga circulante e energia. São a primeira leitura para saber se o circuito está estável.',
+    gran: 'A curva granulométrica mostra a distribuição de tamanhos das partículas. O P80 do produto define quanto trabalho sobra para a moagem: produto mais fino aqui economiza energia nos moinhos.',
+    efic: 'A eficiência do processo compara o resultado com o ideal: eficiência do peneiramento, eficiência energética dos britadores e o OEE do setor. Ajuda a encontrar perdas escondidas.',
+    tend: 'As tendências mostram como as variáveis evoluem no tempo. Uma mudança lenta, como o aumento da carga circulante, aparece aqui antes de virar alarme.',
+    flu: 'Os fluxos de entrada e saída fecham o balanço de massa do setor: o minério novo que entra tem de sair como produto. Diferenças indicam erro de medição ou acúmulo de material.',
+    eq: 'A sala de controle comanda o circuito: partida e parada em sequência, permissivos e intertravamentos. A sequência certa protege os equipamentos e evita entupimentos e derramamentos.',
+    al: 'Alarmes e eventos registram tudo o que saiu da faixa e cada comando dado. Reconhecer e tratar o alarme rapidamente evita que um desvio vire parada ou acidente.',
+    qr: 'O QR Code da área permite que o operador de campo acesse o painel desta área pelo celular, com autorização da sala de controle.',
+    prob: 'Problemas detectados reúne os desvios encontrados nos pontos de inspeção e no modelo, com a causa provável, para priorizar a ação do operador.',
+    insp: 'O registro de inspeção grava o que foi encontrado na ronda, com severidade e local, e vira histórico para a manutenção e para a gestão.',
+    cF: 'A alimentação nova é a quantidade de minério que chega da lavra pela correia de longa distância. Ela define a produção do setor, mas acima da capacidade das peneiras e dos britadores aumenta a carga circulante e pode limitar o circuito. No Concentrador Três, a referência é de cerca de dois mil e quinhentas toneladas por hora.',
+    cC: 'A APF é a abertura na posição fechada dos britadores cônicos HP 400. Fechar a APF gera produto mais fino, mas aumenta a potência e a carga dos britadores. Abrir demais engrossa o produto e aumenta o retorno de material às peneiras.',
+    cT: 'A velocidade da correia de longa distância controla quanto minério ela consegue transportar. Com velocidade baixa, a correia limita a alimentação do setor. A capacidade nominal é de seis mil toneladas por hora a cem por cento.',
+    cM: 'A umidade do minério é crítica no peneiramento. Acima de nove por cento, o material úmido gruda nas telas e entope as aberturas: a eficiência das peneiras cai e a carga circulante aumenta.',
+    cR: 'Os finos do minério são a parte que já chega menor que doze vírgula cinco milímetros. Quanto mais finos, menos material precisa ser britado, e menores ficam a carga circulante e o consumo de energia.',
+    cW: 'O índice de trabalho de Bond mede a dificuldade de quebrar o minério. Minério mais duro exige mais energia para chegar ao mesmo tamanho de produto e reduz a capacidade dos britadores.',
+    cP: 'A rotação do rotor do Barmac define a velocidade com que as partículas são lançadas contra a camada de rocha. Mais rotação gera produto mais fino, porém com mais potência e mais desgaste das pontas do rotor.',
+    cK: 'A cascata desvia parte da alimentação por fora do rotor do Barmac, provocando choque de rocha com rocha. Ela alivia a potência e permite ajustar a granulometria do produto sem parar o britador.' };
+  /* VOZ MAIS HUMANA: escolhe a melhor voz pt-BR instalada (Natural/Online do Edge e Windows › Premium/Aprimorada do Mac › Google › demais),
+     fala frase a frase com pausas naturais; o usuário pode escolher a voz (guardada neste navegador) */
+  const VZ = { list() { try { return speechSynthesis.getVoices().filter((v) => /^pt(-|_)BR/i.test(v.lang) || /portugu[eê]s.*brasil/i.test(v.name)); } catch (e) { return []; } },
+    rank(v) { const n = v.name; return /natural|neural/i.test(n) ? 6 : /online/i.test(n) ? 5 : /premium|enhanced|aprimorad/i.test(n) ? 4 : /google/i.test(n) ? 3 : /luciana|francisca|thalita|antonio|felipe|daniel/i.test(n) ? 2 : 1; },
+    pick() { const V = this.list(); let p = null; try { p = localStorage.getItem('s3voice'); } catch (e) { /* */ } return (p && V.find((v) => v.name === p)) || V.slice().sort((a, b) => this.rank(b) - this.rank(a))[0] || null; },
+    speak(text, onend) { const S = window.speechSynthesis; if (!S) { onend && onend(); return; } S.cancel(); const v = this.pick(), parts = String(text).replace(/\s+/g, ' ').match(/[^.!?;]+[.!?;]?/g) || [String(text)];
+      parts.forEach((t, i) => { const u = new SpeechSynthesisUtterance(t.trim()); u.lang = 'pt-BR'; if (v) u.voice = v; u.rate = .96; u.pitch = 1.03; if (i === parts.length - 1) u.onend = u.onerror = () => onend && onend(); S.speak(u); }); },
+    stop() { try { speechSynthesis.cancel(); } catch (e) { /* */ } } };
+  try { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); } catch (e) { /* */ }
+  /* caixa de explicação: texto do item + ouvir/parar + explicação do Assistente com os valores atuais + escolha da voz */
+  const ex = document.createElement('div'); ex.className = 's3exp'; ex.hidden = true; document.body.appendChild(ex); let exK = null, exTxt = '';
+  const valOf = (k) => { const v = el.querySelector('#' + k + 'v') || el.querySelector('#pS_' + k); return v ? v.textContent.trim() : ''; };
+  const nameOf = (k) => { const b = el.querySelector(`.spk[data-spk="${k}"]`); return b ? b.parentElement.textContent.replace('🔊', '').replace(/\s+/g, ' ').trim().replace(valOf(k), '').trim() : k; };
+  const exRender = (busy) => { const V = VZ.list(), cur = VZ.pick(); ex.innerHTML = `<div class="h"><b>🔊 ${esc(nameOf(exK))}</b><button data-x title="Fechar">×</button></div>${valOf(exK) ? `<small>Valor atual: <b>${esc(valOf(exK))}</b></small>` : ''}
+      <p>${esc(exTxt)}</p><div class="r"><button data-play>▶ Ouvir</button><button data-stop>■ Parar</button><button data-ai class="pri"${busy ? ' disabled' : ''}>${busy ? 'Assistente explicando…' : '🧠 Explicar com o Assistente (valores atuais)'}</button></div>
+      ${V.length ? `<label>Voz <select data-voz>${V.sort((a, b) => VZ.rank(b) - VZ.rank(a)).map((v) => `<option${cur && v.name === cur.name ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>` : '<small>Nenhuma voz em português instalada neste navegador.</small>'}`; };
+  const openEx = (k, b) => { exK = k; exTxt = EXPL[k] || ''; const r = b.getBoundingClientRect(), pr = el.getBoundingClientRect(); ex.style.left = Math.min(innerWidth - 380, pr.right + 10) + 'px'; ex.style.top = Math.max(70, Math.min(innerHeight - 320, r.top - 10)) + 'px';
+    exRender(false); ex.hidden = false; el.querySelectorAll('.spk.on').forEach((x) => x.classList.remove('on')); b.classList.add('on'); VZ.speak(exTxt, () => b.classList.remove('on')); };
+  ex.addEventListener('click', async (e) => { const b = el.querySelector(`.spk[data-spk="${exK}"]`);
+    if (e.target.closest('[data-x]')) { VZ.stop(); ex.hidden = true; b && b.classList.remove('on'); return; }
+    if (e.target.closest('[data-play]')) { b && b.classList.add('on'); VZ.speak(exTxt, () => b && b.classList.remove('on')); return; }
+    if (e.target.closest('[data-stop]')) { VZ.stop(); b && b.classList.remove('on'); return; }
+    if (e.target.closest('[data-ai]')) { exRender(true); try {
+        const q = `EXPLICAÇÃO DIDÁTICA PARA TREINAMENTO (não é diagnóstico): explique para um operador em formação, em até 6 frases simples e faladas, a importância de "${nameOf(exK)}" no processo do setor 3 (peneiramento e britagem): como afeta produção, granulometria do produto, energia, desgaste e segurança${valOf(exK) ? `, e o que o valor atual (${valOf(exK)}) indica em relação aos demais dados` : ''}. Diga o que acontece se aumentar ou diminuir. Escreva a explicação inteira no campo "resumo", sem listas.`;
+        const r = await call('aiAnalyze', [{ modo: 'gemeo3', escopo: 'Área 3 · Peneiramento e britagem', pergunta: q, contexto: ctxAst() }]);
+        exTxt = String((r && r.resumo) || '').trim() || exTxt; logEv('Assistente', `Explicação: ${nameOf(exK)}`); } catch (err) { exTxt = (EXPL[exK] || '') + ' (Assistente indisponível agora: ' + String(err.message || err).slice(0, 80) + ')'; }
+      exRender(false); b && b.classList.add('on'); VZ.speak(exTxt, () => b && b.classList.remove('on')); }
+  });
+  ex.addEventListener('change', (e) => { const s2 = e.target.closest('[data-voz]'); if (s2) { try { localStorage.setItem('s3voice', s2.value); } catch (x) { /* */ } VZ.speak('Esta é a voz escolhida para as explicações.'); } });
+  el.addEventListener('click', (e) => { const b = e.target.closest('.spk'); if (!b) return; e.stopPropagation(); e.preventDefault(); if (exK === b.dataset.spk && !ex.hidden) { VZ.stop(); ex.hidden = true; b.classList.remove('on'); return; } openEx(b.dataset.spk, b); }, true);
   el.querySelectorAll('.s3sec>h5').forEach((h) => h.addEventListener('click', () => {
     const s = h.parentElement, k = s.dataset.k; s.classList.toggle('open');
     open = s.classList.contains('open') ? [...new Set([...open, k])] : open.filter((x) => x !== k); save(); render(true); allBtn();
@@ -95,14 +152,14 @@ export function buildPanels(root, sim, { fm, stTxt, openInfo, logEv }) {
 
   // ---- controles (montados uma vez)
   const C = $('#pB_ctl');
-  C.innerHTML = `<div class="ctl"><div class="r"><span>Alimentação nova (ROM da lavra)</span><b id="cFv"></b></div><input type="range" id="cF" min="0" max="5200" step="50"><small id="cFn">Vazão de ROM que a TCLD entrega ao setor.</small></div>
-    <div class="ctl"><div class="r"><span>Abertura dos HP 400 (APF)</span><b id="cCv"></b></div><input type="range" id="cC" min="12" max="30" step="1"><small>Menor abertura = produto mais fino e mais carga circulante; mais potência nos cônicos.</small></div>
-    <div class="ctl"><div class="r"><span>Velocidade da TCLD</span><b id="cTv"></b></div><input type="range" id="cT" min="40" max="110" step="1"><small>Capacidade nominal 6.000 t/h a 100 %.</small></div>
-    <div class="ctl"><div class="r"><span>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai. Alerta amarelo a partir de 8,5 % (ou quando sobe rápido) e vermelho a partir de 9,5 %.</small></div>
-    <div class="ctl"><div class="r"><span>Finos do ROM (&lt; 12,5 mm)</span><b id="cRv"></b></div><input type="range" id="cR" min="30" max="85" step="1"><small>[adotado] Fração do ROM (&lt; 150 mm) que já chega abaixo de 12,5 mm. Itabirito friável: quanto mais fino, menor a carga circulante e a energia de britagem.</small></div>
-    <div class="ctl"><div class="r"><span>Wi do minério (Bond)</span><b id="cWv"></b></div><input type="range" id="cW" min="6" max="20" step=".5"><small>Índice de trabalho de laboratório; referência para a eficiência energética dos britadores (Wi ÷ Wio).</small></div>
-    <div class="ctl"><div class="r"><span>Barmac · rotação do rotor</span><b id="cPv"></b></div><input type="range" id="cP" min="1000" max="1640" step="10"><small>Manual B9100SE: mais rotação = maior velocidade na ponta (50–85 m/s), produto mais fino e mais potência.</small></div>
-    <div class="ctl"><div class="r"><span>Barmac · cascata</span><b id="cKv"></b></div><input type="range" id="cK" min="0" max="40" step="1"><small>Parte da alimentação que desvia do rotor (choque rocha-rocha): alivia a potência e engrossa o produto — ajuste fino da curva granulométrica.</small></div>
+  C.innerHTML = `<div class="ctl"><div class="r"><span><button class="spk" data-spk="cF" title="Ouvir a explicação">🔊</button>Alimentação nova (ROM da lavra)</span><b id="cFv"></b></div><input type="range" id="cF" min="0" max="5200" step="50"><small id="cFn">Vazão de ROM que a TCLD entrega ao setor.</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cC" title="Ouvir a explicação">🔊</button>Abertura dos HP 400 (APF)</span><b id="cCv"></b></div><input type="range" id="cC" min="12" max="30" step="1"><small>Menor abertura = produto mais fino e mais carga circulante; mais potência nos cônicos.</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cT" title="Ouvir a explicação">🔊</button>Velocidade da TCLD</span><b id="cTv"></b></div><input type="range" id="cT" min="40" max="110" step="1"><small>Capacidade nominal 6.000 t/h a 100 %.</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cM" title="Ouvir a explicação">🔊</button>Umidade do ROM</span><b id="cMv"></b></div><input type="range" id="cM" min="5" max="14" step=".5"><small>Acima de 9 % o minério cola nos decks (colmatação) e a eficiência das peneiras cai. Alerta amarelo a partir de 8,5 % (ou quando sobe rápido) e vermelho a partir de 9,5 %.</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cR" title="Ouvir a explicação">🔊</button>Finos do ROM (&lt; 12,5 mm)</span><b id="cRv"></b></div><input type="range" id="cR" min="30" max="85" step="1"><small>[adotado] Fração do ROM (&lt; 150 mm) que já chega abaixo de 12,5 mm. Itabirito friável: quanto mais fino, menor a carga circulante e a energia de britagem.</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cW" title="Ouvir a explicação">🔊</button>Wi do minério (Bond)</span><b id="cWv"></b></div><input type="range" id="cW" min="6" max="20" step=".5"><small>Índice de trabalho de laboratório; referência para a eficiência energética dos britadores (Wi ÷ Wio).</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cP" title="Ouvir a explicação">🔊</button>Barmac · rotação do rotor</span><b id="cPv"></b></div><input type="range" id="cP" min="1000" max="1640" step="10"><small>Manual B9100SE: mais rotação = maior velocidade na ponta (50–85 m/s), produto mais fino e mais potência.</small></div>
+    <div class="ctl"><div class="r"><span><button class="spk" data-spk="cK" title="Ouvir a explicação">🔊</button>Barmac · cascata</span><b id="cKv"></b></div><input type="range" id="cK" min="0" max="40" step="1"><small>Parte da alimentação que desvia do rotor (choque rocha-rocha): alivia a potência e engrossa o produto — ajuste fino da curva granulométrica.</small></div>
     <button class="go" id="cRun"></button>`;
   const cF = $('#cF'), cC = $('#cC'), cT = $('#cT'), cM = $('#cM'), cR = $('#cR'), cW = $('#cW');
   cR.oninput = () => { sim.f12 = +cR.value / 100; }; cR.onchange = () => logEv('Ajuste', `Finos do ROM < 12,5 mm = ${fm(sim.f12 * 100)} %`);

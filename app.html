@@ -3511,7 +3511,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022195940';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022201821';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -6195,7 +6195,7 @@ function s3ApplySet(q){if(!q)return;
   if(typeof q.running==='boolean'&&RUN.crush!==(q.running?1:0)){RUN.crush=q.running?1:0;refreshEq&&refreshEq(true);logEvent('Comando',`Peneiramento e britagem ${q.running?'partido':'parado'} pelo gêmeo digital`);}}
 /* integração pelo servidor (sites diferentes): publica o estado da área 3 e busca comandos do gêmeo, por até 3 h depois de abrir o gêmeo */
 let TW3_REMOTE=(()=>{try{return +localStorage.getItem('tw3Remote')||0;}catch(e){return 0;}})(),S3SRVt=0,S3SRVbusy=false;
-function s3State(){const s=S3.sim;return{type:'state',vsiRpm:s.rpm,vsiCasc:s.casc,night:(()=>{try{return +todState().L.toFixed(2);}catch(e){return 0;}})(),mine:CUR.mine||0,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,eq:Object.fromEntries(Object.entries(s.eq).map(([t,e])=>[t,{w:+(+e.w||0).toFixed(2),on:!!e.on,mnt:!!e.mnt,mh:e.mnt?+(e.mnt.h||0).toFixed(2):0,rev:e.rev||0,ctl:{trip:e.trip||null,lock:!!e.lock,mode:e.mode,es:!!e.es,lube:e.lube,lid:e.lid,guard:e.guard}}])),belts:Object.fromEntries(Object.entries(s.belts||{}).map(([t,b])=>[t,{on:!!b.on,cord:!!b.cord,trip:b.trip||null,align:+(+b.align||0).toFixed(1)}])),alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))};}
+function s3State(){const s=S3.sim;return{type:'state',vsiRpm:s.rpm,vsiCasc:s.casc,night:(()=>{try{return +todState().L.toFixed(2);}catch(e){return 0;}})(),mine:S3OV&&S3OV.feed!=null?S3OV.feed:(CUR.mine||0)*S3_FK,css:P.css,tcld:P.tcldSpd,moist:s.moist,running:!!RUN.crush,fe:(GEO&&GEO.pile&&GEO.pile.fe)||P.fe,p80:CUR.G&&CUR.G.P80,eq:Object.fromEntries(Object.entries(s.eq).map(([t,e])=>[t,{w:+(+e.w||0).toFixed(2),on:!!e.on,mnt:!!e.mnt,mh:e.mnt?+(e.mnt.h||0).toFixed(2):0,rev:e.rev||0,ctl:{trip:e.trip||null,lock:!!e.lock,mode:e.mode,es:!!e.es,lube:e.lube,lid:e.lid,guard:e.guard}}])),belts:Object.fromEntries(Object.entries(s.belts||{}).map(([t,b])=>[t,{on:!!b.on,cord:!!b.cord,trip:b.trip||null,align:+(+b.align||0).toFixed(1)}])),alarms:(typeof ALARMS!=='undefined'?ALARMS:[]).filter(x=>x.eq==='crush'||x.eq==='mine'||x.eq==='tcld').map(x=>({eq:x.eq,sev:x.sev,msg:x.msg}))};}
 function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REMOTE>3*3600e3)return;const now=performance.now();if(window.__s3bcT&&now-window.__s3bcT<20000)return;/* gêmeo no mesmo navegador: sincroniza pelo canal local, sem carregar o servidor */if(now-S3SRVt<(document.hidden?30000:15000))return;S3SRVt=now;
   const tok=(typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'';S3SRVbusy=true;const done=()=>{S3SRVbusy=false;};
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
@@ -7182,8 +7182,11 @@ const trAck=re=>[...ALMS.values()].some(a=>a.ack&&re.test(a.msg));
 const trS3=()=>typeof S3!=='undefined'&&S3&&S3.sim&&S3.sim.eq&&S3.sim.eq['03BR001']?S3.sim:null;
 const trCamp=c=>{setCamp(c);const sc=$('#campSel');if(sc)sc.value=CAMP;const k=$('#kpiMGP');if(k)k._h='';try{mgpUpdate();}catch(e){}};
 const trShuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
-function trSay(t){try{if(!TR.tts||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗]/g,''));u.lang='pt-BR';
-  const v=speechSynthesis.getVoices().find(v=>/^pt(-|_)BR/i.test(v.lang));if(v)u.voice=v;u.rate=1.03;speechSynthesis.speak(u);}catch(e){}}
+/* voz mais humana: melhor voz pt-BR instalada (Natural/Online › Premium/Aprimorada › Google › demais) ou a escolhida no gêmeo; fala frase a frase */
+function trVoice(){try{const V=speechSynthesis.getVoices().filter(v=>/^pt(-|_)BR/i.test(v.lang)||/portugu[eê]s.*brasil/i.test(v.name)),p=localStorage.getItem('s3voice'),rk=n=>/natural|neural/i.test(n)?6:/online/i.test(n)?5:/premium|enhanced|aprimorad/i.test(n)?4:/google/i.test(n)?3:/luciana|francisca|thalita|antonio|felipe|daniel/i.test(n)?2:1;
+  return(p&&V.find(v=>v.name===p))||V.sort((a,b)=>rk(b.name)-rk(a.name))[0]||null;}catch(e){return null;}}
+function trSay(t){try{if(!TR.tts||!window.speechSynthesis)return;const v=trVoice(),txt=String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗]/g,'').replace(/\s+/g,' '),parts=txt.match(/[^.!?;]+[.!?;]?/g)||[txt];
+  parts.forEach(x=>{const u=new SpeechSynthesisUtterance(x.trim());u.lang='pt-BR';if(v)u.voice=v;u.rate=.96;u.pitch=1.03;speechSynthesis.speak(u);});}catch(e){}}
 function trEv(k,t){const r=TR.on;if(r)r.ev.push({h:(ST.simT-r.t0)/3600,k,t});}
 const TRS={
  chuva:{nome:'Chuva forte · piezômetros da pilha (área 8)',dur:3,

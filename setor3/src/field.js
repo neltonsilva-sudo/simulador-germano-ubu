@@ -1,8 +1,8 @@
 // Dispositivos de campo (funcionais): botoeiras de comando local junto a cada equipamento e chaves de cordão de emergência
 // ao longo das correias, com lâmpadas que mostram o estado real (ligado, falha, bloqueado). Clicar abre o painel de comando local.
 import * as THREE from 'three';
-import { SCREENS, CRUSHERS, LV, B } from './layout.js?v=20261022195940';
-import { V, box, beam } from './util.js?v=20261022195940';
+import { SCREENS, CRUSHERS, LV, B } from './layout.js?v=20261022201821';
+import { V, box, beam } from './util.js?v=20261022201821';
 
 export function buildField(root, M, opt = {}) {
   if (opt.embed) return {};   // no simulador (escala reduzida) os dispositivos não aparecem
