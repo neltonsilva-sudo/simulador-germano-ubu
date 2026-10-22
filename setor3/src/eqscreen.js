@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261022120845';
-import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022120845';
+import { call } from './api.js?v=20261022121108';
+import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261022121108';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 
@@ -25,7 +25,7 @@ const CSS = `
 .s3eq .lmp.on i{background:var(--c);border-color:#ddd;box-shadow:0 0 8px var(--c)}
 .s3eq .lprow .pb{width:38px;height:38px;border-radius:50%;font:800 15px system-ui;border:3px solid #1b1b1b;box-shadow:0 3px 0 #111,inset 0 2px 3px rgba(255,255,255,.35)}.s3eq .lprow .pb:active{transform:translateY(2px);box-shadow:0 1px 0 #111}
 .s3eq .lprow .pb.gr{background:#1fa060}.s3eq .lprow .pb.rd{background:#c8261b}.s3eq .lprow .pb.bl{background:#2a63c9}
-.s3eq .lprow .es{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ff6b5b,#b3140a 70%);border:5px solid #ffd21f;font:800 10px system-ui;box-shadow:0 4px 0 #6b0a03}.s3eq .lprow .es.in{transform:translateY(3px);box-shadow:0 1px 0 #6b0a03;filter:brightness(.8)}
+.s3eq .lprow .es{width:60px;height:60px;padding:0;letter-spacing:-.02em;line-height:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ff6b5b,#b3140a 70%);border:5px solid #ffd21f;font:800 9px system-ui;box-shadow:0 4px 0 #6b0a03}.s3eq .lprow .es.in{transform:translateY(3px);box-shadow:0 1px 0 #6b0a03;filter:brightness(.8)}
 .s3eq .lprow .sel{background:#111;border:2px solid #888;border-radius:6px;font:800 11px ui-monospace,monospace;padding:8px 7px}.s3eq .lprow .sel.l{color:#ffd24a}
 .s3eq .lpx p.n{margin:4px 0 0}.s3eq details{margin:6px 0 2px;font-size:11.5px;color:#cfd6dc}.s3eq summary{cursor:pointer;color:#9fdcf0}.s3eq .pm{padding:1px 0}.s3eq .pm.ok{color:#7fe0a8}.s3eq .pm.no{color:#ff8a7a}
 .s3eq .n.w{color:#ffb070}.s3eq .n.g{color:#7fe0a8}.s3eq .loto{margin-top:6px;padding:8px;border-radius:6px;background:rgba(255,210,74,.08);border:1px dashed #ffd24a;font-size:12px;color:#fff;display:grid;gap:4px}
