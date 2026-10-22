@@ -508,8 +508,10 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trBrief .trfx.spec{box-shadow:inset 0 0 0 3px rgba(255,178,61,.6),inset 0 0 60px rgba(255,178,61,.25)}
 #trBrief .trbt h3{margin:0 0 6px}#trBrief .trbt p{margin:0 0 10px}#trBrief .trbt h4{margin:6px 0 4px;color:#ffb23d;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
 #trBrief .trbt ol{margin:0 0 8px;padding-left:18px;display:grid;gap:4px;font-size:13px;line-height:1.4}#trBrief .trbt ol b{color:#ffb23d;font-weight:600;white-space:nowrap}#trBrief .trbt ol small{color:#9fb3bf}
-#trBrief .btn.pri{background:#1f8a5b;border-color:#2fbf71;color:#fff}
+#trBrief .btn.pri,#trRes .btn.pri,#trDlg .btn.pri{background:#1f8a5b;border-color:#2fbf71;color:#fff}
 @media (max-width:760px){#trBrief .box.trb{grid-template-columns:1fr}#trBrief .trbi,#trBrief .trbi img{min-height:200px}}
+#trHud .trqz{border-top:1px solid rgba(255,255,255,.14);margin:6px 0 8px;padding-top:8px;display:grid;gap:5px}#trHud .trqz b{color:#ffb23d}#trHud .trqz p{margin:0;color:#e6f0f5}
+#trHud .trqz .btn{text-align:left;white-space:normal;height:auto;padding:5px 8px;font-size:12px}#trHud .trqz .btn.ok{border-color:#2fbf71;background:rgba(47,191,113,.2);opacity:1}#trHud .trqz .btn.bad{border-color:#ff5a4a;background:rgba(255,90,74,.18);opacity:1}#trHud .trqz .btn.pri{background:#1f8a5b;border-color:#2fbf71;color:#fff;text-align:center}
 </style>
 
 <div id="app">
@@ -3461,7 +3463,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022140041';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022142304';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -6148,7 +6150,8 @@ function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REM
   const tok=(typeof ACC!=='undefined'&&(ACC.adm||ACC.k))||'';S3SRVbusy=true;const done=()=>{S3SRVbusy=false;};
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
-function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=CUR.mine||0;s.running=!!RUN.crush;s.css=P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
+let S3OV=null;/* sobreposição do treinamento (alimentação e APF do setor 3) */
+function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=S3OV&&S3OV.feed!=null?S3OV.feed:(CUR.mine||0);s.running=!!RUN.crush;s.css=S3OV&&S3OV.css!=null?S3OV.css:P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;
   for(const t in s.eq){const r=s.eq[t].lastMnt;if(r&&!r.logged){r.logged=true;logEvent('Manutenção',`${t}: manutenção concluída em ${fmt(r.h,1)} h · ${r.pecas} · desgaste ${fmt(r.w0,0)} % → ${fmt(r.wf!=null?r.wf:25,0)} %`);}}
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
   if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}TW3_ACC.sim+=dt;TW3_ACC.up+=dt;TW3_ACC.calc+=dt;
@@ -7136,10 +7139,10 @@ const TRS={
    {t:'Escolher a conduta correta',pts:50,q:{p:'Qual é a conduta correta para a leitura congelada?',ops:['Acionar a instrumentação e fazer leitura manual de contingência até a correção','Desconsiderar o alarme: o nível está estável','Parar toda a deposição e evacuar a área','Copiar a leitura do piezômetro vizinho para o sistema'],c:0},dica:'Sem leitura confiável, a estrutura fica sem monitoramento: leitura manual até o reparo.'}]},
  hp:{nome:'Sobrecarga do britador HP 400 (setor 3)',dur:1.5,need:trS3,
   desc:'O britador 03BR002 desarmou. O 03BR001 assume toda a carga da britagem primária e entra em sobrecarga.',
-  setup(s){const m=trS3();s.feed=m.feed;s.css=m.css;m.eq['03BR002'].on=false;m.feed=Math.max(m.feed,4200);s.ring0=m.eq['03BR001'].ring||0;logEvent('Treinamento','Desarme simulado do britador 03BR002');},
-  clean(s){const m=trS3();if(!m)return;m.eq['03BR002'].on=true;m.feed=s.feed;m.css=s.css;},
-  obj:[{t:'Escolher a primeira ação',pts:40,q:{p:'O 03BR002 desarmou e o 03BR001 passou de 105 % de carga. Qual é a primeira ação?',ops:['Reduzir a alimentação do setor 3 até a carga do HP 400 ficar abaixo de 100 %','Fechar a APF para aumentar a redução','Religar o 03BR002 sem verificar a causa do desarme','Manter a operação e aguardar'],c:0,fx:[m=>{m.feed=2900;},m=>{m.css=Math.max(13,m.css-4);},null,null]},dica:'Com um britador a menos, a alimentação tem de cair na mesma proporção; religar sem verificar a causa é risco à segurança.'},
-   {t:'Carga do 03BR001 abaixo de 105 % em até 30 min',pts:30,lim:.5,ok:()=>{const m=trS3();return m&&(m.eq['03BR001'].load||0)<=1.05;},dica:'Sobrecarga prolongada aquece o óleo e desgasta o revestimento.'},
+  setup(s){const m=trS3();m.eq['03BR002'].on=false;m.eq['03BR002'].rev=(m.eq['03BR002'].rev||0)+1;S3OV={feed:Math.max(CUR.mine||0,4200)};s.ring0=m.eq['03BR001'].ring||0;logEvent('Treinamento','Desarme simulado do britador 03BR002');},
+  clean(s){S3OV=null;const m=trS3();if(!m)return;m.eq['03BR002'].on=true;m.eq['03BR002'].rev=(m.eq['03BR002'].rev||0)+1;},
+  obj:[{t:'Escolher a primeira ação',pts:40,q:{p:'O 03BR002 desarmou e o 03BR001 passou de 105 % de carga. Qual é a primeira ação?',ops:['Reduzir a alimentação do setor 3 (≈ 2.000 t/h) até a carga do HP 400 ficar abaixo de 100 %','Fechar a APF para aumentar a redução','Religar o 03BR002 sem verificar a causa do desarme','Manter a operação e aguardar'],c:0,fx:[m=>{S3OV=Object.assign(S3OV||{},{feed:2000});},m=>{S3OV=Object.assign(S3OV||{},{css:Math.max(13,P.css-4)});},null,null]},dica:'Com um britador a menos, a alimentação tem de cair na mesma proporção; religar sem verificar a causa é risco à segurança.'},
+   {t:'Carga do 03BR001 abaixo de 105 % em até 30 min',pts:30,lim:.5,ok:s=>{const m=trS3();if(!m)return false;const L=m.eq['03BR001'].load||0;if(L>1.05)s.ov=true;return !!s.ov&&L<=1.05;}/* só vale depois que a sobrecarga apareceu */,dica:'Sobrecarga prolongada aquece o óleo e desgasta o revestimento.'},
    {t:'Evitar sobrecarga prolongada (anel de ajuste preservado)',pts:30,keep:true,ok:s=>{const m=trS3();return !m||(m.eq['03BR001'].ring||0)-s.ring0<1;},dica:'Cada minuto acima de 105 % aumenta o risco de levantamento do anel de ajuste.'}]},
  cls:{nome:'Campanha CLS · sílica baixa',dur:6,
   desc:'A produção mudou para a campanha CLS. Ajuste a amina e a moagem para manter o concentrado dentro da especificação.',
@@ -7147,13 +7150,41 @@ const TRS={
   obj:[{t:'Responder ao limite da campanha',pts:20,q:{p:'Qual é o limite de SiO₂ médio do concentrado na campanha CLS?',ops:['1,25 %','1,90 %','2,50 %','0,80 %'],c:0},dica:'CLS: SiO₂ ≤ 1,25 % (máx. bi-horário 1,36 %) e Fe ≥ 66,58 %.'},
    {t:'SiO₂ ≤ 1,25 % (tempo na faixa depois de 1 h de ajuste)',pts:50,frac:1,ok:()=>trG().siC>0&&trG().siC<=SPEC.siMax,dica:'Aumente a amina em 5–10 g/t ou reduza o P80 da moagem.'},
    {t:'Fe ≥ 66,58 % (tempo na faixa depois de 1 h de ajuste)',pts:30,frac:1,ok:()=>trG().feC>=SPEC.feMin,dica:'Amina em excesso arrasta ferro para o rejeito: não exagere na dose.'}]}};
+/* QUESTIONÁRIO DO PROCESSO: 5 perguntas por tema (10 pontos cada), respondidas no painel do treinamento; [pergunta, alternativas, índice da correta, explicação] */
+const TQZ={
+ chuva:[['O que o piezômetro mede?',['A pressão da água nos poros do maciço (nível piezométrico)','A umidade do ar sobre a pilha','O recalque da crista do talude','A vazão dos drenos de fundo'],0,'O piezômetro mede a poropressão: o nível de água dentro do maciço.'],
+  ['Por que a chuva forte aumenta o risco no talude?',['A infiltração eleva a poropressão e reduz a resistência do solo, baixando o fator de segurança','A chuva compacta o rejeito e aumenta a estabilidade','A água esfria o maciço e trava os grãos','A chuva só afeta a estrada, não o talude'],0,'Mais água nos poros = menos tensão efetiva entre os grãos = menor resistência ao cisalhamento.'],
+  ['No modelo, a partir de quantos metros acima do normal o piezômetro entra em nível de emergência?',['+2 m','+3,5 m','+5 m','+1 m'],2,'Níveis de controle: atenção +2 m, alerta +3,5 m, emergência +5 m.'],
+  ['Qual é o limite crítico do fator de segurança (alarme P1) usado no simulador?',['FS < 2,0','FS < 1,3','FS < 1,0','FS < 1,8'],1,'FS < 1,5 gera alarme P2 e FS < 1,3 gera alarme P1 (crítico).'],
+  ['Ao ver subida rápida do nível piezométrico, qual a primeira ação?',['Aumentar a deposição para compactar a pilha','Desligar os piezômetros para evitar alarmes falsos','Avisar a geotecnia, aumentar a frequência de leitura e inspecionar drenos e talude','Esperar a chuva passar sem nenhuma ação'],2,'A comunicação imediata com a geotecnia e a inspeção de campo vêm primeiro.']],
+ instr:[['Uma leitura “congelada” no piezômetro indica principalmente:',['Que o nível está perfeitamente estável','Possível falha do sensor, do cabo ou da comunicação','Que a chuva parou','Que o talude está seguro'],1,'Valor parado enquanto os vizinhos variam é sinal de falha de instrumento.'],
+  ['Como confirmar que é falha do instrumento e não estabilidade real?',['Comparar com os piezômetros vizinhos e o histórico, e fazer leitura manual','Reiniciar o simulador','Aumentar a deposição e observar','Ignorar até o próximo turno'],0,'A comparação com vizinhos, a tendência e a leitura manual confirmam a falha.'],
+  ['Qual o tipo de alarme (ISA-18.2) usado no simulador para falha de instrumento?',['PAH (pressão alta)','LAL (nível baixo)','IA (alarme de instrumento)','TAH (temperatura alta)'],2,'O alarme IA indica problema no instrumento ou na comunicação.'],
+  ['Enquanto o piezômetro estiver em falha, o correto é:',['Usar o último valor como válido','Manter leitura manual de contingência na frequência definida','Suspender o monitoramento da área','Copiar o valor do piezômetro vizinho'],1,'Sem leitura automática, a leitura manual garante o monitoramento.'],
+  ['Quem deve ser acionado para reparar o piezômetro?',['A equipe de instrumentação, com aviso à geotecnia','A operação da pelotização','O laboratório químico','Ninguém, ele volta sozinho'],0,'Instrumentação repara; geotecnia acompanha a segurança da estrutura.']],
+ hp:[['O que significa APF no britador cônico?',['Alimentação por fluxo','Abertura na posição fechada: menor distância entre o manto e o côncavo','Ajuste da pressão do filtro','Amperagem de partida forçada'],1,'A APF define o tamanho do produto e a carga do britador.'],
+  ['Antes de partir o motor do HP 400 é obrigatório:',['Abrir a APF ao máximo','Ligar a bomba de lubrificação e estabelecer a pressão de óleo','Encher a câmara de minério','Desligar as peneiras'],1,'Sem óleo pressurizado nos mancais, o britador não pode partir.'],
+  ['O movimento do anel de ajuste (levantamento) indica:',['Operação normal com carga baixa','Sobrecarga ou material não britável fazendo o alívio hidráulico atuar','Falta de energia','Excesso de lubrificação'],1,'O anel se move quando a força de britagem passa do limite do sistema hidráulico.'],
+  ['Fechar a APF com o britador já em sobrecarga:',['Reduz a carga','Não muda nada','Aumenta a carga e piora a sobrecarga','Desliga o britador automaticamente'],2,'APF menor = mais redução = mais esforço; com sobrecarga, piora.'],
+  ['No circuito do setor 3, o material retido no 1º deck (> 25,4 mm) vai para:',['Os britadores cônicos HP 400','Os britadores Barmac','A pilha de produto','O espessador'],0,'Retido no 1º deck → HP 400; retido no 2º deck → Barmac; passante < 12,5 mm → produto.']],
+ cls:[['Na flotação reversa do minério de ferro, o que flota?',['A hematita','O quartzo (sílica), coletado pela amina','A magnetita','Somente a água'],1,'Na flotação reversa, a ganga silicosa flota e o ferro afunda (concentrado).'],
+  ['Qual é a função do amido na flotação?',['Coletar o quartzo','Deprimir os minerais de ferro','Aumentar a espuma','Corrigir a densidade da polpa'],1,'O amido deprime o ferro para que ele não flote junto com a sílica.'],
+  ['Aumentar a dosagem de amina tende a:',['Aumentar a SiO₂ do concentrado','Reduzir a SiO₂, com risco de perder ferro no rejeito','Não ter efeito na qualidade','Aumentar o P80 da moagem'],1,'Amina em excesso arrasta ferro para a espuma (rejeito).'],
+  ['Moer mais fino (P80 menor) ajuda a reduzir a sílica porque:',['Aumenta a liberação do quartzo em relação ao ferro','Reduz o consumo de energia','Aumenta a densidade da polpa','Diminui a quantidade de lama'],0,'Partículas mais liberadas são separadas com mais seletividade.'],
+  ['Por que é feita a deslamagem antes da flotação?',['Para aumentar a temperatura da polpa','Porque as lamas consomem reagentes e prejudicam a seletividade','Para aumentar o teor de sílica','Para engrossar o concentrado'],1,'Lamas (ultrafinos) adsorvem amina e amido e pioram a separação.']]};
+const trQzPts=r=>r.qz?r.qz.ans.filter((a,i)=>a!=null&&a===TQZ[r.k][i][2]).length*10:0;
+function trQzHTML(r){const Q=TQZ[r.k];if(!Q)return'';const z=r.qz,i=z.i;
+  if(i>=Q.length)return `<div class="trqz"><b>Questionário do processo · concluído</b><p>${trQzPts(r)/10} de ${Q.length} corretas (${trQzPts(r)} pts)</p></div>`;
+  const q=Q[i],a=z.ans[i];
+  return `<div class="trqz"><b>Questionário do processo · pergunta ${i+1} de ${Q.length}</b><p>${q[0]}</p>${z.ord[i].map(j=>`<button class="btn${a!=null&&j===q[2]?' ok':a===j?' bad':''}" data-qz="${j}"${a!=null?' disabled':''}>${q[1][j]}</button>`).join('')}
+    ${a!=null?`<p class="hint">${a===q[2]?'✓ Correto. ':'✗ Incorreto. '}${q[3]}</p><button class="btn pri" id="trQn">${i+1<Q.length?'Próxima pergunta →':'Concluir questionário'}</button>`:''}</div>`;}
 function trOpen(){let d=$('#trDlg');if(!d){d=document.createElement('div');d.id='trDlg';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
-   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trBrief(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;});}
+   d.addEventListener('click',e=>{if(e.target===d)d.hidden=true;const b=e.target.closest('[data-tr]');if(b){d.hidden=true;trBrief(b.dataset.tr);}if(e.target.closest('#trX'))d.hidden=true;if(e.target.closest('#trLR')&&trRestore()){d.hidden=true;}});}
   const H=TR.hist.slice(0,6);
   d.innerHTML=`<div class="box" style="max-width:640px"><h3>Modo de treinamento</h3><p>Escolha um cenário. A simulação passa para 60× (1 h simulada = 1 min) e o painel do treinamento mostra os objetivos, o tempo e os pontos.</p>
-  <div class="trl">${Object.entries(TRS).map(([k,s])=>{const ok=!s.need||s.need();return `<div class="trc"><div><b>${s.nome}</b><span>${s.desc}</span><small>${s.obj.length} objetivos · ${fmt(s.dur,1)} h simuladas</small></div><button class="btn" data-tr="${k}"${ok&&!TR.on?'':' disabled'}>${TR.on?'Em curso':ok?'Iniciar':'Indisponível'}</button></div>`;}).join('')}</div>
+  <div class="trl">${Object.entries(TRS).map(([k,s])=>{const ok=!s.need||s.need();return `<div class="trc"><div><b>${s.nome}</b><span>${s.desc}</span><small>${s.obj.length} objetivos · ${(TQZ[k]||[]).length} perguntas sobre o processo · ${fmt(s.dur,1)} h simuladas</small></div><button class="btn" data-tr="${k}"${ok&&!TR.on?'':' disabled'}>${TR.on?'Em curso':ok?'Iniciar':'Indisponível'}</button></div>`;}).join('')}</div>
   ${H.length?`<h4 style="margin:12px 0 4px">Últimos resultados</h4><table class="alt"><tr><th>Data</th><th>Cenário</th><th class="n">Nota</th></tr>${H.map(h=>`<tr><td>${h.d}</td><td>${h.n}</td><td class="n"><b>${h.p}</b></td></tr>`).join('')}</table>`:''}
-  <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="trX">Fechar</button></div></div>`;d.hidden=false;}
+  <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">${TR.snap&&!TR.on?'<button class="btn pri" id="trLR">↺ Voltar o processo ao normal</button>':''}<button class="btn" id="trX">Fechar</button></div></div>`;d.hidden=false;}
 /* BRIEFING do cenário: leva a câmera à área da ocorrência, captura a imagem real do simulador e mostra a situação (sinais, área, objetivos e tempo) */
 const TRB={chuva:{area:'dry',fx:'rain',local:'Pilha de rejeito filtrado · área 8',sit:'Uma tempestade de 30 mm/h cai sobre a pilha há mais de uma hora. A água infiltra no maciço e a poropressão começa a subir nos piezômetros da área 8. A deposição continua normal.',sinais:['⛈ Chuva forte · 30 mm/h','📈 Piezômetros 08-01 a 08-03 subindo','⚠ Alarme de poropressão (PAH)','🚛 Deposição em andamento']},
   instr:{area:'dry',fx:'freeze',local:'Instrumentação geotécnica · piezômetros',sit:'Um dos piezômetros parou de atualizar a leitura: o valor ficou congelado enquanto os vizinhos variam. Sem leitura confiável, a estrutura fica sem monitoramento naquele ponto.',sinais:['❄ Leitura parada há vários minutos','⚠ Alarme de falha de instrumento (IA)','📡 Demais piezômetros normais']},
@@ -7167,11 +7198,26 @@ function trBrief(k){const s=TRS[k],b=TRB[k]||{};if(!s||TR.on)return;
   d.dataset.k=k;d.innerHTML=`<div class="box trb"><div class="trbi"><img alt="Situação na área" id="trBImg"><div class="trfx ${b.fx||''}"></div><span class="trtag">Situação · ${esc(b.local||'')}</span>
       <ul class="trsig">${(b.sinais||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
     <div class="trbt"><h3>${s.nome}</h3><p>${b.sit||s.desc}</p><h4>Sua missão</h4><ol>${s.obj.map(o=>`<li>${o.t}${o.lim?` <small>(até ${Math.floor(o.lim)}:${String(Math.round(o.lim%1*60)).padStart(2,'0')} h)</small>`:''} <b>${o.pts} pts</b></li>`).join('')}</ol>
-      <p class="hint">Duração: ${fmt(s.dur,1)} h simuladas (1 h = 1 min). Pontos cheios dentro do prazo; metade depois do prazo.</p>
+      <p><b>+ ${(TQZ[k]||[]).length} perguntas sobre o processo</b> no painel do treinamento (10 pts cada).</p><p class="hint">Duração: ${fmt(s.dur,1)} h simuladas (1 h = 1 min). Pontos cheios dentro do prazo; metade depois do prazo.</p>
       <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" id="trBBack">Voltar</button><button class="btn pri" id="trBGo">Começar treinamento</button></div></div></div>`;
   d.hidden=false;requestAnimationFrame(()=>{const u=trSnap(b.area);const im=$('#trBImg');if(im&&u)im.src=u;});}
-function trStart(k){const s=TRS[k];if(!s||TR.on)return;const sc=$('#scenario');if(sc&&sc.value!=='nominal'){sc.value='nominal';sc.dispatchEvent(new Event('change'));}
-  pzSim('reset');const st={k,s,t0:ST.simT,st:s.obj.map(()=>({done:false,fail:false,pts:0,inT:0,tot:0,ans:null}))};s.setup(st);TR.on=st;
+/* ESTADO ANTES DO TREINAMENTO: guardado no início do primeiro cenário e restaurado pelo botão "Voltar o processo ao normal" */
+function trSave(){let sm=null;try{sm=simSnap();}catch(e){}const m=trS3();
+  return{sim:sm,speed,camp:CAMP,scen:($('#scenario')||{}).value,pz:PZ.map(p=>({h:p.h,boost:p.boost||0,fault:!!p.fault,read:p.read,rate:p.rate||0,hist:p.hist.slice()})),
+    s3:m?{feed:m.feed,css:m.css,rpm:m.rpm,casc:m.casc,eq:Object.fromEntries(Object.entries(m.eq).map(([t,e])=>[t,{on:e.on,trip:e.trip||null,es:!!e.es,lube:e.lube,choke:!!e.choke}])),
+      belts:m.belts?Object.fromEntries(Object.entries(m.belts).map(([t,b])=>[t,{on:b.on,cord:!!b.cord,trip:b.trip||null}])):null}:null};}
+function trRestore(){const S=TR.snap;if(!S||TR.on)return false;const t=ST.simT;S3OV=null;
+  try{if(S.sim)simRestore(S.sim);}catch(e){}ST.simT=t;/* o relógio segue; o processo volta ao estado anterior */
+  const sc=$('#scenario');if(sc&&S.scen)sc.value=S.scen;trCamp(S.camp);
+  S.pz.forEach((q,i)=>{const p=PZ[i];if(p)Object.assign(p,{h:q.h,boost:q.boost,fault:q.fault,read:q.read,rate:q.rate,hist:q.hist.slice()});});
+  const m=trS3();if(m&&S.s3){Object.assign(m,{feed:S.s3.feed,css:S.s3.css,rpm:S.s3.rpm,casc:S.s3.casc});
+    for(const[tg,q]of Object.entries(S.s3.eq)){const e=m.eq[tg];if(!e)continue;Object.assign(e,{on:q.on,trip:q.trip,es:q.es,lube:q.lube,choke:q.choke});e.rev=(e.rev||0)+1;}
+    if(S.s3.belts&&m.belts)for(const[tg,q]of Object.entries(S.s3.belts)){const b=m.belts[tg];if(b)Object.assign(b,q);}}
+  const sb=document.querySelector(`#speedSeg button[data-s="${S.speed}"]`);if(sb&&S.speed!==1)sb.click();else speed=S.speed;
+  try{exitArea();}catch(e){}try{syncAll();}catch(e){}try{refreshEq(true);}catch(e){}try{evalAlarms();renderAlarms();}catch(e){}try{const k=$('#kpiMGP');if(k)k._h='';mgpUpdate();}catch(e){}
+  TR.snap=null;logEvent('Treinamento','Processo restaurado ao estado de antes do treinamento');toast('Processo de volta ao normal (sem as alterações do treinamento).');return true;}
+function trStart(k){const s=TRS[k];if(!s||TR.on)return;if(!TR.snap)TR.snap=trSave();const sc=$('#scenario');if(sc&&sc.value!=='nominal'){sc.value='nominal';sc.dispatchEvent(new Event('change'));}
+  pzSim('reset');const st={k,s,t0:ST.simT,st:s.obj.map(()=>({done:false,fail:false,pts:0,inT:0,tot:0,ans:null})),qz:{i:0,ans:[],ord:(TQZ[k]||[]).map(q=>q[1].map((_,j)=>j).sort(()=>Math.random()-.5))}};s.setup(st);TR.on=st;
   const b=document.querySelector('#speedSeg button[data-s="60"]');if(b)b.click();if(paused){paused=false;}
   logEvent('Treinamento',`Início: ${s.nome}`);toast('Treinamento iniciado: '+s.nome);trHud(true);clearInterval(TR.iv);TR.iv=setInterval(trTick,500);}
 function trTick(){const r=TR.on;if(!r)return;const h=(ST.simT-r.t0)/3600,dt=Math.max(0,h-(r.lh||0));r.lh=h;
@@ -7183,22 +7229,24 @@ function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();ret
   if(!e){e=document.createElement('div');e.id='trHud';document.body.appendChild(e);
     e.addEventListener('click',ev=>{const a=ev.target.closest('[data-qa]');if(a){const [i,j]=a.dataset.qa.split('|').map(Number),o=TR.on.s.obj[i],q=TR.on.st[i];if(q.ans==null){q.ans=j;q.pts=j===o.q.c?o.pts:0;q.done=true;}
         const fx=o.q.fx&&o.q.fx[j];if(fx&&trS3())fx(trS3());logEvent('Treinamento',`Resposta: ${o.q.ops[j]}`);trHud(true);}
+      const zb=ev.target.closest('[data-qz]');if(zb&&TR.on){const z=TR.on.qz;if(z.ans[z.i]==null){z.ans[z.i]=+zb.dataset.qz;logEvent('Treinamento',`Questionário ${z.i+1}: ${TQZ[TR.on.k][z.i][1][+zb.dataset.qz]}`);}trHud(true);}
+      if(ev.target.closest('#trQn')&&TR.on){TR.on.qz.i++;trHud(true);}
       if(ev.target.closest('#trEndB'))trEnd();if(ev.target.closest('.trh'))e.classList.toggle('min');});}
   const h=(ST.simT-r.t0)/3600,P=trPts(r,false),hm=x=>`${Math.floor(x)}:${String(Math.floor(x%1*60)).padStart(2,'0')}`;
   const li=r.s.obj.map((o,i)=>{const q=r.st[i],ic=o.keep?(q.fail?'✗':'…'):o.frac?(h<1?'…':`${Math.round(q.tot?q.inT/q.tot*100:0)} %`):q.done?(q.pts?'✓':'✗'):'○';
     const quiz=o.q?`<div class="trq"><p>${o.q.p}</p>${o.q.ops.map((t,j)=>`<button class="btn${q.ans!=null&&j===o.q.c?' ok':q.ans===j?' bad':''}" data-qa="${i}|${j}">${t}</button>`).join('')}${q.ans!=null?`<p class="hint">${q.ans===o.q.c?'Correto. ':'Resposta incorreta. '}${o.dica}</p>`:''}</div>`:'';
     return `<li class="${q.fail||(q.done&&!q.pts)?'bad':q.done||(o.keep&&!q.fail)?'ok':''}"><span class="ic">${ic}</span><span>${o.t}${o.lim?` <small>(até ${hm(o.lim)} h)</small>`:''}</span><b>${P[i]}/${o.pts}</b>${quiz}</li>`;}).join('');
-  const html=`<div class="trh" title="Clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h</em></div><ol>${li}</ol><div class="row"><span>Pontos parciais: <b>${P.reduce((a,b)=>a+b,0)}</b></span><button class="btn" id="trEndB">Encerrar</button></div>`;
+  const html=`<div class="trh" title="Clique para recolher"><b>Treinamento</b><span>${r.s.nome}</span><em>${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h</em></div><ol>${li}</ol>${trQzHTML(r)}<div class="row"><span>Pontos parciais: <b>${P.reduce((a,b)=>a+b,0)+trQzPts(r)}</b></span><button class="btn" id="trEndB">Encerrar</button></div>`;
   const key=html.replace(/<em>.*?<\/em>/,'');if(force||e._k!==key){e._k=key;e.innerHTML=html;}else{const m=e.querySelector('.trh em');if(m)m.textContent=`${hm(Math.min(h,r.s.dur))} / ${hm(r.s.dur)} h`;}}
-function trEnd(){const r=TR.on;if(!r)return;clearInterval(TR.iv);TR.on=null;const P=trPts(r,clamp((ST.simT-r.t0)/3600/r.s.dur,0,1)),tot=P.reduce((a,b)=>a+b,0),max=r.s.obj.reduce((a,o)=>a+o.pts,0),nota=Math.round(tot/max*100);
+function trEnd(){const r=TR.on;if(!r)return;clearInterval(TR.iv);TR.on=null;const P=trPts(r,clamp((ST.simT-r.t0)/3600/r.s.dur,0,1)),QP=trQzPts(r),tot=P.reduce((a,b)=>a+b,0)+QP,max=r.s.obj.reduce((a,o)=>a+o.pts,0)+(TQZ[r.k]||[]).length*10,nota=Math.round(tot/max*100);
   try{r.s.clean&&r.s.clean(r);}catch(e){}trHud();
   const cls=nota>=85?'Excelente':nota>=70?'Bom':nota>=50?'Regular':'Precisa treinar mais';
   TR.hist.unshift({d:new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}),n:r.s.nome,p:nota});TR.hist=TR.hist.slice(0,20);try{localStorage.setItem('trHist',JSON.stringify(TR.hist));}catch(e){}
   logEvent('Treinamento',`Fim: ${r.s.nome} · nota ${nota} (${cls})`);
-  let d=$('#trRes');if(!d){d=document.createElement('div');d.id='trRes';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trRX'))d.hidden=true;if(e.target.closest('#trRN')){d.hidden=true;trOpen();}});}
+  let d=$('#trRes');if(!d){d=document.createElement('div');d.id='trRes';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trRX'))d.hidden=true;if(e.target.closest('#trRN')){d.hidden=true;trOpen();}const rr=e.target.closest('#trRR');if(rr&&trRestore()){rr.disabled=true;rr.textContent='✓ Processo restaurado';}});}
   d.innerHTML=`<div class="box" style="max-width:600px"><h3>Resultado do treinamento</h3><p>${r.s.nome}</p><div class="trn ${nota>=70?'ok':nota>=50?'warn':'crit'}"><b>${nota}</b><span>de 100 · ${cls}</span></div>
-  <table class="alt"><tr><th>Objetivo</th><th class="n">Pontos</th></tr>${r.s.obj.map((o,i)=>`<tr><td>${o.t}${P[i]<o.pts?`<br><small class="hint">${o.dica}</small>`:''}</td><td class="n"><b>${P[i]}</b>/${o.pts}</td></tr>`).join('')}</table>
-  <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" id="trRN">Outro cenário</button><button class="btn" id="trRX">Fechar</button></div></div>`;d.hidden=false;}
+  <table class="alt"><tr><th>Objetivo</th><th class="n">Pontos</th></tr>${r.s.obj.map((o,i)=>`<tr><td>${o.t}${P[i]<o.pts?`<br><small class="hint">${o.dica}</small>`:''}</td><td class="n"><b>${P[i]}</b>/${o.pts}</td></tr>`).join('')}${(TQZ[r.k]||[]).map((q,i)=>{const a=r.qz.ans[i],ok=a===q[2];return `<tr><td>Pergunta ${i+1}: ${q[0]}${ok?'':`<br><small class="hint">${a==null?'Não respondida. ':'Resposta errada. '}Correta: ${q[1][q[2]]}. ${q[3]}</small>`}</td><td class="n"><b>${ok?10:0}</b>/10</td></tr>`;}).join('')}</table>
+  <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn pri" id="trRR" title="Desfaz tudo o que o treinamento alterou: chuva, piezômetros, britadores, campanha, ajustes e velocidade">↺ Voltar o processo ao normal</button><button class="btn" id="trRN">Outro cenário</button><button class="btn" id="trRX">Fechar</button></div></div>`;d.hidden=false;}
 $('#trBtn').addEventListener('click',()=>{if(TR.on){const e=$('#trHud');if(e)e.classList.remove('min');toast('Treinamento em curso: veja o painel à esquerda.');}else trOpen();});
 // trava: o operador só altera a própria área; as demais ficam só para visualização
 function operLock(){if(!OPER.area)return;
