@@ -554,6 +554,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trRef .trleg .g{background:#3fbf5a}#trRef .trleg .r{background:#ff5a4a}#trRef .trleg .m{background:#a0703c;color:#fff}#trRef .trleg .y{background:#ffd24a}#trRef .trleg .b{background:#4a8cff;color:#fff}
 #trDlg #trClr{flex:0 0 auto!important;width:auto!important;padding:4px 10px;font-size:12px;min-width:0}
 #trDlg .trtw{border:1px solid rgba(92,198,220,.4);background:rgba(92,198,220,.07);border-radius:10px;padding:8px 10px;margin:0 0 8px;display:grid;gap:4px}#trDlg .trtw span{color:var(--muted);font-size:12.5px}#trDlg .trtw div{display:flex;gap:6px;flex-wrap:wrap}#trDlg .trtw .btn{flex:1}
+.cxspk{display:inline-grid;place-items:center;width:22px;height:22px;margin:0 6px 0 0;padding:0;border:1px solid rgba(92,198,220,.45);border-radius:50%;background:rgba(92,198,220,.12);font-size:11px;line-height:1;cursor:pointer;vertical-align:middle;flex:0 0 auto;color:#fff}.cxspk:hover{background:rgba(92,198,220,.3)}.cxspk.on{background:#ffb23d;border-color:#ffb23d;animation:cxspk 1s ease-in-out infinite}@keyframes cxspk{50%{box-shadow:0 0 0 5px rgba(255,178,61,.25)}}
 .trspk{border:1px solid rgba(92,198,220,.45);background:rgba(92,198,220,.14);border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;cursor:pointer;vertical-align:middle;color:#fff}.trspk:hover{background:rgba(92,198,220,.35)}
 #neuBtn{background:linear-gradient(135deg,#1a3a8a,#6a2cc9);color:#fff;border-color:#8fb4ff;box-shadow:0 0 12px rgba(120,150,255,.55)}
 #neu{position:fixed;right:12px;top:110px;bottom:56px;width:min(560px,96vw);z-index:32;overflow:auto;background:#0a1222;border:1px solid rgba(140,170,255,.45);border-radius:14px;padding:12px 14px;color:#e6eefc;font-size:13px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
@@ -3605,7 +3606,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022232831';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022234758';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5288,15 +5289,63 @@ const CTRL_STAGE={hcP:'conc',millS:'conc',cyP:'conc',cyN:'conc',ph:'conc',air:'c
   divert:'tower',filt:'filter',pfSale:'filter',eteCap:'ete',press:'roller',bent:'mix',lime:'mix',disc:'pell',kv:'esp',temp:'furnace',screenAp:'screen',wind:'fence',ship:'port'};
 const ctlNum=k=>EQ[CTRL_STAGE[k]]?EQ[CTRL_STAGE[k]].num:99;
 CTRL.sort((a,b)=>(a[0]===b[0]?0:a[0]==='ctlMG'?-1:1)||ctlNum(a[1])-ctlNum(b[1]));
+/* explicação falada de cada controle do processo (mesma voz feminina gravada da área 3) */
+const CEXPL={
+ _panel:'Controle de processo. Aqui ficam os ajustes de todas as etapas, de Germano até Ubu. Cada controle muda o modelo do processo na hora, e o botão Testar simula o efeito antes de aplicar. Use o seletor de cenário para começar de uma condição conhecida.',
+ _mg:'Germano, em Minas Gerais, etapas 1 a 10. É onde o minério é lavrado, britado, moído e concentrado por flotação. Daqui sai a polpa de concentrado pelo mineroduto e saem os rejeitos, que são filtrados e empilhados.',
+ _es:'Ubu, no Espírito Santo, etapas 11 a 24. A polpa chega pelo mineroduto, é espessada, filtrada, prensada e pelotizada. As pelotas são queimadas no forno, peneiradas, estocadas no pátio e embarcadas no porto.',
+ fe:'Teor de ferro do minério. É a quantidade de ferro no minério que vem da mina. Teor mais baixo exige mais flotação para chegar ao concentrado de especificação e diminui a recuperação mássica. Ele define quanto concentrado sai de cada tonelada lavrada.',
+ tcldSpd:'Velocidade da TCLD, o transportador de correia de longa distância. Ela limita quanto minério chega da mina à usina. Acima de cem por cento a correia trabalha além do nominal e aumenta o risco de desgaste e de parada. Abaixo disso, a pilha pulmão começa a baixar.',
+ css:'Abertura do britador, a APF. Abertura menor deixa o britado mais fino, o que facilita a moagem e reduz a energia lá na frente, mas aumenta a carga no britador e a recirculação. Abertura maior dá mais capacidade, com produto mais grosso.',
+ vsiRpm:'Rotação do rotor do Barmac, o britador de impacto vertical. Mais rotação lança as partículas com mais velocidade contra a câmara, gerando produto mais fino, porém com mais consumo de energia e mais desgaste das pontas do rotor.',
+ vsiCasc:'Cascata do Barmac. É a parte da alimentação que desvia do rotor e cai em cortina na câmara. Mais cascata alivia a potência e aumenta a capacidade, mas o produto sai mais grosso.',
+ feedC:'Alimentação por concentrador. É a vazão de minério que entra em cada concentrador em operação. Mais alimentação aumenta a produção, mas engrossa a moagem e pode subir a sílica no concentrado. É o principal ajuste de ritmo da usina.',
+ mill:'Potência da moagem. Define a energia aplicada nos moinhos. Mais potência deixa o produto mais fino, liberando melhor o ferro do quartzo e melhorando a flotação, mas aumenta o consumo de energia por tonelada.',
+ hcP:'Pressão dos hidrociclones da moagem. Os ciclones separam o que já está fino do que volta ao moinho. Mais pressão faz um corte mais fino e aumenta a carga circulante. A faixa usual é de cento e vinte a cento e sessenta quilopascal.',
+ millS:'Sólidos na moagem. É a densidade da polpa dentro do moinho. Polpa densa demais amortece o impacto das bolas e engrossa o produto; polpa diluída demais desperdiça energia. A faixa usual é de setenta a setenta e cinco por cento.',
+ cut:'Corte da deslamagem. Define o tamanho abaixo do qual as partículas são retiradas como lama antes da flotação. A lama atrapalha a flotação e consome reagente. O ótimo fica entre oito e doze micrômetros.',
+ cyP:'Pressão dos ciclones da deslamagem. Pressão baixa deixa a lama passar para a flotação e sobe a sílica. Pressão alta joga ferro fino na lama e reduz a recuperação. A faixa recomendada é de cento e cinquenta a duzentos quilopascal.',
+ cyN:'Ciclones de deslamagem em operação. Cada bateria precisa de ciclones suficientes para a vazão de polpa. Com poucos ciclones a bateria fica sobrecarregada e a separação piora.',
+ amine:'Amina, o coletor do quartzo. Na flotação reversa, a amina deixa o quartzo hidrofóbico para ele subir com a espuma. Pouca amina deixa sílica no concentrado; amina em excesso arrasta ferro para o rejeito.',
+ starch:'Amido, o depressor dos minerais de ferro. Ele protege a hematita para que ela afunde e siga como concentrado enquanto o quartzo flota. Pouco amido aumenta a perda de ferro; amido demais pode deprimir também o quartzo.',
+ ph:'pH da flotação, ajustado com soda. A flotação catiônica reversa trabalha melhor entre dez e dez vírgula seis. Fora dessa faixa a amina perde seletividade, a sílica sobe e o ferro se perde no rejeito.',
+ air:'Ar nas colunas de flotação. O ar forma as bolhas que carregam o quartzo para a espuma. Mais ar remove mais sílica, mas também arrasta ferro e pode desestabilizar a camada de espuma.',
+ frothL:'Camada de espuma nas colunas. Uma camada mais espessa drena o ferro arrastado e deixa o concentrado mais limpo, mas reduz a remoção de sílica. A faixa de trabalho fica entre cinquenta e noventa centímetros.',
+ solids:'Sólidos no mineroduto. É a concentração da polpa bombeada até Ubu. Polpa diluída demais pode decantar; densa demais aumenta a pressão de recalque. A faixa segura é de sessenta e seis a setenta por cento, com velocidade acima de um metro por segundo.',
+ floc:'Floculante nos espessadores. Ele junta as partículas finas para que decantem mais rápido. Mais floculante clareia o overflow e aumenta a água recuperada para o processo, com custo maior de reagente.',
+ slimeF:'Lama filtrada e empilhada. É a parte da lama que deixa de ir para a cava e passa a ser filtrada e disposta a seco. A meta para dois mil e trinta é cinquenta por cento, o que reduz o volume de rejeito em polpa.',
+ divert:'Desvio da torre para a bacia. Usado em emergência, envia parte da polpa que chega a Ubu para a bacia, em vez dos espessadores. Ajuda quando a filtragem ou a pelotização param, mas ocupa a bacia.',
+ filt:'Velocidade dos filtros. Define o ritmo de filtragem do pellet feed. Acima de cem por cento a produção aumenta, porém a torta sai mais úmida, o que prejudica a prensagem e a pelotização.',
+ eteCap:'Capacidade de tratamento de água. É quanto a estação trata da água da bacia para voltar ao processo. Mais tratamento aumenta a recirculação de água e evita que a bacia encha.',
+ pfSale:'Pellet feed vendido direto. É a parte do concentrado filtrado vendida sem pelotizar. O restante segue para as usinas de pelotização. Aumentar a venda direta alivia as usinas, mas reduz a produção de pelotas.',
+ press:'Pressão da roller press. A prensa de rolos aumenta a superfície específica do pellet feed, medida em Blaine. Superfície maior melhora a formação e a resistência da pelota. O alvo fica perto de mil e novecentos a dois mil e cem centímetros quadrados por grama.',
+ bent:'Bentonita. É o aglomerante que dá liga à pelota crua. Pouca bentonita gera pelota frágil que quebra no transporte; em excesso, diminui o teor de ferro. O ótimo fica entre cinco e seis quilos por tonelada.',
+ lime:'Calcário. Define a basicidade da pelota, que influencia a qualidade metalúrgica no alto-forno ou na redução direta do cliente. Ajuste conforme a especificação do produto.',
+ disc:'Rotação dos discos de pelotização. Os discos rolam a mistura até formar as pelotas. A rotação controla o tamanho: o ideal é manter a maior parte na faixa de dez a quinze milímetros. O ótimo fica perto de sete rotações por minuto.',
+ temp:'Temperatura de queima no forno. A queima endurece a pelota. Abaixo de mil e trezentos graus a pelota sai fraca; acima de mil trezentos e cinquenta gasta mais combustível e pode fundir parcialmente. A faixa é de mil e trezentos a mil trezentos e cinquenta graus.',
+ grate:'Velocidade da grelha do forno. Grelha mais rápida aumenta a produção, mas a pelota passa menos tempo na queima e sai com menor resistência à compressão. É preciso equilibrar ritmo e qualidade.',
+ kv:'Tensão dos precipitadores eletrostáticos. Eles retiram o pó dos gases do forno antes da chaminé. Tensão maior captura mais pó e reduz a emissão. O limite de emissão é de cinquenta miligramas por metro cúbico normal.',
+ screenAp:'Abertura das peneiras de finos. Separa as pelotas boas dos finos e pedaços quebrados. Abertura maior retira mais finos e melhora o produto, mas reduz a quantidade de pelotas embarcadas. O padrão é oito milímetros.',
+ wind:'Vento no pátio. É uma condição ambiente, não um ajuste da operação. Com vento forte, aumenta a emissão difusa de poeira dos pátios. A barreira de vento e a umectação ajudam a reduzir esse efeito.',
+ ship:'Taxa de embarque. É o ritmo do carregador de navios no porto. Taxa maior esvazia o pátio mais rápido e reduz o tempo de navio atracado, dentro da capacidade do carregador, perto de doze mil toneladas por hora.'};
+
+const cxBtn=(k,l)=>`<button type="button" class="cxspk" data-cx="${k}" title="Ouvir a explicação" aria-label="Ouvir a explicação${l?' de '+l:''}">🔊</button>`;
+let CXA=null,CXB=null,CXI=null;
+function cxStop(){if(CXA){try{CXA.pause();}catch(e){}CXA=null;}if(CXI){clearInterval(CXI);CXI=null;}try{speechSynthesis.cancel();}catch(e){}if(CXB){CXB.classList.remove('on');CXB=null;}}
+function cxSay(k,btn){const same=CXB===btn;cxStop();if(same)return;const t=trNorm(CEXPL[k]||'');if(!t)return;try{TRQ=[];if(TRA){TRA.pause();TRA=null;}}catch(e){}
+  CXB=btn;btn.classList.add('on');const done=()=>{if(CXB===btn){btn.classList.remove('on');CXB=null;}CXA=null;},tts=()=>{trTTS(t);CXI=setInterval(()=>{if(!window.speechSynthesis||!speechSynthesis.speaking){clearInterval(CXI);CXI=null;done();}},500);},sel=trVoiceSel();
+  if(/^__rec/.test(sel)){const a=new Audio(TR_AUD+(sel==='__recT'?'tr_thalita/':'tr/')+trHash(t)+'.mp3?v=1');a.volume=.85;CXA=a;a.onended=done;const fb=()=>{if(CXA!==a)return;CXA=null;tts();};a.onerror=fb;a.play().catch(fb);}else tts();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cx]');if(!b)return;e.preventDefault();e.stopPropagation();cxSay(b.dataset.cx,b);},true);
 CTRL.forEach(([grp_,key,label,unit,min,max,stepv,dec,hint])=>{
   const d=document.createElement('div');d.className='ctl';const sid=CTRL_STAGE[key],num=ctlNum(key);
-  d.innerHTML=`<label for="in-${key}">${num<99?`<button type="button" class="cn" data-stage="${sid}" title="Etapa ${num}: ${EQ[sid].name} (abrir painel)">${num}</button>`:''}${label}</label><output id="out-${key}"></output><input type="range" id="in-${key}" min="${min}" max="${max}" step="${stepv}">${hint?`<small>${hint}</small>`:''}`;
+  d.innerHTML=`<label for="in-${key}">${cxBtn(key,label)}${num<99?`<button type="button" class="cn" data-stage="${sid}" title="Etapa ${num}: ${EQ[sid].name} (abrir painel)">${num}</button>`:''}${label}</label><output id="out-${key}"></output><input type="range" id="in-${key}" min="${min}" max="${max}" step="${stepv}">${hint?`<small>${hint}</small>`:''}`;
   $('#'+grp_).appendChild(d);const inp=d.querySelector('input'),out=d.querySelector('output');const cnb=d.querySelector('.cn');if(cnb)cnb.addEventListener('click',e=>{e.preventDefault();enterArea(cnb.dataset.stage);});
   const I=inputs[key]={syncs:[],sync(){I.syncs.forEach(f=>f());}};
   I.syncs.push(()=>{out.textContent=fmt(P[key],dec)+' '+unit;inp.value=P[key];});
   inp.addEventListener('input',()=>{P[key]=+inp.value;I.sync();});inp.addEventListener('change',()=>logEvent('Ajuste',`${label}: ${fmt(P[key],dec)} ${unit}`));I.sync();
 });
 const CMETA={};CTRL.forEach(c=>CMETA[c[1]]=c);
+$('#ctlMG h3').insertAdjacentHTML('afterbegin',cxBtn('_mg','Germano'));$('#ctlES h3').insertAdjacentHTML('afterbegin',cxBtn('_es','Ubu'));{const h=document.querySelector('.ph h2');if(h&&/Controle de processo/.test(h.textContent))h.insertAdjacentHTML('afterbegin',cxBtn('_panel','Controle de processo'));}
 const syncAll=()=>{for(const k in inputs)inputs[k].sync();};
 const SCEN={nominal:{P:{},stop:[]},full:{P:{feedC:2150},stop:[],units:U2028},slime:{P:{slimeF:50},stop:[],units:Object.assign({},U2026,{fl:1})},lowgrade:{P:{fe:38},stop:[]},mine:{P:{},stop:['mine']},pipe:{P:{},stop:['pump']},silica:{P:{amine:28,cut:5},stop:[]},furnace:{P:{temp:1235,press:45},stop:[]},esp:{P:{},stop:['esp']},geo:{P:{},stop:[],fn(){for(const k in FAULT)delete FAULT[k];GEO.plan=genPlan(40,11);GEO.pile=JSON.parse(JSON.stringify(GEO_DEF));GEO.i=0;for(let k=1;k<=5;k++){const q=GEO.plan[k];q.tipo='IC';q.fe=35.8;q.si=46.2;q.al=.34;q.p=.03;q.wi=16;q.massa=60000;}GEO.plan[0].massa=20000;GEO.rem=20000;ST.stockPile=95000;GEO.src='cenário: minério compacto';GEO.on=true;const inp=$('#in-fe');if(inp)inp.disabled=true;FC=forecast();}},
   chuva:{P:{},stop:[],fn(){GEO.on=false;FC=null;for(const k in FAULT)delete FAULT[k];Object.assign(RAIN,{on:true,modo:'eventos',int:1.2,storm:{t0:ST.ct,dur:3*3600,peak:30},soak:.35,stack:.3,yard:.3});}},
@@ -5497,7 +5546,7 @@ for(let i=0;i<48;i++)histPush();
 const kState=(k,v)=>{const l=LIM[k];if(!l)return'';if(l[0]!=null&&v<l[0])return'warn';if(l[1]!=null&&v>l[1])return'warn';return'ok';};
 let dashId=null;
 function dashCtl(key){const m=CMETA[key];if(!m)return'';const[,k,label,unit,min,max,st,dec,hint]=m;
-  return `<div class="ctl"><label for="d-in-${k}">${ctlNum(k)<99?`<span class="cn" style="cursor:default">${ctlNum(k)}</span>`:''}${label}</label><output id="d-out-${k}"></output><input type="range" id="d-in-${k}" min="${min}" max="${max}" step="${st}">${hint?`<small>${hint}</small>`:''}</div>`;}
+  return `<div class="ctl"><label for="d-in-${k}">${cxBtn(k,label)}${ctlNum(k)<99?`<span class="cn" style="cursor:default">${ctlNum(k)}</span>`:''}${label}</label><output id="d-out-${k}"></output><input type="range" id="d-in-${k}" min="${min}" max="${max}" step="${st}">${hint?`<small>${hint}</small>`:''}</div>`;}
 function openDash(id){
   dashId=id;const e=EQ[id],D=DASH[id];const el=$('#dash');el.hidden=false;el.classList.remove('min');if(!touring){el.classList.remove('side');document.body.classList.remove('tourside');}$('#dMin').setAttribute('aria-pressed','false');$('#dMin').textContent='Minimizar';
   $('#dNum').textContent=e.num;$('#dTitle').textContent=e.name;$('#dSub').textContent=(e.num<=10?'Germano, MG':'Ubu, ES')+' · '+e.desc.split('. ')[0]+'.';

@@ -1,8 +1,8 @@
 // TREINAMENTO NO GÊMEO (primeira pessoa): cenários de segurança com os comandos reais do setor 3 (botoeiras, LOTO, cordão, tampa do Barmac,
 // sala de controle) e ronda de inspeção com anomalias plantadas no 3D. O resultado vai para o histórico do simulador e para o painel da turma.
 import * as THREE from 'three';
-import { sim, itemOf, SEQ, finishMnt, syncCtl, cmd } from './sim.js?v=20261022222102';
-import { call } from './api.js?v=20261022222102';
+import { sim, itemOf, SEQ, finishMnt, syncCtl, cmd } from './sim.js?v=20261022234745';
+import { call } from './api.js?v=20261022234745';
 
 const CSS = `
 .s3tr{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9;width:min(460px,94vw);max-height:48vh;overflow:auto;background:rgba(12,20,28,.93);border:1px solid rgba(255,178,61,.5);border-radius:12px;padding:10px 12px;color:#fff;font:12.5px system-ui;box-shadow:0 14px 40px rgba(0,0,0,.5)}
