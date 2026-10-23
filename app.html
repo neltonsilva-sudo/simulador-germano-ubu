@@ -592,10 +592,10 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #scr .pn{background:#20262c;border:1px solid #39424b;border-radius:10px;padding:10px 12px;min-width:0}
 #scr .pn h3{margin:0 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#ffd24a;display:flex;align-items:center;gap:8px}#scr .pn h3 small{margin-left:auto;color:#8593a0;text-transform:none;letter-spacing:0;font-weight:400}
 #scr .s12{grid-column:span 12}#scr .s8{grid-column:span 8}#scr .s6{grid-column:span 6}#scr .s4{grid-column:span 4}
-#scr .kp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+#scr .kp{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 #scr .kt{background:#171b20;border:1px solid rgba(255,255,255,.08);border-left:4px solid #2fbf71;border-radius:8px;padding:7px 9px;display:grid;gap:2px}
 #scr .kt.warn{border-left-color:#ffb020;background:#1a1408}#scr .kt.crit{border-left-color:#ff3b2f;background:#1f0b0b}
-#scr .kt span{font-size:11px;color:#9fb0bd;line-height:1.2}#scr .kt b{font:600 20px 'IBM Plex Mono',monospace;color:#fff}#scr .kt b small{font-size:11px;color:#9fb0bd;margin-left:4px;font-weight:400}
+#scr .kt span{font-size:11px;color:#9fb0bd;line-height:1.2}#scr .kt b small{display:inline}#scr .kt b em{font-size:11px;font-style:normal;margin-left:6px}#scr .kt b{font:600 20px 'IBM Plex Mono',monospace;color:#fff}#scr .kt b small{font-size:11px;color:#9fb0bd;margin-left:4px;font-weight:400}
 #scr .kt em{font-style:normal;font-size:11px}#scr .up{color:#7fe0a8}#scr .dn{color:#ff9b8f}#scr .kt svg{width:100%;height:26px}
 #scr .lane{display:flex;align-items:stretch;gap:4px;flex-wrap:wrap;margin-bottom:6px}#scr .lane>i{align-self:center;color:#5cc6dc;font-style:normal}
 #scr .lt{font-size:11px;color:#8fb4d8;letter-spacing:.08em;text-transform:uppercase;margin:4px 0}
@@ -637,6 +637,10 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #scr .cams{display:grid;grid-template-columns:1fr 1fr;gap:6px}#scr .cam{position:relative;background:#000;border:1px solid #46505a;border-radius:4px;overflow:hidden;cursor:pointer;aspect-ratio:16/9}
 #scr .cam canvas{width:100%;height:100%;display:block;filter:saturate(.75) contrast(1.08)}#scr .cam .co{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px)}
 #scr .cam b{position:absolute;left:6px;top:4px;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;text-shadow:0 0 3px #000}#scr .cam em{position:absolute;right:6px;top:4px;font:600 10px 'IBM Plex Mono',monospace;color:#ff5b4f;font-style:normal}#scr .cam small{position:absolute;left:6px;bottom:4px;font:10px 'IBM Plex Mono',monospace;color:#e6eefc;text-shadow:0 0 3px #000}
+#scr .cam.sel{outline:2px solid #ffd24a;outline-offset:1px}#scr .cam .cn{position:absolute;right:6px;bottom:4px;font:700 11px 'IBM Plex Mono',monospace;font-style:normal;color:#ffd24a;background:rgba(0,0,0,.55);padding:0 5px;border-radius:3px}
+#scr .cam.tw iframe{position:absolute;left:0;top:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none;background:#000}
+#scr .camsel{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:8px;font-size:11.5px;color:#a9b4bd}#scr .camsel span{margin-right:4px}#scr .camsel b{color:#ffd24a}
+#scr .camsel button{min-width:28px;padding:3px 0;font:600 11px 'IBM Plex Mono',monospace;background:#171b20;color:#cfd8de;border:1px solid #46505a;border-radius:4px;cursor:pointer}#scr .camsel button:hover{border-color:#ffd24a}#scr .camsel button.on{background:#ffd24a;color:#1b1200;border-color:#ffd24a}#scr .camsel button.g3{min-width:38px;color:#9fe8ff;border-color:#2f6f86}#scr .camsel button.g3.on{background:#5cc6dc;color:#04202a}
 #scr .cam select{position:absolute;right:4px;bottom:4px;font-size:10px;padding:1px 3px;pointer-events:auto;background:rgba(0,0,0,.6);opacity:0;transition:opacity .2s;max-width:70%}#scr .cam:hover select,#scr .cam select:focus{opacity:1}#scr .cam b{right:52px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #scr .ban{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:6px 16px;background:#1b1f23;border-top:2px solid #46505a;min-height:42px}
 #scr .ban.p1{border-top-color:#ff3b2f}#scr .ban .bl{display:grid;gap:2px;font:12px 'IBM Plex Mono',monospace;min-width:0}#scr .ban .bl div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3601,7 +3605,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022231026';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022232831';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5862,7 +5866,7 @@ function applyQuality(){
 }
 let fpsAcc=0,fpsN=0,fpsLowT=0,PRLOW=0,PRNEXT=0;
 function renderFrame(dt){
-  if(window.__scrOpen&&!$('#scr').hidden)return;
+  if(window.__scrOpen&&!$('#scr').hidden){if(SALA.tab==='geral')try{scrCams();}catch(e){}return;}
   if(HQ&&composer){composer.render(dt);}else renderer.render(scene,camera);
 }
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(typeof applyViewOffset==='function')applyViewOffset();if(HQ&&composer)setComposerSize(w,h,Math.min(window.devicePixelRatio||1,1.5));}
@@ -7438,17 +7442,17 @@ function scrOpen(){let d=$('#scr');if(!d){d=document.createElement('div');d.id='
      <div class="chips" id="scrChips"></div><button class="sb" data-a="mute" id="scrMute">🔔 Buzina ligada</button><button class="sb" data-a="csv">Exportar dados</button><button class="sb x" data-a="close">✕ Fechar</button></div>
      <div class="tabs" id="scrTabs">${[['geral','Visão geral'],['malhas','Malhas de controle'],['var','Variáveis do processo'],['sp','Setpoints'],['tend','Tendências'],['equip','Equipamentos'],['alm','Alarmes e livro de turno'],['prod','Produção']].map(([k,l])=>`<button data-tab="${k}" aria-pressed="${k==='geral'}">${l}</button>`).join('')}</div>
      <div class="sbody" id="scrBody"></div><div class="ban" id="scrBan"></div>`;
-    d.addEventListener('click',scrClick);d.addEventListener('change',scrChange);d.addEventListener('input',scrInput);
+    d.addEventListener('click',scrClick);d.addEventListener('dblclick',e=>{const c=e.target.closest('.cam');if(!c)return;const id=SALA.cams[+c.dataset.cam];if(id==='tw3'){openTwin3();return;}scrClose();select(id,true);});window.addEventListener('resize',scrTwScale);d.addEventListener('change',scrChange);d.addEventListener('input',scrInput);
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#scr').hidden&&$('#cfm').hidden&&$('#wifDlg').hidden)scrClose();});}
   ['cfm','wifDlg'].forEach(i=>{const x=$('#'+i);if(x)x.style.zIndex=70;});
   ALARMS.filter(a=>a.sev==='crit').forEach(a=>SALA.seenP1.add(almKey(a)));
   d.hidden=false;window.__scrOpen=true;scrTab(SALA.tab);logEvent('Sala de controle','Console da sala de controle aberto');}
-function scrClose(){const d=$('#scr');if(d)d.hidden=true;window.__scrOpen=false;}
+function scrClose(){const d=$('#scr');if(d){d.hidden=true;const b=$('#scrBody');if(b)b.innerHTML='';}window.__scrOpen=false;}
 function scrTab(t){SALA.tab=t;document.querySelectorAll('#scrTabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===t));const B=$('#scrBody');B.scrollTop=0;SALA.tTr=0;SALA.tCam=0;
   if(t==='geral')B.innerHTML=`<div class="grid">
-    <div class="pn s12"><h3>Indicadores-chave <small>verde = na faixa · âmbar = fora do limite · variação na última hora</small></h3><div class="kp" id="scrKpi"></div></div>
+    <div class="pn s12"><h3>Indicadores-chave <small>mesmos valores da barra de indicadores do simulador · âmbar = fora do limite</small></h3><div class="kp" id="scrKpi"></div></div>
     <div class="pn s8"><h3>Sinótico do processo <small>clique numa etapa para ir até ela na planta</small></h3><div id="scrSyn"></div></div>
-    <div class="pn s4"><h3>CFTV · câmeras da planta <small>ao vivo</small></h3><div class="cams" id="scrCams">${SALA.cams.map((c,i)=>`<div class="cam" data-cam="${i}"><canvas width="320" height="180"></canvas><div class="co"></div><b>CAM ${scrPad(i+1)} · ${esc(EQ[c]?EQ[c].name:c)}</b><em>● REC</em><small></small><select data-camsel="${i}">${scrEqs().map(e=>`<option value="${e.id}" ${e.id===c?'selected':''}>${e.num} · ${esc(e.name)}</option>`).join('')}</select></div>`).join('')}</div></div>
+    <div class="pn s4"><h3>CFTV · câmeras da planta <small>clique na tela e escolha a área · duplo clique abre</small></h3><div class="cams" id="scrCams">${SALA.cams.map((c,i)=>scrCamTile(i)).join('')}</div><div class="camsel" id="scrCamSel"></div></div></div>
     <div class="pn s8"><h3>Tendências principais <small id="scrTrH"></small></h3><div class="trg" id="scrTr">${SCR_TR.map(k=>`<div class="tr"><header><span>${HK[k][0]}${HK[k][1]?' · '+HK[k][1]:''}</span><b id="scrtv-${k}"></b></header><canvas id="scrtc-${k}"></canvas></div>`).join('')}</div></div>
     <div class="pn s4"><h3>Apoio à decisão</h3><div id="scrDec"></div><div class="tb" style="margin-top:8px"><button class="sb" data-a="proj" data-h="3">Projetar 3 h</button><button class="sb" data-a="proj" data-h="8">Projetar 8 h</button><button class="sb" data-a="neu">Módulo Neural</button></div><div id="scrProj"></div></div>
     <div class="pn s4"><h3>Estoques e inventários</h3><div id="scrInv"></div></div>
@@ -7470,19 +7474,27 @@ function scrTab(t){SALA.tab=t;document.querySelectorAll('#scrTabs button').forEa
       <div class="pn s4"><h3>Livro de turno <small id="scrLs"></small></h3><div class="lg" id="scrLog"></div><div class="nt"><input id="scrNote" placeholder="Registrar ocorrência do turno…" maxlength="200"><button class="sb" data-a="note">Registrar</button></div></div>
       <div class="pn s12"><h3>Alarmes normalizados (histórico)</h3><div id="scrAh"></div></div></div>`;
   else if(t==='prod')B.innerHTML=`<div class="grid"><div class="pn s12"><h3>Contabilização da produção</h3><div id="scrPr"></div></div><div class="pn s6"><h3>Atingimento do plano</h3><div id="scrPl"></div></div><div class="pn s6"><h3>Expedição · Porto de Ubu</h3><div id="scrSh"></div></div></div>`;
+  if(t==='geral'){scrCamSel();setTimeout(scrTwScale,0);}
   scrUpdate(true);}
 function scrTrGrid(){const g=scrGroups().find(x=>x.id===SALA.grp)||scrGroups()[0];$('#scrTr2').innerHTML=g.ks.map(k=>`<div class="tr"><header><span>${HK[k][0]}${HK[k][1]?' · '+HK[k][1]:''}</span><b id="scrtv-${k}"></b></header><canvas id="scrtc-${k}"></canvas></div>`).join('');SALA.tTr=0;}
 function scrTrend(ks){const keep=trendH;trendH=SALA.th;try{ks.forEach(k=>{const cv=$('#scrtc-'+k);if(!cv)return;const v=scrV(k);$('#scrtv-'+k).textContent=scrF(k,v)+(HK[k][1]?' '+HK[k][1]:'');drawTrend(cv,(HIST[k]||[]).concat([v]).slice(-Math.round(SALA.th*6)),k);});}finally{trendH=keep;}}
 /* CFTV: renderiza a cena 3D com uma câmera por área e copia o quadro para o monitor */
-let scrCam=null;
+let scrCam=null;SALA.sel=0;
+const scrCamName=id=>id==='tw3'?'Gêmeo digital · área 3 (britagem e peneiramento)':EQ[id]?EQ[id].name:id;
+function scrCamTile(i){const id=SALA.cams[i],tw=id==='tw3';return `<div class="cam${i===SALA.sel?' sel':''}${tw?' tw':''}" data-cam="${i}">${tw?`<iframe data-tw3 src="${esc(twin3URL()+'&cftv=1')}" title="Gêmeo digital do setor 3" loading="lazy"></iframe>`:'<canvas width="320" height="180"></canvas>'}<div class="co"></div><b>CAM ${scrPad(i+1)} · ${esc(scrCamName(id))}</b><em>● ${tw?'GÊMEO':'REC'}</em><small>${esc(scrClock().txt)}</small><i class="cn">${i+1}</i></div>`;}
+function scrCamSel(){const el=$('#scrCamSel');if(!el)return;const cur=SALA.cams[SALA.sel];el.innerHTML=`<span>Tela <b>${SALA.sel+1}</b> mostra:</span>`+scrEqs().map(e=>`<button data-area="${e.id}" class="${e.id===cur?'on':''}" title="${e.num} · ${esc(e.name)}">${e.num}</button>`).join('')+`<button data-area="tw3" class="g3 ${cur==='tw3'?'on':''}" title="Gêmeo digital da área 3 (britagem e peneiramento) ao vivo">G3</button>`;}
+function scrTwScale(){document.querySelectorAll('#scrCams .cam.tw iframe').forEach(f=>{const w=f.parentElement.clientWidth;f.style.transform=`scale(${w/1280})`;});}
 function scrCamBox(id){if(SALA.box[id])return SALA.box[id];const g=EQ[id]&&EQ[id].group;if(!g)return null;const b=new THREE.Box3().setFromObject(g),c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3());return SALA.box[id]={c,r:clamp(Math.max(s.x,s.z)*.75,18,140)};}
-function scrCams(){const tiles=document.querySelectorAll('#scrCams .cam');if(!tiles.length||!renderer)return;scrCam=scrCam||new THREE.PerspectiveCamera(48,16/9,.5,6000);
-  const sz=renderer.getDrawingBufferSize(new THREE.Vector2()),W=Math.min(480,sz.x),H=Math.round(W*9/16),ck=scrClock().txt;
-  renderer.setScissorTest(true);
-  tiles.forEach((tl,i)=>{const id=SALA.cams[i],B=scrCamBox(id);if(!B)return;const a=ST.simT/900+i*1.7;scrCam.position.set(B.c.x+Math.cos(a)*B.r,Math.max(B.c.y+B.r*.7,B.c.y+22,30),B.c.z+Math.sin(a)*B.r);scrCam.lookAt(B.c);scrCam.updateMatrixWorld();
-    const pr=renderer.getPixelRatio();renderer.setViewport(0,0,W/pr,H/pr);renderer.setScissor(0,0,W/pr,H/pr);renderer.render(scene,scrCam);
-    const cv=tl.querySelector('canvas');cv.getContext('2d').drawImage(renderer.domElement,0,sz.y-H,W,H,0,0,cv.width,cv.height);tl.querySelector('small').textContent=ck;tl.querySelector('b').textContent=`CAM ${scrPad(i+1)} · ${EQ[id].name}`;});
-  renderer.setScissorTest(false);renderer.setViewport(0,0,sz.x/renderer.getPixelRatio(),sz.y/renderer.getPixelRatio());}
+function scrCams(){const tiles=document.querySelectorAll('#scrCams .cam');if(!tiles.length||!renderer)return;const now=performance.now();const first=!SALA.tCam;SALA.tCam=now;const k=SALA.ck||(SALA.ck=4),i0=SALA.ci||0;SALA.ci=(i0+k)%tiles.length;
+  scrCam=scrCam||new THREE.PerspectiveCamera(48,16/9,.5,6000);const sz=renderer.getDrawingBufferSize(new THREE.Vector2()),pr=renderer.getPixelRatio(),W=Math.min(512,sz.x),H=Math.round(W*9/16),tt=now/1000;
+  const sm=renderer.shadowMap,au=sm.autoUpdate;if(now-(SALA.tSh||0)>1000||first){SALA.tSh=now;sm.needsUpdate=true;}sm.autoUpdate=false;renderer.setScissorTest(true);
+  try{tiles.forEach((tl,i)=>{if(((i-i0+tiles.length)%tiles.length)>=k||SALA.cams[i]==='tw3')return;/* adaptativo: k câmeras por quadro em rodízio */const id=SALA.cams[i],B=scrCamBox(id);if(!B)return;/* varredura PTZ: vai e volta devagar, como câmera de pátio */const a=i*1.7+.9*Math.sin(tt*.07+i*1.3),zr=1+.08*Math.sin(tt*.05+i);
+      scrCam.position.set(B.c.x+Math.cos(a)*B.r*zr,Math.max(B.c.y+B.r*.7,B.c.y+22,30),B.c.z+Math.sin(a)*B.r*zr);scrCam.lookAt(B.c);scrCam.updateMatrixWorld();
+      renderer.setViewport(0,0,W/pr,H/pr);renderer.setScissor(0,0,W/pr,H/pr);renderer.render(scene,scrCam);sm.needsUpdate=false;
+      const cv=tl.querySelector('canvas');if(cv.width!==W){cv.width=W;cv.height=H;}cv.getContext('2d').drawImage(renderer.domElement,0,sz.y-H,W,H,0,0,W,H);});}
+  finally{renderer.setScissorTest(false);renderer.setViewport(0,0,sz.x/pr,sz.y/pr);sm.autoUpdate=au;}
+  const dt=performance.now()-now;SALA.ck=dt>14&&k>1?k-1:dt<6&&k<4?k+1:k;
+  if(now-(SALA.tLbl||0)>1000){SALA.tLbl=now;const ck=scrClock().txt;tiles.forEach((tl,i)=>{tl.querySelector('small').textContent=ck;tl.querySelector('b').textContent=`CAM ${scrPad(i+1)} · ${scrCamName(SALA.cams[i])}`;});}}
 function scrDecision(){const out=[],cr=ALARMS.filter(a=>a.sev==='crit'),wa=ALARMS.filter(a=>a.sev!=='crit');
   cr.slice(0,3).forEach(a=>{const m=almMeta(a);out.push(`<div class="rc c"><b>P1 · ${esc(a.msg)}</b><br>${esc(m.acao.split(' Procedimento')[0])}</div>`);});
   const U=scrUtil().sort((a,b)=>b[1]-a[1]),g=U[0];out.push(`<div class="rc ${g[1]>95?'w':''}"><b>Gargalo atual:</b> ${esc(g[0])} com ${fmt(g[1],0)} % de utilização${g[1]>95?' — a produção está limitada aqui; aliviar esta etapa antes de aumentar a alimentação.':'. Há folga para aumentar a produção.'}</div>`);
@@ -7508,8 +7520,11 @@ function scrUpdate(full){const d=$('#scr');if(!d||d.hidden)return;const ck=scrCl
   $('#scrChips').innerHTML=`<span class="chip ${nc?'p1':'ok'}">P1 · ${nc}</span><span class="chip ${nw?'p2':'ok'}">P2 · ${nw}</span><span class="chip">Etapas em operação ${on}/${scrEqs().length}</span><span class="chip">Malhas em AUTO ${Object.values(LOOPS).filter(L=>L.mode==='auto').length}/${Object.keys(LOOPS).length}</span><span class="chip ${NEU.on?'ok':''}">Neural ${NEU.on?'ativo':'desligado'}</span>`;
   $('#scrMute').textContent=SALA.mute?'🔕 Buzina silenciada':'🔔 Buzina ligada';scrBanner();const t=SALA.tab,ae=document.activeElement;
   if(t==='geral'){
-    $('#scrKpi').innerHTML=SCR_KPI.map(k=>{const v=scrV(k),a=HIST[k]||[],p=a.length>6?a[a.length-7]:v,dv=v-p,st=kState(k,v);return `<div class="kt ${st==='warn'?'warn':''}"><span>${HK[k][0]}</span><b>${scrF(k,v)}<small>${HK[k][1]}</small></b><em class="${dv>0?'up':'dn'}">${Math.abs(dv)>Math.max(1e-3,Math.abs(v)*.003)?(dv>0?'▲ ':'▼ ')+fmt(Math.abs(dv),HK[k][2]):'&nbsp;'}</em>${scrSpark(a.slice(-72).concat([v]),st==='warn'?'#ffb020':'#9fe8ff',160,26)}</div>`;}).join('');
-    const node=e=>{const[s,l]=scrNodeSt(e.id),D=DASH[e.id],k=D&&D.k[0];return `<button class="nd ${s}" data-go="${e.id}" title="${esc(e.name)} · ${l}"><small>${scrPad(e.num)} · ${l}</small><b>${esc(e.name)}</b><span>${k?scrF(k,scrV(k))+' '+HK[k][1]:''}</span></button>`;};
+    /* mesmos números da barra de indicadores do simulador (lidos dos próprios cartões) + extras do histórico */
+    const kh={rom:'feed',fe:'feC',si:'siC',mr:'mr',pel:'total',cs:'cs',em:'emis',pipe:'v'};
+    $('#scrKpi').innerHTML=KPI.map(([k,l])=>{const el=$('#k-'+k);if(!el)return'';const st=/crit/.test(el.className)?'crit':/warn/.test(el.className)?'warn':'',h=kh[k],a=h?(HIST[h]||[]):[];return `<div class="kt ${st}"><span>${esc(l)}</span><b>${el.firstElementChild.innerHTML}</b>${h?scrSpark(a.slice(-72).concat([scrV(h)]),st?'#ffb020':'#9fe8ff',160,26):''}</div>`;}).join('')
+      +['prod','pfSold','kwht'].map(k=>{const v=scrV(k),a=HIST[k]||[],p=a.length>6?a[a.length-7]:v,dv=v-p;return `<div class="kt"><span>${HK[k][0]}</span><b>${scrF(k,v)}<small>${HK[k][1]}</small></b><em class="${dv>0?'up':'dn'}">${Math.abs(dv)>Math.max(1e-3,Math.abs(v)*.003)?(dv>0?'▲ ':'▼ ')+fmt(Math.abs(dv),HK[k][2]):'&nbsp;'}</em>${scrSpark(a.slice(-72).concat([v]),'#9fe8ff',160,26)}</div>`;}).join('');
+    const node=e=>{const[s,l]=scrNodeSt(e.id),D=DASH[e.id],k=D&&D.k[0];let v='';try{v=labelVal(e.id);}catch(_){v=k?scrF(k,scrV(k))+' '+HK[k][1]:'';}return `<button class="nd ${s}" data-go="${e.id}" title="${esc(e.name)} · ${l}"><small>${scrPad(e.num)} · ${l}</small><b>${esc(e.name)}</b><span>${esc(v)}</span></button>`;};
     const E=scrEqs(),mg=E.filter(e=>e.num<=10),es=E.filter(e=>e.num>10);
     $('#scrSyn').innerHTML=`<div class="lt">Germano · MG — lavra, beneficiamento e rejeitos</div><div class="lane">${mg.map(node).join('<i>›</i>')}</div><div class="pipe ${CUR.v>0.05?'':'stop'}">Mineroduto ≈ 400 km · <b>${fmt(CUR.v||0,2)} m/s</b> · polpa <b>${fmt(CUR.pumpRate||0,0)} t/h</b> · pressão <b>${fmt(CUR.pBar||0,0)} bar</b> · trânsito <b>${isFinite(CUR.transit)?fmt(CUR.transit,0)+' h':'parado'}</b></div><div class="lt">Ubu · ES — espessamento, filtragem, pelotização e porto</div><div class="lane">${es.map(node).join('<i>›</i>')}</div>`;
     $('#scrDec').innerHTML=scrDecision();if(SALA.proj&&!$('#scrProj').innerHTML)$('#scrProj').innerHTML=SALA.proj;
@@ -7518,7 +7533,7 @@ function scrUpdate(full){const d=$('#scr');if(!d||d.hidden)return;const ck=scrCl
     const n=Math.max(1,Math.min(Math.floor((ST.simT-sh.t0)/600),HN)),acc=k=>(HIST[k]||[]).slice(-n).reduce((s,x)=>s+x,0)/6,hh=(ST.simT-sh.t0)/3600;
     $('#scrPt').innerHTML=`<div class="pj"><span class="hint">Produto</span><span class="hint">Agora t/h</span><span class="hint">Acum. turno t</span><span></span>${[['total','Produção total'],['prod','Pelotas'],['pfSold','Pellet feed vendido'],['load','Embarque']].map(([k,l])=>`<span>${l}</span><b>${fmt(scrV(k),0)}</b><b>${fmt(acc(k),0)}</b><span></span>`).join('')}</div><p class="hint">${sh.lbl} · ${fmt(hh,1)} h decorridas · ritmo anual atual ≈ <b>${fmt(scrV('total')*8760/1e6,1)} Mt/ano</b></p>`;
     if(now-SALA.tTr>2500){SALA.tTr=now;$('#scrTrH').textContent=`últimas ${SALA.th} h`;scrTrend(SCR_TR);}
-    if(now-SALA.tCam>3000){SALA.tCam=now;try{scrCams();}catch(e){console.warn('cftv',e);}}}
+    }
   else if(t==='malhas'){for(const[k,L]of Object.entries(LOOPS)){const r=SCR_PV[L.pvU]||[L.sp*.5,L.sp*1.5],y=v=>clamp((v-r[0])/(r[1]-r[0])*100,0,100),au=L.mode==='auto';
       $('#fmd-'+k).textContent=au?'AUTO':'MAN';$('#fmd-'+k).className='md'+(au?'':' man');$('#fpv-'+k).style.height=y(L.pv)+'%';$('#fsm-'+k).style.bottom=y(L.sp)+'%';
       $('#fv-'+k).textContent=fmt(L.pv,L.pvU==='°C'?0:1)+' '+L.pvU;$('#fs-'+k).textContent=fmt(L.sp,L.pvU==='°C'?0:1)+' '+L.pvU;$('#fo-'+k).textContent=fmt(L.mv,L.hi>200?0:1)+' '+L.mvU;$('#fe-'+k).textContent=fmt(L.sp-L.pv,2);$('#fob-'+k).style.width=clamp((L.mv-L.lo)/(L.hi-L.lo)*100,0,100)+'%';
@@ -7547,7 +7562,8 @@ function scrSetP(k,v){const m=CMETA[k];if(!m)return;P[k]=clamp(v,m[4],m[5]);for(
 function scrClick(e){const b=e.target.closest('button,.cam');if(!b)return;const D=b.dataset;
   if(D.tab)return scrTab(D.tab);if(D.tabgo)return scrTab(D.tabgo);
   if(D.go){scrClose();select(D.go,true);return;}
-  if(b.classList.contains('cam')){if(e.target.tagName==='SELECT')return;scrClose();select(SALA.cams[+D.cam],true);return;}
+  if(b.classList.contains('cam')){SALA.sel=+D.cam;document.querySelectorAll('#scrCams .cam').forEach((c,i)=>c.classList.toggle('sel',i===SALA.sel));scrCamSel();return;}
+  if(D.area){const i=SALA.sel,old=SALA.cams[i];SALA.cams[i]=D.area;if(old!==D.area){const t=document.querySelector(`#scrCams .cam[data-cam="${i}"]`);if(t){t.outerHTML=scrCamTile(i);SALA.tCam=0;scrTwScale();}logEvent('Sala de controle',`Tela ${i+1} do CFTV: ${scrCamName(D.area)}`);}scrCamSel();return;}
   if(D.th){SALA.th=+D.th;document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b));SALA.tTr=0;scrUpdate();return;}
   if(D.lm){scrSetLoop(D.lm,D.m);scrUpdate(true);return;}
   if(D.wif){wifOpen(D.wif);return;}
