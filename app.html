@@ -3610,13 +3610,16 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261023004927';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261023100505';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
 (function(){if(window.google&&window.google.script)return;var Q=location.search;if(!/github\.io$/.test(location.hostname)&&!/[?&]api=1(&|$)/.test(Q))return;
  var API='https:'+'/'+'/script.google.com/macros/s/AKfycbzI3n1FQsK7H1_Guhcwz7dK21wDqK-4aeBLHF4ryNnhWE0eHH0Y7x_W97tP9Gee62Q/exec',P=new URLSearchParams(Q);
  function auth(){var a=window.__ACC||{};return a.adm||a.k||'';}
+ /* conexão direta com o gêmeo do setor 3 no CFTV da sala de controle: o simulador já autenticado autoriza o gêmeo (mesmo site: leitura direta; outro site: resposta só para o endereço do gêmeo) */
+ window.__s3auth=function(){var a=window.__ACC||{};return (a.role&&a.role!=='pending'&&!document.getElementById('gateOv'))?{ok:true,t:a.adm||a.k||''}:{ok:false};};
+ window.addEventListener('message',function(e){if(!e.data||e.data.type!=='s3-auth?'||e.origin!=='https://neltonsilva-sudo.github.io')return;try{var r=window.__s3auth();r.type='s3-auth';e.source.postMessage(r,e.origin);}catch(x){}});
  function call(fn,args,ok,bad,tries){var body=JSON.stringify({fn:fn,args:args||[],auth:auth()});tries=tries==null?4:tries;
   if(fn==='acessoFechar'&&navigator.sendBeacon){try{navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));}catch(e){}return;}
   /* o Apps Script às vezes demora ou corta a conexão: limite de 25 s por tentativa e novas tentativas automáticas */

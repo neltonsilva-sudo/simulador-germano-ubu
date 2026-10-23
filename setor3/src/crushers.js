@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261022234745';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261022234745';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261023100504';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261023100504';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);

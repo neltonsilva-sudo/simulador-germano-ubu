@@ -1,8 +1,18 @@
-import { call, setToken } from './api.js?v=20261022234745';
+import { call, setToken } from './api.js?v=20261023100504';
 // Acesso: o gêmeo abre só pelo simulador, que passa a chave da sessão (?t=). A chave é conferida no servidor
 // (Apps Script) e retirada do endereço. Sem proteção configurada no servidor, abre direto.
 let TOKEN_RETRY = '';
+// Conexão direta com o simulador: dentro do CFTV da sala de controle (iframe), o próprio simulador já autenticado autoriza o gêmeo
+// sem esperar o servidor. Mesmo site: lê a sessão do simulador; sites diferentes (Apps Script/Artifact): pede por mensagem.
+const OKORIG = (o) => o === location.origin || /^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/.test(o) || /^https:\/\/([a-z0-9-]+\.)*(claude\.ai|claudeusercontent\.com)$/.test(o);
+function parentAuth() {
+  if (window.parent === window) return Promise.resolve(null);
+  try { const f = window.parent.__s3auth; if (typeof f === 'function') return Promise.resolve(f()); } catch (e) { /* outro site: segue por mensagem */ }
+  return new Promise((res) => { const on = (e) => { if (e.source !== window.parent || !OKORIG(e.origin) || !e.data || e.data.type !== 's3-auth') return; removeEventListener('message', on); res(e.data); };
+    addEventListener('message', on); try { window.parent.postMessage({ type: 's3-auth?' }, '*'); } catch (e) { /* */ } setTimeout(() => { removeEventListener('message', on); res(null); }, 1500); });
+}
 export async function gate() {
+  if (new URLSearchParams(location.search).get('cftv')) { document.documentElement.classList.add('cftv'); const st = document.createElement('style'); st.textContent = '.cftv #ui,.cftv .s3exp{display:none!important}'; document.head.appendChild(st); }
   if (['localhost', '127.0.0.1'].includes(location.hostname)) { setToken(''); return true; }
   const ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;background:#0b1622;color:#dce6ee;font:15px/1.5 system-ui,sans-serif';
@@ -10,6 +20,7 @@ export async function gate() {
   msg('<p style="margin:0">Verificando acesso…</p>'); document.body.appendChild(ov);
   const P = new URLSearchParams(location.search), t = P.get('t') || TOKEN_RETRY || '';
   try { history.replaceState(null, '', location.pathname); } catch (e) { /* sem histórico */ }
+  const pa = await parentAuth(); if (pa && pa.ok) { setToken(pa.t || t); ov.remove(); return true; }
   try {
     const c = await call('acessoChecar', [t]);
     if (c.ok) { setToken(t); ov.remove(); return true; }
