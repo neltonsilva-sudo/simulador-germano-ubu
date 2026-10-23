@@ -3610,7 +3610,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022235453';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261023000632';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5341,19 +5341,31 @@ function cxSay(k,btn){const same=CXB===btn;cxStop();if(same)return;const t=trNor
   if(/^__rec/.test(sel)){const a=new Audio(TR_AUD+(sel==='__recT'?'tr_thalita/':'tr/')+trHash(t)+'.mp3?v=1');a.volume=.85;CXA=a;a.onended=done;const fb=()=>{if(CXA!==a)return;CXA=null;tts();};a.onerror=fb;a.play().catch(fb);}else tts();}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cx]');if(!b)return;e.preventDefault();e.stopPropagation();cxOpen(b.dataset.cx,b);},true);
 /* cartão de explicação (igual ao do gêmeo do setor 3): imagem ao vivo da área, valor atual, texto, ouvir/parar, Assistente e escolha da voz */
+/* vista 3D de cada controle: câmera no equipamento do título (coordenadas locais do grupo da etapa; s3 = gêmeo do setor 3 embutido; cut = esconde telhado/paredes) */
+const MV=[[0,3,-5],[2,21,-13],'Moinhos de bolas · moagem',1],FLO=[[0,3.2,7],[1,12,21],'Células de flotação',1],CYC=[[9,7.8,1.2],[17,13,10],'Baterias de ciclones da deslamagem',1];
+const CXVIEW={feedC:[[-8,8,-3],[-26,15,11],'Silo e correia de alimentação da moagem',1],mill:MV,hcP:[MV[0],MV[1],'Moinhos e hidrociclones · circuito de moagem',1],millS:[MV[0],MV[1],'Polpa nos moinhos de bolas',1],
+  cut:CYC,cyP:[CYC[0],CYC[1],'Ciclones da deslamagem · pressão de alimentação',1],cyN:CYC,amine:[FLO[0],FLO[1],'Flotação · coletor amina',1],starch:[FLO[0],FLO[1],'Flotação · depressor amido',1],ph:[FLO[0],FLO[1],'Flotação · controle de pH',1],
+  air:[FLO[0],FLO[1],'Flotação · ar nas colunas',1],frothL:[FLO[0],FLO[1],'Flotação · camada de espuma',1],
+  css:[[59.3,2.6,5.5],[62.5,4.5,12],'Britador cônico HP 400 (APF)',0,'s3'],vsiRpm:[[61,1.8,17.5],[63,7.5,19.5],'Britador Barmac (VSI) · rotor',0,'s3'],vsiCasc:[[61,1.8,17.5],[63,7.5,19.5],'Britador Barmac (VSI) · cascata',0,'s3'],
+  floc:[[-38,1.5,20],[-53,15,31],'Espessador de concentrado',0],slimeF:[[0,2,0],[8,8,9],'Filtros horizontais de correia',1],solids:[[0,1,0],[7,7,9],'Bombas de pistão-diafragma do mineroduto',1],
+  divert:[[0,10,0],[18,16,18],'Torre de gravidade · Ubu',0],filt:[[0,1.5,0],[9,8,10],'Filtros a disco do pellet feed',1],pfSale:[[0,1.5,0],[9,8,10],'Filtragem do pellet feed',1],eteCap:[[2,1,0],[14,12,14],'Estação de tratamento de água',0],
+  press:[[0,3,0],[7,7,8],'Prensa de rolos (roller press)',1],bent:[[0,2,1.5],[9,9,11],'Misturadores intensivos · bentonita',1],lime:[[0,2,1.5],[9,9,11],'Misturadores intensivos · calcário',1],
+  disc:[[0,2.4,1],[0,8,13],'Discos de pelotização',1],temp:[[0,5,0],[14,14,16],'Forno · leito de pelotas em queima',1],grate:[[0,5,0],[14,14,16],'Grelha móvel do forno',1],kv:[[0,6,0],[10,12,12],'Precipitadores eletrostáticos · placas',1],screenAp:[[0,2.6,0],[7,7,8],'Peneiras de rolos',1]};
 const CX_HEAD={_panel:['Controle de processo','conc'],_mg:['Germano · MG (etapas 1 a 10)','conc'],_es:['Ubu · ES (etapas 11 a 24)','furnace']};
 const cxName=k=>CX_HEAD[k]?CX_HEAD[k][0]:CMETA[k]?CMETA[k][2]:k,cxStage=k=>CX_HEAD[k]?CX_HEAD[k][1]:CTRL_STAGE[k];
 const cxVal=k=>{const m=CMETA[k];return m?fmt(P[k],m[7])+' '+m[3]:'';};
 const CXV={k:null,txt:'',btn:null,busy:false,t:null};
 function cxVoices(){try{const FEM=/luciana|francisca|thalita|maria|fernanda|vit[oó]ria|leila|helo[ií]sa|raquel|let[ií]cia|yara|manuela|brenda|elza|giovanna|flo\b|sandy|shelley|grandma|google/i,rk=n=>/natural|neural/i.test(n)?6:/online/i.test(n)?5:/premium|enhanced|aprimorad/i.test(n)?4:/google/i.test(n)?3:/luciana|francisca|thalita|antonio|felipe|daniel/i.test(n)?2:1;
   return speechSynthesis.getVoices().filter(v=>(/^pt(-|_)BR/i.test(v.lang)||/portugu[eê]s.*brasil/i.test(v.name))&&FEM.test(v.name)).sort((a,b)=>rk(b.name)-rk(a.name));}catch(e){return[];}}
-function cxShot(){const cv=$('#cxCard canvas');if(!cv||!renderer||$('#cxCard').hidden)return;const id=cxStage(CXV.k),B=typeof scrCamBox==='function'?scrCamBox(id):null;if(!B)return;
-  scrCam=scrCam||new THREE.PerspectiveCamera(48,16/9,.5,6000);const sz=renderer.getDrawingBufferSize(new THREE.Vector2()),pr=renderer.getPixelRatio(),W=Math.min(640,sz.x),H=Math.round(W*9/16),a=.7+.5*Math.sin(performance.now()/1000*.06);
-  scrCam.position.set(B.c.x+Math.cos(a)*B.r,Math.max(B.c.y+B.r*.7,B.c.y+22,30),B.c.z+Math.sin(a)*B.r);scrCam.lookAt(B.c);scrCam.updateMatrixWorld();
-  renderer.setScissorTest(true);try{renderer.setViewport(0,0,W/pr,H/pr);renderer.setScissor(0,0,W/pr,H/pr);renderer.render(scene,scrCam);if(cv.width!==W){cv.width=W;cv.height=H;}cv.getContext('2d').drawImage(renderer.domElement,0,sz.y-H,W,H,0,0,W,H);}
-  finally{renderer.setScissorTest(false);renderer.setViewport(0,0,sz.x/pr,sz.y/pr);}}
+function cxShot(){const cv=$('#cxCard canvas');if(!cv||!renderer||$('#cxCard').hidden)return;const k=CXV.k,id=cxStage(k),V=CXVIEW[k],g=V&&V[4]==='s3'?(S3&&S3.group):EQ[id]&&EQ[id].group;
+  scrCam=scrCam||new THREE.PerspectiveCamera(48,16/9,.5,6000);const sz=renderer.getDrawingBufferSize(new THREE.Vector2()),pr=renderer.getPixelRatio(),W=Math.min(640,sz.x),H=Math.round(W*9/16),hid=[];
+  if(V&&g){g.updateMatrixWorld(true);const tg=g.localToWorld(new THREE.Vector3(...V[0])),ey=g.localToWorld(new THREE.Vector3(...V[1])),w=.04*Math.sin(performance.now()/1000*.25);ey.sub(tg).multiplyScalar(V[5]||1).applyAxisAngle(new THREE.Vector3(0,1,0),w).add(tg);scrCam.position.copy(ey);scrCam.lookAt(tg);
+    if(V[3])EQ[id].group.traverse(o=>{if(o.userData&&o.userData.shell&&o.visible){o.visible=false;hid.push(o);}});}
+  else{const B=typeof scrCamBox==='function'?scrCamBox(id):null;if(!B)return;const a=.7+.5*Math.sin(performance.now()/1000*.06);scrCam.position.set(B.c.x+Math.cos(a)*B.r,Math.max(B.c.y+B.r*.7,B.c.y+22,30),B.c.z+Math.sin(a)*B.r);scrCam.lookAt(B.c);}
+  scrCam.updateMatrixWorld();renderer.setScissorTest(true);try{renderer.setViewport(0,0,W/pr,H/pr);renderer.setScissor(0,0,W/pr,H/pr);renderer.render(scene,scrCam);if(cv.width!==W){cv.width=W;cv.height=H;}cv.getContext('2d').drawImage(renderer.domElement,0,sz.y-H,W,H,0,0,W,H);}
+  finally{renderer.setScissorTest(false);renderer.setViewport(0,0,sz.x/pr,sz.y/pr);hid.forEach(o=>o.visible=true);}}
 function cxRender(){const d=$('#cxCard'),k=CXV.k,sel=trVoiceSel(),rec=/^__rec/.test(sel),st=EQ[cxStage(k)],v=cxVal(k);
-  d.innerHTML=`<div class="h"><b>🔊 ${esc(cxName(k))}</b><button data-cxx title="Fechar">×</button></div><figure class="exim"><canvas width="640" height="360"></canvas><figcaption>${st?`Etapa ${st.num} · ${esc(st.name)}`:''}</figcaption></figure>${v?`<small>Valor atual: <b id="cxVal">${esc(v)}</b></small>`:''}
+  d.innerHTML=`<div class="h"><b>🔊 ${esc(cxName(k))}</b><button data-cxx title="Fechar">×</button></div><figure class="exim"><canvas width="640" height="360"></canvas><figcaption>${CXVIEW[k]?esc(CXVIEW[k][2])+(st?` · etapa ${st.num}`:''):st?`Etapa ${st.num} · ${esc(st.name)}`:''}</figcaption></figure>${v?`<small>Valor atual: <b id="cxVal">${esc(v)}</b></small>`:''}
    <p>${esc(CXV.txt)}</p><div class="r"><button data-cxp>▶ Ouvir</button><button data-cxs>■ Parar</button><button data-cxa class="pri"${CXV.busy?' disabled':''}>${CXV.busy?'Assistente explicando…':'🧠 Explicar com o Assistente (valores atuais)'}</button></div>
    <label>Voz <select data-cxv><option value="__rec"${sel==='__rec'?' selected':''}>Francisca · voz natural (gravada)</option><option value="__recT"${sel==='__recT'?' selected':''}>Thalita · voz natural expressiva (gravada)</option>${cxVoices().map(x=>`<option${sel===x.name?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>${rec?'<small>A explicação do Assistente, criada na hora, usa a melhor voz do navegador.</small>':''}`;
   cxShot();}
