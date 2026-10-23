@@ -3610,7 +3610,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261023100505';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261023100722';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5278,7 +5278,7 @@ function step(sdt){
   const pumpMW=pumpRate>0?(ADV.pipe?HY.stP.reduce((a,b)=>a+b,0):pBar)*1e5*Qm3/3600/.72/1e6:0;
   U.alP=U.fired>0?((arr.al||.4)/100*pfPel+.16*P.bent/1000*pfPel)/U.fired*100:0;U.pP=U.fired>0?(arr.p||.05)/100*pfPel/U.fired*100:0;
   if(sdt>0){mpcRun();expertRun();perfAdd(sdt);if(ST.ct-(ST.ctH||0)>=120){ST.ctH=ST.ct;for(const k in LOOPS){const L=LOOPS[k];L.hist.push([ST.simT,L.pv,L.sp,L.mv]);if(L.hist.length>360)L.hist.shift();}}}
-  CUR={arrP80:arr.p80,solidsEff,HY,vdep:HY.vdep,arrAl:arr.al,arrP:arr.p,G,U,mine,mineReq,pumpRate,pumpFe,pumpSi,v,transit,arrived,arrFe:arr.fe,arrSi:arr.si,toThick,toBasin,dredge,filterRate,pfPel,pfSold,load,inYard:inP+inF,Qm3,water,A,nL,capPipe,pBar,pumpMW,
+  CUR={capFilt,arrP80:arr.p80,solidsEff,HY,vdep:HY.vdep,arrAl:arr.al,arrP:arr.p,G,U,mine,mineReq,pumpRate,pumpFe,pumpSi,v,transit,arrived,arrFe:arr.fe,arrSi:arr.si,toThick,toBasin,dredge,filterRate,pfPel,pfSold,load,inYard:inP+inF,Qm3,water,A,nL,capPipe,pBar,pumpMW,
     total:U.prod+pfSold,TH,solidsEff,recWater:RUN.ete?clamp(80+12*P.eteCap/100+(P.floc-20)*.15,0,97):40,recWaterMG:RUN.thick6?clamp(78+(P.floc-10)*.5,70,95):0,
     tcldCap,crushCirc:RUN.crush&&mine>0?(typeof S3!=='undefined'&&S3&&S3.sim.kpi&&isFinite(S3.sim.kpi.circ)?S3.sim.kpi.circ:clamp(25+(20-P.css)*2,5,70)):0,ovf:RUN.thick6&&G.C>0?TH.ovf:0,
     dust:RUN.yard?(1-.85*Math.min(1,RAIN.rateU/2))*Math.pow(P.wind,2)*(RUN.fence?.35:1)*clamp(ST.yard/500000,.2,2)/36*60:0,
@@ -7642,7 +7642,7 @@ function scrGroups(){if(SALA.groups)return SALA.groups;const seen=new Set(),G=[]
 const scrEqs=()=>Object.values(EQ).filter(e=>e&&e.num).sort((a,b)=>a.num-b.num);
 function scrNodeSt(id){const e=EQ[id];if(e.toggle&&!RUN[id])return['off','Parado'];return eqState(id);}
 /* utilização dos ativos: o maior valor indica o gargalo atual */
-function scrUtil(){const c=CUR;return[['TCLD (transportador de longa distância)',scrV('tcldLoad'),'tcld'],['Moagem (potência)',P.mill,'conc'],['Filtragem de rejeito',scrV('sfload'),'sandf'],['Mineroduto (velocidade / 2,0 m/s)',(c.v||0)/2*100,'pump'],['Filtros de Ubu',P.filt,'filter'],['Usinas de pelotização',scrV('util'),'pell'],['Tanques de Germano',ST.tank6/58000*100,'thick6']];}
+function scrUtil(){const c=CUR;return[['TCLD (transportador de longa distância)',scrV('tcldLoad'),'tcld'],['Moagem (potência aplicada)',P.mill,'conc'],['Filtragem de rejeito',scrV('sfload'),'sandf'],['Mineroduto (velocidade / 2,0 m/s)',(c.v||0)/2*100,'pump'],['Filtros de Ubu (vazão / capacidade)',c.capFilt>0?(c.filterRate||0)/c.capFilt*100:0,'filter'],['Usinas de pelotização',scrV('util'),'pell'],['Tanques de Germano',ST.tank6/58000*100,'thick6']];}
 function scrBeep(){if(SALA.mute)return;try{const a=SALA.ac||(SALA.ac=new(window.AudioContext||window.webkitAudioContext)()),t=a.currentTime;[0,.35].forEach(d=>{const o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=740;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.06,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.25);o.connect(g).connect(a.destination);o.start(t+d);o.stop(t+d+.27);});}catch(e){}}
 function scrOpen(){let d=$('#scr');if(!d){d=document.createElement('div');d.id='scr';d.hidden=true;document.body.appendChild(d);
     d.innerHTML=`<div class="sh"><div><h2>SALA DE CONTROLE</h2><div class="ss">Centro de operações integradas · Germano (MG) – Ubu (ES) · Modelo didático</div></div><span class="clk" id="scrClk"></span><span class="chip" id="scrShift"></span>
