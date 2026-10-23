@@ -554,6 +554,10 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trRef .trleg .g{background:#3fbf5a}#trRef .trleg .r{background:#ff5a4a}#trRef .trleg .m{background:#a0703c;color:#fff}#trRef .trleg .y{background:#ffd24a}#trRef .trleg .b{background:#4a8cff;color:#fff}
 #trDlg #trClr{flex:0 0 auto!important;width:auto!important;padding:4px 10px;font-size:12px;min-width:0}
 #trDlg .trtw{border:1px solid rgba(92,198,220,.4);background:rgba(92,198,220,.07);border-radius:10px;padding:8px 10px;margin:0 0 8px;display:grid;gap:4px}#trDlg .trtw span{color:var(--muted);font-size:12.5px}#trDlg .trtw div{display:flex;gap:6px;flex-wrap:wrap}#trDlg .trtw .btn{flex:1}
+#cxCard .exim{margin:6px 0 4px;position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.15)}#cxCard .exim img,#cxCard .exim svg{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}#cxCard .exim figcaption{position:absolute;left:6px;bottom:6px;background:rgba(10,16,24,.8);border-radius:6px;padding:2px 7px;font-size:11px;color:#ffd24a}#cxCard{max-height:calc(100vh - 80px);overflow:auto}
+#cxCard{position:fixed;z-index:46;width:360px;max-width:92vw;background:rgba(12,22,34,.97);border:1px solid rgba(92,198,220,.5);border-radius:12px;padding:10px 12px;color:#fff;font:13px system-ui;box-shadow:0 14px 40px rgba(0,0,0,.5)}#cxCard .h{display:flex;justify-content:space-between;align-items:center;gap:8px}#cxCard .h b{color:#9fdcf0}#cxCard p{margin:6px 0;line-height:1.5}#cxCard small{color:#9fb0bd}#cxCard small b{color:#ffd24a}
+#cxCard .r{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}#cxCard button{border:1px solid rgba(255,255,255,.2);background:#1f3a5c;color:#fff;border-radius:6px;padding:4px 9px;font:600 12px system-ui;cursor:pointer}#cxCard button.pri{background:#2c6fd6}#cxCard button:disabled{opacity:.6}#cxCard label{display:flex;gap:6px;align-items:center;font-size:12px;color:#cfd8de}#cxCard select{flex:1;background:#0b1622;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px}
+#cxCard .exim canvas{display:block;width:100%;aspect-ratio:16/9;background:#000}#cxCard[hidden]{display:none}
 .cxspk{display:inline-grid;place-items:center;width:22px;height:22px;margin:0 6px 0 0;padding:0;border:1px solid rgba(92,198,220,.45);border-radius:50%;background:rgba(92,198,220,.12);font-size:11px;line-height:1;cursor:pointer;vertical-align:middle;flex:0 0 auto;color:#fff}.cxspk:hover{background:rgba(92,198,220,.3)}.cxspk.on{background:#ffb23d;border-color:#ffb23d;animation:cxspk 1s ease-in-out infinite}@keyframes cxspk{50%{box-shadow:0 0 0 5px rgba(255,178,61,.25)}}
 .trspk{border:1px solid rgba(92,198,220,.45);background:rgba(92,198,220,.14);border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;cursor:pointer;vertical-align:middle;color:#fff}.trspk:hover{background:rgba(92,198,220,.35)}
 #neuBtn{background:linear-gradient(135deg,#1a3a8a,#6a2cc9);color:#fff;border-color:#8fb4ff;box-shadow:0 0 12px rgba(120,150,255,.55)}
@@ -3606,7 +3610,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022234758';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022235453';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -5335,7 +5339,43 @@ function cxStop(){if(CXA){try{CXA.pause();}catch(e){}CXA=null;}if(CXI){clearInte
 function cxSay(k,btn){const same=CXB===btn;cxStop();if(same)return;const t=trNorm(CEXPL[k]||'');if(!t)return;try{TRQ=[];if(TRA){TRA.pause();TRA=null;}}catch(e){}
   CXB=btn;btn.classList.add('on');const done=()=>{if(CXB===btn){btn.classList.remove('on');CXB=null;}CXA=null;},tts=()=>{trTTS(t);CXI=setInterval(()=>{if(!window.speechSynthesis||!speechSynthesis.speaking){clearInterval(CXI);CXI=null;done();}},500);},sel=trVoiceSel();
   if(/^__rec/.test(sel)){const a=new Audio(TR_AUD+(sel==='__recT'?'tr_thalita/':'tr/')+trHash(t)+'.mp3?v=1');a.volume=.85;CXA=a;a.onended=done;const fb=()=>{if(CXA!==a)return;CXA=null;tts();};a.onerror=fb;a.play().catch(fb);}else tts();}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-cx]');if(!b)return;e.preventDefault();e.stopPropagation();cxSay(b.dataset.cx,b);},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cx]');if(!b)return;e.preventDefault();e.stopPropagation();cxOpen(b.dataset.cx,b);},true);
+/* cartão de explicação (igual ao do gêmeo do setor 3): imagem ao vivo da área, valor atual, texto, ouvir/parar, Assistente e escolha da voz */
+const CX_HEAD={_panel:['Controle de processo','conc'],_mg:['Germano · MG (etapas 1 a 10)','conc'],_es:['Ubu · ES (etapas 11 a 24)','furnace']};
+const cxName=k=>CX_HEAD[k]?CX_HEAD[k][0]:CMETA[k]?CMETA[k][2]:k,cxStage=k=>CX_HEAD[k]?CX_HEAD[k][1]:CTRL_STAGE[k];
+const cxVal=k=>{const m=CMETA[k];return m?fmt(P[k],m[7])+' '+m[3]:'';};
+const CXV={k:null,txt:'',btn:null,busy:false,t:null};
+function cxVoices(){try{const FEM=/luciana|francisca|thalita|maria|fernanda|vit[oó]ria|leila|helo[ií]sa|raquel|let[ií]cia|yara|manuela|brenda|elza|giovanna|flo\b|sandy|shelley|grandma|google/i,rk=n=>/natural|neural/i.test(n)?6:/online/i.test(n)?5:/premium|enhanced|aprimorad/i.test(n)?4:/google/i.test(n)?3:/luciana|francisca|thalita|antonio|felipe|daniel/i.test(n)?2:1;
+  return speechSynthesis.getVoices().filter(v=>(/^pt(-|_)BR/i.test(v.lang)||/portugu[eê]s.*brasil/i.test(v.name))&&FEM.test(v.name)).sort((a,b)=>rk(b.name)-rk(a.name));}catch(e){return[];}}
+function cxShot(){const cv=$('#cxCard canvas');if(!cv||!renderer||$('#cxCard').hidden)return;const id=cxStage(CXV.k),B=typeof scrCamBox==='function'?scrCamBox(id):null;if(!B)return;
+  scrCam=scrCam||new THREE.PerspectiveCamera(48,16/9,.5,6000);const sz=renderer.getDrawingBufferSize(new THREE.Vector2()),pr=renderer.getPixelRatio(),W=Math.min(640,sz.x),H=Math.round(W*9/16),a=.7+.5*Math.sin(performance.now()/1000*.06);
+  scrCam.position.set(B.c.x+Math.cos(a)*B.r,Math.max(B.c.y+B.r*.7,B.c.y+22,30),B.c.z+Math.sin(a)*B.r);scrCam.lookAt(B.c);scrCam.updateMatrixWorld();
+  renderer.setScissorTest(true);try{renderer.setViewport(0,0,W/pr,H/pr);renderer.setScissor(0,0,W/pr,H/pr);renderer.render(scene,scrCam);if(cv.width!==W){cv.width=W;cv.height=H;}cv.getContext('2d').drawImage(renderer.domElement,0,sz.y-H,W,H,0,0,W,H);}
+  finally{renderer.setScissorTest(false);renderer.setViewport(0,0,sz.x/pr,sz.y/pr);}}
+function cxRender(){const d=$('#cxCard'),k=CXV.k,sel=trVoiceSel(),rec=/^__rec/.test(sel),st=EQ[cxStage(k)],v=cxVal(k);
+  d.innerHTML=`<div class="h"><b>🔊 ${esc(cxName(k))}</b><button data-cxx title="Fechar">×</button></div><figure class="exim"><canvas width="640" height="360"></canvas><figcaption>${st?`Etapa ${st.num} · ${esc(st.name)}`:''}</figcaption></figure>${v?`<small>Valor atual: <b id="cxVal">${esc(v)}</b></small>`:''}
+   <p>${esc(CXV.txt)}</p><div class="r"><button data-cxp>▶ Ouvir</button><button data-cxs>■ Parar</button><button data-cxa class="pri"${CXV.busy?' disabled':''}>${CXV.busy?'Assistente explicando…':'🧠 Explicar com o Assistente (valores atuais)'}</button></div>
+   <label>Voz <select data-cxv><option value="__rec"${sel==='__rec'?' selected':''}>Francisca · voz natural (gravada)</option><option value="__recT"${sel==='__recT'?' selected':''}>Thalita · voz natural expressiva (gravada)</option>${cxVoices().map(x=>`<option${sel===x.name?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>${rec?'<small>A explicação do Assistente, criada na hora, usa a melhor voz do navegador.</small>':''}`;
+  cxShot();}
+function cxSpeak(){const b=CXV.btn;if(CXV.txt===CEXPL[CXV.k])cxSay(CXV.k,b);else{cxStop();CXB=b;b&&b.classList.add('on');trTTS(CXV.txt);CXI=setInterval(()=>{if(!speechSynthesis.speaking){clearInterval(CXI);CXI=null;if(CXB===b){b&&b.classList.remove('on');CXB=null;}}},500);}}
+function cxOpen(k,b){let d=$('#cxCard');if(!d){d=document.createElement('div');d.id='cxCard';d.className='s3exp';d.hidden=true;document.body.appendChild(d);
+    d.addEventListener('click',cxCardClick);d.addEventListener('change',e=>{const s=e.target.closest('[data-cxv]');if(!s)return;try{localStorage.setItem('s3voice',s.value);}catch(x){}cxRender();if(/^__rec/.test(s.value)){CXV.txt=CEXPL[CXV.k];cxSpeak();}else{cxStop();trTTS('Esta é a voz escolhida para as explicações.');}});}
+  if(CXV.k===k&&!d.hidden){cxClose();return;}
+  CXV.k=k;CXV.txt=CEXPL[k]||'';CXV.btn=b;CXV.busy=false;const r=b.getBoundingClientRect(),pn=b.closest('.panel,#left,#dash')||b;const pr=pn.getBoundingClientRect();
+  d.style.left=Math.max(8,Math.min(innerWidth-380,(pn.id==='dash'?r.right:pr.right)+10))+'px';d.style.top=Math.max(70,Math.min(innerHeight-560,r.top-10))+'px';d.hidden=false;
+  cxRender();cxSay(k,b);clearInterval(CXV.t);CXV.t=setInterval(()=>{if(d.hidden){clearInterval(CXV.t);return;}cxShot();const e=$('#cxVal');if(e)e.textContent=cxVal(CXV.k);},1500);}
+function cxClose(){cxStop();const d=$('#cxCard');if(d)d.hidden=true;clearInterval(CXV.t);}
+function cxCardClick(e){const t=e.target;
+  if(t.closest('[data-cxx]')){cxClose();return;}
+  if(t.closest('[data-cxp]')){cxStop();cxSpeak();return;}
+  if(t.closest('[data-cxs]')){cxStop();return;}
+  if(t.closest('[data-cxa]')){if(!(window.google&&google.script&&google.script.run)){CXV.txt=(CEXPL[CXV.k]||'')+' (Assistente indisponível nesta versão.)';cxRender();return;}
+    CXV.busy=true;cxRender();const k=CXV.k,v=cxVal(k),st=EQ[cxStage(k)];
+    const q=`EXPLICAÇÃO DIDÁTICA PARA TREINAMENTO (não é diagnóstico): explique para um operador em formação, em até 6 frases simples e faladas, a importância de "${cxName(k)}" no processo${st?` (etapa ${st.num}, ${st.name})`:''} do complexo Germano–Ubu: como afeta produção, qualidade (Fe, SiO₂, resistência), energia, meio ambiente e segurança${v?`, e o que o valor atual (${v}) indica em relação aos demais dados`:''}. Diga o que acontece se aumentar ou diminuir. Escreva a explicação inteira no campo "resumo", sem listas.`;
+    google.script.run.withSuccessHandler(r=>{if(CXV.k!==k)return;CXV.busy=false;CXV.txt=String((r&&r.resumo)||'').trim()||CEXPL[k];logEvent('Simulação',`Explicação do Assistente: ${cxName(k)}`);cxRender();cxSpeak();})
+      .withFailureHandler(err=>{if(CXV.k!==k)return;CXV.busy=false;CXV.txt=(CEXPL[k]||'')+' (Assistente indisponível agora: '+String(err&&err.message||err).slice(0,80)+')';cxRender();})
+      .aiAnalyze({modo:'diag',escopo:'all',pergunta:q,contexto:buildContext('all')});}}
+
 CTRL.forEach(([grp_,key,label,unit,min,max,stepv,dec,hint])=>{
   const d=document.createElement('div');d.className='ctl';const sid=CTRL_STAGE[key],num=ctlNum(key);
   d.innerHTML=`<label for="in-${key}">${cxBtn(key,label)}${num<99?`<button type="button" class="cn" data-stage="${sid}" title="Etapa ${num}: ${EQ[sid].name} (abrir painel)">${num}</button>`:''}${label}</label><output id="out-${key}"></output><input type="range" id="in-${key}" min="${min}" max="${max}" step="${stepv}">${hint?`<small>${hint}</small>`:''}`;
