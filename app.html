@@ -642,7 +642,9 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #scr .cams{display:grid;grid-template-columns:1fr 1fr;gap:6px}#scr .cam{position:relative;background:#000;border:1px solid #46505a;border-radius:4px;overflow:hidden;cursor:pointer;aspect-ratio:16/9}
 #scr .cam canvas{width:100%;height:100%;display:block;filter:saturate(.75) contrast(1.08)}#scr .cam .co{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px)}
 #scr .cam b{position:absolute;left:6px;top:4px;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;text-shadow:0 0 3px #000}#scr .cam em{position:absolute;right:6px;top:4px;font:600 10px 'IBM Plex Mono',monospace;color:#ff5b4f;font-style:normal}#scr .cam small{position:absolute;left:6px;bottom:4px;font:10px 'IBM Plex Mono',monospace;color:#e6eefc;text-shadow:0 0 3px #000}
-#scr .cam.sel{outline:2px solid #ffd24a;outline-offset:1px}#scr .cam .cn{position:absolute;right:6px;bottom:4px;font:700 11px 'IBM Plex Mono',monospace;font-style:normal;color:#ffd24a;background:rgba(0,0,0,.55);padding:0 5px;border-radius:3px}
+#scr .cam.a1{outline:3px solid #ff3b2f;animation:scrCa 1s steps(2) infinite}#scr .cam.a2{outline:3px solid #ffb020}@keyframes scrCa{50%{outline-color:#5a1010}}#scr .cam.a1 em,#scr .cam.a2 em{color:#fff;background:#d0302a;padding:0 5px;border-radius:3px}#scr .cam.a2 em{background:#b07800}
+#scr .camsel button.a1{background:#c0281f;border-color:#ff5b4f;color:#fff}#scr .camsel button.a2{background:#8a5a00;border-color:#ffb020;color:#fff}#scr .camsel button.au{min-width:auto;padding:3px 8px;font-family:system-ui;color:#ffd9a0}#scr .camsel button.au.on{background:#3a2a10;border-color:#ffb020;color:#ffd24a}
+#scr .cam.sel{outline:2px solid #ffd24a;outline-offset:1px}#scr .cam.sel.a1{outline:3px solid #ff3b2f}#scr .cam.sel.a2{outline:3px solid #ffb020}#scr .cam .cn{position:absolute;right:6px;bottom:4px;font:700 11px 'IBM Plex Mono',monospace;font-style:normal;color:#ffd24a;background:rgba(0,0,0,.55);padding:0 5px;border-radius:3px}
 #scr .cam.tw iframe{position:absolute;left:0;top:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none;background:#000}
 #scr .camsel{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:8px;font-size:11.5px;color:#a9b4bd}#scr .camsel span{margin-right:4px}#scr .camsel b{color:#ffd24a}
 #scr .camsel button{min-width:28px;padding:3px 0;font:600 11px 'IBM Plex Mono',monospace;background:#171b20;color:#cfd8de;border:1px solid #46505a;border-radius:4px;cursor:pointer}#scr .camsel button:hover{border-color:#ffd24a}#scr .camsel button.on{background:#ffd24a;color:#1b1200;border-color:#ffd24a}#scr .camsel button.g3{min-width:38px;color:#9fe8ff;border-color:#2f6f86}#scr .camsel button.g3.on{background:#5cc6dc;color:#04202a}
@@ -3610,7 +3612,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261023100722';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261023101153';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7689,7 +7691,17 @@ function scrTrend(ks){const keep=trendH;trendH=SALA.th;try{ks.forEach(k=>{const 
 let scrCam=null;SALA.sel=0;
 const scrCamName=id=>id==='tw3'?'Gêmeo digital · área 3 (britagem e peneiramento)':EQ[id]?EQ[id].name:id;
 function scrCamTile(i){const id=SALA.cams[i],tw=id==='tw3';return `<div class="cam${i===SALA.sel?' sel':''}${tw?' tw':''}" data-cam="${i}">${tw?`<iframe data-tw3 src="${esc(twin3URL()+'&cftv=1')}" title="Gêmeo digital do setor 3" loading="lazy"></iframe>`:'<canvas width="320" height="180"></canvas>'}<div class="co"></div><b>CAM ${scrPad(i+1)} · ${esc(scrCamName(id))}</b><em>● ${tw?'GÊMEO':'REC'}</em><small>${esc(scrClock().txt)}</small><i class="cn">${i+1}</i></div>`;}
-function scrCamSel(){const el=$('#scrCamSel');if(!el)return;const cur=SALA.cams[SALA.sel];el.innerHTML=`<span>Tela <b>${SALA.sel+1}</b> mostra:</span>`+scrEqs().map(e=>`<button data-area="${e.id}" class="${e.id===cur?'on':''}" title="${e.num} · ${esc(e.name)}">${e.num}</button>`).join('')+`<button data-area="tw3" class="g3 ${cur==='tw3'?'on':''}" title="Gêmeo digital da área 3 (britagem e peneiramento) ao vivo">G3</button>`;}
+const scrAlmCls=id=>{if(!EQ[id])return'';const[s]=scrNodeSt(id);return s==='crit'?'a1':s==='warn'?'a2':'';};
+function scrSetCam(i,id){SALA.cams[i]=id;const t=document.querySelector(`#scrCams .cam[data-cam="${i}"]`);if(t){t.outerHTML=scrCamTile(i);SALA.tCam=0;scrTwScale();}}
+/* áreas em alarme vão sozinhas para o CFTV (P1 primeiro); quando o alarme normaliza, a tela volta à área anterior */
+function scrCamAuto(){if(!document.querySelector('#scrCams'))return;SALA.camAuto=SALA.camAuto||{};const A=SALA.camAuto;
+  const al=[...new Set(ALARMS.filter(a=>EQ[a.eq]).sort((a,b)=>(a.sev==='crit'?0:1)-(b.sev==='crit'?0:1)).map(a=>a.eq))];let ch=false;
+  for(const i of Object.keys(A)){if(SALA.auto===false||!al.includes(SALA.cams[i])){scrSetCam(+i,A[i]);delete A[i];ch=true;}}
+  if(SALA.auto!==false)for(const id of al){if(SALA.cams.includes(id))continue;const free=j=>!(j in A)&&!al.includes(SALA.cams[j]);let i=SALA.cams.findIndex((c,j)=>free(j)&&c!=='tw3');if(i<0)i=SALA.cams.findIndex((c,j)=>free(j));if(i<0)break;
+    A[i]=SALA.cams[i];scrSetCam(i,id);ch=true;logEvent('Sala de controle',`CFTV: tela ${i+1} mostrando ${EQ[id].num} · ${EQ[id].name} (área em alarme)`);}
+  document.querySelectorAll('#scrCams .cam').forEach((t,i)=>{const c=scrAlmCls(SALA.cams[i]);t.classList.toggle('a1',c==='a1');t.classList.toggle('a2',c==='a2');const bd=t.querySelector('em');if(bd&&SALA.cams[i]!=='tw3')bd.textContent=c?'⚠ ALARME':'● REC';});
+  document.querySelectorAll('#scrCamSel [data-area]').forEach(b=>{const c=scrAlmCls(b.dataset.area);b.classList.toggle('a1',c==='a1');b.classList.toggle('a2',c==='a2');});if(ch)scrCamSel();}
+function scrCamSel(){const el=$('#scrCamSel');if(!el)return;const cur=SALA.cams[SALA.sel];el.innerHTML=`<button data-a="camauto" class="au ${SALA.auto!==false?'on':''}" title="Mostrar automaticamente nas telas as áreas com alarme">⚠ Auto alarmes: ${SALA.auto!==false?'ligado':'desligado'}</button><span>Tela <b>${SALA.sel+1}</b> mostra:</span>`+scrEqs().map(e=>`<button data-area="${e.id}" class="${e.id===cur?'on':''} ${scrAlmCls(e.id)}" title="${e.num} · ${esc(e.name)}">${e.num}</button>`).join('')+`<button data-area="tw3" class="g3 ${cur==='tw3'?'on':''}" title="Gêmeo digital da área 3 (britagem e peneiramento) ao vivo">G3</button>`;}
 function scrTwScale(){document.querySelectorAll('#scrCams .cam.tw iframe').forEach(f=>{const w=f.parentElement.clientWidth;f.style.transform=`scale(${w/1280})`;});}
 function scrCamBox(id){if(SALA.box[id])return SALA.box[id];const g=EQ[id]&&EQ[id].group;if(!g)return null;const b=new THREE.Box3().setFromObject(g),c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3());return SALA.box[id]={c,r:clamp(Math.max(s.x,s.z)*.75,18,140)};}
 function scrCams(){const tiles=document.querySelectorAll('#scrCams .cam');if(!tiles.length||!renderer)return;const now=performance.now();const first=!SALA.tCam;SALA.tCam=now;const k=SALA.ck||(SALA.ck=4),i0=SALA.ci||0;SALA.ci=(i0+k)%tiles.length;
@@ -7739,6 +7751,7 @@ function scrUpdate(full){const d=$('#scr');if(!d||d.hidden)return;const ck=scrCl
     const U=scrUtil(),gm=Math.max(...U.map(u=>u[1]));$('#scrUt').innerHTML=U.map(([l,v])=>`<div class="gb"><span>${v===gm?'<b style="color:#ffd24a">▶ </b>':''}${l}</span><div class="bar"><i class="${v>98?'crit':v>90?'warn':''}" style="width:${clamp(v,0,100)}%"></i><u style="left:90%"></u></div><b>${fmt(v,0)} %</b></div>`).join('');
     const n=Math.max(1,Math.min(Math.floor((ST.simT-sh.t0)/600),HN)),acc=k=>(HIST[k]||[]).slice(-n).reduce((s,x)=>s+x,0)/6,hh=(ST.simT-sh.t0)/3600;
     $('#scrPt').innerHTML=`<div class="pj"><span class="hint">Produto</span><span class="hint">Agora t/h</span><span class="hint">Acum. turno t</span><span></span>${[['total','Produção total'],['prod','Pelotas'],['pfSold','Pellet feed vendido'],['load','Embarque']].map(([k,l])=>`<span>${l}</span><b>${fmt(scrV(k),0)}</b><b>${fmt(acc(k),0)}</b><span></span>`).join('')}</div><p class="hint">${sh.lbl} · ${fmt(hh,1)} h decorridas · ritmo anual atual ≈ <b>${fmt(scrV('total')*8760/1e6,1)} Mt/ano</b></p>`;
+    try{scrCamAuto();}catch(e){console.warn('cftv auto',e);}
     if(now-SALA.tTr>2500){SALA.tTr=now;$('#scrTrH').textContent=`últimas ${SALA.th} h`;scrTrend(SCR_TR);}
     }
   else if(t==='malhas'){for(const[k,L]of Object.entries(LOOPS)){const r=SCR_PV[L.pvU]||[L.sp*.5,L.sp*1.5],y=v=>clamp((v-r[0])/(r[1]-r[0])*100,0,100),au=L.mode==='auto';
@@ -7770,7 +7783,7 @@ function scrClick(e){const b=e.target.closest('button,.cam');if(!b)return;const 
   if(D.tab)return scrTab(D.tab);if(D.tabgo)return scrTab(D.tabgo);
   if(D.go){scrClose();select(D.go,true);return;}
   if(b.classList.contains('cam')){SALA.sel=+D.cam;document.querySelectorAll('#scrCams .cam').forEach((c,i)=>c.classList.toggle('sel',i===SALA.sel));scrCamSel();return;}
-  if(D.area){const i=SALA.sel,old=SALA.cams[i];SALA.cams[i]=D.area;if(old!==D.area){const t=document.querySelector(`#scrCams .cam[data-cam="${i}"]`);if(t){t.outerHTML=scrCamTile(i);SALA.tCam=0;scrTwScale();}logEvent('Sala de controle',`Tela ${i+1} do CFTV: ${scrCamName(D.area)}`);}scrCamSel();return;}
+  if(D.area){const i=SALA.sel,old=SALA.cams[i];if(SALA.camAuto)delete SALA.camAuto[i];SALA.cams[i]=D.area;if(old!==D.area){const t=document.querySelector(`#scrCams .cam[data-cam="${i}"]`);if(t){t.outerHTML=scrCamTile(i);SALA.tCam=0;scrTwScale();}logEvent('Sala de controle',`Tela ${i+1} do CFTV: ${scrCamName(D.area)}`);}scrCamSel();return;}
   if(D.th){SALA.th=+D.th;document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b));SALA.tTr=0;scrUpdate();return;}
   if(D.lm){scrSetLoop(D.lm,D.m);scrUpdate(true);return;}
   if(D.wif){wifOpen(D.wif);return;}
@@ -7778,7 +7791,7 @@ function scrClick(e){const b=e.target.closest('button,.cam');if(!b)return;const 
   if(D.run){const id=D.run,on=RUN[id],E=EQ[id];const act=()=>{RUN[id]=on?0:1;logEvent('Comando',`${on?'Parada':'Partida'} da etapa ${E.num} · ${E.name} (sala de controle)`);refreshEq(true);scrUpdate();};
     if(on)confirmCmd(`Parar a etapa ${E.num}?`,`${E.name}. ${CONSEQ[id]||'O fluxo a jusante será interrompido e os estoques intermediários começarão a variar.'}`,act);else act();return;}
   if(D.unit){const k=D.unit,on=RUN[k],act=()=>{RUN[k]=on?0:1;logEvent('Comando',`${D.nm}: ${on?'parada':'partida'} (sala de controle)`);refreshEq(true);scrUpdate();};if(on)confirmCmd(`Parar ${D.nm}?`,'A capacidade da etapa será reduzida e o balanço a jusante mudará.',act);else act();return;}
-  switch(D.a){case'close':scrClose();break;case'mute':SALA.mute=!SALA.mute;scrUpdate();break;case'neu':neuOpen();break;case'proj':scrProject(+D.h);break;
+  switch(D.a){case'close':scrClose();break;case'camauto':SALA.auto=SALA.auto===false;scrCamAuto();scrCamSel();break;case'mute':SALA.mute=!SALA.mute;scrUpdate();break;case'neu':neuOpen();break;case'proj':scrProject(+D.h);break;
     case'ackall':for(const o of ALMS.values())if(!o.ack){o.ack=true;logEvent('Reconhecimento',o.msg);}renderAlarms();scrUpdate();break;
     case'mpc':MPC.on=!MPC.on;MPC.next=ST.ct;MPC.moves=[];logEvent('Controle',`MPC de SiO₂ ${MPC.on?'ligado':'desligado'} (sala de controle)`);scrTab('malhas');break;
     case'note':{const i=$('#scrNote'),v=i.value.trim();if(v){logEvent('Turno',`${scrShift().lbl}: ${v}`);i.value='';scrUpdate();}break;}
