@@ -568,7 +568,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #neuNote{position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:45;display:grid;gap:8px;width:min(520px,94vw);cursor:pointer}
 #neuNote .nn{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;background:rgba(10,18,40,.95);border:1px solid #7aa8ff;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 18px rgba(110,150,255,.35);color:#fff;animation:nnIn .35s ease-out}
 #neuNote .nn.go{border-color:#2fbf71;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 18px rgba(47,191,113,.45)}#neuNote .nn.out{opacity:0;transform:translateY(-8px);transition:.45s}
-#neuNote img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #8fd8ff}#neuNote div{display:grid;gap:2px}#neuNote b{color:#9fd0ff;font-size:13px}#neuNote span{font-size:13px}#neuNote small{color:#9fb0bd;font-size:11.5px}#neuNote i{font-style:normal;color:#ffd24a;letter-spacing:2px}
+#neuNote img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #8fd8ff}#neuNote div{display:grid;gap:2px}#neuNote b{color:#9fd0ff;font-size:13px}#neuNote span{font-size:13px}#neuNote small{color:#9fb0bd;font-size:11.5px}#neuNote small.pv{color:#9fe0b8}#neuNote i{font-style:normal;color:#ffd24a;letter-spacing:2px}
 @keyframes nnIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
 </style>
 
@@ -3527,7 +3527,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022223333';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022224040';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7218,35 +7218,58 @@ const NEU_RULES=[
   {re:/tratamento de água/i,k:'eteCap',d:+10,why:()=>'tratamento de água abaixo da demanda',ef:'mais capacidade na ETE equilibra o balanço hídrico',m:()=>0,better:0,u:''},
   {re:/sobrecarga|carga [0-9]/i,ok:()=>true,k:'tcldSpd',d:-5,why:()=>'britador em sobrecarga no setor 3',ef:'menos alimentação reduz a carga dos britadores',m:()=>{try{return Math.max(...Object.values(S3.sim.eq).map(e=>e.load||0))*100;}catch(e){return 0;}},better:-1,u:'% carga máx.'}];
 function neuStep(k,d){const m=CMETA[k];if(!m)return null;const cur=+P[k],mx=(m[5]-m[4])*NEU.stepK,step=Math.max(-mx,Math.min(mx,d)),nv=clamp(+(cur+step).toFixed(m[7]||0),m[4],m[5]);return nv===cur?null:{cur,nv};}
-function neuApply(k,nv,src,why,ef,metric,better,u){const m=CMETA[k],cur=+P[k];P[k]=nv;for(const L of Object.values(LOOPS))if(L.spKey===k)L.sp=nv;try{if(typeof syncAll==='function')syncAll();else inputs[k]&&inputs[k].sync();}catch(e){}
-  const e={t:ST.simT,src,k,nome:m[2],u:m[3],de:cur,para:nv,why,ef,m0:metric?metric():null,metric,better,mu:u,chk:null};NEU.log.unshift(e);if(NEU.log.length>80)NEU.log.pop();NEU.nAdj++;
-  if(metric)NEU.checks.push(e);logEvent('Neural',`${m[2]}: ${fmt(cur,m[7]||0)} → ${fmt(nv,m[7]||0)} ${m[3]} · ${why}`);}
+function neuApply(k,nv,src,why,ef,metric,better,u,prev){const m=CMETA[k],cur=+P[k];P[k]=nv;for(const L of Object.values(LOOPS))if(L.spKey===k)L.sp=nv;try{if(typeof syncAll==='function')syncAll();else inputs[k]&&inputs[k].sync();}catch(e){}
+  const e={t:ST.simT,src,k,nome:m[2],u:m[3],de:cur,para:nv,why,ef,prev,m0:metric?metric():null,metric,better,mu:u,chk:null};NEU.log.unshift(e);if(NEU.log.length>80)NEU.log.pop();NEU.nAdj++;
+  (NEU.wait=NEU.wait||{})[k]={until:ST.simT+(prev?1.5*3600:1800),t:ST.simT,e};if(metric)NEU.checks.push(e);logEvent('Neural',`${m[2]}: ${fmt(cur,m[7]||0)} → ${fmt(nv,m[7]||0)} ${m[3]} · ${why}`);}
+/* OTIMIZAÇÃO PELO MODELO: para cada problema, testa valores do controle numa projeção de 3 h (simProject, sem mexer no processo real)
+   e escolhe a MENOR mudança que resolve o alarme da área sem criar alarmes novos, sem queda de produção > 1 %, sem tirar Fe/SiO₂ da
+   especificação, sem passar do limite de emissão e sem aumento de energia > 5 %. */
+const NEU_H=3,nk=m=>String(m).replace(/[\d.,]+/g,'#');
+function neuSetK(k,v){P[k]=v;for(const L of Object.values(LOOPS))if(L.spKey===k)L.sp=v;}
+async function neuPlan(r,p){const m=CMETA[r.k];if(!m)return null;const cur=+P[r.k],dir=Math.sign(r.d)||1,span=m[5]-m[4],base=Math.abs(r.d)||m[6]||1,key=nk(p.msg);
+  const B=simProject(NEU_H,null);await new Promise(z=>setTimeout(z,0));const bAl=new Set(B.alarms.keys()),nowAl=new Set((ALARMS||[]).map(a=>nk(a.msg)));
+  const cands=[];for(const f of [1,2,3,4,6,8,12]){const v=clamp(+(cur+dir*base*f).toFixed(m[7]||0),m[4],m[5]);if(v!==cur&&Math.abs(v-cur)<=span*.35&&!cands.includes(v))cands.push(v);}
+  let best=null,part=null;
+  for(const v of cands){const res=simProject(NEU_H,()=>neuSetK(r.k,v));await new Promise(z=>setTimeout(z,0));
+    const pa=res.alarms.get(key),resolved=!(res.last&&res.last.has(key)),novos=[...res.alarms.keys()].filter(x=>!bAl.has(x)&&!nowAl.has(x)),
+      dProd=B.m.tot>0?(res.m.tot-B.m.tot)/B.m.tot:0,dKwh=B.m.kwh>0?(res.m.kwh-B.m.kwh)/B.m.kwh:0,
+      quality=(res.m.si>SPEC.siMax&&B.m.si<=SPEC.siMax)||(res.m.fe<SPEC.feMin&&B.m.fe>=SPEC.feMin),emis=res.m.em>50&&B.m.em<=50;
+    const safe=!novos.length&&dProd>=-.01&&dKwh<=.05&&!quality&&!emis,score=(pa?pa.n:0);
+    const prev=`previsão em ${NEU_H} h: ${resolved?'problema resolvido':'melhora parcial'} · produção ${fmt(B.m.tot,0)} → ${fmt(res.m.tot,0)} t/h (${dProd>=0?'+':''}${fmt(dProd*100,1)} %) · SiO₂ ${fmt(B.m.si,2)} → ${fmt(res.m.si,2)} % · Fe ${fmt(B.m.fe,2)} → ${fmt(res.m.fe,2)} % · ${novos.length?novos.length+' alarme(s) novo(s)':'sem alarmes novos'}`;
+    if(safe&&resolved){best={v,prev};break;}
+    if(safe&&(!part||score<part.score))part={v,prev,score};}
+  if(best)return{nv:best.v,prev:best.prev,ok:true};if(part&&part.score<((B.alarms.get(key)||{}).n||NEU_H))return{nv:part.v,prev:part.prev,ok:false};return null;}
 /* AVISO EM 3 TEMPOS: cada ajuste planejado é anunciado 3 vezes (com som) e só então aplicado */
 function neuQueue(o){if(NEU.q.some(x=>x.k===o.k))return;o.n=0;o.next=performance.now();NEU.q.push(o);}
 function neuNote(o){const m=CMETA[o.k],dg=m[7]||0;let w=$('#neuNote');if(!w){w=document.createElement('div');w.id='neuNote';document.body.appendChild(w);w.addEventListener('click',()=>{const d=$('#neu');if(!d||d.hidden)neuOpen();});}
-  const el=document.createElement('div');el.className='nn'+(o.n>=3?' go':'');el.innerHTML=`<img src="${NEU_IMG}" alt=""><div><b>Módulo Neural · aviso ${o.n} de 3</b><span>${o.n>=3?'Aplicando agora':'Vou ajustar o processo'}: ${esc(m[2])} ${fmt(+P[o.k],dg)} → ${fmt(o.nv,dg)} ${esc(m[3])}</span><small>Motivo: ${esc(o.why)}</small></div><i>${'●'.repeat(o.n)}${'○'.repeat(3-o.n)}</i>`;
+  const el=document.createElement('div');el.className='nn'+(o.n>=3?' go':'');el.innerHTML=`<img src="${NEU_IMG}" alt=""><div><b>Módulo Neural · aviso ${o.n} de 3</b><span>${o.n>=3?'Aplicando agora':'Vou ajustar o processo'}: ${esc(m[2])} ${fmt(+P[o.k],dg)} → ${fmt(o.nv,dg)} ${esc(m[3])}</span><small>Motivo: ${esc(o.why)}</small>${o.prev?`<small class="pv">📈 ${esc(o.prev)}</small>`:''}</div><i>${'●'.repeat(o.n)}${'○'.repeat(3-o.n)}</i>`;
   w.appendChild(el);setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),500);},o.n>=3?3800:2600);while(w.children.length>3)w.firstChild.remove();
   logEvent('Neural',`Aviso ${o.n}/3: ajuste de ${m[2]} ${fmt(+P[o.k],dg)} → ${fmt(o.nv,dg)} ${m[3]} (${o.why})`);neuBeep(o.n>=3);}
 let neuAC=null;function neuBeep(ok){try{neuAC=neuAC||new(window.AudioContext||window.webkitAudioContext)();const a=neuAC,t=a.currentTime;(ok?[660,880]:[740]).forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain(),t0=t+i*.12;o.frequency.value=f;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(.08,t0+.02);g.gain.exponentialRampToValueAtTime(.001,t0+.18);o.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+.2);});}catch(e){}}
-function neuRunQueue(){const t=performance.now();NEU.q=NEU.q.filter(o=>{if(t<o.next)return true;o.n++;o.next=t+3200;neuNote(o);if(o.n>=3){neuApply(o.k,o.nv,o.src,o.why,o.ef,o.metric,o.better,o.u);return false;}return true;});}
-function neuCycle(){const P0=neuProblems(),now=ST.simT;
+function neuRunQueue(){const t=performance.now();NEU.q=NEU.q.filter(o=>{if(t<o.next)return true;o.n++;o.next=t+3200;neuNote(o);if(o.n>=3){neuApply(o.k,o.nv,o.src,o.why,o.ef,o.metric,o.better,o.u,o.prev);return false;}return true;});}
+function neuCycle(){try{evalAlarms();renderAlarms();}catch(e){}const P0=neuProblems(),now=ST.simT;
   /* resolvidos desde o ciclo anterior */
-  const cur=new Set(P0.map(p=>p.key));for(const [k,p] of NEU.seen)if(!cur.has(k)){NEU.seen.delete(k);NEU.log.unshift({t:now,src:'res',msg:p.msg,area:p.area});NEU.nRes++;}
+  const cur=new Set(P0.map(p=>p.key));for(const [k,p] of NEU.seen)if(!cur.has(k)){NEU.seen.delete(k);const r=NEU_RULES.find(x=>x.re.test(p.msg)),wt=r&&(NEU.wait||{})[r.k];NEU.log.unshift({t:now,src:'res',msg:p.msg,area:p.area,by:wt&&now-wt.t<4*3600?`${wt.e.nome} ${fmt(wt.e.de,CMETA[wt.e.k][7]||0)} → ${fmt(wt.e.para,CMETA[wt.e.k][7]||0)} ${wt.e.u}`:''});if(r&&wt)delete NEU.wait[r.k];NEU.nRes++;}
   for(const p of P0)if(!NEU.seen.has(p.key))NEU.seen.set(p.key,p);
   /* confere o efeito dos ajustes depois de 1 h simulada */
   NEU.checks=NEU.checks.filter(e=>{if(now-e.t<3600)return true;let v=null;try{v=e.metric();}catch(x){}if(v!=null&&e.m0!=null&&e.better){const d=(v-e.m0)*e.better;e.chk={v,ok:d>0,txt:`${fmt(e.m0,2)} → ${fmt(v,2)} ${e.mu}`};}return false;});
-  /* decisões locais: no máximo 3 por ciclo, uma por chave */
-  const used=new Set();let n=0;
-  for(const p of P0){if(n>=3)break;if(p.safety)continue;const r=NEU_RULES.find(x=>x.re.test(p.msg)&&(!x.ok||x.ok()));if(!r||used.has(r.k))continue;if(neuLoopAuto(r.k)){p.st='malha em automático';continue;}
-    const s=neuStep(r.k,r.d);if(!s)continue;used.add(r.k);n++;const why=r.why();
-    if(NEU.auto)neuQueue({k:r.k,nv:s.nv,why,ef:r.ef,metric:r.m,better:r.better,u:r.u,src:'rede',prob:p.msg});else if(!NEU.pend.some(q=>q.k===r.k))NEU.pend.push({k:r.k,nv:s.nv,why,ef:r.ef,metric:r.m,better:r.better,u:r.u,src:'rede'});}
-  neuServer(P0);}
+  neuDecide(P0);neuServer(P0);}
+/* decisões: até 2 problemas por ciclo, cada um com o valor calculado pela projeção do modelo */
+async function neuDecide(P0){if(NEU.busy)return;NEU.busy=true;try{const used=new Set();let n=0;
+  for(const p of P0){if(n>=2)break;if(p.safety)continue;const r=NEU_RULES.find(x=>x.re.test(p.msg)&&(!x.ok||x.ok()));if(!r||used.has(r.k)||NEU.q.some(q=>q.k===r.k))continue;const wt=(NEU.wait||{})[r.k];if(wt&&ST.simT<wt.until){p.st=`ajuste aplicado: aguardando o efeito (previsto até ${fmt((wt.until-ST.simT)/3600,1)} h)`;continue;}if(neuLoopAuto(r.k)){p.st='malha em automático';continue;}
+    used.add(r.k);n++;NEU.planning=`calculando o ajuste de ${CMETA[r.k][2]} na projeção do modelo…`;neuRender();const pl=await neuPlan(r,p);NEU.planning='';
+    if(!pl){NEU.noSafe=NEU.noSafe||{};NEU.noSafe[nk(p.msg)]=`nenhum ajuste de ${CMETA[r.k][2]} resolve sem impacto no processo: decisão do operador`;continue;}
+    const why=r.why(),o={k:r.k,nv:pl.nv,why,ef:r.ef,prev:pl.prev,metric:r.m,better:r.better,u:r.u,src:'rede',prob:p.msg};
+    if(NEU.auto)neuQueue(o);else if(!NEU.pend.some(q=>q.k===r.k))NEU.pend.push(o);}}finally{NEU.busy=false;neuRender();}}
 /* rede do servidor (Assistente, modo soluções): no máximo uma consulta a cada 90 s reais, só com problemas não resolvidos pela política local */
 function neuServer(P0){if(!HAS_GAS||NEU.srvBusy||!P0.some(p=>!p.safety)||performance.now()-NEU.srvT<90000)return;NEU.srvT=performance.now();NEU.srvBusy=true;NEU.srvMsg='consultando a rede do servidor…';
   const q='GESTÃO AUTÔNOMA (Módulo Neural): proponha no máximo 3 ajustes de controle para os problemas atuais, usando SOMENTE as chaves listadas em "controles", com valor_sugerido próximo do atual (passos pequenos) e efeito_esperado claro. Não proponha ligar/desligar unidades. Problemas: '+P0.filter(p=>!p.safety).slice(0,8).map(p=>p.msg).join(' | ');
   google.script.run.withSuccessHandler(r=>{NEU.srvBusy=false;NEU.srvMsg=r&&r.resumo?String(r.resumo).slice(0,220):'';
-      (r&&r.recomendacoes||[]).slice(0,3).forEach(c=>{if(!c||!CMETA[c.chave]||!isFinite(c.valor_sugerido)||neuLoopAuto(c.chave))return;const s=neuStep(c.chave,+c.valor_sugerido-(+P[c.chave]));if(!s)return;
-        const why=c.titulo||'recomendação da rede do servidor',ef=c.efeito_esperado||'';if(NEU.auto)neuQueue({k:c.chave,nv:s.nv,why,ef,metric:null,better:0,u:'',src:'servidor',prob:why});else if(!NEU.pend.some(x=>x.k===c.chave))NEU.pend.push({k:c.chave,nv:s.nv,why,ef,src:'servidor'});});neuRender();})
+      (r&&r.recomendacoes||[]).slice(0,3).forEach(c=>{if(!c||!CMETA[c.chave]||!isFinite(c.valor_sugerido)||neuLoopAuto(c.chave)||NEU.q.some(q=>q.k===c.chave))return;const m=CMETA[c.chave],nv=clamp(+c.valor_sugerido,m[4],m[5]);if(nv===+P[c.chave])return;
+        /* valida a recomendação do servidor na projeção: só aplica se não criar alarmes novos nem derrubar a produção */
+        const B=simProject(NEU_H,null),res=simProject(NEU_H,()=>neuSetK(c.chave,nv)),bA=new Set(B.alarms.keys()),novos=[...res.alarms.keys()].filter(x=>!bA.has(x)),dP=B.m.tot>0?(res.m.tot-B.m.tot)/B.m.tot:0;
+        if(novos.length||dP<-.01)return;const why=c.titulo||'recomendação da rede do servidor',ef=c.efeito_esperado||'',prev=`previsão em ${NEU_H} h: produção ${fmt(B.m.tot,0)} → ${fmt(res.m.tot,0)} t/h · sem alarmes novos`;
+        const o={k:c.chave,nv,why,ef,prev,metric:null,better:0,u:'',src:'servidor',prob:why};if(NEU.auto)neuQueue(o);else if(!NEU.pend.some(x=>x.k===c.chave))NEU.pend.push(o);});neuRender();})
     .withFailureHandler(e=>{NEU.srvBusy=false;NEU.srvMsg='rede do servidor indisponível agora: seguindo só com a política local';neuRender();})
     .aiAnalyze({modo:'solucoes',escopo:'all',pergunta:q,contexto:buildContext('all')});}
 function neuTick(){if(!NEU.on)return;neuRunQueue();const t=performance.now();if(ST.simT>=NEU.next&&t-NEU.lastReal>8000){NEU.next=ST.simT+NEU.every;NEU.lastReal=t;try{neuCycle();}catch(e){console.warn('neural',e);}}if(!$('#neu').hidden)neuRender();}
@@ -7254,22 +7277,22 @@ setInterval(neuTick,1000);
 function neuRender(){const d=$('#neu');if(!d||d.hidden)return;const P0=neuProblems(),hm=t=>{try{return simStamp?fmtT(t):'';}catch(e){return '';}};
   const ts=t=>{const s=Math.max(0,ST.simT-t);return s<90?'agora':s<5400?`há ${Math.round(s/60)} min`:`há ${(s/3600).toFixed(1).replace('.',',')} h`;};
   const adj=k=>NEU.log.find(e=>e.k&&e.why&&ST.simT-e.t<7200&&P0.some(p=>p.msg&&e.why));
-  $('#neuSt').innerHTML=`<span class="nd ${NEU.on?'on':''}"></span>${NEU.on?(NEU.auto?'Gestão autônoma <b>ligada</b>':'Recomendando: o operador aprova'):'Gestão neural <b>desligada</b>'} · ${P0.length} item(ns) com problema · ${NEU.nAdj} ajuste(s) · ${NEU.nRes} resolvido(s)${NEU.srvMsg?`<br><small>Rede do servidor: ${esc(NEU.srvMsg)}</small>`:''}`;
+  $('#neuSt').innerHTML=`<span class="nd ${NEU.on?'on':''}"></span>${NEU.on?(NEU.auto?'Gestão autônoma <b>ligada</b>':'Recomendando: o operador aprova'):'Gestão neural <b>desligada</b>'} · ${P0.length} item(ns) com problema · ${NEU.nAdj} ajuste(s) · ${NEU.nRes} resolvido(s)${NEU.planning?`<br><small>🧮 ${esc(NEU.planning)}</small>`:''}${NEU.srvMsg?`<br><small>Rede do servidor: ${esc(NEU.srvMsg)}</small>`:''}`;
   $('#neuOn').textContent=NEU.on?'⏸ Pausar gestão':'▶ Ligar gestão neural';$('#neuOn').classList.toggle('pri',!NEU.on);
   $('#neuMode').value=NEU.auto?'auto':'rec';
-  $('#neuP').innerHTML=P0.length?P0.map(p=>{const r=!p.safety&&NEU_RULES.find(x=>x.re.test(p.msg)),qq=r&&NEU.q.find(x=>x.k===r.k),st=qq?`<span class="ns ai">🧠 ajuste anunciado (${qq.n}/3): ${esc(CMETA[r.k][2])} → ${fmt(qq.nv,CMETA[r.k][7]||0)} ${esc(CMETA[r.k][3])}</span>`:p.safety?'<span class="ns op">👤 decisão do operador</span>':p.st?`<span class="ns">${p.st}</span>`:r?`<span class="ns ai">🧠 sob gestão: ${esc(CMETA[r.k]?CMETA[r.k][2]:r.k)}</span>`:`<span class="ns">🧠 ${HAS_GAS?'em análise na rede do servidor':'monitorando (sem ajuste automático para este item)'}</span>`;
+  $('#neuP').innerHTML=P0.length?P0.map(p=>{const r=!p.safety&&NEU_RULES.find(x=>x.re.test(p.msg)),qq=r&&NEU.q.find(x=>x.k===r.k),ns0=(NEU.noSafe||{})[nk(p.msg)],st=ns0?`<span class="ns op">👤 ${esc(ns0)}</span>`:r&&(NEU.wait||{})[r.k]&&ST.simT<NEU.wait[r.k].until?`<span class="ns ai">⏳ ajuste aplicado (${esc(NEU.wait[r.k].e.nome)} ${fmt(NEU.wait[r.k].e.de,CMETA[r.k][7]||0)} → ${fmt(NEU.wait[r.k].e.para,CMETA[r.k][7]||0)}): aguardando o efeito</span>`:qq?`<span class="ns ai">🧠 ajuste anunciado (${qq.n}/3): ${esc(CMETA[r.k][2])} → ${fmt(qq.nv,CMETA[r.k][7]||0)} ${esc(CMETA[r.k][3])}</span>`:p.safety?'<span class="ns op">👤 decisão do operador</span>':p.st?`<span class="ns">${p.st}</span>`:r?`<span class="ns ai">🧠 sob gestão: ${esc(CMETA[r.k]?CMETA[r.k][2]:r.k)}</span>`:`<span class="ns">🧠 ${HAS_GAS?'em análise na rede do servidor':'monitorando (sem ajuste automático para este item)'}</span>`;
       return `<div class="nrow ${p.sev}"><i></i><div><b>${esc(p.area)}</b><span>${esc(p.msg)}</span>${p.causa?`<small>Causa provável: ${esc(p.causa)}</small>`:''}${p.safety&&p.acao?`<small>Ação recomendada: ${esc(p.acao)}</small>`:''}${st}</div></div>`;}).join(''):'<p class="hint">✓ Nenhum item com problema no processo agora.</p>';
-  $('#neuQ').innerHTML=NEU.pend.length?`<h4>Ajustes aguardando aprovação</h4>${NEU.pend.map((q,i)=>`<div class="nlog"><b>${esc(CMETA[q.k][2])}: ${fmt(+P[q.k],CMETA[q.k][7]||0)} → ${fmt(q.nv,CMETA[q.k][7]||0)} ${esc(CMETA[q.k][3])}</b><span>${esc(q.why)}${q.ef?' · '+esc(q.ef):''}</span><div><button class="btn pri" data-na="${i}">Aplicar</button><button class="btn" data-nx="${i}">Descartar</button></div></div>`).join('')}`:'';
-  $('#neuL').innerHTML=NEU.log.length?NEU.log.slice(0,40).map(e=>e.src==='res'?`<div class="nlog res"><b>✓ Resolvido · ${esc(e.area)}</b><span>${esc(e.msg)}</span><small>${ts(e.t)}</small></div>`
-      :`<div class="nlog"><b>${e.src==='servidor'?'🌐':'🧠'} ${esc(e.nome)}: ${fmt(e.de,CMETA[e.k][7]||0)} → ${fmt(e.para,CMETA[e.k][7]||0)} ${esc(e.u)}</b><span>Motivo: ${esc(e.why)}${e.ef?` · Efeito esperado: ${esc(e.ef)}`:''}</span><small>${ts(e.t)}${e.chk?` · efeito observado: ${esc(e.chk.txt)} ${e.chk.ok?'✓ melhorou':'✗ não melhorou: nova análise no próximo ciclo'}`:e.metric?' · conferindo o efeito em 1 h simulada':''}</small></div>`).join(''):'<p class="hint">Nenhuma mudança feita ainda.</p>';}
+  $('#neuQ').innerHTML=NEU.pend.length?`<h4>Ajustes aguardando aprovação</h4>${NEU.pend.map((q,i)=>`<div class="nlog"><b>${esc(CMETA[q.k][2])}: ${fmt(+P[q.k],CMETA[q.k][7]||0)} → ${fmt(q.nv,CMETA[q.k][7]||0)} ${esc(CMETA[q.k][3])}</b><span>${esc(q.why)}${q.ef?' · '+esc(q.ef):''}</span>${q.prev?`<small>📈 ${esc(q.prev)}</small>`:''}<div><button class="btn pri" data-na="${i}">Aplicar</button><button class="btn" data-nx="${i}">Descartar</button></div></div>`).join('')}`:'';
+  $('#neuL').innerHTML=NEU.log.length?NEU.log.slice(0,40).map(e=>e.src==='res'?`<div class="nlog res"><b>✓ Alarme resolvido · ${esc(e.area)}</b><span>${esc(e.msg)}</span><small>${ts(e.t)}${e.by?` · resolvido pelo ajuste: ${esc(e.by)}`:''}</small></div>`
+      :`<div class="nlog"><b>${e.src==='servidor'?'🌐':'🧠'} ${esc(e.nome)}: ${fmt(e.de,CMETA[e.k][7]||0)} → ${fmt(e.para,CMETA[e.k][7]||0)} ${esc(e.u)}</b><span>Motivo: ${esc(e.why)}${e.ef?` · Efeito esperado: ${esc(e.ef)}`:''}</span>${e.prev?`<small>📈 ${esc(e.prev)}</small>`:''}<small>${ts(e.t)}${e.chk?` · efeito observado: ${esc(e.chk.txt)} ${e.chk.ok?'✓ melhorou':'✗ não melhorou: nova análise no próximo ciclo'}`:e.metric?' · conferindo o efeito em 1 h simulada':''}</small></div>`).join(''):'<p class="hint">Nenhuma mudança feita ainda.</p>';}
 function neuOpen(){let d=$('#neu');if(!d){d=document.createElement('div');d.id='neu';d.hidden=true;document.body.appendChild(d);
     d.innerHTML=`<div class="nh"><img src="${NEU_IMG}" alt=""><div><b>Módulo Neural</b><small>Gestão autônoma do processo · analisa, ajusta e informa cada mudança</small></div><button class="btn" id="neuX">×</button></div>
       <div class="nst" id="neuSt"></div><div class="nctl"><button class="btn pri" id="neuOn"></button><select id="neuMode"><option value="auto">Ajustar automaticamente</option><option value="rec">Só recomendar (operador aprova)</option></select><button class="btn" id="neuNow">Analisar agora</button></div>
       <h4>Itens do processo com problema</h4><div id="neuP"></div><div id="neuQ"></div><h4>Mudanças no processo e efeito observado</h4><div id="neuL"></div>
-      <p class="hint">Passos limitados a 10 % da faixa de cada controle por ciclo; malhas em automático não são alteradas; segurança, geotecnia, desarmes e instrumentos ficam com o operador. Modelo didático.</p>`;
+      <p class="hint">Cada ajuste é calculado numa projeção de 3 h do modelo: a menor mudança que resolve o problema sem criar alarmes, sem queda de produção acima de 1 %, sem tirar Fe/SiO₂ da especificação, sem passar do limite de emissão e sem aumento de energia acima de 5 %; malhas em automático não são alteradas; segurança, geotecnia, desarmes e instrumentos ficam com o operador. Modelo didático.</p>`;
     d.addEventListener('click',e=>{if(e.target.closest('#neuX'))d.hidden=true;if(e.target.closest('#neuOn')){NEU.on=!NEU.on;if(NEU.on){NEU.next=0;NEU.lastReal=0;}logEvent('Neural',NEU.on?'Gestão neural ligada':'Gestão neural pausada');neuTick();neuRender();}
       if(e.target.closest('#neuNow')){NEU.next=0;NEU.lastReal=0;const was=NEU.on;NEU.on=true;neuTick();NEU.on=was;neuRender();}
-      const a=e.target.closest('[data-na]');if(a){const q=NEU.pend.splice(+a.dataset.na,1)[0];if(q)neuApply(q.k,q.nv,q.src,q.why,q.ef,q.metric,q.better,q.u);neuRender();}
+      const a=e.target.closest('[data-na]');if(a){const q=NEU.pend.splice(+a.dataset.na,1)[0];if(q)neuApply(q.k,q.nv,q.src,q.why,q.ef,q.metric,q.better,q.u,q.prev);neuRender();}
       const x=e.target.closest('[data-nx]');if(x){NEU.pend.splice(+x.dataset.nx,1);neuRender();}});
     d.addEventListener('change',e=>{if(e.target.id==='neuMode'){NEU.auto=e.target.value==='auto';neuRender();}});}
   d.hidden=!d.hidden;neuRender();}
@@ -7871,7 +7894,7 @@ function simRestore(S){const put=(t,s)=>{for(const k of Object.keys(t))if(!(k in
   for(const k in LOOPS)Object.assign(LOOPS[k],S.LOOPS[k]);for(const k in LAG)Object.assign(LAG[k],S.LAG[k]);Object.assign(RAIN,S.RAIN);Object.assign(LTN,S.LTN);PERF=S.PERF;seed=S.seed;CUR=S.CUR;ALARMS=S.ALARMS;put(FAULT,S.FAULT);Object.assign(AMB.g,S.AMB.g);Object.assign(AMB.u,S.AMB.u);}
 function simProject(hours,change,track){const S=simSnap(),lg=logEvent,W=window.__simQuiet;logEvent=()=>{};const out={h:[],alarms:new Map()};if(track){out.lp={};for(const k in LOOPS)out.lp[k]={pv:[],sp:[],mv:[],sat:[]};}
   try{if(change)change();const dt=120,per=3600/dt;for(let h=0;h<hours;h++){let a={tot:0,fe:0,si:0,cs:0,kwh:0,em:0,v:0,lv6:0,lvH:0,pf:0};for(let i=0;i<per;i++){ST.simT+=dt;const c=step(dt);a.tot+=c.total;a.fe+=c.G.feC;a.si+=c.G.siC;a.cs+=c.U.CS;a.kwh+=c.kWhT;a.em+=c.U.emis;a.v+=c.v;a.lv6+=lvl6();a.lvH+=lvlH();a.pf+=c.U.prod;}
-      for(const k in a)a[k]/=per;out.h.push(a);if(track)for(const k in LOOPS){const L=LOOPS[k],o=out.lp[k];o.pv.push(+L.pv||0);o.sp.push(+L.sp||0);o.mv.push(+L.mv||0);o.sat.push(L.satT>0);}evalAlarms();const seen=new Set();ALARMS.forEach(x=>{const k=x.msg.replace(/[\d.,]+/g,'#');if(seen.has(k))return;seen.add(k);const o=out.alarms.get(k)||{sev:x.sev,eq:x.eq,msg:x.msg,n:0};o.n++;o.msg=x.msg;out.alarms.set(k,o);});}}
+      for(const k in a)a[k]/=per;out.h.push(a);if(track)for(const k in LOOPS){const L=LOOPS[k],o=out.lp[k];o.pv.push(+L.pv||0);o.sp.push(+L.sp||0);o.mv.push(+L.mv||0);o.sat.push(L.satT>0);}evalAlarms();const seen=new Set();ALARMS.forEach(x=>{const k=x.msg.replace(/[\d.,]+/g,'#');if(seen.has(k))return;seen.add(k);const o=out.alarms.get(k)||{sev:x.sev,eq:x.eq,msg:x.msg,n:0};o.n++;o.msg=x.msg;out.alarms.set(k,o);});out.last=seen;}}
   finally{logEvent=lg;simRestore(S);}
   const avg=f=>out.h.reduce((s,x)=>s+x[f],0)/out.h.length;out.m={tot:avg('tot'),fe:avg('fe'),si:avg('si'),cs:avg('cs'),kwh:avg('kwh'),em:avg('em'),v:avg('v'),lv6:avg('lv6'),lvH:avg('lvH'),mt:avg('tot')*hours/1000};return out;}
 function wifOpen(key){const m=CMETA[key];if(!m)return;WIF.key=key;WIF.res=null;const[,k,label,unit,min,max,st,dec]=m;const d=$('#wifDlg');d.hidden=false;$('#wifT').textContent='Testar antes de aplicar';
