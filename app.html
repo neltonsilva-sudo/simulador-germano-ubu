@@ -554,6 +554,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trRef .trleg .g{background:#3fbf5a}#trRef .trleg .r{background:#ff5a4a}#trRef .trleg .m{background:#a0703c;color:#fff}#trRef .trleg .y{background:#ffd24a}#trRef .trleg .b{background:#4a8cff;color:#fff}
 #trDlg #trClr{flex:0 0 auto!important;width:auto!important;padding:4px 10px;font-size:12px;min-width:0}
 #trDlg .trtw{border:1px solid rgba(92,198,220,.4);background:rgba(92,198,220,.07);border-radius:10px;padding:8px 10px;margin:0 0 8px;display:grid;gap:4px}#trDlg .trtw span{color:var(--muted);font-size:12.5px}#trDlg .trtw div{display:flex;gap:6px;flex-wrap:wrap}#trDlg .trtw .btn{flex:1}
+.trspk{border:1px solid rgba(92,198,220,.45);background:rgba(92,198,220,.14);border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;cursor:pointer;vertical-align:middle;color:#fff}.trspk:hover{background:rgba(92,198,220,.35)}
 </style>
 
 <div id="app">
@@ -3511,7 +3512,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022204058';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022210413';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7171,7 +7172,7 @@ function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id=
    pré-teste e pós-teste com banco de questões (situação-problema), objetivos com prazo, comunicação pelo rádio, dicas sob demanda, eventos inesperados,
    narração por voz, modo instrutor (injeção de falhas), debriefing com linha do tempo, painel da turma e certificado ==== */
 const trLS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
-const TR={on:null,hist:trLS.get('trHist',[]),user:trLS.get('trUser',null),lvl:trLS.get('trLvl','padrao'),tts:trLS.get('trTts',false),mod:trLS.get('trMod','proc'),ins:false,par:{},pend:null};
+const TR={on:null,hist:trLS.get('trHist',[]),user:trLS.get('trUser',null),lvl:trLS.get('trLvl','padrao'),tts:trLS.get('trTts',true),mod:trLS.get('trMod','proc'),ins:false,par:{},pend:null};
 const TRL={guiado:{nome:'Guiado',desc:'dicas visíveis em cada objetivo, prazos 50 % maiores e sem evento inesperado',limK:1.5,dicas:'auto',fb:true,ev2:0},
   padrao:{nome:'Padrão',desc:'dicas sob demanda (−5 pts cada), correção imediata e evento inesperado em metade das vezes',limK:1,dicas:'pedir',fb:true,ev2:.5},
   aval:{nome:'Avaliação',desc:'sem dicas, correção só no final, prazos 25 % menores e sempre com evento inesperado',limK:.75,dicas:'nao',fb:false,ev2:1}};
@@ -7185,7 +7186,30 @@ const trShuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Ma
 /* voz mais humana: melhor voz pt-BR instalada (Natural/Online › Premium/Aprimorada › Google › demais) ou a escolhida no gêmeo; fala frase a frase */
 function trVoice(){try{const FEM=/luciana|francisca|thalita|maria|fernanda|vit[oó]ria|leila|helo[ií]sa|raquel|let[ií]cia|yara|manuela|brenda|elza|giovanna|flo\b|sandy|shelley|grandma|google/i,V=speechSynthesis.getVoices().filter(v=>(/^pt(-|_)BR/i.test(v.lang)||/portugu[eê]s.*brasil/i.test(v.name))&&FEM.test(v.name)),p=localStorage.getItem('s3voice'),rk=n=>/natural|neural/i.test(n)?6:/online/i.test(n)?5:/premium|enhanced|aprimorad/i.test(n)?4:/google/i.test(n)?3:/luciana|francisca|thalita|antonio|felipe|daniel/i.test(n)?2:1;
   return(p&&V.find(v=>v.name===p))||V.sort((a,b)=>rk(b.name)-rk(a.name))[0]||null;}catch(e){return null;}}
-function trSay(t){try{if(!TR.tts||!window.speechSynthesis)return;const v=trVoice(),txt=String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗]/g,'').replace(/\s+/g,' '),parts=txt.match(/[^.!?;]+[.!?;]?/g)||[txt];
+/* VOZ GRAVADA DA ÁREA 3 (neural, Francisca ou Thalita, a mesma escolhida no gêmeo): cada fala fixa do treinamento tem um áudio gravado
+   (nome = hash do texto); o que não tiver gravação usa a voz do navegador. As falas tocam em fila. */
+const TR_AUD='https:'+'/'+'/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/audio/';
+const trNorm=t=>String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗🕳🌫⛰🚑📏🪢📳📝👀⚙🔊📋⚡🏋🔒🟢🔴🟡🔵]/gu,'').replace(/\s+/g,' ').trim();
+const trHash=t=>{let h=5381;for(const ch of t)h=((h*33)^ch.codePointAt(0))>>>0;return h.toString(36);};
+let TRQ=[],TRA=null;
+function trVoiceSel(){try{return localStorage.getItem('s3voice')||'__rec';}catch(e){return '__rec';}}
+function trPlayNext(){if(TRA||!TRQ.length)return;const t=TRQ.shift(),sel=trVoiceSel();
+  if(/^__rec/.test(sel)){const a=new Audio(TR_AUD+(sel==='__recT'?'tr_thalita/':'tr/')+trHash(t)+'.mp3?v=1');a.volume=.85;TRA=a;
+    a.onended=()=>{TRA=null;trPlayNext();};a.onerror=()=>{TRA=null;trTTS(t);trPlayNext();};a.play().catch(()=>{TRA=null;trTTS(t);trPlayNext();});}
+  else{trTTS(t);trPlayNext();}}
+function trSay(t){if(!TR.tts)return;const x=trNorm(t);if(!x)return;TRQ.push(x);trPlayNext();}
+function trSayNow(t,force){if(!force&&!TR.tts)return;TRQ=[];if(TRA){try{TRA.pause();}catch(e){}TRA=null;}try{speechSynthesis.cancel();}catch(e){}const was=TR.tts;TR.tts=true;trSay(t);TR.tts=was;}
+const trInstr=o=>o.order?'Clique nas etapas na ordem correta.':o.items?'Marque todas as opções que se aplicam e confirme.':o.match?'Escolha a opção correta para cada item e confirme.':o.gas?'Use o monitor de gases: meça a atmosfera, ventile se for preciso e só libere a entrada com todos os valores dentro dos limites.':'';
+const trTaskTxt=o=>o.q?o.q.p:(o.t+'. '+trInstr(o));
+window.__trTexts=()=>{const L=new Set(['Objetivo concluído.','Atenção: comunicação pelo rádio necessária.']);
+  ['Excelente','Bom','Regular','Precisa treinar mais'].forEach(c=>L.add(`Treinamento encerrado. Resultado: ${c}.`));
+  for(const [k,s] of Object.entries(TRS)){const b=TRB[k];L.add('Treinamento iniciado. '+s.nome+'.');if(s.ev2)L.add('Evento inesperado. '+s.ev2.t);s.obj.forEach(o=>o.dica&&L.add(o.dica));
+    const ps=k==='chuva'?[24,28,32,36].map(v=>({peak:v})):k==='hp'?[4100,4200,4300,4400,4500].map(v=>({feed:v})):[b&&b.par?b.par():{}];
+    if(b)ps.forEach(p=>L.add(s.nome+'. '+b.sit(p)+' '+b.sinais(p).join('. ')));}
+  for(const Q of Object.values(TQZ))Q.forEach(q=>{L.add(q[0]);L.add(q[3]);});['Correto.','Incorreto.'].forEach(x=>L.add(x));
+  for(const s of Object.values(TRS))s.obj.forEach(o=>{if(o.q||o.order||o.items||o.match||o.gas)L.add(trTaskTxt(o));});
+  return [...L].map(trNorm);};
+function trTTS(t){try{if(!window.speechSynthesis)return;const v=trVoice(),txt=String(t).replace(/[⛈📈⚠🚛❄📡⛔🔥➡🎯📊🧪📻💡✓✗]/g,'').replace(/\s+/g,' '),parts=txt.match(/[^.!?;]+[.!?;]?/g)||[txt];
   parts.forEach(x=>{const u=new SpeechSynthesisUtterance(x.trim());u.lang='pt-BR';if(v)u.voice=v;u.rate=.88;u.pitch=.96;u.volume=.85;speechSynthesis.speak(u);});}catch(e){}}
 function trEv(k,t){const r=TR.on;if(r)r.ev.push({h:(ST.simT-r.t0)/3600,k,t});}
 const TRS={
@@ -7428,7 +7452,7 @@ const trQzPts=r=>r.qz?trQ(r).filter((q,i)=>r.qz.ans[i]===q[2]).length*10:0;
 function trQzHTML(r){const Q=trQ(r),z=r.qz,i=z.i,fb=trLv().fb;if(!Q.length)return'';
   if(i>=Q.length)return `<div class="trqz"><b>Pós-teste do processo · concluído</b><p>${fb?`${trQzPts(r)/10} de ${Q.length} corretas (${trQzPts(r)} pts)`:'Respostas registradas: a correção sai no resultado.'}</p></div>`;
   const q=Q[i],a=z.ans[i];
-  return `<div class="trqz"><b>Pós-teste do processo · pergunta ${i+1} de ${Q.length}</b><p>${q[0]}</p>${z.ord[i].map(j=>`<button class="btn${fb&&a!=null&&j===q[2]?' ok':fb&&a===j&&j!==q[2]?' bad':!fb&&a===j?' sel':''}" data-qz="${j}"${a!=null?' disabled':''}>${q[1][j]}</button>`).join('')}
+  return `<div class="trqz"><b>Pós-teste do processo · pergunta ${i+1} de ${Q.length}</b><p><button class="trspk" data-say="qz" title="Ouvir a pergunta">🔊</button> ${q[0]}</p>${z.ord[i].map(j=>`<button class="btn${fb&&a!=null&&j===q[2]?' ok':fb&&a===j&&j!==q[2]?' bad':!fb&&a===j?' sel':''}" data-qz="${j}"${a!=null?' disabled':''}>${q[1][j]}</button>`).join('')}
     ${a!=null?`<p class="hint">${fb?(a===q[2]?'✓ Correto. ':'✗ Incorreto. ')+q[3]:'Resposta registrada.'}</p><button class="btn pri" id="trQn">${i+1<Q.length?'Próxima pergunta →':'Concluir'}</button>`:''}</div>`;}
 /* IDENTIFICAÇÃO do treinando (fica neste navegador; vai junto com o resultado para o painel da turma) */
 function trWho(next){let d=$('#trWho');if(!d){d=document.createElement('div');d.id='trWho';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);}
@@ -7457,9 +7481,9 @@ function trOpen(){if(!TR.user)return trWho(trOpen);
   ${H.length?`<div class="row" style="justify-content:space-between;align-items:center;margin:12px 0 4px"><h4 style="margin:0">Últimos resultados neste navegador</h4><button class="btn" id="trClr" title="Apaga o histórico de notas deste navegador">🗑 Limpar resultados</button></div><table class="alt"><tr><th>Data</th><th>Treinando</th><th>Cenário</th><th>Nível</th><th class="n">Pré → Pós</th><th class="n">Nota</th></tr>${H.map(h=>`<tr><td>${h.d}</td><td>${esc(h.nome||'–')}</td><td>${h.n}</td><td>${h.lvl||'–'}</td><td class="n">${h.pre!=null?h.pre+' → '+h.pos:'–'}</td><td class="n"><b>${h.p}</b></td></tr>`).join('')}</table>`:''}
   <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">${TR.snap&&!TR.on?'<button class="btn pri" id="trLR">↺ Voltar o processo ao normal</button>':''}<button class="btn" id="trX">Fechar</button></div></div>`;d.hidden=false;}
 /* BRIEFING: imagem real da área, sinais, nível de dificuldade, missão; parâmetros sorteados (variação do cenário) */
-const TRB={chuva:{area:'dry',fx:'rain',local:'Pilha de rejeito filtrado · área 8',par:()=>({peak:Math.round(24+Math.random()*14)}),sit:p=>`Uma tempestade de ${p.peak} mm/h cai sobre a pilha há mais de uma hora. A água infiltra no maciço e a poropressão começa a subir nos piezômetros da área 8. A deposição continua normal.`,sinais:p=>[`⛈ Chuva forte · ${p.peak} mm/h`,'📈 Piezômetros 08-01 a 08-03 subindo','⚠ Alarme de poropressão (PAH)','🚛 Deposição em andamento']},
+const TRB={chuva:{area:'dry',fx:'rain',local:'Pilha de rejeito filtrado · área 8',par:()=>({peak:[24,28,32,36][Math.floor(Math.random()*4)]}),sit:p=>`Uma tempestade de ${p.peak} mm/h cai sobre a pilha há mais de uma hora. A água infiltra no maciço e a poropressão começa a subir nos piezômetros da área 8. A deposição continua normal.`,sinais:p=>[`⛈ Chuva forte · ${p.peak} mm/h`,'📈 Piezômetros 08-01 a 08-03 subindo','⚠ Alarme de poropressão (PAH)','🚛 Deposição em andamento']},
   instr:{area:'dry',fx:'freeze',local:'Instrumentação geotécnica · piezômetros',par:()=>({}),sit:()=>'Um dos piezômetros parou de atualizar a leitura: o valor ficou congelado enquanto os vizinhos variam. Sem leitura confiável, a estrutura fica sem monitoramento naquele ponto.',sinais:()=>['❄ Leitura parada há vários minutos','⚠ Alarme de falha de instrumento (IA)','📡 Demais piezômetros normais']},
-  hp:{area:'crush',fx:'trip',local:'Setor 3 · britagem primária (HP 400)',par:()=>({feed:Math.round((4100+Math.random()*400)/50)*50}),sit:p=>`O britador 03BR002 desarmou. Toda a britagem primária passou para o 03BR001, que entrou em sobrecarga com ${fmt(p.feed)} t/h chegando ao setor 3: a carga passa de 105 % e o anel de ajuste começa a se mover.`,sinais:p=>['⛔ 03BR002 desarmado','🔥 03BR001 com carga acima de 105 %','⚠ Risco de levantamento do anel de ajuste',`➡ Alimentação do setor 3: ${fmt(p.feed)} t/h`]},
+  hp:{area:'crush',fx:'trip',local:'Setor 3 · britagem primária (HP 400)',par:()=>({feed:[4100,4200,4300,4400,4500][Math.floor(Math.random()*5)]}),sit:p=>`O britador 03BR002 desarmou. Toda a britagem primária passou para o 03BR001, que entrou em sobrecarga com ${fmt(p.feed,0)} t/h chegando ao setor 3: a carga passa de 105 % e o anel de ajuste começa a se mover.`,sinais:p=>['⛔ 03BR002 desarmado','🔥 03BR001 com carga acima de 105 %','⚠ Risco de levantamento do anel de ajuste',`➡ Alimentação do setor 3: ${fmt(p.feed,0)} t/h`]},
   cls:{area:'conc',fx:'spec',local:'Concentrador · flotação',par:()=>({}),sit:()=>'A programação mudou a produção para a campanha CLS (sílica baixa). A especificação fica mais apertada e o concentrado atual está acima do novo limite de SiO₂.',sinais:()=>['🎯 Nova meta: SiO₂ ≤ 1,25 %','📊 Fe mínimo 66,58 %','🧪 Dosagem de amina e moagem atuais da campanha CNS']}};
 Object.assign(TRB,TRB_SEG);
 function trSnap(area){try{if(area&&EQ[area]){enterArea(area);if(tween){camera.position.copy(tween.p1);controls.target.copy(tween.t1);tween=null;controls.update();}}
@@ -7486,13 +7510,13 @@ function trBriefBody(k){const d=$('#trBrief'),s=TRS[k],b=TRB[k],p=TR.par[k],L=tr
 function trPre(k){const sel=trShuf((TQZ[k]||[]).map((_,i)=>i)).slice(0,5),Q=sel.map(i=>TQZ[k][i]);
   TR.pend={k,sel,ord:Q.map(q=>trShuf([0,1,2,3])),pre:[],i:0};if(!Q.length)return trStart(k);
   let d=$('#trPre');if(!d){d=document.createElement('div');d.id='trPre';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);
-    d.addEventListener('click',e=>{const P=TR.pend;if(!P)return;const b=e.target.closest('[data-pa]');if(b){P.pre[P.i]=+b.dataset.pa;P.i++;}
+    d.addEventListener('click',e=>{const P=TR.pend;if(!P)return;if(e.target.closest('[data-say]')){trSayNow(TQZ[P.k][P.sel[P.i]][0],true);return;}const b=e.target.closest('[data-pa]');if(b){P.pre[P.i]=+b.dataset.pa;P.i++;}
       if(e.target.closest('#trPskip'))P.i=99;if(P.i>=P.sel.length){d.hidden=true;trStart(P.k);}else trPreBody();});}
   d.hidden=false;trPreBody();}
 function trPreBody(){const P=TR.pend,d=$('#trPre'),q=TQZ[P.k][P.sel[P.i]];
   d.innerHTML=`<div class="box" style="max-width:620px"><h3>Pré-teste · pergunta ${P.i+1} de ${P.sel.length}</h3><p class="hint">Diagnóstico do que você já sabe. Não vale nota e a correção aparece só no resultado, comparada com o pós-teste.</p>
-    <p style="color:#fff">${q[0]}</p><div class="trpa">${P.ord[P.i].map(j=>`<button class="btn" data-pa="${j}">${q[1][j]}</button>`).join('')}</div>
-    <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="trPskip">Pular pré-teste</button></div></div>`;}
+    <p style="color:#fff"><button class="trspk" data-say="pre" title="Ouvir a pergunta">🔊</button> ${q[0]}</p><div class="trpa">${P.ord[P.i].map(j=>`<button class="btn" data-pa="${j}">${q[1][j]}</button>`).join('')}</div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="trPskip">Pular pré-teste</button></div></div>`;trSayNow(q[0]);}
 /* ESTADO ANTES DO TREINAMENTO: guardado no início do primeiro cenário e restaurado pelo botão "Voltar o processo ao normal" */
 function trSave(){let sm=null;try{sm=simSnap();}catch(e){}const m=trS3();
   return{sim:sm,speed,camp:CAMP,scen:($('#scenario')||{}).value,pz:PZ.map(p=>({h:p.h,boost:p.boost||0,fault:!!p.fault,read:p.read,rate:p.rate||0,hist:p.hist.slice()})),
@@ -7528,10 +7552,11 @@ function trHint(r){const i=r.s.obj.findIndex((o,j)=>{const q=r.st[j];return !q.d
 function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();return;}
   if(!e){e=document.createElement('div');e.id='trHud';e.innerHTML='<div class="trimg"><img alt="Situação"><div class="trfx2"></div><span></span></div><div class="trbody"></div>';document.body.appendChild(e);
     e.addEventListener('click',ev=>{const R=TR.on;if(!R)return;const a=ev.target.closest('[data-qa]');if(a){const [i,j]=a.dataset.qa.split('|').map(Number),o=R.s.obj[i],q=R.st[i];if(q.ans==null){q.ans=j;q.pts=j===o.q.c?o.pts:0;q.done=true;q.at=(ST.simT-R.t0)/3600;
-          const fx=o.q.fx&&o.q.fx[j];if(fx&&trS3())fx(trS3());trEv(o.radio?'Rádio':'Decisão',`${o.radio?'Comunicou':'Escolheu'}: ${o.q.ops[j]}`);if(TRL[R.lvl].fb){trPop(q.pts?'+'+q.pts+' pts':'✗ resposta errada',!!q.pts);trBeep(q.pts?'ok':'bad');}}trHud(true);}
+          const fx=o.q.fx&&o.q.fx[j];if(fx&&trS3())fx(trS3());trEv(o.radio?'Rádio':'Decisão',`${o.radio?'Comunicou':'Escolheu'}: ${o.q.ops[j]}`);if(TRL[R.lvl].fb){trPop(q.pts?'+'+q.pts+' pts':'✗ resposta errada',!!q.pts);trBeep(q.pts?'ok':'bad');trSayNow(q.pts?'Correto.':'Incorreto.');trSay(o.dica);}}trHud(true);}
       if(trInterAct(R,ev)){trHud(true);return;}if(ev.target.closest('#trPause')){$('#pauseBtn').click();trHud(true);}
-      const zb=ev.target.closest('[data-qz]');if(zb){const z=R.qz;if(z.ans[z.i]==null){z.ans[z.i]=+zb.dataset.qz;trEv('Pós-teste',`Pergunta ${z.i+1} respondida`);}trHud(true);}
-      if(ev.target.closest('#trQn')){R.qz.i++;trHud(true);}
+      const sb=ev.target.closest('[data-say]');if(sb){const [w,j]=sb.dataset.say.split('|');if(w==='qz'){const q=trQ(R)[R.qz.i];if(q)trSayNow(q[0],true);}else if(w==='oq')trSayNow(trTaskTxt(R.s.obj[+j]),true);return;}
+      const zb=ev.target.closest('[data-qz]');if(zb){const z=R.qz;if(z.ans[z.i]==null){z.ans[z.i]=+zb.dataset.qz;trEv('Pós-teste',`Pergunta ${z.i+1} respondida`);if(TRL[R.lvl].fb){const q=trQ(R)[z.i];trSayNow(z.ans[z.i]===q[2]?'Correto.':'Incorreto.');trSay(q[3]);}}trHud(true);}
+      if(ev.target.closest('#trQn')){R.qz.i++;const q=trQ(R)[R.qz.i];if(q)trSayNow(q[0]);trHud(true);}
       if(ev.target.closest('#trHintB')){trHint(R);if(TRL[R.lvl].dicas==='pedir')trPop('−5 pts (dica)',false);trHud(true);}
       if(ev.target.closest('#trTtsH')){TR.tts=!TR.tts;trLS.set('trTts',TR.tts);if(!TR.tts)try{speechSynthesis.cancel();}catch(x){}trHud(true);}
       if(ev.target.closest('#trEndB'))trEnd();if(ev.target.closest('.trh')&&!e._moved)e.classList.toggle('min');e._moved=false;});
@@ -7541,10 +7566,11 @@ function trHud(force){const r=TR.on;let e=$('#trHud');if(!r){if(e)e.remove();ret
       const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);};addEventListener('pointermove',mv);addEventListener('pointerup',up);});
     e.addEventListener('change',ev=>{const s2=ev.target.closest('[data-mt]');if(s2&&TR.on){const [i,j]=s2.dataset.mt.split('|').map(Number);TR.on.st[i].mt[j]=s2.value===''?undefined:+s2.value;}});}
   if(!e._drag){const lp=$('#left'),open=lp&&!lp.classList.contains('collapsed')&&lp.offsetParent!==null,x=open?Math.round(lp.getBoundingClientRect().right+12):16;if(e._x!==x){e._x=x;e.style.left=x+'px';}}
-  const h=(ST.simT-r.t0)/3600,P=trPts(r,false),L=TRL[r.lvl],fb=L.fb;
+  const h=(ST.simT-r.t0)/3600,P=trPts(r,false),L=TRL[r.lvl],fb=L.fb;r.spk=r.spk||{};
+  {const ci=r.s.obj.findIndex((o,i)=>{const q=r.st[i];return trIA(o)&&!q.done&&!q.fail&&!(o.at&&!q.shown);});if(ci>=0&&!r.spk[ci]){r.spk[ci]=1;trSay(trTaskTxt(r.s.obj[ci]));}}
   const li=r.s.obj.map((o,i)=>{const q=r.st[i];if(o.at&&!q.shown)return `<li class="wait"><span class="ic">◌</span><span>${o.radio?'📻 ':''}${o.t} <small>(aguardando a situação)</small></span><b>–/${o.pts}</b></li>`;
     const IA=trIA(o),ic=o.keep?(q.fail?'✗':'…'):o.frac?(h<1?'…':`${Math.round(q.tot?q.inT/q.tot*100:0)} %`):q.done?(!fb&&IA?'●':q.pts?'✓':'✗'):'○';
-    const quiz=o.q&&(o.at?q.shown:true)?`<div class="trq${o.radio?' radio':''}"><p>${o.radio?'📻 ':''}${o.q.p}</p>${o.q.ops.map((t,j)=>`<button class="btn${fb&&q.ans!=null&&j===o.q.c?' ok':fb&&q.ans===j&&j!==o.q.c?' bad':!fb&&q.ans===j?' sel':''}" data-qa="${i}|${j}"${q.ans!=null?' disabled':''}>${t}</button>`).join('')}${q.ans!=null?`<p class="hint">${fb?(q.ans===o.q.c?'Correto. ':'Resposta incorreta. ')+o.dica:'Resposta registrada.'}</p>`:''}</div>`:IA?trInter(o,i,q,fb):'';
+    const quiz=o.q&&(o.at?q.shown:true)?`<div class="trq${o.radio?' radio':''}"><p><button class="trspk" data-say="oq|${i}" title="Ouvir">🔊</button> ${o.radio?'📻 ':''}${o.q.p}</p>${o.q.ops.map((t,j)=>`<button class="btn${fb&&q.ans!=null&&j===o.q.c?' ok':fb&&q.ans===j&&j!==o.q.c?' bad':!fb&&q.ans===j?' sel':''}" data-qa="${i}|${j}"${q.ans!=null?' disabled':''}>${t}</button>`).join('')}${q.ans!=null?`<p class="hint">${fb?(q.ans===o.q.c?'Correto. ':'Resposta incorreta. ')+o.dica:'Resposta registrada.'}</p>`:''}</div>`:IA?trInter(o,i,q,fb):'';
     const showD=!q.done&&!q.fail&&(L.dicas==='auto'||r.rev.includes(i));
     return `<li class="${q.fail||(fb&&q.done&&!q.pts)?'bad':(fb||!IA)&&(q.done||(o.keep&&!q.fail))?'ok':''}"><span class="ic">${ic}</span><span>${o.radio?'📻 ':''}${o.t}${o.lim?` <small>(até ${trHM(o.lim*L.limK)} h)</small>`:''}${showD?`<i class="trdica">💡 ${o.dica}</i>`:''}${showD&&o.go?`<button class="trgo" data-go="${i}">Ir até lá ➜</button>`:''}</span><b>${fb||!IA?P[i]:'–'}/${o.pts}</b>${quiz}</li>`;}).join('');
   const u=r.user||{},tot=P.reduce((a,b)=>a+b,0)+(fb?trQzPts(r):0)-(L.dicas==='pedir'?r.hints*5:0);
@@ -7572,7 +7598,7 @@ function trEnd(){const r=TR.on;if(!r)return;clearInterval(TR.iv);TR.on=null;wind
   if(r.e2done)(r.ev.some(x=>x.k!=='Evento inesperado'&&x.h>r.e2t)?bem:mel).push(`Evento inesperado durante o cenário: ${r.s.ev2.t}`);
   const u=r.user||{},res={d:new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}),n:r.s.nome,p:nota,nome:u.nome,lvl:L.nome,pre:preN?pre:null,pos};
   TR.hist.unshift(res);TR.hist=TR.hist.slice(0,30);trLS.set('trHist',TR.hist);
-  logEvent('Treinamento',`Fim: ${r.s.nome} · ${u.nome||''} · nota ${nota} (${cls})`);trSay(`Treinamento encerrado. Nota ${nota}. ${cls}.`);
+  logEvent('Treinamento',`Fim: ${r.s.nome} · ${u.nome||''} · nota ${nota} (${cls})`);trSayNow(`Treinamento encerrado. Resultado: ${cls}.`);
   const erros=Q.map((q,i)=>r.qz.ans[i]===q[2]?null:q[0].replace(/^Contexto:[^.]*\.\s*Comando:\s*/,'').slice(0,60)).filter(Boolean);
   TR.last={r,res,nota,cls,u};trSend(r,nota,cls,pre,preN,pos,erros);
   let d=$('#trRes');if(!d){d=document.createElement('div');d.id='trRes';d.className='modal';d.setAttribute('role','dialog');document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#trRX'))d.hidden=true;if(e.target.closest('#trRN')){d.hidden=true;trOpen();}
