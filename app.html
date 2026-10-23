@@ -570,6 +570,11 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #neuNote .nn.go{border-color:#2fbf71;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 18px rgba(47,191,113,.45)}#neuNote .nn.out{opacity:0;transform:translateY(-8px);transition:.45s}
 #neuNote img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #8fd8ff}#neuNote div{display:grid;gap:2px}#neuNote b{color:#9fd0ff;font-size:13px}#neuNote span{font-size:13px}#neuNote small{color:#9fb0bd;font-size:11.5px}#neuNote small.pv{color:#9fe0b8}#neuNote i{font-style:normal;color:#ffd24a;letter-spacing:2px}
 @keyframes nnIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@media (max-width:2050px){.ctrls .seg button,.ctrls .btn{padding:7px 11px!important;font-size:11px!important}}
+@media (max-width:1880px){.ctrls .seg button,.ctrls .btn{padding:6px 9px!important;font-size:10.5px!important}}
+#neuBtn .neuIco{width:18px!important;height:18px!important}
+@media (max-width:1440px){.ctrls .seg button,.ctrls .btn{padding:5px 6px!important;font-size:9.5px!important;letter-spacing:0!important}.ctrls{gap:3px!important}#neuBtn .neuIco{width:15px!important;height:15px!important}}
+@media (max-width:1300px){.ctrls .seg button,.ctrls .btn{padding:4px 5px!important;font-size:9px!important}}
 </style>
 
 <div id="app">
@@ -595,8 +600,8 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
       <button class="btn" id="lblBtn" aria-pressed="true">Rótulos</button>
       <div class="seg" id="todSeg" role="group" aria-label="Iluminação"><div class="dd"><button type="button" class="ddbtn" aria-haspopup="true" aria-expanded="false" title="Turno (iluminação)">Turno <b class="ddv"></b> ▾</button><div class="ddmenu" role="menu"><button data-t="day" aria-pressed="false">Dia</button><button data-t="dusk" aria-pressed="false">Entardecer</button><button data-t="night" aria-pressed="false">Noite</button></div></div><button data-t="cycle" aria-pressed="true">Ciclo real</button></div>
       <button class="btn" id="engBtn" title="Gêmeo digital: geometalurgia, previsão, reconciliação, sensores virtuais, modelos avançados, calibração e dados reais">Gêmeo digital</button>
-      <button class="btn" id="neuBtn" title="Módulo Neural: gestão autônoma do processo (analisa, ajusta e informa cada mudança)"><img class="neuIco" src="data:image/jpeg;base64,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" alt="">Neural</button><button class="btn" id="aiBtn" title="Análise do processo com Simulação">Assistente de Simulação</button>
-            <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button><button class="btn" id="trBtn" title="Modo de treinamento: cenários com objetivos, tempo e pontuação">Treinamento</button><button class="btn" id="exitBtn" title="Encerrar a sessão e voltar à tela de acesso">⏻ Sair</button>
+      <button class="btn" id="neuBtn" title="Módulo Neural: gestão autônoma do processo (analisa, ajusta e informa cada mudança)"><img class="neuIco" src="data:image/jpeg;base64,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" alt="">Neural</button><button class="btn" id="aiBtn" title="Assistente de Simulação: análise do processo">Assistente</button>
+            <button class="btn" id="qBtn" aria-pressed="false" title="Qualidade da imagem: leve (clique para alta, com oclusão ambiente, antisserrilhado e correção de cor)">Qualidade</button><button class="btn" id="trBtn" title="Modo de treinamento: cenários com objetivos, tempo e pontuação">Treinamento</button><button class="btn" id="exitBtn" title="Encerrar a sessão e voltar à tela de acesso">⏻ Sair</button>
     </div>
   </header>
 
@@ -3527,7 +3532,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022224904';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022225515';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4666,17 +4671,26 @@ reg('fence',23,FENCE,{name:'Barreira de vento (wind fence)',toggle:false,desc:'B
 reg('port',24,PORT,{name:'Terminal Marítimo de Ponta Ubu',toggle:true,desc:'Terminal próprio em Anchieta (ES), com capacidade de cerca de 33 Mt/ano. O carregador embarca cerca de 12 mil t/h em navios de até 210 mil t.',ins:['load'],outs:[]});
 
 /* ============ PROCESS MODEL ============ */
-const DEF={tcldSpd:100,css:20,floc:20,divert:0,filt:100,eteCap:100,disc:7,screenAp:8,wind:6,feedC:1900,slimeF:0,pfSale:5,fe:40,mill:90,cut:10,amine:60,starch:500,solids:68,press:80,bent:5.5,lime:18,temp:1320,kv:65,ship:10000};
+const DEF={hcP:140,millS:72,cyP:170,cyN:8,ph:10.3,air:100,frothL:70,grate:100,vsiRpm:1450,vsiCasc:10,tcldSpd:100,css:20,floc:20,divert:0,filt:100,eteCap:100,disc:7,screenAp:8,wind:6,feedC:1900,slimeF:0,pfSale:5,fe:40,mill:90,cut:10,amine:60,starch:500,solids:68,press:80,bent:5.5,lime:18,temp:1320,kv:65,ship:10000};
 const P=Object.assign({},DEF);
 const CTRL=[
   ['ctlMG','feedC','Alimentação por concentrador','t/h',1200,2600,20,0,'Concentradores ativos na etapa 5'],
   ['ctlMG','tcldSpd','Velocidade da TCLD','%',40,110,1,0,'Capacidade nominal 6.000 t/h a 100 %'],
   ['ctlMG','css','Abertura do britador (APF)','mm',10,40,1,0,'Menor abertura = britado mais fino, menos carga circulante e mais energia por tonelada britada'],
   ['ctlMG','fe','Teor de Fe do minério','% Fe',34,52,.5,1,'Padrão 40 % Fe [adotado]; referência ≈ 44 % Fe no ROM do Concentrador 01 [dissertação Figueiredo, UFMG 2019]'],
+  ['ctlMG','vsiRpm','Barmac · rotação do rotor','rpm',1000,1640,10,0,'Sincronizado com o gêmeo do setor 3: mais rotação = produto mais fino e mais desgaste das pontas'],
+  ['ctlMG','vsiCasc','Barmac · cascata','%',0,40,1,0,'Parte da alimentação que desvia do rotor: alivia a potência e engrossa o produto'],
   ['ctlMG','mill','Potência da moagem','%',60,110,1,0,'P80 alvo ≈ 45 µm · pellet feed [referência, dissertação 2019]: +74 µm ≤ 3,5 %, −44 µm ≥ 87,2 %, 1950 cm²/g'],
+  ['ctlMG','hcP','Pressão dos hidrociclones da moagem','kPa',80,200,5,0,'Mais pressão = corte mais fino (P80 menor) e mais carga circulante no moinho · faixa 120–160 kPa'],
+  ['ctlMG','millS','Sólidos na moagem','%',60,80,.5,1,'Faixa usual 70–75 %: polpa densa demais engrossa o produto'],
   ['ctlMG','cut','Corte da deslamagem','µm',4,20,.5,1,'Ótimo 8–12 µm'],
+  ['ctlMG','cyP','Pressão dos ciclones da deslamagem','kPa',100,250,5,0,'Faixa 150–200 kPa: baixa deixa lama ir para a flotação; alta joga ferro fino na lama'],
+  ['ctlMG','cyN','Ciclones de deslamagem em operação','un.',4,12,1,0,'Por concentrador · poucos ciclones sobrecarregam a bateria'],
   ['ctlMG','amine','Amina (coletor do quartzo)','g/t',20,130,1,0,'Excesso arrasta ferro para o rejeito'],
   ['ctlMG','starch','Amido (depressor dos minerais de ferro)','g/t',200,900,10,0,''],
+  ['ctlMG','ph','pH da flotação (soda)','pH',8.5,11.5,.1,1,'Ótimo 10,0–10,6 na flotação catiônica reversa'],
+  ['ctlMG','air','Ar nas colunas de flotação','%',40,140,1,0,'100 % = vazão nominal · mais ar remove mais sílica, mas arrasta ferro'],
+  ['ctlMG','frothL','Camada de espuma nas colunas','cm',20,120,5,0,'Mais espessa = concentrado mais limpo, porém menos remoção de sílica · faixa 50–90 cm'],
   ['ctlMG','solids','Sólidos no mineroduto','%',58,74,.5,1,'Faixa segura 66–70 % · v ≥ 1,0 m/s'],
   ['ctlMG','floc','Floculante nos espessadores','g/t',5,45,1,0,'Clarifica o overflow e aumenta a água recuperada'],
   ['ctlMG','slimeF','Lama filtrada e empilhada','%',0,100,5,0,'Meta 2030: 50 %; hoje a lama vai para a Cava Alegria Sul'],
@@ -4689,6 +4703,7 @@ const CTRL=[
   ['ctlES','lime','Calcário','kg/t',0,40,1,0,'Define a basicidade da pelota'],
   ['ctlES','disc','Rotação dos discos','rpm',4,10,.1,1,'Ótimo ≈ 7 rpm'],
   ['ctlES','temp','Temperatura de queima','°C',1180,1400,5,0,'Faixa 1.300–1.350 °C'],
+  ['ctlES','grate','Velocidade da grelha do forno','%',70,120,1,0,'Mais rápida = mais produção e menos tempo de queima (pelota mais fraca)'],
   ['ctlES','kv','Tensão dos precipitadores','kV',20,80,1,0,'Limite de emissão 50 mg/Nm³'],
   ['ctlES','screenAp','Abertura das peneiras de finos','mm',5,11,.5,1,'Padrão 8 mm'],
   ['ctlES','wind','Vento no pátio (ambiente)','m/s',0,16,.5,1,'A barreira de vento reduz a emissão difusa'],
@@ -4875,14 +4890,15 @@ function germanoCore(F,gfIn){
   const gf=gfIn||(GEO.on?GEO.pile:null),gm=gf||GEO_DEF,dO=typeof DIST!=='undefined',wi=(gf?gf.wi:WI)*(dO?1+DIST.wi:1),fe0=(gf?gf.fe:P.fe)+(dO?DIST.fe:0);
   const nCc=Math.max(1,nOn(['c1','c2','c3']));const kWc=MILL_KW*P.mill/90;const W=F>50?kWc/(F/nCc):kWc/P.feedC;
   const P80=clamp((ADV.mill?pbmP80(W,wi):1/Math.pow(W/(10*wi)+1/Math.sqrt(F80),2))*(1+(P.css-20)*.012),22,220);
-  const L=clamp(1-(P80-25)/180,.5,.98);
+  const P80m=clamp(P80*Math.pow(140/(P.hcP||140),.25)*(1+((P.millS||72)-72)*.008),22,220);/* hidrociclones e sólidos da moagem */
+  const L=clamp(1-(P80m-25)/180,.5,.98);
   const f=fe0/100,hem=Math.min(.99,f/FE_HEM),qtz=1-hem;
   const kW=F>50?kWc*nOn(['c1','c2','c3'])*Math.min(1,F/(P.feedC*Math.max(1,nOn(['c1','c2','c3'])))):0;
   if(MODEL_MODE==='pilot'){
-    const x=pilotConcentrate(Math.max(F,1e-6),f,P80,{amine:P.amine,starch:P.starch,cut:P.cut},nCc,(()=>{const q=geoPP(PCAL,gf);const rs=typeof RAIN!=='undefined'?RAIN.soak:0;return Object.assign({},q,{d_lib:q.d_lib*(dO?1+DIST.lib:1)*(1-.15*rs),ent:q.ent*(1+rs)});})());
+    const x=pilotConcentrate(Math.max(F,1e-6),f,P80m,{amine:P.amine,starch:P.starch,cut:P.cut},nCc,(()=>{const q=geoPP(PCAL,gf);const rs=typeof RAIN!=='undefined'?RAIN.soak:0;return Object.assign({},q,{d_lib:q.d_lib*(dO?1+DIST.lib:1)*(1-.15*rs),ent:q.ent*(1+rs)});})());
     const k=F>1e-3?1:0,sl=x.slime*k,stack=Math.min(sl*P.slimeF/100,RUN.fl?420:0);const mn=geoMinor(gm,x.massRec);if(typeof RAIN!=='undefined')mn.alC*=1+.4*RAIN.soak;
-    return {F,P80,L,W,wi,C:x.C*k,feC:x.feC,siC:x.siC,alC:mn.alC,pC:mn.pC,sand:x.sand*k,feSand:x.feSand,slime:sl,feSlime:x.feSlime,massRec:F>0?x.massRec:0,feRec:F>0?x.feRec:0,kW,
-      slimeStack:stack,slimeCava:sl-stack,bySize:x.bySize,tau:x.tau,model:'pilot'};
+    return flotAdj({F,P80:P80m,L,W,wi,C:x.C*k,feC:x.feC,siC:x.siC,alC:mn.alC,pC:mn.pC,sand:x.sand*k,feSand:x.feSand,slime:sl,feSlime:x.feSlime,massRec:F>0?x.massRec:0,feRec:F>0?x.feRec:0,kW,
+      slimeStack:stack,slimeCava:sl-stack,bySize:x.bySize,tau:x.tau,model:'pilot'});
   }
   const ms=clamp(.02+.0068*P.cut+.002*Math.max(0,45-P80),.03,.2);
   const sl=F*ms,slH=sl*hem*.95,slQ=sl-slH;
@@ -4892,9 +4908,18 @@ function germanoCore(F,gfIn){
   const Hc=H0*(1-hL),Qc=Q0*(1-qR),C=Hc+Qc;
   const Hs=H0*hL,Qs=Q0*qR,Sd=Hs+Qs;const stack=Math.min(sl*P.slimeF/100,RUN.fl?420:0);
   const mn=geoMinor(gm,F>0?C/F*100:50);
-  return {F,P80,L,W,wi,alC:mn.alC,pC:mn.pC,C,feC:C>0?Hc*FE_HEM/C*100:0,siC:C>0?Qc/C*100:0,sand:Sd,feSand:Sd>0?Hs*FE_HEM/Sd*100:0,slime:sl,feSlime:sl>0?slH*FE_HEM/sl*100:0,
-    massRec:F>0?C/F*100:0,feRec:F>0?Hc/(F*hem)*100:0,kW,slimeStack:stack,slimeCava:sl-stack,model:'simple'};
+  return flotAdj({F,P80:P80m,L,W,wi,alC:mn.alC,pC:mn.pC,C,feC:C>0?Hc*FE_HEM/C*100:0,siC:C>0?Qc/C*100:0,sand:Sd,feSand:Sd>0?Hs*FE_HEM/Sd*100:0,slime:sl,feSlime:sl>0?slH*FE_HEM/sl*100:0,
+    massRec:F>0?C/F*100:0,feRec:F>0?Hc/(F*hem)*100:0,kW,slimeStack:stack,slimeCava:sl-stack,model:'simple'});
 }
+/* efeitos de pH, ciclones da deslamagem e espuma/ar das colunas sobre o concentrado: qf = sílica que fica (>1 piora), dhl = perda extra de ferro */
+function flotAdj(r){if(!r||!(r.C>0))return r;const ph=P.ph||10.3,fpH=Math.exp(-Math.pow((ph-10.3)/.7,2)),cyP=P.cyP||170,air=P.air||100,fl=P.frothL||70;
+  const nC=Math.max(1,nOn(['c1','c2','c3'])),load=r.F/(nC*(P.cyN||8)),loadN=(P.feedC||1900)/8;
+  let qf=(1+(1-fpH)*.9)*(1+Math.max(0,165-cyP)*.004)*(1+Math.max(0,load-loadN*1.18)/loadN*.6)*(1-(air-100)*.004+(fl-70)*.003);
+  let dhl=(1-fpH)*.03+Math.max(0,cyP-180)*.00025+Math.max(0,air-100)*.0006+Math.max(0,60-fl)*.0005;qf=clamp(qf,.55,2.5);dhl=clamp(dhl,0,.2);
+  if(Math.abs(qf-1)<1e-4&&dhl<1e-5)return r;
+  const hem=r.C*r.feC/100/FE_HEM,Qc=r.C*r.siC/100,oth=Math.max(0,r.C-hem-Qc),hem2=hem*(1-dhl),Q2=Qc*qf,C2=hem2+Q2+oth,dC=r.C-C2;
+  const feS=r.sand*r.feSand/100+(hem-hem2)*FE_HEM,sand2=Math.max(1e-6,r.sand+dC);
+  return Object.assign(r,{C:C2,feC:hem2*FE_HEM/C2*100,siC:Q2/C2*100,sand:sand2,feSand:feS/sand2*100,massRec:r.F>0?C2/r.F*100:0,feRec:r.feRec*(hem>0?hem2/hem:1)});}
 function ubu(pf,feC,siC,on){
   const TQ=ST.Tq,p80u=ST.p80H||45,cwu=ST.tankH+ST.wH>1?ST.tankH/(ST.tankH+ST.wH)*100:69;
   const Bl=1350+8.5*P.press+(45-p80u)*14;
@@ -4904,7 +4929,8 @@ function ubu(pf,feC,siC,on){
   const g=clamp(.72+.045*(P.bent-4)-.06*Math.abs(moist-9.3)-.05*Math.abs(P.disc-7)+(Bl-1900)/5000-Math.max(0,P.bent-7)*.03,.35,.95);
   const capU=['u1','u2','u3','u4'].reduce((a,k)=>a+(RUN[k]?PEL_CAP[k]:0),0),utilF=capU>0?mix/capU:0;const FM=ADV.fur&&on.pellet&&pf>1?furnaceModel(TQ,utilF):null;
   let CS=(FM?FM.csAvg:150+(TQ-1250)*1.7)+(Bl-1900)*.06+(P.bent-5)*6;if(TQ>1360)CS-=(TQ-1360)*2.5;CS=clamp(CS,40,380);
-  const fired=mix*(1-.022);
+  const gr=P.grate||100;CS=clamp(CS-Math.max(0,gr-100)*2.4+Math.max(0,100-gr)*.8,40,380);/* grelha mais rápida = menos tempo de queima */
+  const fired=mix*(1-.022)*Math.min(1,(gr+8)/100);
   const pS=clamp(.975-Math.max(0,250-CS)*.0022-Math.max(0,TQ-1360)*.004-(P.screenAp-8)*.012,.6,.99);
   const prod=on.pellet?fired*pS:0,fines=on.pellet?fired*(1-pS):0;
   const feP=feC/(1+A)/(1-.022);
@@ -5185,7 +5211,7 @@ step(0);
 /* ============ UI: controls ============ */
 const inputs={};
 /* etapa do processo a que cada controle pertence (mesma numeração do mapa) */
-const CTRL_STAGE={fe:'mine',tcldSpd:'tcld',css:'crush',feedC:'conc',mill:'conc',cut:'conc',amine:'conc',starch:'conc',floc:'thick6',slimeF:'sandf',solids:'pump',
+const CTRL_STAGE={hcP:'conc',millS:'conc',cyP:'conc',cyN:'conc',ph:'conc',air:'conc',frothL:'conc',vsiRpm:'crush',vsiCasc:'crush',grate:'furnace',fe:'mine',tcldSpd:'tcld',css:'crush',feedC:'conc',mill:'conc',cut:'conc',amine:'conc',starch:'conc',floc:'thick6',slimeF:'sandf',solids:'pump',
   divert:'tower',filt:'filter',pfSale:'filter',eteCap:'ete',press:'roller',bent:'mix',lime:'mix',disc:'pell',kv:'esp',temp:'furnace',screenAp:'screen',wind:'fence',ship:'port'};
 const ctlNum=k=>EQ[CTRL_STAGE[k]]?EQ[CTRL_STAGE[k]].num:99;
 CTRL.sort((a,b)=>(a[0]===b[0]?0:a[0]==='ctlMG'?-1:1)||ctlNum(a[1])-ctlNum(b[1]));
@@ -5369,9 +5395,9 @@ const LIM={pbar:[null,150],siP:[null,2.5],feC:[65.5,null],siC:[null,2.5],mr:[45,
 const DASH={
   mine:{k:['mine','feed','pile','tcldLoad'],t:['mine','pile'],c:['feedC','fe','tcldSpd']},
   tcld:{k:['mine','tcldLoad'],t:['mine','tcldLoad'],c:['tcldSpd','feedC']},
-  crush:{k:['mine','circ','p80'],t:['circ','p80'],c:['css','tcldSpd']},
+  crush:{k:['mine','circ','p80'],t:['circ','p80'],c:['css','tcldSpd','vsiRpm','vsiCasc']},
   pile:{k:['pile','feed','mine'],t:['pile','feed'],c:['feedC','tcldSpd']},
-  conc:{k:['feed','conc','feC','siC','mr','feR','p80','kwht'],t:['feC','siC','mr'],c:['feedC','fe','mill','cut','amine','starch']},
+  conc:{k:['feed','conc','feC','siC','mr','feR','p80','kwht'],t:['feC','siC','mr'],c:['feedC','fe','mill','hcP','millS','cut','cyP','cyN','amine','starch','ph','air','frothL']},
   thick6:{k:['tank6','recMG','ovf','pump'],t:['tank6','ovf'],c:['floc','solids']},
   sandf:{k:['sand','sfload','slimeS','stack'],t:['sand','sfload'],c:['slimeF','feedC']},
   dry:{k:['stack','sand','slimeS'],t:['stack','sand'],c:['slimeF']},
@@ -5386,7 +5412,7 @@ const DASH={
   mix:{k:['mix','b2','feP'],t:['mix','b2'],c:['bent','lime','pfSale']},
   pell:{k:['g','mix','util','prod'],t:['g','util'],c:['disc','bent','pfSale']},
   esp:{k:['emis','prod'],t:['emis'],c:['kv']},
-  furnace:{k:['cs','temp','heat','prod','util','feP','siP'],t:['cs','prod'],c:['temp','press']},
+  furnace:{k:['cs','temp','heat','prod','util','feP','siP'],t:['cs','prod'],c:['temp','grate','press']},
   screen:{k:['prod','fines','cs'],t:['prod','fines'],c:['screenAp']},
   yard:{k:['yard','total','load','dust'],t:['yard','dust'],c:['wind','ship']},
   fence:{k:['dust','yard'],t:['dust'],c:['wind']},
@@ -5524,6 +5550,15 @@ function evalAlarms(){const c=CUR,G=c.G,U=c.U,A=[];const add=(eq,sev,msg)=>A.pus
   else if(G.F>0&&G.siC>SPEC.siMax)add('conc','warn',`SiO₂ alto no concentrado (${fmt(G.siC,2)} %): acima da média da campanha ${CAMP}`);
   if(G.feC<SPEC.feMin&&G.F>0)add('conc','warn',`Fe baixo no concentrado (${fmt(G.feC,2)} %): abaixo do mínimo da campanha ${CAMP}`);
   if(P.amine>95&&RUN.conc)add('conc','warn','Excesso de amina: perda de ferro no rejeito');
+  if(RUN.conc&&Math.abs(P.ph-10.3)>.5)add('conc','warn',`pH da flotação fora da faixa (${fmt(P.ph,1)}; ideal 10,0–10,6): perda de seletividade`);
+  if(RUN.conc&&P.cyP<145)add('conc','warn',`Pressão baixa nos ciclones da deslamagem (${fmt(P.cyP,0)} kPa): lama passando para a flotação`);
+  if(RUN.conc&&P.cyP>210)add('conc','warn',`Pressão alta nos ciclones da deslamagem (${fmt(P.cyP,0)} kPa): ferro fino indo para a lama`);
+  if(RUN.conc&&G.F>0&&G.F/(Math.max(1,nOn(['c1','c2','c3']))*P.cyN)>P.feedC/8*1.25)add('conc','warn',`Bateria de ciclones da deslamagem sobrecarregada (${P.cyN} ciclones): colocar mais ciclones em operação`);
+  if(RUN.conc&&P.air>125&&P.frothL<45)add('conc','warn','Espuma transbordando nas colunas de flotação: arraste de ferro para o rejeito');
+  if(RUN.conc&&P.air<65)add('conc','warn','Colapso de espuma nas colunas: pouca remoção de sílica');
+  if(RUN.conc&&P.hcP>185)add('conc','warn',`Pressão alta nos hidrociclones da moagem (${fmt(P.hcP,0)} kPa): carga circulante alta no moinho`);
+  if(RUN.conc&&P.hcP<100)add('conc','warn',`Pressão baixa nos hidrociclones da moagem (${fmt(P.hcP,0)} kPa): produto grosso para a flotação`);
+  if(RUN.furnace&&P.grate>110)add('furnace','warn',`Grelha do forno rápida (${fmt(P.grate,0)} %): tempo de queima curto, pelota mais fraca`);
   if(G.slime/Math.max(1,G.slime+G.sand)>.3&&G.F>0)add('cava','warn','Lama acima de 30 % dos rejeitos');
   if(G.limited&&G.F>0)add('sandf','warn',`Filtragem de rejeito no limite: alimentação reduzida para ${fmt(G.F,0)} t/h`);
   if(G.nC===0)add('conc','crit','Nenhum concentrador em operação');
@@ -5578,6 +5613,11 @@ function logEvent(tipo,texto){const _r=window.__TRON;if(_r&&tipo!=='Treinamento'
 const almKey=a=>a.eq+'|'+a.msg.replace(/\(.*?\)|[\d.,]+/g,'#');
 /* ISA-18.2 · racionalização: cada alarme tem tag de campo, causa provável e ação esperada do operador */
 const ALM_RULES=[
+ [/pH da flotação/i,'AAL','pH fora da faixa: dosagem de soda desajustada ou água de processo ácida/alcalina','Corrigir a dosagem de soda até pH 10,0–10,6 e conferir o medidor de pH (calibração).'],
+ [/ciclones da deslamagem/i,'PAL','Pressão de alimentação dos ciclones fora da faixa (bomba, nível do tanque ou ciclones entupidos)','Ajustar a pressão para 150–200 kPa, conferir ápices entupidos e o número de ciclones em operação.'],
+ [/espuma/i,'LAH','Desequilíbrio entre vazão de ar e camada de espuma nas colunas','Ajustar o ar e a camada de espuma das colunas; verificar spargers e água de lavagem.'],
+ [/hidrociclones da moagem/i,'PAH','Pressão dos hidrociclones da moagem fora da faixa','Ajustar a pressão para 120–160 kPa e a densidade da polpa da moagem.'],
+ [/grelha do forno/i,'SAH','Grelha rápida: tempo de queima insuficiente','Reduzir a velocidade da grelha ou elevar a temperatura de queima dentro da faixa.'],
  [/piezômetro.*(congelad|falha de instrumento)/i,'IA','Falha do sensor, do cabo ou da comunicação do piezômetro','Acionar a instrumentação para verificar o piezômetro e fazer leitura manual de contingência até a correção.'],
  [/subida rápida/i,'PRH','Infiltração intensa (chuva forte, surgência ou falha de drenagem)','Avisar a geotecnia imediatamente, aumentar a frequência de leitura e inspecionar drenos e o talude.'],
  [/fator de segurança/i,'SFL','Poropressão elevada reduzindo a estabilidade do talude','Acionar a geotecnia, restringir o acesso à área e suspender a deposição até a reavaliação da estabilidade.'],
@@ -5749,7 +5789,7 @@ function applyQuality(){
   renderer.toneMapping=HQ?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;
   renderer.setPixelRatio(HQ?Math.min(window.devicePixelRatio||1,1.5):Math.min(window.devicePixelRatio||1,2));
   scene.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true);}});
-  const b=$('#qBtn');b.setAttribute('aria-pressed',HQ);b.textContent=HQ?'Qualidade alta':'Qualidade leve';resize();
+  const b=$('#qBtn');b.setAttribute('aria-pressed',HQ);b.textContent=HQ?'Qualidade ✓':'Qualidade';b.title=HQ?'Qualidade da imagem: alta (clique para leve)':'Qualidade da imagem: leve (clique para alta)';resize();
 }
 let fpsAcc=0,fpsN=0,fpsLowT=0,PRLOW=0,PRNEXT=0;
 function renderFrame(dt){
@@ -6202,7 +6242,7 @@ let S3BC=null;try{S3BC=new BroadcastChannel('setor3-sync');S3BC.onmessage=m=>{co
   if(d.type!=='set'||!d.set)return;s3ApplySet(d.set);};}catch(e){S3BC=null;}
 /* comando vindo do gêmeo (canal local ou servidor): APF, velocidade da TCLD, partir/parar */
 function s3ApplySet(q){if(!q)return;
-  if(S3&&isFinite(q.vsiRpm)){S3.sim.rpm=clamp(+q.vsiRpm,1000,1640);}if(S3&&isFinite(q.vsiCasc)){S3.sim.casc=clamp(+q.vsiCasc,0,40);}
+  if(S3&&isFinite(q.vsiRpm)){P.vsiRpm=S3.sim.rpm=clamp(+q.vsiRpm,1000,1640);inputs.vsiRpm&&inputs.vsiRpm.sync();}if(S3&&isFinite(q.vsiCasc)){P.vsiCasc=S3.sim.casc=clamp(+q.vsiCasc,0,40);inputs.vsiCasc&&inputs.vsiCasc.sync();}
   /* troca / liga-desliga dado no gêmeo: aplica no setor 3 do simulador (fonte única do desgaste e dos alarmes) */
   if(q.eqCmd&&S3&&S3.sim.eq[q.eqCmd.tag]){const c=q.eqCmd,e=S3.sim.eq[c.tag];if((c.rev||0)<(e.rev||0))return;e.rev=Math.max(e.rev||0,c.rev||0);if(c.troca){e.w=0;logEvent('Manutenção',`${c.tag}: troca registrada pelo gêmeo digital`);}if(c.mnt===true&&!e.mnt){Setor3.startMnt(e);logEvent('Manutenção',`${c.tag} em manutenção (bloqueado, plano de ${Setor3.MNT[e.k].h} h) pelo gêmeo digital`);}if(c.mnt===false&&e.mnt)Setor3.finishMnt(c.tag,e,true);if(typeof c.on==='boolean'&&e.on!==c.on&&!e.mnt){e.on=c.on;logEvent('Comando',`${c.tag} ${c.on?'ligado':'desligado'} pelo gêmeo digital`);}if(typeof tw3Calc==='function')tw3Calc();}
   /* estado de comando completo vindo do gêmeo (desarme, bloqueio, seletor, emergência, óleo, tampas, cordão, alinhamento) */
@@ -6217,7 +6257,7 @@ function s3Server(){if(!S3||!HAS_GAS||S3SRVbusy||!TW3_REMOTE||Date.now()-TW3_REM
   google.script.run.withSuccessHandler(()=>{google.script.run.withSuccessHandler(q=>{done();(q||[]).forEach(c=>s3ApplySet(c.set));}).withFailureHandler(done).syncGet('cmd',tok);}).withFailureHandler(done).syncPost('state',s3State(),tok);}
 let S3BCt=0;
 let S3OV=null;const S3_FK=2500/3800;/* C3 (apostila): o setor 3 britaria 2.500 t/h de ROM com a mina no ritmo nominal de 3.800 t/h *//* sobreposição do treinamento (alimentação e APF do setor 3) */
-function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=S3OV&&S3OV.feed!=null?S3OV.feed:(CUR.mine||0)*S3_FK;s.running=!!RUN.crush;s.css=S3OV&&S3OV.css!=null?S3OV.css:P.css;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;if(S3OV&&S3OV.moist!=null)s.moist=S3OV.moist;
+function tw3Tick(t,dt){if(!S3)return;const s=S3.sim;s.feed=S3OV&&S3OV.feed!=null?S3OV.feed:(CUR.mine||0)*S3_FK;s.running=!!RUN.crush;s.css=S3OV&&S3OV.css!=null?S3OV.css:P.css;s.rpm=P.vsiRpm||1450;s.casc=P.vsiCasc??10;s.tcld=P.tcldSpd;s.moist=typeof romM==='function'?romM():8;if(S3OV&&S3OV.moist!=null)s.moist=S3OV.moist;
   for(const t in s.eq){const r=s.eq[t].lastMnt;if(r&&!r.logged){r.logged=true;logEvent('Manutenção',`${t}: manutenção concluída em ${fmt(r.h,1)} h · ${r.pecas} · desgaste ${fmt(r.w0,0)} % → ${fmt(r.wf!=null?r.wf:25,0)} %`);}}
   if(s.kpi&&s.kpi.gran&&isFinite(s.kpi.gran.ratio))F80=6000*clamp(s.kpi.gran.ratio,.7,1.6);
   if(S3BC&&performance.now()-S3BCt>1000){S3BCt=performance.now();try{S3BC.postMessage(s3State());}catch(e){}}TW3_ACC.sim+=dt;TW3_ACC.up+=dt;TW3_ACC.calc+=dt;
@@ -7201,6 +7241,13 @@ function neuProblems(){const out=[],seen=new Set();
 const NEU_RULES=[
   {re:/SiO₂ alto|SiO₂ no concentrado|SiO₂ na pelota|sílica/i,ok:()=>LAG.si.y>SPEC.siMax,k:'amine',d:+5,why:()=>`SiO₂ ${fmt(LAG.si.y,2)} % acima da campanha ${CAMP} (≤ ${fmt(SPEC.siMax,2)} %)`,ef:'mais amina coleta mais quartzo e reduz a sílica do concentrado',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
   {re:/Fe baixo|Fe no concentrado/i,ok:()=>CUR.G&&CUR.G.feC<SPEC.feMin&&P.amine>30,k:'amine',d:-4,why:()=>`Fe ${fmt(CUR.G.feC,2)} % abaixo do mínimo ${fmt(SPEC.feMin,2)} %`,ef:'menos amina reduz o arraste de ferro para o rejeito',m:()=>CUR.G.feC,better:1,u:'% Fe'},
+  {re:/pH da flotação/i,k:'ph',d:()=>P.ph<10.3?.2:-.2,why:()=>`pH da flotação em ${fmt(P.ph,1)}, fora da faixa 10,0–10,6`,ef:'pH no ótimo devolve a seletividade da amina',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
+  {re:/ciclones da deslamagem \(/i,k:'cyP',d:()=>P.cyP<170?5:-5,why:()=>`pressão dos ciclones da deslamagem em ${fmt(P.cyP,0)} kPa (faixa 150–200)`,ef:'pressão na faixa separa a lama sem perder ferro fino',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
+  {re:/bateria de ciclones/i,k:'cyN',d:1,why:()=>`bateria de ciclones sobrecarregada com ${P.cyN} ciclones`,ef:'mais ciclones reduzem a carga por ciclone e melhoram a separação',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
+  {re:/espuma transbordando/i,k:'air',d:-5,why:()=>`ar nas colunas em ${fmt(P.air,0)} % com camada de espuma fina`,ef:'menos ar estabiliza a espuma e reduz o arraste de ferro',m:()=>CUR.G?CUR.G.feC:0,better:1,u:'% Fe'},
+  {re:/colapso de espuma/i,k:'air',d:+5,why:()=>`ar nas colunas baixo (${fmt(P.air,0)} %)`,ef:'mais ar recupera a remoção de sílica',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
+  {re:/hidrociclones da moagem/i,k:'hcP',d:()=>P.hcP<140?5:-5,why:()=>`pressão dos hidrociclones da moagem em ${fmt(P.hcP,0)} kPa (faixa 120–160)`,ef:'pressão na faixa equilibra P80 e carga circulante',m:()=>LAG.p80.y,better:0,u:'µm'},
+  {re:/grelha do forno rápida/i,k:'grate',d:-3,why:()=>`grelha do forno a ${fmt(P.grate,0)} %`,ef:'grelha mais lenta aumenta o tempo de queima e a resistência da pelota',m:()=>CUR.U?CUR.U.CS:0,better:1,u:'kgf/pelota'},
   {re:/excesso de amina|dosagem de amina|amina acima/i,k:'amine',d:-5,why:()=>`amina em ${fmt(P.amine,0)} g/t acima da faixa: ferro indo para o rejeito`,ef:'menos amina devolve o ferro ao concentrado e reduz o custo de reagente',m:()=>CUR.G?CUR.G.feC:0,better:1,u:'% Fe'},
   {re:/lama|finos .*previsto/i,k:'cut',d:+.5,why:()=>'minério com mais lama que o previsto',ef:'corte maior na deslamagem retira mais ultrafinos antes da flotação',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
   {re:/velocidade alta/i,k:'solids',d:+.5,why:()=>'velocidade acima do projeto no mineroduto',ef:'polpa um pouco mais densa reduz a vazão volumétrica e a velocidade',m:()=>CUR.v||0,better:-1,u:'m/s'},
@@ -7226,7 +7273,7 @@ function neuApply(k,nv,src,why,ef,metric,better,u,prev){const m=CMETA[k],cur=+P[
    especificação, sem passar do limite de emissão e sem aumento de energia > 5 %. */
 const NEU_H=3,nk=m=>String(m).replace(/[\d.,]+/g,'#');
 function neuSetK(k,v){P[k]=v;for(const L of Object.values(LOOPS))if(L.spKey===k)L.sp=v;}
-async function neuPlan(r,p){const m=CMETA[r.k];if(!m)return null;const cur=+P[r.k],dir=Math.sign(r.d)||1,span=m[5]-m[4],base=Math.abs(r.d)||m[6]||1,key=nk(p.msg);
+async function neuPlan(r,p){const m=CMETA[r.k];if(!m)return null;const rd=typeof r.d==='function'?r.d():r.d,cur=+P[r.k],dir=Math.sign(rd)||1,span=m[5]-m[4],base=Math.abs(rd)||m[6]||1,key=nk(p.msg);
   const B=simProject(NEU_H,null);await new Promise(z=>setTimeout(z,0));const bAl=new Set(B.alarms.keys()),nowAl=new Set((ALARMS||[]).map(a=>nk(a.msg)));
   const cands=[];for(const f of [1,2,3,4,6,8,12]){const v=clamp(+(cur+dir*base*f).toFixed(m[7]||0),m[4],m[5]);if(v!==cur&&Math.abs(v-cur)<=span*.35&&!cands.includes(v))cands.push(v);}
   let best=null,part=null;
