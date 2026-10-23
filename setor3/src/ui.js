@@ -1,13 +1,13 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261022204058';
-import { buildEqScreen } from './eqscreen.js?v=20261022204058';
-import { buildTraining } from './training.js?v=20261022204058';
-import { buildTour } from './tour.js?v=20261022204058';
-import { logEv, cmd, itemOf } from './sim.js?v=20261022204058';
-import { SIM_URL } from './api.js?v=20261022204058';
-import { buildRiskMap } from './riskmap.js?v=20261022204058';
+import { buildPanels } from './panels.js?v=20261022210359';
+import { buildEqScreen } from './eqscreen.js?v=20261022210359';
+import { buildTraining } from './training.js?v=20261022210359';
+import { buildTour } from './tour.js?v=20261022210359';
+import { logEv, cmd, itemOf } from './sim.js?v=20261022210359';
+import { SIM_URL } from './api.js?v=20261022210359';
+import { buildRiskMap } from './riskmap.js?v=20261022210359';
 
 const CSS = `
 .s3flash{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:20;padding:8px 14px;border-radius:10px;font:600 13px system-ui;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:80vw}.s3flash.ok{background:rgba(31,138,91,.95)}.s3flash.no{background:rgba(160,40,30,.95)}
