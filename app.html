@@ -556,7 +556,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trDlg .trtw{border:1px solid rgba(92,198,220,.4);background:rgba(92,198,220,.07);border-radius:10px;padding:8px 10px;margin:0 0 8px;display:grid;gap:4px}#trDlg .trtw span{color:var(--muted);font-size:12.5px}#trDlg .trtw div{display:flex;gap:6px;flex-wrap:wrap}#trDlg .trtw .btn{flex:1}
 .trspk{border:1px solid rgba(92,198,220,.45);background:rgba(92,198,220,.14);border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;cursor:pointer;vertical-align:middle;color:#fff}.trspk:hover{background:rgba(92,198,220,.35)}
 #neuBtn{background:linear-gradient(135deg,#1a3a8a,#6a2cc9);color:#fff;border-color:#8fb4ff;box-shadow:0 0 12px rgba(120,150,255,.55)}
-#neu{position:fixed;right:12px;top:110px;bottom:56px;width:min(560px,96vw);z-index:28;overflow:auto;background:rgba(8,14,30,.96);border:1px solid rgba(140,170,255,.45);border-radius:14px;padding:12px 14px;color:#e6eefc;font-size:13px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+#neu{position:fixed;right:12px;top:110px;bottom:56px;width:min(560px,96vw);z-index:32;overflow:auto;background:#0a1222;border:1px solid rgba(140,170,255,.45);border-radius:14px;padding:12px 14px;color:#e6eefc;font-size:13px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
 #neu .nh{display:flex;gap:10px;align-items:center}#neu .nh img{width:64px;height:44px;object-fit:cover;border-radius:8px;border:1px solid #5cc6dc}#neu .nh div{flex:1;display:grid}#neu .nh b{font-size:17px;color:#9fd0ff}#neu .nh small{color:#9fb0bd}
 #neu .nst{margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.05);line-height:1.45}#neu .nd{display:inline-block;width:10px;height:10px;border-radius:50%;background:#555;margin-right:6px}#neu .nd.on{background:#7cf;box-shadow:0 0 10px #7cf;animation:trPulse 1.4s infinite}
 #neu .nctl{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}#neu select{background:#0b1622;color:#fff;border:1px solid var(--line-2);border-radius:6px;padding:4px}#neu .btn.pri{background:#1f8a5b;border-color:#2fbf71;color:#fff}
@@ -3527,7 +3527,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022224040';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022224811';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7295,8 +7295,10 @@ function neuOpen(){let d=$('#neu');if(!d){d=document.createElement('div');d.id='
       const a=e.target.closest('[data-na]');if(a){const q=NEU.pend.splice(+a.dataset.na,1)[0];if(q)neuApply(q.k,q.nv,q.src,q.why,q.ef,q.metric,q.better,q.u,q.prev);neuRender();}
       const x=e.target.closest('[data-nx]');if(x){NEU.pend.splice(+x.dataset.nx,1);neuRender();}});
     d.addEventListener('change',e=>{if(e.target.id==='neuMode'){NEU.auto=e.target.value==='auto';neuRender();}});}
-  d.hidden=!d.hidden;neuRender();}
+  d.hidden=!d.hidden;if(!d.hidden){const al=$('#alm');if(al)al.hidden=true;}neuRender();}
 $('#neuBtn').addEventListener('click',neuOpen);
+/* uma tela de cada vez: abrir o painel de alarmes fecha o Módulo Neural (e vice-versa) */
+{const al=$('#alm');if(al)new MutationObserver(()=>{if(!al.hidden){const n=$('#neu');if(n)n.hidden=true;}}).observe(al,{attributes:true,attributeFilter:['hidden']});}
 /* ==== Modo de treinamento (metodologia de simulador de treinamento operacional): identificação do treinando, níveis de dificuldade, briefing com imagem,
    pré-teste e pós-teste com banco de questões (situação-problema), objetivos com prazo, comunicação pelo rádio, dicas sob demanda, eventos inesperados,
    narração por voz, modo instrutor (injeção de falhas), debriefing com linha do tempo, painel da turma e certificado ==== */
