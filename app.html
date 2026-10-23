@@ -555,6 +555,15 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
 #trDlg #trClr{flex:0 0 auto!important;width:auto!important;padding:4px 10px;font-size:12px;min-width:0}
 #trDlg .trtw{border:1px solid rgba(92,198,220,.4);background:rgba(92,198,220,.07);border-radius:10px;padding:8px 10px;margin:0 0 8px;display:grid;gap:4px}#trDlg .trtw span{color:var(--muted);font-size:12.5px}#trDlg .trtw div{display:flex;gap:6px;flex-wrap:wrap}#trDlg .trtw .btn{flex:1}
 .trspk{border:1px solid rgba(92,198,220,.45);background:rgba(92,198,220,.14);border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;cursor:pointer;vertical-align:middle;color:#fff}.trspk:hover{background:rgba(92,198,220,.35)}
+#neuBtn{background:linear-gradient(135deg,#1a3a8a,#6a2cc9);color:#fff;border-color:#8fb4ff;box-shadow:0 0 12px rgba(120,150,255,.55)}
+#neu{position:fixed;right:12px;top:110px;bottom:56px;width:min(560px,96vw);z-index:28;overflow:auto;background:rgba(8,14,30,.96);border:1px solid rgba(140,170,255,.45);border-radius:14px;padding:12px 14px;color:#e6eefc;font-size:13px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+#neu .nh{display:flex;gap:10px;align-items:center}#neu .nh img{width:64px;height:44px;object-fit:cover;border-radius:8px;border:1px solid #5cc6dc}#neu .nh div{flex:1;display:grid}#neu .nh b{font-size:17px;color:#9fd0ff}#neu .nh small{color:#9fb0bd}
+#neu .nst{margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.05);line-height:1.45}#neu .nd{display:inline-block;width:10px;height:10px;border-radius:50%;background:#555;margin-right:6px}#neu .nd.on{background:#7cf;box-shadow:0 0 10px #7cf;animation:trPulse 1.4s infinite}
+#neu .nctl{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}#neu select{background:#0b1622;color:#fff;border:1px solid var(--line-2);border-radius:6px;padding:4px}#neu .btn.pri{background:#1f8a5b;border-color:#2fbf71;color:#fff}
+#neu h4{margin:10px 0 6px;color:#ffd24a;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+#neu .nrow{display:grid;grid-template-columns:12px 1fr;gap:8px;padding:7px 8px;border-radius:8px;background:rgba(255,255,255,.04);margin-bottom:5px}#neu .nrow i{width:10px;height:10px;border-radius:50%;margin-top:4px;background:#ffb020}#neu .nrow.crit i{background:#ff3b2f;box-shadow:0 0 8px #ff3b2f}
+#neu .nrow div{display:grid;gap:2px}#neu .nrow span{color:#fff}#neu .nrow small{color:#9fb0bd}#neu .ns{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.08);color:#cfd8de;margin-top:3px;justify-self:start}#neu .ns.ai{background:rgba(120,150,255,.2);color:#cfe0ff}#neu .ns.op{background:rgba(255,178,61,.18);color:#ffd9a8}
+#neu .nlog{display:grid;gap:2px;padding:7px 9px;border-left:3px solid #7a8cff;background:rgba(255,255,255,.03);border-radius:6px;margin-bottom:5px}#neu .nlog.res{border-color:#2fbf71}#neu .nlog b{color:#fff}#neu .nlog span{color:#cfd8de}#neu .nlog small{color:#9fb0bd}#neu .nlog div{display:flex;gap:6px;margin-top:4px}
 </style>
 
 <div id="app">
@@ -580,7 +589,7 @@ table.eqt td code{font-family:var(--f-mono);font-size:11.5px;color:#9fdcf0}
       <button class="btn" id="lblBtn" aria-pressed="true">Rótulos</button>
       <div class="seg" id="todSeg" role="group" aria-label="Iluminação"><div class="dd"><button type="button" class="ddbtn" aria-haspopup="true" aria-expanded="false" title="Turno (iluminação)">Turno <b class="ddv"></b> ▾</button><div class="ddmenu" role="menu"><button data-t="day" aria-pressed="false">Dia</button><button data-t="dusk" aria-pressed="false">Entardecer</button><button data-t="night" aria-pressed="false">Noite</button></div></div><button data-t="cycle" aria-pressed="true">Ciclo real</button></div>
       <button class="btn" id="engBtn" title="Gêmeo digital: geometalurgia, previsão, reconciliação, sensores virtuais, modelos avançados, calibração e dados reais">Gêmeo digital</button>
-      <button class="btn" id="aiBtn" title="Análise do processo com Simulação">Assistente de Simulação</button>
+      <button class="btn" id="neuBtn" title="Módulo Neural: gestão autônoma do processo (analisa, ajusta e informa cada mudança)">🧠 Neural</button><button class="btn" id="aiBtn" title="Análise do processo com Simulação">Assistente de Simulação</button>
             <button class="btn" id="qBtn" aria-pressed="false" title="Oclusão ambiente, antisserrilhado e correção de cor">Qualidade leve</button><button class="btn" id="trBtn" title="Modo de treinamento: cenários com objetivos, tempo e pontuação">Treinamento</button><button class="btn" id="exitBtn" title="Encerrar a sessão e voltar à tela de acesso">⏻ Sair</button>
     </div>
   </header>
@@ -3512,7 +3521,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261022210413';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261022222102';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -7168,6 +7177,82 @@ const canEdit=k=>!OPER.area||(CMETA[k]?CTRL_STAGE[k]===OPER.area:unitArea(k)===O
 function qrSVG(text,px){if(typeof qrcode==='undefined')return '<p class="hint">Gerador de QR indisponível (sem internet).</p>';const q=qrcode(0,'M');q.addData(text);q.make();const n=q.getModuleCount(),m=4,s=(n+2*m);let d='';
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c+m} ${r+m}h1v1h-1z`;return `<svg viewBox="0 0 ${s} ${s}" width="${px}" height="${px}" shape-rendering="crispEdges" style="background:#fff;border-radius:6px"><path d="${d}" fill="#000"/></svg>`;}
 function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e);}e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600);}
+/* ==== MÓDULO NEURAL: gestão autônoma do processo. Reúne todos os itens com problema, decide e aplica ajustes em passos pequenos e dentro dos
+   limites de cada controle, registra cada mudança (antes → depois, motivo, efeito esperado) e confere o efeito depois de 1 h simulada.
+   Combina as regras de controle locais com a rede do servidor (Assistente) quando disponível. Itens de segurança (geotecnia, desarmes,
+   intertravamentos, instrumentos) não são ajustados sozinhos: vão para a decisão do operador. ==== */
+const NEU={on:false,auto:true,log:[],pend:[],seen:new Map(),next:0,lastReal:0,srvT:0,srvBusy:false,srvMsg:'',checks:[],every:1800,stepK:.1,nAdj:0,nRes:0};
+const neuSafety=m=>/piezômetro|poropressão|fator de segurança|parad[ao]|intertravad|inexistente|desarm|emergência|cordão|instrumento|suspeito|congelad|chuva|raio|trovoada|tempestade|descarga|previsão|desgaste|troca|revestimento/i.test(m);
+const neuLoopAuto=k=>Object.values(LOOPS).some(L=>L.spKey===k&&L.mode==='auto');
+function neuProblems(){const out=[],seen=new Set();
+  for(const a of (ALARMS||[])){const m=almMeta(a),key=(a.eq||'')+'|'+a.msg.replace(/[\d.,]+/g,'#');if(seen.has(key))continue;seen.add(key);
+    out.push({key,eq:a.eq,area:EQ[a.eq]?`${EQ[a.eq].num} · ${EQ[a.eq].name}`:(a.eq||'Processo'),sev:a.sev,msg:a.msg,tag:m.tag,causa:m.causa||m.cause||'',acao:m.acao||m.action||'',safety:neuSafety(a.msg)});}
+  try{if(S3&&S3.sim&&S3.sim.kpi)for(const a of (S3.sim.kpi.alarms||[])){const key='s3|'+a.tag+'|'+String(a.why).replace(/[\d.,]+/g,'#');if(seen.has(key))continue;seen.add(key);
+    out.push({key,eq:'crush',area:'3 · Setor 3 (peneiramento e britagem)',sev:a.st==='crit'?'crit':'warn',msg:`${a.tag}: ${a.why}`,tag:'S3',causa:'',acao:'',safety:neuSafety(a.why)||/desarmado/.test(a.why)});}}catch(e){}
+  return out.sort((a,b)=>(b.sev==='crit')-(a.sev==='crit'));}
+/* política local: cada regra olha um sintoma, diz o porquê e o efeito esperado, e propõe um passo pequeno numa chave de controle */
+const NEU_RULES=[
+  {re:/SiO₂ alto|SiO₂ no concentrado|SiO₂ na pelota|sílica/i,ok:()=>LAG.si.y>SPEC.siMax,k:'amine',d:+5,why:()=>`SiO₂ ${fmt(LAG.si.y,2)} % acima da campanha ${CAMP} (≤ ${fmt(SPEC.siMax,2)} %)`,ef:'mais amina coleta mais quartzo e reduz a sílica do concentrado',m:()=>LAG.si.y,better:-1,u:'% SiO₂'},
+  {re:/Fe baixo|Fe no concentrado/i,ok:()=>CUR.G&&CUR.G.feC<SPEC.feMin&&P.amine>30,k:'amine',d:-4,why:()=>`Fe ${fmt(CUR.G.feC,2)} % abaixo do mínimo ${fmt(SPEC.feMin,2)} %`,ef:'menos amina reduz o arraste de ferro para o rejeito',m:()=>CUR.G.feC,better:1,u:'% Fe'},
+  {re:/pilha.*cheia/i,k:'tcldSpd',d:-5,why:()=>'pilha pulmão cheia: lavra acima do consumo dos concentradores',ef:'a TCLD mais lenta equilibra a entrada com o consumo',m:()=>ST.stockPile/1000,better:-1,u:'kt na pilha'},
+  {re:/autonomia|esgotad|sem alimentação/i,k:'tcldSpd',d:+5,why:()=>'pilha pulmão baixa: reposição menor que o consumo',ef:'a TCLD mais rápida repõe a pilha',m:()=>ST.stockPile/1000,better:1,u:'kt na pilha'},
+  {re:/velocidade baixa|sedimenta/i,k:'solids',d:-.5,why:()=>'velocidade baixa no mineroduto: risco de sedimentação',ef:'polpa menos densa aumenta a vazão volumétrica e a velocidade',m:()=>CUR.v||0,better:1,u:'m/s'},
+  {re:/pressão/i,k:'solids',d:-.5,why:()=>'pressão alta no mineroduto: polpa densa',ef:'menos sólidos reduz a perda de carga',m:()=>LAG.cwP.y,better:-1,u:'% sólidos'},
+  {re:/temperatura/i,k:'temp',d:-5,why:()=>'temperatura do forno acima da faixa',ef:'reduzir o setpoint de queima evita sobreaquecimento',m:()=>LAG.tq.y,better:-1,u:'°C'},
+  {re:/pelota fraca|kgf/i,k:'temp',d:+5,why:()=>'resistência da pelota abaixo do mínimo',ef:'queima um pouco mais quente aumenta a resistência',m:()=>CUR.U?CUR.U.CS:0,better:1,u:'kgf/pelota'},
+  {re:/emissão/i,k:'kv',d:+3,why:()=>'emissão do precipitador acima do limite',ef:'mais tensão nos precipitadores aumenta a captura de pó',m:()=>CUR.U?CUR.U.emis:0,better:-1,u:'mg/Nm³'},
+  {re:/sólidos|densa|underflow/i,k:'floc',d:+2,why:()=>'densidade do underflow fora da faixa',ef:'mais floculante melhora o adensamento',m:()=>LAG.cwUF.y,better:1,u:'% sólidos UF'},
+  {re:/tratamento de água/i,k:'eteCap',d:+10,why:()=>'tratamento de água abaixo da demanda',ef:'mais capacidade na ETE equilibra o balanço hídrico',m:()=>0,better:0,u:''},
+  {re:/sobrecarga|carga [0-9]/i,ok:()=>true,k:'tcldSpd',d:-5,why:()=>'britador em sobrecarga no setor 3',ef:'menos alimentação reduz a carga dos britadores',m:()=>{try{return Math.max(...Object.values(S3.sim.eq).map(e=>e.load||0))*100;}catch(e){return 0;}},better:-1,u:'% carga máx.'}];
+function neuStep(k,d){const m=CMETA[k];if(!m)return null;const cur=+P[k],mx=(m[5]-m[4])*NEU.stepK,step=Math.max(-mx,Math.min(mx,d)),nv=clamp(+(cur+step).toFixed(m[7]||0),m[4],m[5]);return nv===cur?null:{cur,nv};}
+function neuApply(k,nv,src,why,ef,metric,better,u){const m=CMETA[k],cur=+P[k];P[k]=nv;for(const L of Object.values(LOOPS))if(L.spKey===k)L.sp=nv;try{if(typeof syncAll==='function')syncAll();else inputs[k]&&inputs[k].sync();}catch(e){}
+  const e={t:ST.simT,src,k,nome:m[2],u:m[3],de:cur,para:nv,why,ef,m0:metric?metric():null,metric,better,mu:u,chk:null};NEU.log.unshift(e);if(NEU.log.length>80)NEU.log.pop();NEU.nAdj++;
+  if(metric)NEU.checks.push(e);logEvent('Neural',`${m[2]}: ${fmt(cur,m[7]||0)} → ${fmt(nv,m[7]||0)} ${m[3]} · ${why}`);}
+function neuCycle(){const P0=neuProblems(),now=ST.simT;
+  /* resolvidos desde o ciclo anterior */
+  const cur=new Set(P0.map(p=>p.key));for(const [k,p] of NEU.seen)if(!cur.has(k)){NEU.seen.delete(k);NEU.log.unshift({t:now,src:'res',msg:p.msg,area:p.area});NEU.nRes++;}
+  for(const p of P0)if(!NEU.seen.has(p.key))NEU.seen.set(p.key,p);
+  /* confere o efeito dos ajustes depois de 1 h simulada */
+  NEU.checks=NEU.checks.filter(e=>{if(now-e.t<3600)return true;let v=null;try{v=e.metric();}catch(x){}if(v!=null&&e.m0!=null&&e.better){const d=(v-e.m0)*e.better;e.chk={v,ok:d>0,txt:`${fmt(e.m0,2)} → ${fmt(v,2)} ${e.mu}`};}return false;});
+  /* decisões locais: no máximo 3 por ciclo, uma por chave */
+  const used=new Set();let n=0;
+  for(const p of P0){if(n>=3)break;if(p.safety)continue;const r=NEU_RULES.find(x=>x.re.test(p.msg)&&(!x.ok||x.ok()));if(!r||used.has(r.k))continue;if(neuLoopAuto(r.k)){p.st='malha em automático';continue;}
+    const s=neuStep(r.k,r.d);if(!s)continue;used.add(r.k);n++;const why=r.why();
+    if(NEU.auto)neuApply(r.k,s.nv,'rede',why,r.ef,r.m,r.better,r.u);else if(!NEU.pend.some(q=>q.k===r.k))NEU.pend.push({k:r.k,nv:s.nv,why,ef:r.ef,metric:r.m,better:r.better,u:r.u,src:'rede'});}
+  neuServer(P0);}
+/* rede do servidor (Assistente, modo soluções): no máximo uma consulta a cada 90 s reais, só com problemas não resolvidos pela política local */
+function neuServer(P0){if(!HAS_GAS||NEU.srvBusy||!P0.some(p=>!p.safety)||performance.now()-NEU.srvT<90000)return;NEU.srvT=performance.now();NEU.srvBusy=true;NEU.srvMsg='consultando a rede do servidor…';
+  const q='GESTÃO AUTÔNOMA (Módulo Neural): proponha no máximo 3 ajustes de controle para os problemas atuais, usando SOMENTE as chaves listadas em "controles", com valor_sugerido próximo do atual (passos pequenos) e efeito_esperado claro. Não proponha ligar/desligar unidades. Problemas: '+P0.filter(p=>!p.safety).slice(0,8).map(p=>p.msg).join(' | ');
+  google.script.run.withSuccessHandler(r=>{NEU.srvBusy=false;NEU.srvMsg=r&&r.resumo?String(r.resumo).slice(0,220):'';
+      (r&&r.recomendacoes||[]).slice(0,3).forEach(c=>{if(!c||!CMETA[c.chave]||!isFinite(c.valor_sugerido)||neuLoopAuto(c.chave))return;const s=neuStep(c.chave,+c.valor_sugerido-(+P[c.chave]));if(!s)return;
+        const why=c.titulo||'recomendação da rede do servidor',ef=c.efeito_esperado||'';if(NEU.auto)neuApply(c.chave,s.nv,'servidor',why,ef,null,0,'');else if(!NEU.pend.some(x=>x.k===c.chave))NEU.pend.push({k:c.chave,nv:s.nv,why,ef,src:'servidor'});});neuRender();})
+    .withFailureHandler(e=>{NEU.srvBusy=false;NEU.srvMsg='rede do servidor indisponível agora: seguindo só com a política local';neuRender();})
+    .aiAnalyze({modo:'solucoes',escopo:'all',pergunta:q,contexto:buildContext('all')});}
+function neuTick(){if(!NEU.on)return;const t=performance.now();if(ST.simT>=NEU.next&&t-NEU.lastReal>8000){NEU.next=ST.simT+NEU.every;NEU.lastReal=t;try{neuCycle();}catch(e){console.warn('neural',e);}}if(!$('#neu').hidden)neuRender();}
+setInterval(neuTick,2000);
+function neuRender(){const d=$('#neu');if(!d||d.hidden)return;const P0=neuProblems(),hm=t=>{try{return simStamp?fmtT(t):'';}catch(e){return '';}};
+  const ts=t=>{const s=Math.max(0,ST.simT-t);return s<90?'agora':s<5400?`há ${Math.round(s/60)} min`:`há ${(s/3600).toFixed(1).replace('.',',')} h`;};
+  const adj=k=>NEU.log.find(e=>e.k&&e.why&&ST.simT-e.t<7200&&P0.some(p=>p.msg&&e.why));
+  $('#neuSt').innerHTML=`<span class="nd ${NEU.on?'on':''}"></span>${NEU.on?(NEU.auto?'Gestão autônoma <b>ligada</b>':'Recomendando: o operador aprova'):'Gestão neural <b>desligada</b>'} · ${P0.length} item(ns) com problema · ${NEU.nAdj} ajuste(s) · ${NEU.nRes} resolvido(s)${NEU.srvMsg?`<br><small>Rede do servidor: ${esc(NEU.srvMsg)}</small>`:''}`;
+  $('#neuOn').textContent=NEU.on?'⏸ Pausar gestão':'▶ Ligar gestão neural';$('#neuOn').classList.toggle('pri',!NEU.on);
+  $('#neuMode').value=NEU.auto?'auto':'rec';
+  $('#neuP').innerHTML=P0.length?P0.map(p=>{const r=!p.safety&&NEU_RULES.find(x=>x.re.test(p.msg)),st=p.safety?'<span class="ns op">👤 decisão do operador</span>':p.st?`<span class="ns">${p.st}</span>`:r?`<span class="ns ai">🧠 sob gestão: ${esc(CMETA[r.k]?CMETA[r.k][2]:r.k)}</span>`:`<span class="ns">🧠 ${HAS_GAS?'em análise na rede do servidor':'monitorando (sem ajuste automático para este item)'}</span>`;
+      return `<div class="nrow ${p.sev}"><i></i><div><b>${esc(p.area)}</b><span>${esc(p.msg)}</span>${p.causa?`<small>Causa provável: ${esc(p.causa)}</small>`:''}${p.safety&&p.acao?`<small>Ação recomendada: ${esc(p.acao)}</small>`:''}${st}</div></div>`;}).join(''):'<p class="hint">✓ Nenhum item com problema no processo agora.</p>';
+  $('#neuQ').innerHTML=NEU.pend.length?`<h4>Ajustes aguardando aprovação</h4>${NEU.pend.map((q,i)=>`<div class="nlog"><b>${esc(CMETA[q.k][2])}: ${fmt(+P[q.k],CMETA[q.k][7]||0)} → ${fmt(q.nv,CMETA[q.k][7]||0)} ${esc(CMETA[q.k][3])}</b><span>${esc(q.why)}${q.ef?' · '+esc(q.ef):''}</span><div><button class="btn pri" data-na="${i}">Aplicar</button><button class="btn" data-nx="${i}">Descartar</button></div></div>`).join('')}`:'';
+  $('#neuL').innerHTML=NEU.log.length?NEU.log.slice(0,40).map(e=>e.src==='res'?`<div class="nlog res"><b>✓ Resolvido · ${esc(e.area)}</b><span>${esc(e.msg)}</span><small>${ts(e.t)}</small></div>`
+      :`<div class="nlog"><b>${e.src==='servidor'?'🌐':'🧠'} ${esc(e.nome)}: ${fmt(e.de,CMETA[e.k][7]||0)} → ${fmt(e.para,CMETA[e.k][7]||0)} ${esc(e.u)}</b><span>Motivo: ${esc(e.why)}${e.ef?` · Efeito esperado: ${esc(e.ef)}`:''}</span><small>${ts(e.t)}${e.chk?` · efeito observado: ${esc(e.chk.txt)} ${e.chk.ok?'✓ melhorou':'✗ não melhorou: nova análise no próximo ciclo'}`:e.metric?' · conferindo o efeito em 1 h simulada':''}</small></div>`).join(''):'<p class="hint">Nenhuma mudança feita ainda.</p>';}
+function neuOpen(){let d=$('#neu');if(!d){d=document.createElement('div');d.id='neu';d.hidden=true;document.body.appendChild(d);
+    d.innerHTML=`<div class="nh"><img src="https:${'/'}/neltonsilva-sudo.github.io/simulador-germano-ubu/setor3/img/cerebro.jpg" alt=""><div><b>Módulo Neural</b><small>Gestão autônoma do processo · analisa, ajusta e informa cada mudança</small></div><button class="btn" id="neuX">×</button></div>
+      <div class="nst" id="neuSt"></div><div class="nctl"><button class="btn pri" id="neuOn"></button><select id="neuMode"><option value="auto">Ajustar automaticamente</option><option value="rec">Só recomendar (operador aprova)</option></select><button class="btn" id="neuNow">Analisar agora</button></div>
+      <h4>Itens do processo com problema</h4><div id="neuP"></div><div id="neuQ"></div><h4>Mudanças no processo e efeito observado</h4><div id="neuL"></div>
+      <p class="hint">Passos limitados a 10 % da faixa de cada controle por ciclo; malhas em automático não são alteradas; segurança, geotecnia, desarmes e instrumentos ficam com o operador. Modelo didático.</p>`;
+    d.addEventListener('click',e=>{if(e.target.closest('#neuX'))d.hidden=true;if(e.target.closest('#neuOn')){NEU.on=!NEU.on;if(NEU.on){NEU.next=0;NEU.lastReal=0;}logEvent('Neural',NEU.on?'Gestão neural ligada':'Gestão neural pausada');neuTick();neuRender();}
+      if(e.target.closest('#neuNow')){NEU.next=0;NEU.lastReal=0;const was=NEU.on;NEU.on=true;neuTick();NEU.on=was;neuRender();}
+      const a=e.target.closest('[data-na]');if(a){const q=NEU.pend.splice(+a.dataset.na,1)[0];if(q)neuApply(q.k,q.nv,q.src,q.why,q.ef,q.metric,q.better,q.u);neuRender();}
+      const x=e.target.closest('[data-nx]');if(x){NEU.pend.splice(+x.dataset.nx,1);neuRender();}});
+    d.addEventListener('change',e=>{if(e.target.id==='neuMode'){NEU.auto=e.target.value==='auto';neuRender();}});}
+  d.hidden=!d.hidden;neuRender();}
+$('#neuBtn').addEventListener('click',neuOpen);
 /* ==== Modo de treinamento (metodologia de simulador de treinamento operacional): identificação do treinando, níveis de dificuldade, briefing com imagem,
    pré-teste e pós-teste com banco de questões (situação-problema), objetivos com prazo, comunicação pelo rádio, dicas sob demanda, eventos inesperados,
    narração por voz, modo instrutor (injeção de falhas), debriefing com linha do tempo, painel da turma e certificado ==== */
