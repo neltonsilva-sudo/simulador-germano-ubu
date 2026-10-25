@@ -1,4 +1,4 @@
-import { call, setToken } from './api.js?v=20261025115224';
+import { call, setToken } from './api.js?v=20261025151330';
 // Acesso: o gêmeo abre só pelo simulador, que passa a chave da sessão (?t=). A chave é conferida no servidor
 // (Apps Script) e retirada do endereço. Sem proteção configurada no servidor, abre direto.
 let TOKEN_RETRY = '';

@@ -8,7 +8,7 @@
 // Modo caminhar: passos (concreto com minério no térreo e no +7,5; grade metálica no +14).
 // Política dos navegadores: o áudio só nasce no primeiro clique/toque/tecla. Liga/desliga: window.__s3som(true|false),
 // sem argumento alterna; preferência guardada em localStorage 's3som'; ?som=0 começa desligado. Evento 's3som' no document.
-import { LV, B, SCREENS, CRUSHERS } from './layout.js?v=20261025115224';
+import { LV, B, SCREENS, CRUSHERS } from './layout.js?v=20261025151330';
 
 export const SR = 22050;                                   // texturas em 22 kHz (economia; o contexto reamostra)
 const TAU = Math.PI * 2;
