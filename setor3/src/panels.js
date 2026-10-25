@@ -1,5 +1,5 @@
-import { call, getToken, ready, SIM_URL } from './api.js?v=20261025111821';
-import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261025111821';
+import { call, getToken, ready, SIM_URL } from './api.js?v=20261025112536';
+import { startMnt, finishMnt, SEQ, itemOf, perms, cmd, seq, seqAbort, syncCtl } from './sim.js?v=20261025112536';
 // Painéis do processo em cascata (acordeão): cada painel abre e fecha com um clique; o estado fica salvo.
 // Indicadores · Tendências · Controles e ajustes · Fluxos (entradas e saídas) · Equipamentos · Alarmes e eventos.
 // Sincronização com o simulador (mesma origem, BroadcastChannel 'setor3-sync'): lavra, APF, TCLD, umidade e partida

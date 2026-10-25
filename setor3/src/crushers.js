@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261025111821';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025111821';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261025112536';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025112536';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -558,8 +558,8 @@ export function buildCrushers(scene, M) {
   // correias: produto dos britadores → retorno às peneiras (circuito fechado)
   const belt = (a, b, w = 1.2) => { const d = new THREE.Vector3().subVectors(b, a), L = d.length(); const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
     box(grp, w + .2, .25, L, M.steelDk, 0, 0, 0); box(grp, w, .06, L, M.belt, 0, .16, 0);
-    const oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.026), M.ore, Math.floor(L * 70)); /* produto britado: ~25–80 mm (P80 do HP ≈ 30 mm) */ const m4 = new THREE.Matrix4();
-    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / 70 + Math.random() * .015, x: (Math.random() - .5) * w * .62 * Math.random(), r: Math.random() * 6, s: .55 + Math.pow(Math.random(), 2.2) * 1.1 }));
+    const DPM = 150, oreG = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.03), M.ore, Math.floor(L * DPM)); /* produto britado em escala real: ~30–90 mm, cobrindo todo o leito (P80 do HP ≈ 30 mm, topo ~75 mm) */ const m4 = new THREE.Matrix4();
+    const rk = Array.from({ length: oreG.count }, (_, k) => ({ z: -L / 2 + k / DPM + Math.random() * .012, x: (Math.random() * 2 - 1) * w * .31, r: Math.random() * 6, s: .5 + Math.pow(Math.random(), 1.6) * 1.0, u: Math.random() * .025 }));
     const bedG = new THREE.CylinderGeometry(w * .33, w * .33, L, 10, 1, true, -Math.PI / 2, Math.PI); bedG.rotateX(Math.PI / 2); bedG.scale(1, .32, 1);
     const bed = new THREE.Mesh(bedG, M.ore); bed.position.y = .2; bed.userData.keep = true; grp.add(bed);   // cordão contínuo de minério sobre a lona
     oreG.frustumCulled = false; grp.add(oreG); belts.push({ im: oreG, rk, L, bed, R2: (w * .33) ** 2 }); /* pedras se movem: sem recorte por esfera (sumiam conforme o ângulo da câmera) */
@@ -587,7 +587,7 @@ export function buildCrushers(scene, M) {
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); }
     for (const st of streams) { const e = E[st.tag] || { on: true, flow: 1, load: .7 }, run = e.on && e.flow > 0; st.im.visible = run; if (!run) continue;
       const k = .6 + Math.min(1.2, e.load); for (let i = 0; i < st.d.length; i++) { const d = st.d[i]; d.u += dt * 1.4 * k; if (d.u > 1) d.u -= 1; p4.set(st.x + d.x, st.y0 + (st.y1 - st.y0) * d.u * d.u, st.z + d.z); e4.set(t * 5 + i, i, 0); q4.setFromEuler(e4); s4.setScalar(d.s || 1); m4.compose(p4, q4, s4); st.im.setMatrixAt(i, m4); } st.im.instanceMatrix.needsUpdate = true; }
-    const run = K.F > 0; for (const b of belts) { b.im.visible = run; if (b.bed) b.bed.visible = run; if (!run) continue; for (let i = 0; i < b.rk.length; i++) { const r = b.rk[i]; r.z += dt * 2.2; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .2 + .32 * Math.sqrt(Math.max(0, b.R2 - r.x * r.x)) + .006, r.z); /* assenta na superfície do cordão */ e4.set(r.r, r.r * 2, 0); q4.setFromEuler(e4); s4.setScalar(r.s || 1); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); } b.im.instanceMatrix.needsUpdate = true; }
+    const run = K.F > 0; for (const b of belts) { b.im.visible = run; if (b.bed) b.bed.visible = run; if (!run) continue; for (let i = 0; i < b.rk.length; i++) { const r = b.rk[i]; r.z += dt * 2.2; if (r.z > b.L / 2) r.z -= b.L; p4.set(r.x, .2 + .32 * Math.sqrt(Math.max(0, b.R2 - r.x * r.x)) + .006 + (r.u || 0), r.z); /* assenta na superfície do cordão */ e4.set(r.r, r.r * 2, 0); q4.setFromEuler(e4); s4.setScalar(r.s || 1); m4.compose(p4, q4, s4); b.im.setMatrixAt(i, m4); } b.im.instanceMatrix.needsUpdate = true; }
     for (const [tag, b] of Object.entries(beacons)) { const e = E[tag] || { st: 'ok' }; const c = COL[e.st] || COL.ok; b.material.color.setHex(c); b.material.emissive.setHex(c); b.material.emissiveIntensity = e.st === 'off' ? .15 : e.st === 'crit' ? (Math.sin(t * 9) > 0 ? 6 : .5) : 2.5 + Math.max(0, Math.sin(t * 6 + tag.length)) * 3; }
   } };
 }
