@@ -24,8 +24,7 @@ export const AREAS = [
   { id: 'pen', nome: 'Peneiras banana (+7,5 m)', at: [14.5, 7.5, 9], h: 5.5, riscos: [
     ['fisico', 'G', 'Ruído acima de 85 dB(A) e vibração das peneiras'],
     ['acidente', 'M', 'Cargas suspensas na troca de telas e painéis'],
-    ['quimico', 'M', 'Poeira mineral'],
-    ['acidente', 'M', 'Piso molhado e com minério sob as peneiras (escorregamento)'],
+    ['quimico', 'M', 'Poeira mineral; piso molhado e com minério sob as peneiras'],
     ['ergonomico', 'M', 'Postura forçada na troca de painéis de poliuretano'],
   ] },
   { id: 'hp', nome: 'Britagem primária · HP 400', at: [55, 0.5, 7], h: 7, riscos: [
@@ -48,10 +47,9 @@ export const AREAS = [
   ] },
   { id: 'circ', nome: 'Circulação, escadas e passarelas', at: [5, 0, 21], h: 5, riscos: [
     ['acidente', 'M', 'Escorregamento em poças d\'água e manchas de óleo; queda em escadas'],
-    ['acidente', 'M', 'Choque elétrico em cabos e eletrocalhas danificados'],
     ['fisico', 'P', 'Ofuscamento nas aberturas e iluminação deficiente no interior'],
     ['biologico', 'P', 'Animais peçonhentos nas áreas externas'],
-    ['acidente', 'P', 'Rotas de fuga e extintores: manter desobstruídos'],
+    ['acidente', 'M', 'Choque elétrico em cabos danificados; rotas de fuga e extintores desobstruídos'],
   ] },
 ];
 
