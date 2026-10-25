@@ -221,7 +221,7 @@ function paintTex(size, o, full = true) {
 
 // ---------- shader de sujeira/pó/bordas (onBeforeCompile) ----------
 const G_HEAD = /* glsl */`
-uniform float uTri; uniform float uDust; uniform float uEdge; uniform float uGrime; uniform float uMacro; uniform vec3 uDustCol;
+uniform float uTri; uniform float uDust; uniform float uEdge; uniform float uGrime; uniform float uMacro; uniform vec3 uDustCol; uniform float uRust; uniform float uWet;
 float gHash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float gNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(gHash(i), gHash(i + vec2(1., 0.)), f.x), mix(gHash(i + vec2(0., 1.)), gHash(i + vec2(1., 1.)), f.x), f.y); }
@@ -293,6 +293,13 @@ const G_DUST = /* glsl */`
   diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * ( .55 + .45 * uDustCol / max( max( uDustCol.r, uDustCol.g ), .05 ) ) * .8, clamp( stain, 0., 1. ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, mix( diffuseColor.rgb, uDustCol, .5 ) * 1.12, clamp( dry, 0., 1. ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, dc * .72, clamp( splash * .75, 0., 1. ) );
+  // ferrugem localizada (uRust, 0 = desligada): só onde água e lama ficam — base das peças junto a cada piso e escorridos
+  if ( uRust > 0. ) {
+    float gRn = gFbm( gP.xz * 3.1 + vec2( gP.y * 2.3 + 5.7, gP.y * 1.7 ) );
+    float gRu = clamp( smoothstep( .48, .66, gRn * .75 + gN2 * .25 ) * clamp( splash * 1.7 + drip * .5, 0., 1. ) * uRust, 0., 1. );
+    diffuseColor.rgb = mix( diffuseColor.rgb, mix( vec3( .2, .075, .03 ), vec3( .34, .15, .06 ), gN2 ), gRu );
+    roughnessFactor = mix( roughnessFactor, .95, gRu ); metalnessFactor = mix( metalnessFactor, .05, gRu );
+  }
   diffuseColor.rgb = mix( diffuseColor.rgb, dc, clamp( max( dm, drip * .5 ), 0., 1. ) );
   // crosta de pó: grão fino de minério (variação de tom e de relevo) — só onde há acumulação
   float gCr = gNoise( gP.xz * 46. + gP.y * 13. );
@@ -302,6 +309,19 @@ const G_DUST = /* glsl */`
   metalnessFactor = mix( metalnessFactor, 0., max( dm, splash * .6 ) );
   // pó espesso esconde o relevo da tinta
   normal = normalize( mix( normal, nonPerturbedNormal, dm * .7 ) );
+  // poças d'água e manchas de óleo nas faces de cima (uWet, 0 = desligado): escuras e lisas (refletem), com halo úmido fosco
+  if ( uWet > 0. ) {
+    float gUp2 = smoothstep( .8, .97, gN.y );
+    float gW = gFbm( gP.xz * .21 + vec2( 17.3, 4.1 ) ) * .8 + gN1 * .2;
+    float gDamp = smoothstep( .55, .63, gW ) * gUp2 * uWet, gWet = smoothstep( .63, .67, gW ) * gUp2 * uWet;
+    float gOil = smoothstep( .7, .75, gFbm( gP.xz * .62 + vec2( 41.2, 9.7 ) ) ) * gUp2 * uWet * ( .55 + .45 * gN2 );
+    diffuseColor.rgb *= 1. - .22 * gDamp - .28 * gWet;
+    diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( .34, .33, .35 ), gOil );
+    roughnessFactor = mix( roughnessFactor, roughnessFactor * .6, gDamp );
+    roughnessFactor = mix( roughnessFactor, .1, gWet ); roughnessFactor = mix( roughnessFactor, .28, gOil );
+    metalnessFactor = mix( metalnessFactor, 0., max( gWet, gOil ) );
+    normal = normalize( mix( normal, nonPerturbedNormal, max( gWet, gOil * .7 ) ) );
+  }
 #ifdef USE_MAP
   if ( uEdge > 0. ) {
     vec2 dux = dFdx( vMapUv ), duy = dFdy( vMapUv ); vec3 dpx = dFdx( gP ), dpy = dFdy( gP );
@@ -323,10 +343,10 @@ const G_DUST = /* glsl */`
 #endif
 }
 `;
-// o: { tri: repetições por metro (0 = usa o UV), dust, edge, grime, macro, dustCol: '#rrggbb' }
+// o: { tri: repetições por metro (0 = usa o UV), dust, edge, grime, macro, dustCol: '#rrggbb', rust: ferrugem na zona de respingo, wet: poças/óleo }
 function grime(mat, o = {}) {
   if (!SHADER_OK) return mat;
-  const tri = o.tri || 0, U = { uTri: { value: tri }, uDust: { value: o.dust ?? .6 }, uEdge: { value: o.edge ?? .8 }, uGrime: { value: o.grime ?? .5 }, uMacro: { value: o.macro ?? .14 }, uDustCol: { value: new THREE.Color(o.dustCol || '#7a4630') } };
+  const tri = o.tri || 0, U = { uTri: { value: tri }, uDust: { value: o.dust ?? .6 }, uEdge: { value: o.edge ?? .8 }, uGrime: { value: o.grime ?? .5 }, uMacro: { value: o.macro ?? .14 }, uDustCol: { value: new THREE.Color(o.dustCol || '#7a4630') }, uRust: { value: o.rust ?? 0 }, uWet: { value: o.wet ?? 0 } };
   mat.userData.grime = U;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
@@ -337,7 +357,7 @@ function grime(mat, o = {}) {
     else f = f.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + G_DUST);
     sh.fragmentShader = f;
   };
-  mat.customProgramCacheKey = () => 'grime3' + (tri > 0 ? 't' : 'u');
+  mat.customProgramCacheKey = () => 'grime4' + (tri > 0 ? 't' : 'u');
   return mat;
 }
 

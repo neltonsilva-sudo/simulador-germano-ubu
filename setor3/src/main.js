@@ -1,12 +1,13 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261025103139';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261025103139';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261025103139';
-import { buildUI } from './ui.js?v=20261025103139';
-import { gate } from './gate.js?v=20261025103139';
-import { buildContext } from './context.js?v=20261025103139';
+import { B, LV, CAMS } from './layout.js?v=20261025111256';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261025111256';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261025111256';
+import { buildUI } from './ui.js?v=20261025111256';
+import { gate } from './gate.js?v=20261025111256';
+import { buildContext } from './context.js?v=20261025111256';
+import { buildAmbience } from './ambience.js?v=20261025111256';
 const REAL0 = new URLSearchParams(location.search).get('real') === '1';   // lido antes do gate, que limpa o endereço
 gate();
 
@@ -21,7 +22,8 @@ let CTX = null; try { CTX = buildContext(scene, S3.M, S3.group); window.__ctxOcc
 const LIGHT = buildLighting(scene, renderer, S3.lamps);
 /* modo realista (padrão): texturas escaneadas reais e céu de pedreira; botão na barra desliga e lembra a escolha neste navegador */
 window.__s3real = (on) => import('./real.js').then((m) => { m.setReal(scene, S3.M, renderer, on); try { localStorage.setItem('s3real', on ? '1' : '0'); } catch (e) { /* */ } });
-window.__s3realOn = REAL0 || (() => { try { return localStorage.getItem('s3real') !== '0'; } catch (e) { return true; } })();   // padrão: realista if (window.__s3realOn) window.__s3real(true);
+window.__s3realOn = REAL0 || (() => { try { return localStorage.getItem('s3real') !== '0'; } catch (e) { return true; } })();   // padrão: realista
+if (window.__s3realOn) window.__s3real(true);
 // projetores do entorno (acendem à noite): um por área do processo e quatro em volta do prédio do setor 3
 try { (CTX && CTX.labels || []).filter((l) => l.kind === 'area').forEach((l) => LIGHT.addYard(l.pos.x + 30, 16, l.pos.z + 30, 1));   // poste ao lado da área (fora da cava/pilha)
   const W = S3.LAYOUT ? S3.LAYOUT.B.W : 64, D = S3.LAYOUT ? S3.LAYOUT.B.D : 26; [[-6, -6], [W + 6, -6], [-6, D + 6], [W + 6, D + 6]].forEach(([x, z]) => LIGHT.addYard(x, 12, z, .6)); } catch (e) { console.warn('projetores', e); }
@@ -73,6 +75,9 @@ const hotspots = S3.hotspots;
 stepSim(0);
 const ui = Q.get('ui') === '0' ? null : buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, pick: S3.pick, pickRoot: S3.group, fieldBtns: (parts.field && parts.field.btns) || [], getWalk: () => ({ walk, level }), CAMS, sim, flowLabels: parts.flows.labels || [] });
 
+// som ambiente espacial (liga no 1º clique/toque; window.__s3som(on) liga/desliga); fora das capturas automáticas
+let AMB = null; if (!Q.get('shot')) try { AMB = buildAmbience({ camera, sim, hotspots, getWalk: () => ({ walk, level }) }); } catch (e) { console.warn('som ambiente', e); }
+
 function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); composer && composer.setSize(innerWidth, innerHeight); }
 addEventListener('resize', resize); resize();
 
@@ -86,6 +91,7 @@ function frame() {
   stepSim(dt);
   S3.update(dt, t, camera); CTX && CTX.update(dt);
   ui && ui.update();
+  AMB && AMB.update(dt);
   if (composer) composer.render(dt); else renderer.render(scene, camera);
   frames++; acc += dt; if (acc > 1) { window.__fps = Math.round(frames / acc); frames = 0; acc = 0; }
   requestAnimationFrame(frame);

@@ -1,13 +1,13 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261025103139';
-import { buildEqScreen } from './eqscreen.js?v=20261025103139';
-import { buildTraining } from './training.js?v=20261025103139';
-import { buildTour } from './tour.js?v=20261025103139';
-import { logEv, cmd, itemOf } from './sim.js?v=20261025103139';
-import { SIM_URL } from './api.js?v=20261025103139';
-import { buildRiskMap } from './riskmap.js?v=20261025103139';
+import { buildPanels } from './panels.js?v=20261025111256';
+import { buildEqScreen } from './eqscreen.js?v=20261025111256';
+import { buildTraining } from './training.js?v=20261025111256';
+import { buildTour } from './tour.js?v=20261025111256';
+import { logEv, cmd, itemOf } from './sim.js?v=20261025111256';
+import { SIM_URL } from './api.js?v=20261025111256';
+import { buildRiskMap } from './riskmap.js?v=20261025111256';
 
 const CSS = `
 .s3flash{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:20;padding:8px 14px;border-radius:10px;font:600 13px system-ui;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:80vw}.s3flash.ok{background:rgba(31,138,91,.95)}.s3flash.no{background:rgba(160,40,30,.95)}
@@ -52,7 +52,7 @@ const CSS = `
 export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, getWalk, CAMS, sim, flowLabels = [], pick = [], pickRoot = null, fieldBtns = [] }) {
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.getElementById('ui');
-  root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><button id="s3real" aria-pressed="false" title="Modo realista: texturas escaneadas de materiais reais e céu real de pedreira (clique para alternar)">✨ Realista</button><button id="s3trn" style="background:#2c6fd6;color:#fff" title="Treinamento em primeira pessoa: LOTO, cordão de emergência, Barmac e ronda de inspeção">🎓 Treinamento</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3back" style="background:#1f63b3;color:#fff" title="Ir para o simulador sem fechar o gêmeo">◀ Simulador</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
+  root.innerHTML = `<div class="s3bar" id="s3bar"><div class="s3card"><b>Gêmeo Digital · Setor 3 — Britagem e Peneiramento</b><small>Usina II · Germano · réplica 3D em escala real (modelo didático)</small></div><button id="s3vis" aria-expanded="false" title="Escolher uma vista">📷 Vistas ▾</button><button id="s3tour" style="background:#ffd24a;color:#1d2733">▶ Tour</button><button id="s3walk" aria-pressed="false">Caminhar</button><button id="s3tags" aria-pressed="true">Etiquetas</button><button id="s3real" aria-pressed="false" title="Modo realista: texturas escaneadas de materiais reais e céu real de pedreira (clique para alternar)">✨ Realista</button><button id="s3som" aria-pressed="true" title="Som ambiente da área (britadores, peneiras, correias) · liga no primeiro clique">🔊 Som</button><button id="s3trn" style="background:#2c6fd6;color:#fff" title="Treinamento em primeira pessoa: LOTO, cordão de emergência, Barmac e ronda de inspeção">🎓 Treinamento</button><span class="sp"></span><button id="s3risk" aria-pressed="false" title="Mostrar/ocultar o mapa de riscos do setor (NR-5)"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="4" fill="#2e9d3a"/><circle cx="16.5" cy="7" r="3" fill="#d6261f"/><circle cx="9" cy="17" r="3.3" fill="#f2c40f"/><circle cx="17" cy="16" r="4.5" fill="#1f5fd1"/></svg>Mapa de Riscos</button><button id="s3hlp" aria-pressed="false" title="Como navegar">?</button><button id="s3back" style="background:#1f63b3;color:#fff" title="Ir para o simulador sem fechar o gêmeo">◀ Simulador</button><button id="s3exit" style="background:#d0362b;color:#fff" title="Fechar o gêmeo e voltar ao simulador na visão geral">✕ Sair</button></div>
    <div class="s3lv" id="s3lv" hidden><button data-lv="2">Piso dos alimentadores (+14 m)</button><button data-lv="1">Piso das peneiras (+7,5 m)</button><button data-lv="0">Térreo</button></div>
    <div class="s3help" id="s3help">Arraste para girar · role para aproximar · <b>Caminhar</b>: W A S D ou setas, Shift corre, arraste para olhar. Clique numa etiqueta para ver o equipamento.</div>
    <div class="s3joy" id="s3joy"><i></i></div><div class="s3info" id="s3info" hidden></div>
@@ -87,6 +87,7 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   $('#s3walk').addEventListener('click', () => { setWalk(!getWalk().walk); refreshWalk(); });
   lvBox.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { setWalk(true, +b.dataset.lv); refreshWalk(); }));
   { const b = $('#s3real'); let on = !!window.__s3realOn; b.setAttribute('aria-pressed', on); b.addEventListener('click', () => { on = !on; b.setAttribute('aria-pressed', on); window.__s3real && window.__s3real(on); }); }
+  { const b = $('#s3som'); let on = true; try { on = localStorage.getItem('s3som') !== '0'; } catch (e) { /* */ } b.setAttribute('aria-pressed', on); b.addEventListener('click', () => { on = !on; b.setAttribute('aria-pressed', on); window.__s3som && window.__s3som(on); }); }
   let showTags = true; $('#s3tags').addEventListener('click', () => { showTags = !showTags; $('#s3tags').setAttribute('aria-pressed', showTags); });
   // etiquetas projetadas
   const tags = hotspots.map((h) => { const d = document.createElement('div'); d.className = 's3tag'; d.textContent = h.tag; d.addEventListener('click', () => info(h)); root.appendChild(d); return { h, d }; });

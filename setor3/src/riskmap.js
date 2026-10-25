@@ -18,20 +18,21 @@ export const AREAS = [
   { id: 'alim', nome: 'Alimentadores e distribuidor (+14 m)', at: [22, 14, 3], h: 6, riscos: [
     ['acidente', 'G', 'Queda de altura em aberturas e bordas do piso'],
     ['acidente', 'M', 'Prensamento em partes móveis do alimentador e do tripper'],
-    ['quimico', 'M', 'Poeira mineral (sílica e minério de ferro)'],
+    ['quimico', 'G', 'Poeira mineral em suspensão (sílica e minério de ferro)'],
     ['fisico', 'M', 'Ruído e vibração'],
   ] },
   { id: 'pen', nome: 'Peneiras banana (+7,5 m)', at: [14.5, 7.5, 9], h: 5.5, riscos: [
     ['fisico', 'G', 'Ruído acima de 85 dB(A) e vibração das peneiras'],
     ['acidente', 'M', 'Cargas suspensas na troca de telas e painéis'],
     ['quimico', 'M', 'Poeira mineral'],
+    ['acidente', 'M', 'Piso molhado e com minério sob as peneiras (escorregamento)'],
     ['ergonomico', 'M', 'Postura forçada na troca de painéis de poliuretano'],
   ] },
   { id: 'hp', nome: 'Britagem primária · HP 400', at: [55, 0.5, 7], h: 7, riscos: [
     ['acidente', 'G', 'Partes móveis e energia acumulada: bloqueio (LOTO) obrigatório'],
     ['fisico', 'G', 'Ruído intenso'],
     ['acidente', 'M', 'Içamento de manto e côncavo na troca de revestimento'],
-    ['quimico', 'P', 'Óleo hidráulico e lubrificante (contato e incêndio)'],
+    ['quimico', 'M', 'Óleo hidráulico e lubrificante: contato, vazamento no piso e incêndio'],
   ] },
   { id: 'vsi', nome: 'Britagem secundária · Barmac (VSI)', at: [55.5, 0.5, 17.5], h: 5.5, riscos: [
     ['acidente', 'G', 'Projeção de partículas e rotor em alta rotação'],
@@ -46,8 +47,9 @@ export const AREAS = [
     ['ergonomico', 'M', 'Limpeza manual de derramamento com pá'],
   ] },
   { id: 'circ', nome: 'Circulação, escadas e passarelas', at: [5, 0, 21], h: 5, riscos: [
-    ['acidente', 'M', 'Queda em escadas e piso com minério'],
-    ['fisico', 'P', 'Calor e iluminação deficiente'],
+    ['acidente', 'M', 'Escorregamento em poças d\'água e manchas de óleo; queda em escadas'],
+    ['acidente', 'M', 'Choque elétrico em cabos e eletrocalhas danificados'],
+    ['fisico', 'P', 'Ofuscamento nas aberturas e iluminação deficiente no interior'],
     ['biologico', 'P', 'Animais peçonhentos nas áreas externas'],
     ['acidente', 'P', 'Rotas de fuga e extintores: manter desobstruídos'],
   ] },

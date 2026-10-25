@@ -15,10 +15,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
-import { B, LV } from './layout.js?v=20261025103139';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261025103139';
-import { PhoneShader } from './render_post.js?v=20261025103139';
-import { UpscaleShader } from './render_upscale.js?v=20261025103139';
+import { B, LV } from './layout.js?v=20261025111256';
+import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261025111256';
+import { PhoneShader } from './render_post.js?v=20261025111256';
+import { UpscaleShader } from './render_upscale.js?v=20261025111256';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -35,9 +35,9 @@ export const LOOK = {
   lamp: 55,           // spots das luminárias (cd)
   lampL2: 11,         // projetores locais do piso +14 (a 2,8 m do piso)
   shaft: .32,         // feixes de luz do dia (claraboias) — espalhamento no pó do ar
-  motes: .9,          // brilho das partículas de pó dentro dos feixes
+  motes: .45,         // brilho das partículas de pó dentro dos feixes (discreto: sem pontinhos brilhantes)
   halo: .22,          // halo das luminárias (sem estourar)
-  fogIn: .012,        // névoa de pó dentro do prédio (FogExp2)
+  fogIn: .009,        // névoa de pó dentro do prédio (FogExp2)
   fogOut: .0016,
   aoScale: .6,
   bloom: [.16, .25, 2.6],
@@ -200,7 +200,8 @@ export function buildLighting(scene, renderer, lamps = []) {
   const dome = skyDome(); scene.add(dome);
   scene.environment = buildEnvironment(renderer, lamps, { sky: LOOK.sky, lamp: 40, skylights: findSkylights(scene) });
   scene.environmentIntensity = HIGH ? LOOK.env : 1.25;
-  const fog = new THREE.FogExp2(0x9c826f, LOOK.fogIn);   // pó de minério em suspensão (bege-avermelhado) scene.fog = fog;
+  // pó de minério em suspensão (bege-avermelhado): perspectiva aérea dentro do galpão — o fundo perde contraste e ganha profundidade
+  const fog = new THREE.FogExp2(0xa38b78, LOOK.fogIn); scene.fog = fog;
   // meia-luz quente: céu azulado por cima, rebatimento marrom-acinzentado (pó de minério) por baixo
   const hemi = new THREE.HemisphereLight(0xd6e2ee, 0x6a4636, HIGH ? LOOK.hemi : LOOK.hemi * 2.5); scene.add(hemi);
   // sol: alto, vindo da frente aberta (z = D) e um pouco de lado — entra pelas aberturas e faz faixas de luz no piso
@@ -320,7 +321,7 @@ export function createComposer(renderer, scene, camera) {
   composer.addPass(new OutputPass());
   const phone = new ShaderPass(PhoneShader);
   phone.uniforms.sharpen.value = .14; phone.uniforms.vignette.value = .3; phone.uniforms.grain.value = 0; /* sem granulado (aparecia como pontilhado fixo) */ phone.uniforms.chroma.value = .0007;
-  phone.uniforms.wb.value.set(1.03, 1.0, .95); phone.uniforms.contrast.value = 1.08; phone.uniforms.saturation.value = .93; phone.uniforms.distortion.value = .03;
+  phone.uniforms.wb.value.set(1.03, 1.0, .95); phone.uniforms.contrast.value = 1.05; phone.uniforms.saturation.value = .87;   /* tom de foto industrial: menos saturado/menos duro */ phone.uniforms.distortion.value = .03;
   composer.addPass(phone);
   const up = new ShaderPass(UpscaleShader); up.uniforms.srcSize.value = new THREE.Vector2(size.x * dpr, size.y * dpr); composer.addPass(up);
   const forced = Q.has('rs') ? Math.min(1, Math.max(.4, +Q.get('rs') || 1)) : null;

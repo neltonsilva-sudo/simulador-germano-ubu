@@ -4,10 +4,10 @@
 // Posições convertidas do simulador: x_gêmeo = (x_sim + 91,2)/0,38 ; z_gêmeo = (z_sim + 2,6)/0,38.
 // Regra de vizinhança: nada do entorno a menos de ~25 m das paredes do setor 3 (x 0–64, z 0–24), exceto correias e estradas.
 import * as THREE from 'three';
-import { B } from './layout.js?v=20261025103139';
-import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261025103139';
-import { mergeStatic } from './merge.js?v=20261025103139';
-import { HIGH } from './render.js?v=20261025103139';
+import { B } from './layout.js?v=20261025111256';
+import { V, box, beam, cyl, flatU, railing, stairs, rockGeometry } from './util.js?v=20261025111256';
+import { mergeStatic } from './merge.js?v=20261025111256';
+import { HIGH } from './render.js?v=20261025111256';
 
 const AREAS = {
   mina: { n: 1, nome: 'Mina de Alegria e pilha pulmão', x: 4, z: -80 },
@@ -683,6 +683,40 @@ export function buildContext(scene, M, root) {
     scatter(kinds.mata, Math.round(560 * K), () => { const c = CAP[Math.floor(rr() * CAP.length)]; return [c[0] + gauss() * c[2], c[1] + gauss() * c[2]]; }, (c) => tone(c, .12).multiplyScalar(.9), .75, 1.35, { tilt: .05 });
     const CL = [...Array(7)].map((_, i) => { const a = i / 7 * 6.283 + .4 + rr() * .5, r = 268 + rr() * 26; /* talhões perto o bastante para não flutuarem na névoa do horizonte */ return [GC.x + Math.cos(a) * r, GC.z + Math.sin(a) * r]; });
     scatter(kinds.eucalipto, Math.round(300 * K), () => { const c = CL[Math.floor(rr() * CL.length)]; return [c[0] + (rr() - .5) * 46, c[1] + (rr() - .5) * 46]; }, (c) => c.setScalar(.85 + rr() * .3), .75, 1.25, { tilt: .04 });
+  }
+
+  // ================= DETALHES DO TÉRREO DO SETOR 3 (presença) =================
+  // extintores com placa nas colunas da frente e da sala dos britadores, placas genéricas de segurança (sem marcas),
+  // montinhos de minério e poças de lama sob as correias dos retidos (o derramamento das cabeças/caudas fica em flows.js)
+  {
+    const P = new THREE.Group(); P.name = 'detalhes-terreo'; g.add(P);
+    const signT = (bg, fg, l1, l2, kind) => ctex(256, 320, (x, w, h) => { x.fillStyle = '#f2f0ea'; x.fillRect(0, 0, w, h); x.fillStyle = bg; x.fillRect(8, 8, w - 16, h - 16);
+      x.fillStyle = fg; x.strokeStyle = fg; x.lineWidth = 12;
+      if (kind === 'tri') { x.beginPath(); x.moveTo(w / 2, 40); x.lineTo(w - 40, 190); x.lineTo(40, 190); x.closePath(); x.stroke(); x.font = 'bold 110px sans-serif'; x.textAlign = 'center'; x.fillText('!', w / 2, 180); }
+      else if (kind === 'circ') { x.beginPath(); x.arc(w / 2, 115, 78, 0, 6.283); x.fill(); x.fillStyle = bg; x.beginPath(); x.arc(w / 2, 100, 30, Math.PI, 0); x.fill(); x.fillRect(w / 2 - 44, 98, 18, 40); x.fillRect(w / 2 + 26, 98, 18, 40); }   // protetor auricular estilizado
+      else { x.fillRect(w / 2 - 22, 60, 44, 120); x.fillRect(w / 2 - 10, 38, 20, 24); x.fillRect(w / 2 + 6, 44, 40, 12); }                     // extintor estilizado
+      x.fillStyle = fg; x.textAlign = 'center'; x.font = 'bold 30px sans-serif'; x.fillText(l1, w / 2, 245); x.font = 'bold 24px sans-serif'; x.fillText(l2, w / 2, 280);
+      for (let i = 0; i < 120; i++) { x.fillStyle = `rgba(110,60,40,${.05 + rr() * .12})`; x.fillRect(rr() * w, h * .55 + rr() * h * .45, 2 + rr() * 8, 2 + rr() * 5); } });   // pó de minério na metade de baixo
+    const sMat = (t) => new THREE.MeshStandardMaterial({ map: t, roughness: .7, metalness: 0 });
+    const S = { ext: sMat(signT('#c4161c', '#ffffff', 'EXTINTOR', 'PÓ ABC', 'ext')), epi: sMat(signT('#1d5fae', '#ffffff', 'USO OBRIGATÓRIO', 'PROTETOR AURICULAR', 'circ')),
+      cuid: sMat(signT('#f1c40f', '#1b1b1b', 'CUIDADO', 'PARTES MÓVEIS', 'tri')) };
+    const red = mat(0xa8141a, .45, .2), blk = mat(0x1a1a1a, .6, .2), stl = mat(0x8a8d90, .4, .7);
+    // face = direção para onde a placa olha (+1 / −1 em z)
+    const sign = (m, x, y, z, face) => { const s = new THREE.Mesh(new THREE.PlaneGeometry(.4, .5), m); s.position.set(x, y, z + face * .33); if (face < 0) s.rotation.y = Math.PI; P.add(s); };
+    const ext = (x, z, face) => { const zz = z + face * .42;
+      cyl(P, .085, .085, .5, red, x, .68, zz, 14); cyl(P, .07, .085, .06, red, x, .96, zz, 14); cyl(P, .02, .02, .08, stl, x, 1.02, zz, 8);
+      box(P, .14, .025, .03, blk, x + .05, 1.07, zz); beam(P, V(x - .04, 1.04, zz), V(x - .1, .7, zz + face * .06), .018, blk);           // gatilho e mangueira
+      box(P, .22, .04, .1, stl, x, .44, zz - face * .05);                                                                                    // suporte na coluna
+      sign(S.ext, x, 1.6, z, face);
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(.9, .9), mat(0xa8201e, .9, 0, { polygonOffset: true, polygonOffsetFactor: -2 })); fl.rotation.x = -Math.PI / 2; fl.position.set(x, .012, z + face * .75); P.add(fl); };   // demarcação no piso
+    ext(8, 24, -1); ext(24, 24, -1); ext(40, 24, -1); ext(56, 24, -1); ext(48, 0, 1);
+    sign(S.epi, 16, 1.9, 24, -1); sign(S.cuid, 32, 1.9, 24, -1); sign(S.epi, 48, 1.9, 24, -1); sign(S.cuid, 64, 1.9, 24, -1); sign(S.epi, 56, 1.9, 0, 1);
+    // montinhos de minério e lama sob as correias dos retidos (fora das linhas de colunas x = 8k)
+    const mound = pileMat(), puddle = mat(0x2a1a14, .12, .05, { polygonOffset: true, polygonOffsetFactor: -3 });
+    for (let i = 0; i < 9; i++) { let x = 4 + rr() * 40; if (Math.abs(x / 8 - Math.round(x / 8)) * 8 < 1.2) x += 2.4; const z = 13.4 + rr() * 1.6, r = .35 + rr() * .5;
+      const m = new THREE.Mesh(pileGeo(r, r * .32, i + 3), mound); m.position.set(x, 0, z); m.rotation.y = rr() * 6; P.add(m); }
+    for (let i = 0; i < 6; i++) { let x = 5 + rr() * 38; if (Math.abs(x / 8 - Math.round(x / 8)) * 8 < 1.5) x += 3; const s = new THREE.Mesh(new THREE.CircleGeometry(1, 20), puddle);
+      s.rotation.x = -Math.PI / 2; s.rotation.z = rr() * 6; s.scale.set(.6 + rr() * 1.2, .35 + rr() * .6, 1); s.position.set(x, .008, 15.4 + rr() * 1.4); s.receiveShadow = true; P.add(s); }
   }
 
   // etiquetas numeradas das áreas (mesmo padrão da página principal)
