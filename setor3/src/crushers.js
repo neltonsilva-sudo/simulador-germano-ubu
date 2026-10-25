@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261025114453';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025114453';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261025115224';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025115224';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -570,28 +570,20 @@ export function buildCrushers(scene, M) {
   // inclinação (sidewall) encostada na parede z ≈ 2, por fora dos silos → cauda da correia de distribuição (y 17,4 m)
   const E2 = B.screenEnd, sidewall = (rg, w) => { const L = rg.userData.L; for (const sx of [-1, 1]) box(rg, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(rg, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); };
   const chute = (a, b) => { beam(g, a, b, .9, M.chute); box(g, 1.3, .5, 1.3, M.chute, a.x, a.y + .1, a.z); };
-  belt(V(E2 + 2.6, 1.0, 13.2), V(B.W - .9, 1.0, 13.2));   // fora da linha de colunas z = 12
-  chute(V(B.W - 1.1, .95, 13.2), V(B.W - 1.1, .6, 12.9));
-  // descarga dos HP 400: calha sob a base → abertura no piso (com guarda-corpo) → correia de abas subindo → calha de transferência na correia de retorno
-  CRUSHERS.cones.forEach((c) => {
-    const zc = c.z + 1.9;
-    beam(g, V(c.x, .8, zc), V(c.x, .05, zc + 1.0), .8, M.chute);                                   // calha de descarga saindo da base
-    box(g, 1.0, .5, .25, M.chute, c.x, .78, zc - .05);                                              // boca da calha na base
-    box(g, 1.7, .012, 1.5, M.black, c.x, .006, zc + 1.45);                                          // abertura no piso
-    for (const [dx, dz, w, d] of [[0, -.8, 1.9, .14], [0, .8, 1.9, .14], [-.88, 0, .14, 1.5], [.88, 0, .14, 1.5]]) box(g, w, .15, d, M.plinth || M.chute, c.x + dx, .075, zc + 1.45 + dz);   // meio-fio de concreto
-    for (const [dx, dz] of [[-.95, -.85], [.95, -.85], [-.95, .85], [.95, .85]]) box(g, .05, 1.1, .05, M.yellow, c.x + dx, .55, zc + 1.45 + dz);    // guarda-corpo
-    for (const y of [.6, 1.1]) { box(g, 1.95, .04, .04, M.yellow, c.x, y, zc + .6); box(g, .04, .04, 1.7, M.yellow, c.x - .95, y, zc + 1.45); box(g, .04, .04, 1.7, M.yellow, c.x + .95, y, zc + 1.45); }
-    sidewall(belt(V(c.x, -.5, zc + 1.6), V(c.x, 1.95, 12.45), .9), .9);                             // correia de abas (inclinada) até a correia de retorno
-    chute(V(c.x, 1.9, 12.55), V(c.x, 1.45, 13.05));                                                  // calha de transferência
-  });
-  // descarga dos Barmac: o britado cai do fundo da câmara para dentro da base e sai por uma calha fechada na traseira, direto na correia de retorno
-  CRUSHERS.vsi.forEach((c) => {
-    box(g, 1.1, .7, .3, M.chute, c.x, 1.6, c.z - 1.72);                                              // boca de descarga na traseira da base
-    beam(g, V(c.x, 1.75, c.z - 1.85), V(c.x, 1.45, 13.55), .75, M.chute);                             // calha de descarga
-    box(g, .95, .35, .5, M.chute, c.x, 1.4, 13.45);                                                   // capota de transferência sobre a correia
-  });
-  belt(V(B.W - 1.1, .5, 12.8), V(B.W - 1.1, .5, 2.2), 1.0);   // afastada das colunas x = 64
-  chute(V(B.W - 1.1, .45, 1.9), V(B.W - 1.5, .4, 2.0));
+  // descarga POR BAIXO (como na usina): o britado cai pelo centro da carcaça, atravessa a base e o bloco de concreto por uma tremonha
+  // e cai numa correia na galeria sob o piso (uma sob os HP 400, outra sob os Barmac); as galerias descarregam numa coletora que sobe
+  // até a correia de abas (retorno às peneiras). Grades no piso sobre as galerias deixam ver o minério passando.
+  const YG = -2.0, XC = B.W - 1.1;
+  const grate = (x0, x1, z0, z1) => { const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, w = x1 - x0, d = z1 - z0;
+    box(g, w, .02, d, M.black, cx, .006, cz);
+    if (w > d) for (let x = x0 + .15; x < x1; x += .3) box(g, .035, .03, d, M.steelDk, x, .02, cz); else for (let z = z0 + .15; z < z1; z += .3) box(g, w, .03, .035, M.steelDk, cx, .02, z);
+    for (const [ax, az, aw, ad] of [[cx, z0, w + .1, .08], [cx, z1, w + .1, .08], [x0, cz, .08, d], [x1, cz, .08, d]]) box(g, aw, .05, ad, M.steelDk, ax, .025, az); };
+  for (const z of [7, 17.5]) { belt(V(E2 + 2.4, YG, z), V(XC - .3, YG, z), 1.0); chute(V(XC - .25, YG + .25, z), V(XC, YG - .35, z)); grate(E2 + 2.2, XC - .7, z - .75, z + .75); }
+  CRUSHERS.cones.forEach((c) => beam(g, V(c.x, .5, c.z), V(c.x, YG + .5, c.z), 1.2, M.chute));      // tremonha de descarga sob o HP 400
+  CRUSHERS.vsi.forEach((c) => beam(g, V(c.x, .6, c.z), V(c.x, YG + .5, c.z), 1.2, M.chute));        // tremonha de descarga sob o Barmac
+  belt(V(XC, YG - .6, 18.3), V(XC, .45, 2.4), 1.0);                                                  // coletora: sobe da galeria até a correia de abas
+  grate(XC - .75, XC + .75, 2.4, 18.3);
+  chute(V(XC, .45, 2.15), V(B.W - 1.5, .4, 2.0));
   sidewall(belt(V(B.W - 1.4, .35, 2.0), V(E2 + 2.6, 18.9, 2.0), 1.0), 1.0);
   chute(V(E2 + 2.4, 18.8, 2.0), V(E2 + 2.0, 17.75, 2.4));
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);                    // correia do passante (< 12,5 mm) → pilha
