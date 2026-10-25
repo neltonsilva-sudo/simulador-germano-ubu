@@ -8,7 +8,7 @@
 // Modo caminhar: passos (concreto com minério no térreo e no +7,5; grade metálica no +14).
 // Política dos navegadores: o áudio só nasce no primeiro clique/toque/tecla. Liga/desliga: window.__s3som(true|false),
 // sem argumento alterna; preferência guardada em localStorage 's3som'; ?som=0 começa desligado. Evento 's3som' no document.
-import { LV, B, SCREENS, CRUSHERS } from './layout.js?v=20261025111256';
+import { LV, B, SCREENS, CRUSHERS } from './layout.js?v=20261025111638';
 
 export const SR = 22050;                                   // texturas em 22 kHz (economia; o contexto reamostra)
 const TAU = Math.PI * 2;
@@ -202,7 +202,7 @@ export function sourceList(hotspots = []) {
 export function buildAmbience({ camera, sim, hotspots = [], getWalk = () => ({ walk: false, level: 0 }) } = {}) {
   const Q = new URLSearchParams(location.search), LOW = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   const pref = () => { try { return localStorage.getItem('s3som'); } catch (e) { return null; } };
-  let want = Q.get('som') !== '0' && pref() !== '0', ctx = null, ready = false, on = false, vol = .5, building = false;
+  let want = Q.get('som') !== '0' && pref() !== '0', ctx = null, ready = false, on = false, vol = (() => { try { const v = parseFloat(localStorage.getItem('s3somVol')); return isFinite(v) ? clamp(v, 0, 1) : .5; } catch (e) { return .5; } })(), building = false;
   const AC = window.AudioContext || window.webkitAudioContext;
   const SRC = sourceList(hotspots), BUF = {}, OS = {}, rnd = rng(7);
   let N = null;   // nós principais
@@ -285,7 +285,7 @@ export function buildAmbience({ camera, sim, hotspots = [], getWalk = () => ({ w
   document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend().catch(() => {}); else if (on) ctx.resume().catch(() => {}); });
   window.__s3som = (v) => { if (v == null) v = !on; want = !!v; try { localStorage.setItem('s3som', v ? '1' : '0'); } catch (e) { /* */ } v ? start() : stop(); return !!v; };
   window.__s3somOn = () => on;
-  window.__s3somVol = (v) => { vol = clamp(+v || 0, 0, 1); if (on) fadeTo(vol, .3); return vol; };
+  window.__s3somVol = (v) => { if (v == null) return vol; vol = clamp(+v || 0, 0, 1); try { localStorage.setItem('s3somVol', String(vol)); } catch (e) { /* */ } if (on) fadeTo(vol, .3); return vol; };
   window.__s3somDbg = () => { if (!N) return null; const a = new Float32Array(N.an.fftSize); N.an.getFloatTimeDomainData(a); return { state: ctx.state, t: +ctx.currentTime.toFixed(2), red: +N.comp.reduction.toFixed(1), out: +N.out.gain.value.toFixed(3), duck: +N.duck.gain.value.toFixed(2), rms: +rms(a).toFixed(4), fontes: SRC.map((s) => ({ id: s.tag || s.key || s.kind, g: s.out ? s.out.g.map((x) => +x.toFixed(3)) : null })) }; };
 
   // ---------- quadro a quadro ----------

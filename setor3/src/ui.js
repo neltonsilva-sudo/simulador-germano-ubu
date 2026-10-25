@@ -1,13 +1,13 @@
 // Interface: cartão de título, barra de vistas (câmeras das fotos), caminhar por nível, etiquetas dos equipamentos
 // (projetadas sobre a cena) e cartão de informação ao clicar. Joystick na tela para celular.
 import * as THREE from 'three';
-import { buildPanels } from './panels.js?v=20261025111256';
-import { buildEqScreen } from './eqscreen.js?v=20261025111256';
-import { buildTraining } from './training.js?v=20261025111256';
-import { buildTour } from './tour.js?v=20261025111256';
-import { logEv, cmd, itemOf } from './sim.js?v=20261025111256';
-import { SIM_URL } from './api.js?v=20261025111256';
-import { buildRiskMap } from './riskmap.js?v=20261025111256';
+import { buildPanels } from './panels.js?v=20261025111638';
+import { buildEqScreen } from './eqscreen.js?v=20261025111638';
+import { buildTraining } from './training.js?v=20261025111638';
+import { buildTour } from './tour.js?v=20261025111638';
+import { logEv, cmd, itemOf } from './sim.js?v=20261025111638';
+import { SIM_URL } from './api.js?v=20261025111638';
+import { buildRiskMap } from './riskmap.js?v=20261025111638';
 
 const CSS = `
 .s3flash{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:20;padding:8px 14px;border-radius:10px;font:600 13px system-ui;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:80vw}.s3flash.ok{background:rgba(31,138,91,.95)}.s3flash.no{background:rgba(160,40,30,.95)}
@@ -30,6 +30,7 @@ const CSS = `
 .s3lv{position:fixed;left:14px;bottom:16px;z-index:5;display:flex;gap:6px;flex-direction:column;padding:6px;border-radius:12px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px)}
 .s3tag{position:fixed;z-index:4;transform:translate(-50%,-100%);padding:3px 8px;border-radius:5px;background:#1f63b3;color:#fff;font:600 11.5px system-ui;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .s3tag.sel{background:#ffd24a;color:#1d2733;transform:translate(-50%,-100%) scale(1.25);z-index:5;box-shadow:0 0 0 3px rgba(255,210,74,.45)}
+#s3somPop{position:fixed;z-index:30;width:260px;box-sizing:border-box;display:grid;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(12,22,34,.96);border:1px solid rgba(92,198,220,.5);color:#fff;font:13px system-ui;box-shadow:0 10px 30px rgba(0,0,0,.45)}#s3somPop[hidden]{display:none}#s3somPop b{color:#ffd24a}#s3somPop small{color:#9fb0bd;font-size:11px;line-height:1.35}#s3somPop button{border:1px solid rgba(255,255,255,.25);background:#1f3a5c;color:#fff;border-radius:6px;padding:5px 8px;font:600 12px system-ui;cursor:pointer}#s3somPop [data-t].on{background:#1f6b45;border-color:#2fbf71}#s3somPop .vr{display:grid;grid-template-columns:30px 1fr 30px 52px;gap:6px;align-items:center}#s3somPop .vr button{padding:3px 0;font-size:16px}#s3somPop input{width:100%;accent-color:#5cc6dc}#s3somPop output{font:600 12px ui-monospace,monospace;color:#9fe8ff;text-align:right}
 .s3tag:after{content:"";position:absolute;left:50%;top:100%;width:1px;height:14px;background:#1f63b3}
 .s3info{position:fixed;left:14px;top:96px;z-index:6;width:min(360px,calc(100vw - 28px));padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.9);backdrop-filter:blur(14px);box-shadow:0 8px 26px rgba(0,0,0,.22);color:#1d2733;font-size:13px;line-height:1.45}
 .s3info h3{margin:0 0 4px;font-size:15px;color:#1f63b3}.s3info button{float:right;border:0;background:none;font-size:18px;cursor:pointer;color:#555}
@@ -87,7 +88,20 @@ export function buildUI({ camera, controls, canvas, hotspots, setCam, setWalk, g
   $('#s3walk').addEventListener('click', () => { setWalk(!getWalk().walk); refreshWalk(); });
   lvBox.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { setWalk(true, +b.dataset.lv); refreshWalk(); }));
   { const b = $('#s3real'); let on = !!window.__s3realOn; b.setAttribute('aria-pressed', on); b.addEventListener('click', () => { on = !on; b.setAttribute('aria-pressed', on); window.__s3real && window.__s3real(on); }); }
-  { const b = $('#s3som'); let on = true; try { on = localStorage.getItem('s3som') !== '0'; } catch (e) { /* */ } b.setAttribute('aria-pressed', on); b.addEventListener('click', () => { on = !on; b.setAttribute('aria-pressed', on); window.__s3som && window.__s3som(on); }); }
+  /* som ambiente: o botão abre um painel com liga/desliga e volume (− / barra / +), lembrados neste navegador */
+  { const b = $('#s3som'); let on = true, vol = .5; try { on = localStorage.getItem('s3som') !== '0'; const v = parseFloat(localStorage.getItem('s3somVol')); if (isFinite(v)) vol = Math.max(0, Math.min(1, v)); } catch (e) { /* */ }
+    const pop = document.createElement('div'); pop.id = 's3somPop'; pop.hidden = true; root.appendChild(pop);
+    pop.innerHTML = `<b>Som ambiente</b><button data-t></button><div class="vr"><button data-d="-1" title="Diminuir">−</button><input type="range" min="0" max="100" step="5" aria-label="Volume"><button data-d="1" title="Aumentar">+</button><output></output></div><small>Começa no primeiro clique na cena. Fone de ouvido dá a melhor sensação de espaço.</small>`;
+    const rg = pop.querySelector('input'), out = pop.querySelector('output'), tg = pop.querySelector('[data-t]');
+    const paint = () => { const p = Math.round(vol * 100); rg.value = p; out.textContent = p + ' %'; tg.textContent = on ? 'Ligado · clique para desligar' : 'Desligado · clique para ligar'; tg.className = on ? 'on' : '';
+      b.textContent = !on || p === 0 ? '🔇 Som' : p < 40 ? '🔉 Som' : '🔊 Som'; b.setAttribute('aria-pressed', on && p > 0); };
+    const setVol = (v) => { vol = Math.max(0, Math.min(1, v)); window.__s3somVol && window.__s3somVol(vol); try { localStorage.setItem('s3somVol', String(vol)); } catch (e) { /* */ } if (vol > 0 && !on) { on = true; window.__s3som && window.__s3som(true); } paint(); };
+    b.addEventListener('click', (e) => { e.stopPropagation(); pop.hidden = !pop.hidden; if (!pop.hidden) { const r = b.getBoundingClientRect(); pop.style.left = Math.max(8, Math.min(innerWidth - 268, r.left)) + 'px'; pop.style.top = r.bottom + 6 + 'px'; } paint(); });
+    tg.addEventListener('click', () => { on = !on; window.__s3som && window.__s3som(on); paint(); });
+    rg.addEventListener('input', () => setVol(rg.value / 100));
+    pop.querySelectorAll('[data-d]').forEach((x) => x.addEventListener('click', () => setVol(Math.round((vol + x.dataset.d * .1) * 20) / 20)));
+    pop.addEventListener('click', (e) => e.stopPropagation()); document.addEventListener('click', () => { pop.hidden = true; });
+    document.addEventListener('s3som', (e) => { if (e.detail && 'on' in e.detail) { on = !!e.detail.on; paint(); } }); paint(); }
   let showTags = true; $('#s3tags').addEventListener('click', () => { showTags = !showTags; $('#s3tags').setAttribute('aria-pressed', showTags); });
   // etiquetas projetadas
   const tags = hotspots.map((h) => { const d = document.createElement('div'); d.className = 's3tag'; d.textContent = h.tag; d.addEventListener('click', () => info(h)); root.appendChild(d); return { h, d }; });
