@@ -1,13 +1,13 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261025114030';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261025114030';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261025114030';
-import { buildUI } from './ui.js?v=20261025114030';
-import { gate } from './gate.js?v=20261025114030';
-import { buildContext } from './context.js?v=20261025114030';
-import { buildAmbience } from './ambience.js?v=20261025114030';
+import { B, LV, CAMS } from './layout.js?v=20261025114453';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261025114453';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261025114453';
+import { buildUI } from './ui.js?v=20261025114453';
+import { gate } from './gate.js?v=20261025114453';
+import { buildContext } from './context.js?v=20261025114453';
+import { buildAmbience } from './ambience.js?v=20261025114453';
 const REAL0 = new URLSearchParams(location.search).get('real') === '1';   // lido antes do gate, que limpa o endereço
 gate();
 

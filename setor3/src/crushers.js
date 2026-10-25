@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261025114030';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025114030';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261025114453';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025114453';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -570,11 +570,29 @@ export function buildCrushers(scene, M) {
   // inclinação (sidewall) encostada na parede z ≈ 2, por fora dos silos → cauda da correia de distribuição (y 17,4 m)
   const E2 = B.screenEnd, sidewall = (rg, w) => { const L = rg.userData.L; for (const sx of [-1, 1]) box(rg, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(rg, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); };
   const chute = (a, b) => { beam(g, a, b, .9, M.chute); box(g, 1.3, .5, 1.3, M.chute, a.x, a.y + .1, a.z); };
-  belt(V(E2 + 2.6, 1.4, 13.2), V(B.W - .9, 1.4, 13.2));   // fora da linha de colunas z = 12
-  chute(V(B.W - 1.1, 1.35, 13.2), V(B.W - 1.1, .95, 12.9));
-  belt(V(B.W - 1.1, .85, 12.8), V(B.W - 1.1, .85, 2.2), 1.0);   // afastada das colunas x = 64
-  chute(V(B.W - 1.1, .8, 1.9), V(B.W - 1.5, .75, 2.0));
-  sidewall(belt(V(B.W - 1.4, .7, 2.0), V(E2 + 2.6, 18.9, 2.0), 1.0), 1.0);
+  belt(V(E2 + 2.6, 1.0, 13.2), V(B.W - .9, 1.0, 13.2));   // fora da linha de colunas z = 12
+  chute(V(B.W - 1.1, .95, 13.2), V(B.W - 1.1, .6, 12.9));
+  // descarga dos HP 400: calha sob a base → abertura no piso (com guarda-corpo) → correia de abas subindo → calha de transferência na correia de retorno
+  CRUSHERS.cones.forEach((c) => {
+    const zc = c.z + 1.9;
+    beam(g, V(c.x, .8, zc), V(c.x, .05, zc + 1.0), .8, M.chute);                                   // calha de descarga saindo da base
+    box(g, 1.0, .5, .25, M.chute, c.x, .78, zc - .05);                                              // boca da calha na base
+    box(g, 1.7, .012, 1.5, M.black, c.x, .006, zc + 1.45);                                          // abertura no piso
+    for (const [dx, dz, w, d] of [[0, -.8, 1.9, .14], [0, .8, 1.9, .14], [-.88, 0, .14, 1.5], [.88, 0, .14, 1.5]]) box(g, w, .15, d, M.plinth || M.chute, c.x + dx, .075, zc + 1.45 + dz);   // meio-fio de concreto
+    for (const [dx, dz] of [[-.95, -.85], [.95, -.85], [-.95, .85], [.95, .85]]) box(g, .05, 1.1, .05, M.yellow, c.x + dx, .55, zc + 1.45 + dz);    // guarda-corpo
+    for (const y of [.6, 1.1]) { box(g, 1.95, .04, .04, M.yellow, c.x, y, zc + .6); box(g, .04, .04, 1.7, M.yellow, c.x - .95, y, zc + 1.45); box(g, .04, .04, 1.7, M.yellow, c.x + .95, y, zc + 1.45); }
+    sidewall(belt(V(c.x, -.5, zc + 1.6), V(c.x, 1.95, 12.45), .9), .9);                             // correia de abas (inclinada) até a correia de retorno
+    chute(V(c.x, 1.9, 12.55), V(c.x, 1.45, 13.05));                                                  // calha de transferência
+  });
+  // descarga dos Barmac: o britado cai do fundo da câmara para dentro da base e sai por uma calha fechada na traseira, direto na correia de retorno
+  CRUSHERS.vsi.forEach((c) => {
+    box(g, 1.1, .7, .3, M.chute, c.x, 1.6, c.z - 1.72);                                              // boca de descarga na traseira da base
+    beam(g, V(c.x, 1.75, c.z - 1.85), V(c.x, 1.45, 13.55), .75, M.chute);                             // calha de descarga
+    box(g, .95, .35, .5, M.chute, c.x, 1.4, 13.45);                                                   // capota de transferência sobre a correia
+  });
+  belt(V(B.W - 1.1, .5, 12.8), V(B.W - 1.1, .5, 2.2), 1.0);   // afastada das colunas x = 64
+  chute(V(B.W - 1.1, .45, 1.9), V(B.W - 1.5, .4, 2.0));
+  sidewall(belt(V(B.W - 1.4, .35, 2.0), V(E2 + 2.6, 18.9, 2.0), 1.0), 1.0);
   chute(V(E2 + 2.4, 18.8, 2.0), V(E2 + 2.0, 17.75, 2.4));
   belt(V(2, 1.3, 20.5), V(B.screenEnd + 2, 1.3, 20.5), 1.2);                    // correia do passante (< 12,5 mm) → pilha
   const COL = { ok: 0x5ff0ff, warn: 0xffb020, crit: 0xff3b2f, off: 0x4a525a };
