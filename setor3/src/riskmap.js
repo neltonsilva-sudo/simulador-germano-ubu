@@ -40,14 +40,14 @@ export const AREAS = [
     ['ergonomico', 'P', 'Troca de pontas e placas de desgaste'],
   ] },
   { id: 'cor', nome: 'Correias transportadoras', at: [32, 1.5, 20.5], h: 6, riscos: [
-    ['acidente', 'G', 'Aprisionamento em tambores e roletes'],
-    ['acidente', 'M', 'Queda de material das correias'],
+    ['acidente', 'G', 'Aprisionamento em tambores e roletes; queda de material das correias'],
+    ['fisico', 'M', 'Ruído de roletes, tambores e transferências'],
     ['quimico', 'M', 'Poeira nas transferências'],
     ['ergonomico', 'M', 'Limpeza manual de derramamento com pá'],
   ] },
   { id: 'circ', nome: 'Circulação, escadas e passarelas', at: [5, 0, 21], h: 5, riscos: [
     ['acidente', 'M', 'Escorregamento em poças d\'água e manchas de óleo; queda em escadas'],
-    ['fisico', 'P', 'Ofuscamento nas aberturas e iluminação deficiente no interior'],
+    ['fisico', 'M', 'Ruído do setor em toda a circulação (protetor auricular); ofuscamento e pouca luz no interior'],
     ['biologico', 'P', 'Animais peçonhentos nas áreas externas'],
     ['acidente', 'M', 'Choque elétrico em cabos danificados; rotas de fuga e extintores desobstruídos'],
   ] },
