@@ -1,12 +1,13 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261023100504';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261023100504';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261023100504';
-import { buildUI } from './ui.js?v=20261023100504';
-import { gate } from './gate.js?v=20261023100504';
-import { buildContext } from './context.js?v=20261023100504';
+import { B, LV, CAMS } from './layout.js?v=20261025103139';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261025103139';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261025103139';
+import { buildUI } from './ui.js?v=20261025103139';
+import { gate } from './gate.js?v=20261025103139';
+import { buildContext } from './context.js?v=20261025103139';
+const REAL0 = new URLSearchParams(location.search).get('real') === '1';   // lido antes do gate, que limpa o endereço
 gate();
 
 const Q = new URLSearchParams(location.search);
@@ -18,6 +19,9 @@ const S3 = buildSetor3(); scene.add(S3.group); const parts = S3.parts;
 // entorno: restante do processo de Germano ao redor do setor 3 (como na página principal)
 let CTX = null; try { CTX = buildContext(scene, S3.M, S3.group); window.__ctxOcc = CTX.occ; (parts.flows.labels || (parts.flows.labels = [])).push(...CTX.labels); } catch (e) { console.error('entorno', e); } console.log('setor3: malhas fundidas', S3.stats);
 const LIGHT = buildLighting(scene, renderer, S3.lamps);
+/* modo realista (padrão): texturas escaneadas reais e céu de pedreira; botão na barra desliga e lembra a escolha neste navegador */
+window.__s3real = (on) => import('./real.js').then((m) => { m.setReal(scene, S3.M, renderer, on); try { localStorage.setItem('s3real', on ? '1' : '0'); } catch (e) { /* */ } });
+window.__s3realOn = REAL0 || (() => { try { return localStorage.getItem('s3real') !== '0'; } catch (e) { return true; } })();   // padrão: realista if (window.__s3realOn) window.__s3real(true);
 // projetores do entorno (acendem à noite): um por área do processo e quatro em volta do prédio do setor 3
 try { (CTX && CTX.labels || []).filter((l) => l.kind === 'area').forEach((l) => LIGHT.addYard(l.pos.x + 30, 16, l.pos.z + 30, 1));   // poste ao lado da área (fora da cava/pilha)
   const W = S3.LAYOUT ? S3.LAYOUT.B.W : 64, D = S3.LAYOUT ? S3.LAYOUT.B.D : 26; [[-6, -6], [W + 6, -6], [-6, D + 6], [W + 6, D + 6]].forEach(([x, z]) => LIGHT.addYard(x, 12, z, .6)); } catch (e) { console.warn('projetores', e); }
