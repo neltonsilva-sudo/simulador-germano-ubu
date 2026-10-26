@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261026204515';
-import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261026204515';
-import { PhoneShader } from './render_post.js?v=20261026204515';
-import { UpscaleShader } from './render_upscale.js?v=20261026204515';
+import { B, LV } from './layout.js?v=20261026204743';
+import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261026204743';
+import { PhoneShader } from './render_post.js?v=20261026204743';
+import { UpscaleShader } from './render_upscale.js?v=20261026204743';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -29,7 +29,7 @@ export const LOOK = {
   sun: 4.5,           // sol (lux relativo) entrando pelas aberturas
   sky: 3.4,           // radiância do céu vista pelas aberturas (ambiente)
   env: .72,           // intensidade do ambiente PMREM (q=high; parte da luz do céu vem das janelas de área abaixo)
-  open: 12,           // luz natural das ABERTURAS (termo no shader, só q=high): clara junto aos vãos, cai com a distância
+  open: 0,            // (desligado: em algumas GPUs o cálculo saía errado — clarão/blocos; reativar para teste com ?lk=open:12) luz natural das ABERTURAS (termo no shader, só q=high): clara junto aos vãos, cai com a distância
   deep: .5,           // fração do ambiente difuso (PMREM) que sobra no miolo do prédio (o resto vem das aberturas)
   skyIn: 1.7,         // ganho extra do céu visto de DENTRO (foto exposta para o interior: o exterior quase estoura)
   tm: 0,              // tone mapping: 0 = Neutral, 1 = AgX
@@ -313,7 +313,7 @@ export function createComposer(renderer, scene, camera) {
   composer.addPass(gtao);
   /* proteção: pixel inválido (NaN/infinito, gerado por algumas GPUs) vira preto e o acúmulo de quadros + bloom o espalhavam em blocos pretos */
   const SAN = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); bool bad = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || !(c.a == c.a) || max(max(c.r, c.g), c.b) > 6.0e4; gl_FragColor = bad ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(min(c.rgb, vec3(6.0e4)), c.a); }' };
+    fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); bool bad = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || !(c.a == c.a) || max(max(c.r, c.g), c.b) > 6.0e4; gl_FragColor = bad ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(min(c.rgb, vec3(64.0)), c.a); }' };
   composer.addPass(new ShaderPass(SAN));
   const TAA = Q.get('taa') === '1',   // desligado por padrão: o acúmulo deixava rastro no minério e nas correias em movimento (MSAA 4x já suaviza as bordas)
    accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum); composer.addPass(new ShaderPass(SAN));   // de novo após o acúmulo (o histórico nunca guarda pixel inválido)
