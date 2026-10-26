@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261026180016';
-import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261026180016';
-import { PhoneShader } from './render_post.js?v=20261026180016';
-import { UpscaleShader } from './render_upscale.js?v=20261026180016';
+import { B, LV } from './layout.js?v=20261026204515';
+import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261026204515';
+import { PhoneShader } from './render_post.js?v=20261026204515';
+import { UpscaleShader } from './render_upscale.js?v=20261026204515';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -311,8 +311,12 @@ export function createComposer(renderer, scene, camera) {
   gtao.blendIntensity = 1.0; gtao.normalMaterial.side = THREE.DoubleSide;
   { const r0 = gtao.render.bind(gtao); gtao.render = (...a) => { const g = FX.group, v = g && g.visible; if (g) g.visible = false; r0(...a); if (g) g.visible = v; }; }   // feixes/halos fora da oclusão
   composer.addPass(gtao);
+  /* proteção: pixel inválido (NaN/infinito, gerado por algumas GPUs) vira preto e o acúmulo de quadros + bloom o espalhavam em blocos pretos */
+  const SAN = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); bool bad = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || !(c.a == c.a) || max(max(c.r, c.g), c.b) > 6.0e4; gl_FragColor = bad ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(min(c.rgb, vec3(6.0e4)), c.a); }' };
+  composer.addPass(new ShaderPass(SAN));
   const TAA = Q.get('taa') === '1',   // desligado por padrão: o acúmulo deixava rastro no minério e nas correias em movimento (MSAA 4x já suaviza as bordas)
-   accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum);
+   accum = TAA ? new AccumPass() : null; if (accum) composer.addPass(accum); composer.addPass(new ShaderPass(SAN));   // de novo após o acúmulo (o histórico nunca guarda pixel inválido)
   const bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), ...LOOK.bloom); composer.addPass(bloom);
   const grade = new ShaderPass(GradeShader); composer.addPass(grade);
   composer.addPass(new OutputPass());

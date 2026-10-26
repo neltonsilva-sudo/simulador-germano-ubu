@@ -3,7 +3,7 @@
 // B.W × B.H × B.D (64 × 24 × 24 m) com telhas escuras por dentro, piso empoeirado, luminárias de galpão e as
 // grandes ABERTURAS laterais por onde entra a luz do dia (céu claro, vegetação e terreno lá fora).
 import * as THREE from 'three';
-import { B, LV } from './layout.js?v=20261026180016';
+import { B, LV } from './layout.js?v=20261026204515';
 
 let patched = false;
 export const BOX = {
@@ -27,11 +27,14 @@ function openingGLSL() {
   const R = [['z', D, 0, W, 0, oH, 1], ['x', W, 0, D, 0, 6, .95], ['x', 0, 0, D, 0, 6, .9], ['z', 0, 0, W, 0, 4, .85]];
   const calls = R.map(([ax, v, u0, u1, y0, y1, k]) => `e += ${f(k)} * twinOpening${ax.toUpperCase()}( p, n, ${f(v)}, ${f(u0)}, ${f(u1)}, ${f(y0)}, ${f(y1)} );`).join('\n    ');
   return /* glsl */`
+  vec3 twSafeN( vec3 v ) { float l = length( v ); return l > 1e-4 ? v / l : vec3( 0.0, 1.0, 0.0 ); }
   float twinRectFF( vec3 p, vec3 n, vec3 a, vec3 b, vec3 c, vec3 d ) {
-    vec3 v0 = normalize( a - p ), v1 = normalize( b - p ), v2 = normalize( c - p ), v3 = normalize( d - p );
+    p += n * 0.02;   // afasta o ponto da superfície: evita vetor nulo (NaN) em pontos sobre o plano ou nos cantos do vão
+    vec3 v0 = twSafeN( a - p ), v1 = twSafeN( b - p ), v2 = twSafeN( c - p ), v3 = twSafeN( d - p );
     vec3 F = LTC_EdgeVectorFormFactor( v0, v1 ) + LTC_EdgeVectorFormFactor( v1, v2 ) + LTC_EdgeVectorFormFactor( v2, v3 ) + LTC_EdgeVectorFormFactor( v3, v0 );
     F *= dot( F, 0.25 * ( a + b + c + d ) - p ) < 0.0 ? -1.0 : 1.0;
-    float l = length( F ); return max( ( l * l + dot( F, n ) ) / ( l + 1.0 ), 0.0 );
+    float l = length( F ), r = ( l * l + dot( F, n ) ) / ( l + 1.0 );
+    return ( r == r && r < 1e4 ) ? clamp( r, 0.0, 4.0 ) : 0.0;   // descarta NaN/infinito (viravam blocos pretos no pós-processamento)
   }
   const vec3 twSky = vec3( 0.80, 0.88, 0.97 ), twGnd = vec3( 0.40, 0.29, 0.21 );
   vec3 twinOpeningZ( vec3 p, vec3 n, float z, float x0, float x1, float y0, float y1 ) {
@@ -91,7 +94,8 @@ export function installBoxProjection() {
     vec3 twP = cameraPosition + ( vec4( - vViewPosition, 0.0 ) * viewMatrix ).xyz;
     float twM = twinInside( twP );
     if ( twM > 0.0 ) {
-      irradiance += twM * uOpen.x * twinOpeningIrr( twP, inverseTransformDirection( geometryNormal, viewMatrix ) );
+      vec3 twE = twinOpeningIrr( twP, inverseTransformDirection( geometryNormal, viewMatrix ) );
+      if ( twE.x == twE.x && twE.y == twE.y && twE.z == twE.z ) irradiance += twM * uOpen.x * clamp( twE, 0.0, 16.0 );
       iblIrradiance *= mix( 1.0, uOpen.z, twM );
     }
   }
