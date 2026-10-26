@@ -3,7 +3,7 @@
 // B.W × B.H × B.D (64 × 24 × 24 m) com telhas escuras por dentro, piso empoeirado, luminárias de galpão e as
 // grandes ABERTURAS laterais por onde entra a luz do dia (céu claro, vegetação e terreno lá fora).
 import * as THREE from 'three';
-import { B, LV } from './layout.js?v=20261025151330';
+import { B, LV } from './layout.js?v=20261026180016';
 
 let patched = false;
 export const BOX = {
@@ -12,6 +12,48 @@ export const BOX = {
   probe: { value: new THREE.Vector3(B.W / 2, 8, B.D / 2) },
   directSpec: { value: 0.55 },
 };
+// LUZ NATURAL DAS ABERTURAS (termo barato no shader, substitui as RectAreaLight): cada vão do fechamento é um retângulo
+// emissor (céu / pátio iluminado pelo sol); o fator de forma (integral de contorno, mesma aproximação LTC das luzes de área
+// do three) dá o gradiente fotográfico — claro junto às aberturas, caindo com a distância para o miolo do galpão — e o
+// ambiente difuso PMREM (igual em todo ponto) é reduzido no interior. Float32Array: não é clonado pelo three, então o
+// valor muda por quadro. x = intensidade, y = liga (câmera dentro do prédio), z = fator do ambiente difuso no interior.
+export const OPEN = { value: new Float32Array([0, 0, 1, 0]) };
+const f = (v) => (+v).toFixed(3);
+function openingGLSL() {
+  const W = B.W, D = B.D, oH = LV.L2 + 2;
+  // vãos: [plano (eixo e valor), faixa horizontal (u0,u1), altura (y0,y1), peso]. Cada vão é cortado na altura do ponto
+  // sombreado: o que fica ACIMA dele mostra céu (frio, claro); o que fica ABAIXO mostra o pátio de minério ao sol (quente,
+  // escuro) — assim a face de baixo de um piso não "acende" com o céu, como numa foto real.
+  const R = [['z', D, 0, W, 0, oH, 1], ['x', W, 0, D, 0, 6, .95], ['x', 0, 0, D, 0, 6, .9], ['z', 0, 0, W, 0, 4, .85]];
+  const calls = R.map(([ax, v, u0, u1, y0, y1, k]) => `e += ${f(k)} * twinOpening${ax.toUpperCase()}( p, n, ${f(v)}, ${f(u0)}, ${f(u1)}, ${f(y0)}, ${f(y1)} );`).join('\n    ');
+  return /* glsl */`
+  float twinRectFF( vec3 p, vec3 n, vec3 a, vec3 b, vec3 c, vec3 d ) {
+    vec3 v0 = normalize( a - p ), v1 = normalize( b - p ), v2 = normalize( c - p ), v3 = normalize( d - p );
+    vec3 F = LTC_EdgeVectorFormFactor( v0, v1 ) + LTC_EdgeVectorFormFactor( v1, v2 ) + LTC_EdgeVectorFormFactor( v2, v3 ) + LTC_EdgeVectorFormFactor( v3, v0 );
+    F *= dot( F, 0.25 * ( a + b + c + d ) - p ) < 0.0 ? -1.0 : 1.0;
+    float l = length( F ); return max( ( l * l + dot( F, n ) ) / ( l + 1.0 ), 0.0 );
+  }
+  const vec3 twSky = vec3( 0.80, 0.88, 0.97 ), twGnd = vec3( 0.40, 0.29, 0.21 );
+  vec3 twinOpeningZ( vec3 p, vec3 n, float z, float x0, float x1, float y0, float y1 ) {
+    float ys = clamp( p.y, y0, y1 ); vec3 e = vec3( 0.0 );
+    if ( ys < y1 - 0.01 ) e += twSky * twinRectFF( p, n, vec3( x0, ys, z ), vec3( x1, ys, z ), vec3( x1, y1, z ), vec3( x0, y1, z ) );
+    if ( ys > y0 + 0.01 ) e += twGnd * twinRectFF( p, n, vec3( x0, y0, z ), vec3( x1, y0, z ), vec3( x1, ys, z ), vec3( x0, ys, z ) );
+    return e;
+  }
+  vec3 twinOpeningX( vec3 p, vec3 n, float x, float z0, float z1, float y0, float y1 ) {
+    float ys = clamp( p.y, y0, y1 ); vec3 e = vec3( 0.0 );
+    if ( ys < y1 - 0.01 ) e += twSky * twinRectFF( p, n, vec3( x, ys, z0 ), vec3( x, ys, z1 ), vec3( x, y1, z1 ), vec3( x, y1, z0 ) );
+    if ( ys > y0 + 0.01 ) e += twGnd * twinRectFF( p, n, vec3( x, y0, z0 ), vec3( x, y0, z1 ), vec3( x, ys, z1 ), vec3( x, ys, z0 ) );
+    return e;
+  }
+  float twinInside( vec3 p ) { vec3 q = min( p, vec3(${f(W)}, ${f(B.H)}, ${f(D)}) - p ); return smoothstep( 0.05, 0.5, min( min( q.x, q.y ), q.z ) ); }
+  vec3 twinOpeningIrr( vec3 p, vec3 n ) {
+    vec3 e = vec3( 0.0 );
+    ${calls}
+    return e;
+  }
+`;
+}
 // Instala uma vez, antes da primeira compilação de shader (limites da caixa = uniforms globais compartilhados).
 export function installBoxProjection() {
   if (patched) return; patched = true;
@@ -42,10 +84,22 @@ export function installBoxProjection() {
   C.lights_physical_pars_fragment = C.lights_physical_pars_fragment.replace(
     'reflectedLight.directSpecular += irradiance * BRDF_GGX( directLight.direction, geometryViewDir, geometryNormal, material );',
     'reflectedLight.directSpecular += uDirectSpec * irradiance * BRDF_GGX( directLight.direction, geometryViewDir, geometryNormal, material );');
-  C.lights_physical_pars_fragment = 'uniform float uDirectSpec;\n' + C.lights_physical_pars_fragment;
+  C.lights_physical_pars_fragment = 'uniform float uDirectSpec;\nuniform vec4 uOpen;\n' + C.lights_physical_pars_fragment + openingGLSL();
+  C.lights_fragment_maps += /* glsl */`
+#if defined( RE_IndirectDiffuse ) && defined( STANDARD )
+  if ( uOpen.y > 0.5 ) {
+    vec3 twP = cameraPosition + ( vec4( - vViewPosition, 0.0 ) * viewMatrix ).xyz;
+    float twM = twinInside( twP );
+    if ( twM > 0.0 ) {
+      irradiance += twM * uOpen.x * twinOpeningIrr( twP, inverseTransformDirection( geometryNormal, viewMatrix ) );
+      iblIrradiance *= mix( 1.0, uOpen.z, twM );
+    }
+  }
+#endif
+`;
   for (const k of ['standard', 'physical']) {
     const u = THREE.ShaderLib[k].uniforms;
-    u.uBoxMin = BOX.min; u.uBoxMax = BOX.max; u.uBoxProbe = BOX.probe; u.uDirectSpec = BOX.directSpec;
+    u.uBoxMin = BOX.min; u.uBoxMax = BOX.max; u.uBoxProbe = BOX.probe; u.uDirectSpec = BOX.directSpec; u.uOpen = OPEN;
   }
 }
 

@@ -7,8 +7,8 @@
 // Minério: leito contínuo (finos) + pedras de granulometria variada por correia (InstancedMesh, só a translação é atualizada),
 // derramamento acumulado sob cabeças, caudas e transferências, e poeira leve nas quedas.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261025151330';
-import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261025151330';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261026180016';
+import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261026180016';
 
 const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
 // pedrisco facetado (icosaedro sem subdivisão), deslocamento coerente por posição (não abre as faces)
@@ -55,13 +55,17 @@ export function buildFlows(scene, M, opt = {}) {
   // escala real (diâmetro ≈ 1,8 × escala): alimentação ≤ 150 mm; retido do 1º deck (HP 400) 25–150 mm; −25,4 +12,5 mm (Barmac); produto < 12,5 mm
   // camada densa (cascalho contínuo) + blocos maiores na alimentação
   const GRADE = { F: [34, .025, .085, 70, .008, .02, .09], T: [34, .025, .085, 70, .008, .02, .09], R1: [30, .02, .085, 50, .008, .016, .07],
-    R2: [95, .0075, .014, 95, .005, .008, .07], P: [65, .0035, .007, 95, .0025, .004, .06] };
+    R2: [95, .0075, .014, 95, .005, .008, .07], P: [170, .0035, .0075, 240, .0025, .0045, .06] };   // produto < 12,5 mm: muitas pedrinhas, leito granular
   const dens0 = LOW ? .5 : 1;
   // instâncias estáticas compartilhadas por todas as correias (roletes, rolos de impacto, cavaletes, pedras derramadas)
-  const ROLL = [], IMP = [], FRM = [], SPILL = [];
+  const ROLL = [], IMP = [], FRM = [], SPILL = [], RAIL = [];
   const mt = new THREE.Matrix4(), qt = new THREE.Quaternion(), sc = new THREE.Vector3(), Y = V(0, 1, 0), X = V(1, 0, 0);
   const rollAt = (list, grp, x, y, z, dir, len, r) => { qt.setFromUnitVectors(Y, dir); mt.compose(V(x, y, z), qt, sc.set(r, len, r)); list.push(new THREE.Matrix4().multiplyMatrices(grp.matrix, mt)); };
   const frmAt = (grp, x, y, z, sx, sy, sz) => { mt.compose(V(x, y, z), qt.identity(), sc.set(sx, sy, sz)); FRM.push(new THREE.Matrix4().multiplyMatrices(grp.matrix, mt)); };
+  // barra (caixa unitária) entre dois pontos no referencial do grupo g → lista (guarda-corpo amarelo, quadros das telas)
+  const barAt = (list, a, b, t) => { const d = new THREE.Vector3().subVectors(b, a), l = d.length(); qt.setFromUnitVectors(Y, d.multiplyScalar(1 / l)); mt.compose(a.clone().lerp(b, .5), qt, sc.set(t, l, t)); list.push(mt.clone()); };
+  // UV escalado (malha/grade com passo real em vez de esticada)
+  const uvScale = (geo, su, sv) => { const u = geo.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * su, u.getY(i) * sv); return geo; };
 
   // ---------- piso abaixo de um ponto (raio para baixo contra o prédio e os equipamentos já montados) ----------
   const rc = new THREE.Raycaster(); rc.far = 26; const DOWN = V(0, -1, 0), nW = new THREE.Vector3();
@@ -98,7 +102,7 @@ export function buildFlows(scene, M, opt = {}) {
   const EMIT = [];
   const dustAt = (p, k = 1) => { if (!embed) EMIT.push({ p: p.clone(), k }); };
 
-  function belt(a, b, w, key) {
+  function belt(a, b, w, key, walk = 0) {
     const d = new THREE.Vector3().subVectors(b, a), L = d.length(), steep = Math.abs(d.y) / L > .42, G = GRADE[key] || GRADE.T;
     const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp); grp.updateMatrix();
     const toG = (x, y, z) => V(x, y, z).applyMatrix4(grp.matrix);
@@ -165,13 +169,19 @@ export function buildFlows(scene, M, opt = {}) {
     // correia de alta inclinação (> 25°): bordas laterais onduladas e taliscas (sidewall), que seguram o minério na subida
     if (steep) { for (const sx of [-1, 1]) box(grp, .06, .55, L, M.rubber, sx * w * .46, .45, 0); for (let s2 = .4; s2 < L - .2; s2 += .55) box(grp, w * .9, .22, .06, M.rubber, 0, .3, -L / 2 + s2); }
     // leito contínuo de finos (seção em lombo sobre a calha; a espessura acompanha a vazão)
-    const zr0 = zA + .12, span = Z1 + .05 - zr0, wo = (steep ? .8 : .84) * w, t0 = G[6] * Math.min(1.3, w / 1.2), NU = 9;
-    const bzs = zs.filter((z) => z > zr0); bzs.unshift(zr0);
-    const bedTh = (sx) => { const u = sx / (wo / 2); return Math.pow(Math.max(0, 1 - u * u), .6); };
+    // material a granel ocupa ~2/3 da lona (bordas pretas limpas dos dois lados); seção em monte com crista irregular e borda ondulada
+    const zr0 = zA + .12, span = Z1 + .05 - zr0, wo = (steep ? .74 : .68) * w, t0 = G[6] * 1.3 * Math.min(1.3, w / 1.2), NU = LOW ? 9 : 17, dzB = LOW ? .5 : .2;
+    const bzs = []; for (let z = zr0; z < Z1 + .04; z += dzB) bzs.push(z); bzs.push(Z1 + .05);
+    const bedTh = (sx) => { const u = sx / (wo / 2); return Math.pow(Math.max(0, 1 - u * u), .85); };
     const so = { x: 0, y: 0 };
-    const bedG = ribbonGeoF(NU, bzs, (i, z, o) => { const sx = (i / (NU - 1) - .5) * wo; surf(sx, z, o); o.y += .004; }); const bedP = bedG.attributes.position, base = Float32Array.from(bedP.array);
-    const bed = new THREE.Mesh(bedG, M.oreBed); bed.receiveShadow = true; bed.castShadow = false; bed.userData.keep = true; grp.add(bed);
-    const setBed = (h) => { for (let k = 0; k < bedP.count; k++) { const i = k % NU, sx = (i / (NU - 1) - .5) * wo, z = base[k * 3 + 2], wav = 1 + .12 * Math.sin(z * 2.3 + i) * (i % (NU - 1) ? 1 : 0); bedP.setY(k, base[k * 3 + 1] + t0 * h * bedTh(sx) * wav); } bedP.needsUpdate = true; bedG.computeVertexNormals(); };
+    const edgeW = (z) => 1 + .05 * Math.sin(z * 1.7 + L) + .035 * Math.sin(z * 4.3 + 1.3 * L);
+    const bedG = ribbonGeoF(NU, bzs, (i, z, o) => { const sx = (i / (NU - 1) - .5) * wo * edgeW(z); surf(sx, z, o); o.y += .004; }); const bedP = bedG.attributes.position, base = Float32Array.from(bedP.array);
+    // fator de altura por vértice: perfil em monte × relevo granular (blocos, torrões e vales) — calculado uma vez
+    const fac = new Float32Array(bedP.count);
+    for (let k = 0; k < bedP.count; k++) { const i = k % NU, j = (k / NU) | 0, u = i / (NU - 1) - .5, z = base[k * 3 + 2], n1 = hashF(i * 3.1 + L, j * 1.7), n2 = hashF(i * .9 + 7, j * 2.9 + L);
+      fac[k] = bedTh(u * wo) * (.72 + .45 * n1 + .25 * n2 * n2 + .12 * Math.sin(z * 2.1 + i * .7)); }
+    const bed = new THREE.Mesh(bedG, key === 'P' && M.oreFine ? M.oreFine : M.oreBed); bed.receiveShadow = true; bed.castShadow = !LOW; bed.userData.keep = true; grp.add(bed);
+    const setBed = (h) => { for (let k = 0; k < bedP.count; k++) bedP.setY(k, base[k * 3 + 1] + t0 * h * fac[k]); bedP.needsUpdate = true; bedG.computeVertexNormals(); };
     // pedras (blocos e grãos): z inicial estratificado e embaralhado → qualquer fração visível fica espalhada pela correia toda
     const mkRocks = (geo, perM, s0, s1, pal, cast) => {
       const n = Math.max(4, Math.round(L * perM * Math.min(1.3, w / 1.2) * dens0)), im = new THREE.InstancedMesh(geo, M.ore, n); im.castShadow = cast; im.receiveShadow = true;
@@ -188,6 +198,29 @@ export function buildFlows(scene, M, opt = {}) {
     const lump = mkRocks(lumpGeo, G[0], G[1], G[2], WET, true), grain = mkRocks(grainGeo, G[3], G[4], G[5], FIN, false);
     const B0 = { key, grp, L, span, zr0, off: rnd() * span, lump, grain, bed, setBed, hs: -1, surf, bedTh, t0, wo, so, ctr: grp.position.clone(), rad: L / 2 + 1.5 };
     belts.push(B0);
+    if (!embed) {
+      // telas de proteção (malha em quadro amarelo) nas laterais dos tambores de cabeça e cauda; no lado do acionamento a cabeça fica com o redutor
+      for (const zz of [Z0, Z1]) for (const s of [-1, 1]) {
+        if (zz === Z1 && s < 0 && L > 6) continue;
+        const gx = s * (hw + .62), gz = zz + (zz > 0 ? -.2 : .2), gy = yc + .02, pw = 1.5, ph = 1.0;
+        const pn = new THREE.Mesh(uvScale(new THREE.PlaneGeometry(pw, ph), .3, .3), M.wire); pn.rotation.y = Math.PI / 2; pn.position.set(gx, gy, gz); grp.add(pn);
+        for (const [p0, p1] of [[[-.5, -.5], [.5, -.5]], [[-.5, .5], [.5, .5]], [[-.5, -.5], [-.5, .5]], [[.5, -.5], [.5, .5]]]) barAt(RAIL, toG(gx, gy + p0[1] * ph, gz + p0[0] * pw), toG(gx, gy + p1[1] * ph, gz + p1[0] * pw), .035);
+      }
+      // passarela lateral (grade de piso, rodapé, guarda-corpo vertical) e cabo de emergência ao longo da correia
+      if (walk) {
+        const s = walk, xi = s * (hw + .3), xo = s * (hw + 1.12), xm = (xi + xo) / 2, yw = -.34, za = Z0 + 1.0, zb = Z1 - 1.0, lw2 = zb - za;
+        const dk = new THREE.Mesh(uvScale(new THREE.PlaneGeometry(.82, lw2), .21, lw2 * .8), M.grate); dk.rotation.x = -Math.PI / 2; dk.position.set(xm, yw, (za + zb) / 2); dk.receiveShadow = true; grp.add(dk);
+        frmAt(grp, xo, yw + .07, (za + zb) / 2, .01, .15, lw2); frmAt(grp, xi, yw - .05, (za + zb) / 2, .05, .1, lw2); frmAt(grp, xo, yw - .05, (za + zb) / 2, .05, .1, lw2);
+        for (let z = za + .3; z < zb; z += 2) frmAt(grp, s * (hw + .66), yw - .09, z, 1.02, .06, .06);   // mãos-francesas da longarina
+        const up = (p, h) => V(p.x, p.y + h, p.z), pA = toG(xo, yw, za), pB = toG(xo, yw, zb);
+        barAt(RAIL, up(pA, 1.1), up(pB, 1.1), .045); barAt(RAIL, up(pA, .55), up(pB, .55), .035);
+        const np = Math.max(2, Math.round(lw2 / 1.6));
+        for (let i = 0; i <= np; i++) { const p = toG(xo, yw, za + lw2 * i / np); barAt(RAIL, p, up(p, 1.12), .045); }
+        // cabo de emergência (puxar-parar) preso nos cavaletes do lado da passarela
+        const cA = toG(s * (hw + .26), .28, Z0 + 1), cB = toG(s * (hw + .26), .28, Z1 - 1); beam(grp.parent, cA, cB, .006, M.orange, true).castShadow = false;
+        for (let z = Z0 + 1; z < Z1 - .9; z += 3.5) frmAt(grp, s * (hw + .23), .14, z, .03, .3, .03);
+      }
+    }
     // apoios (pórticos de duas pernas com travessa) até o piso abaixo quando a correia está alta; derramamento sob cabeça e cauda e ao longo
     for (let z = Z0 + 3; z < Z1 - 1; z += 6) {
       const pa = toG(-(hw + .2), -.19, z), pb = toG(hw + .2, -.19, z), fa = floorAt(pa) ?? (embed ? 0 : null), fb = floorAt(pb) ?? (embed ? 0 : null);
@@ -217,7 +250,7 @@ export function buildFlows(scene, M, opt = {}) {
   };
   // ENTRADA: TCLD chegando de fora pelo fundo do prédio até o topo, e tripper sobre os alimentadores
   // a distribuição corre do fim do prédio (lado dos britadores, x ≈ 48) para o início: ROM novo e retorno caem na cauda
-  if (!opt.embed) { belt(V(E + 20, 2.5, -30), V(E - .6, yTop + 1.6, 1.9), 1.4, 'F'); xfer(V(E - .6, yTop + 1.5, 2.0), V(E - .8, yTop + .4, 2.3)); }
+  if (!opt.embed) { belt(V(E + 20, 2.5, -30), V(E - .6, yTop + 1.6, 1.9), 1.4, 'F', 1); xfer(V(E - .6, yTop + 1.5, 2.0), V(E - .8, yTop + .4, 2.3)); }
   belt(V(E + 2.2, yTop, 2.4), V(-.5, yTop, 2.4), 1.4, 'T');
   const trip = new THREE.Group(); g.add(trip); box(trip, 2.4, 1.2, 2.2, M.yellow, 0, yTop + .7, 2.4); box(trip, 1.0, 1.4, 1.0, M.chute, 0, yTop - .4, 2.4);
   // retidos sob as descargas das peneiras (bicas com poeira na queda sobre as correias)
@@ -242,12 +275,13 @@ export function buildFlows(scene, M, opt = {}) {
   CRUSHERS.vsi.forEach((c) => { box(g, 1.3, .5, 1.3, M.chute, c.x, 14.85, zV); box(g, .4, 1.2, 1.7, M.yellow, c.x, 15.8, zV); dustAt(V(c.x, 15.0, zV - .8), .6); });
   // SAÍDA: produto < 12,5 mm saindo pela lateral rumo à pilha
   xfer(V(E + 2.3, 1.25, 20.5), V(E + 2.9, .95, 20.6), .8);
-  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 6, 7.6, 32), 1.2, 'P');
+  belt(V(E + 2.9, .85, 20.6), opt.embed ? V(B.W + 4, 2.4, 22) : V(B.W + 6, 7.6, 32), 1.2, 'P', opt.embed ? 0 : 1);
 
   // instâncias estáticas: roletes (aço), rolos de impacto (borracha), cavaletes e pedras derramadas
   const inst = (geo, mat, list, cast = true) => { if (!list.length) return null; const im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach((m, i) => im.setMatrixAt(i, m)); im.castShadow = cast; im.receiveShadow = true; if (im.computeBoundingSphere) im.computeBoundingSphere(); g.add(im); return im; };
   const rollGeo = flatU(new THREE.CylinderGeometry(1, 1, 1, LOW ? 8 : 12));
-  inst(rollGeo, M.greyDk, ROLL); inst(rollGeo, M.rubber, IMP); inst(new THREE.BoxGeometry(1, 1, 1), M.steelDk, FRM);
+  const boxG = new THREE.BoxGeometry(1, 1, 1);
+  inst(rollGeo, M.greyDk, ROLL); inst(rollGeo, M.rubber, IMP); inst(boxG, M.steelDk, FRM); inst(boxG, M.yellow, RAIL);
   const spIm = inst(lumpGeo, M.ore, SPILL, false); if (spIm) { for (let i = 0; i < SPILL.length; i++) setCol(spIm, i, rnd() < .6 ? DRY : WET); spIm.instanceColor.needsUpdate = true; }
 
   // poeira: partículas que nascem nas quedas, sobem devagar, espalham e somem (idades defasadas → emissão contínua)

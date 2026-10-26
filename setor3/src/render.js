@@ -14,11 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
-import { B, LV } from './layout.js?v=20261025151330';
-import { installBoxProjection, buildEnvironment } from './render_env.js?v=20261025151330';
-import { PhoneShader } from './render_post.js?v=20261025151330';
-import { UpscaleShader } from './render_upscale.js?v=20261025151330';
+import { B, LV } from './layout.js?v=20261026180016';
+import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261026180016';
+import { PhoneShader } from './render_post.js?v=20261026180016';
+import { UpscaleShader } from './render_upscale.js?v=20261026180016';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -30,7 +29,10 @@ export const LOOK = {
   sun: 4.5,           // sol (lux relativo) entrando pelas aberturas
   sky: 3.4,           // radiância do céu vista pelas aberturas (ambiente)
   env: .72,           // intensidade do ambiente PMREM (q=high; parte da luz do céu vem das janelas de área abaixo)
-  win: 0,             // (desligado por desempenho) luz natural das ABERTURAS (luzes de área retangulares, só q=high): cai com a distância da abertura
+  open: 12,           // luz natural das ABERTURAS (termo no shader, só q=high): clara junto aos vãos, cai com a distância
+  deep: .5,           // fração do ambiente difuso (PMREM) que sobra no miolo do prédio (o resto vem das aberturas)
+  skyIn: 1.7,         // ganho extra do céu visto de DENTRO (foto exposta para o interior: o exterior quase estoura)
+  tm: 0,              // tone mapping: 0 = Neutral, 1 = AgX
   hemi: .18,          // preenchimento muito fraco
   lamp: 55,           // spots das luminárias (cd)
   lampL2: 11,         // projetores locais do piso +14 (a 2,8 m do piso)
@@ -63,7 +65,7 @@ export function createRenderer(canvas) {
   // computador: devicePixelRatio real (até 2) — a resolução dinâmica reduz só se o fps cair
   renderer.setPixelRatio(Math.min(devicePixelRatio, HIGH ? 2 : 1.25));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = LOOK.exposure;
+  renderer.toneMapping = LOOK.tm ? THREE.AgXToneMapping : THREE.NeutralToneMapping; renderer.toneMappingExposure = LOOK.exposure;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = HIGH ? THREE.VSMShadowMap : THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
   return renderer;
@@ -223,17 +225,9 @@ export function buildLighting(scene, renderer, lamps = []) {
   // LUZ NATURAL DAS ABERTURAS (q=high): luzes de área retangulares nos vãos do fechamento, voltadas para dentro.
   // Dão o gradiente fotográfico — claro junto às aberturas, escurecendo para o miolo do prédio — que o ambiente
   // PMREM (igual em todo ponto) não consegue. Parte alta da frente = céu (frio); parte baixa = pátio de minério (quente).
+  // (o termo das aberturas fica em render_env.js → OPEN: retângulos emissores avaliados no shader, sem luzes extras)
   const wins = [];
-  if (HIGH && LOOK.win > 0) {
-    RectAreaLightUniformsLib.init();
-    const oH = LV.L2 + 2;
-    const win = (col, I, w, h, x, y, z, tx, tz) => { const l = new THREE.RectAreaLight(col, I * LOOK.win, w, h); l.position.set(x, y, z); l.lookAt(tx, y, tz); l.userData.base = I * LOOK.win; scene.add(l); wins.push(l); };
-    win(0xdde8f4, .55, B.W, oH - 5, B.W / 2, 5 + (oH - 5) / 2, B.D + .05, B.W / 2, 0);   // frente: céu
-    win(0xd2a283, .32, B.W, 5, B.W / 2, 2.5, B.D + .05, B.W / 2, 0);                       // frente: pátio/terreno (rebatido)
-    win(0xe6e2da, .45, B.D, 6, B.W + .05, 3, B.D / 2, 0, B.D / 2);                         // lateral dos britadores
-    win(0xe6e2da, .4, B.D, 6, -.05, 3, B.D / 2, B.W, B.D / 2);                             // lateral oposta
-    win(0xd9c4b0, .3, B.W, 4, B.W / 2, 2, -.05, B.W / 2, B.D);                             // fundo (vão baixo)
-  }
+  let nightK = 0;
   buildLightFX(scene, sun, lamps);
   // anisotropia máxima em todas as texturas (piso/chapas não borram em ângulo rasante)
   const maxA = renderer.capabilities.getMaxAnisotropy();
@@ -246,6 +240,9 @@ export function buildLighting(scene, renderer, lamps = []) {
   scene.onBeforeRender = (r, s, cam) => {
     const p = cam.position, inside = p.x > -1 && p.x < B.W + 1 && p.z > -1 && p.z < B.D + 1 && p.y < B.H;
     fog.density = inside ? LOOK.fogIn : LOOK.fogOut;
+    // luz das aberturas só com o prédio fechado (de fora o fechamento some); à noite apaga junto com o céu
+    const ov = OPEN.value; ov[0] = LOOK.open * (1 - .97 * nightK); ov[1] = HIGH && inside && LOOK.open > 0 ? 1 : 0; ov[2] = LOOK.deep;
+    dome.material.color.setScalar(domeK * (inside ? LOOK.skyIn : 1) * (1 - .86 * nightK));
     // feixes e poeira só com o prédio fechado (de fora a cobertura some e o feixe ficaria solto no ar)
     const tt = (performance.now() - t0) / 1000;
     if (FX.shafts) { FX.shafts.visible = inside; FX.mat.uniforms.uT.value = tt; FX.mat.uniforms.uI.value = LOOK.shaft; }
@@ -269,7 +266,7 @@ export function buildLighting(scene, renderer, lamps = []) {
   const setNight = (k) => { k = Math.max(0, Math.min(1, +k || 0)); if (Math.abs(k - nk) < .01) return; nk = k;
     sun.intensity = base.sun * (1 - .93 * k); sun.color.copy(base.sunC).lerp(moon, k); hemi.intensity = base.hemi * (1 - .8 * k); hemi.color.copy(base.hs).lerp(nightHs, k);
     scene.environmentIntensity = base.env * (1 - .78 * k); scene.background.copy(base.bg).lerp(nightBg, k); fog.color.copy(base.fog).lerp(nightFog, k);
-    dome.material.color.setScalar(domeK * (1 - .86 * k));
+    nightK = k;
     wins.forEach((l) => { l.intensity = l.userData.base * (1 - .97 * k); l.visible = k < .98; });
     yard.forEach((l) => { l.intensity = k * l.userData.k * 650; l.visible = k > .02; }); headMat.emissiveIntensity = k * 6; };
   window.__s3setNight = setNight;

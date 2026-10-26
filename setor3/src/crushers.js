@@ -8,8 +8,8 @@
 // sobre bases trapezoidais com etiquetas amarelas, placa "BRITADOR SECUNDÁRIO".
 // Silos de alimentação acima de cada britador; correias de retorno às peneiras (circuito fechado).
 import * as THREE from 'three';
-import { CRUSHERS, B, CAMS } from './layout.js?v=20261025151330';
-import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261025151330';
+import { CRUSHERS, B, CAMS } from './layout.js?v=20261026180016';
+import { V, sh, box, cyl, beam, railing, plateMesh, flatU } from './util.js?v=20261026180016';
 
 const TAU = Math.PI * 2;
 let sdC = 11; const rrC = () => ((sdC = (sdC * 16807) % 2147483647) / 2147483647);
@@ -108,6 +108,39 @@ export function buildCrushers(scene, M) {
   // sujeira em modo UV (sem triplanar) para materiais com textura própria mapeada no UV
   const uvBase = [M.cladIn, M.cladOut, M.floor].find((m) => m && m.userData && m.userData.grime && !(m.userData.grime.uTri.value > 0));
   const grimeUV = (mat, gp = {}) => { if (!uvBase) return mat; const ob = uvBase.onBeforeCompile; mat.onBeforeCompile = (s, r) => { ob(s, r); gUni(s, gp); }; mat.customProgramCacheKey = uvBase.customProgramCacheKey; return mat; };
+  // ---- modo realista também nos materiais locais: real.js troca mapas só nos materiais-base (M.steel, M.orange…);
+  // os clones daqui "seguem" uma base escaneada quando ela muda (detecção barata por quadro) e voltam ao original ao desligar.
+  // Tinta bege/marrom/cinza usa a foto de tinta neutra (green_metal_rust recolorida) com a cor própria; peças de mapa UV
+  // (carcaça, anel, tambor) mantêm o próprio desenho de sujeira e ganham só relevo/rugosidade escaneados.
+  const FOL = [], UVT = new Map();
+  const follow = (m, src, col, o = {}) => { if (m && src && m !== src) FOL.push({ m, src, n0: src.normalMap, col, o, on: false, keep: null }); return m; };
+  const pc = (hex, k = 1.72) => () => new THREE.Color(hex).multiplyScalar(k);      // compensa a tinta neutra da foto (~0,58 linear)
+  const mul = (rgb) => (sc) => (rgb ? sc.clone().multiply(new THREE.Color().setRGB(...rgb)) : sc.clone());
+  const uvTex = (t, rx, ry) => { if (!t) return t; const k = t.uuid + '|' + rx + '|' + ry; if (!UVT.has(k)) { const c = t.clone(); c.repeat.set(rx, ry); c.needsUpdate = true; UVT.set(k, c); } return UVT.get(k); };
+  const folSync = () => {
+    for (const f of FOL) {
+      const on = f.src.normalMap !== f.n0; if (on === f.on) continue; f.on = on; const m = f.m, s = f.src, o = f.o, rp = o.uv;
+      if (!f.keep) f.keep = { map: m.map, normalMap: m.normalMap, roughnessMap: m.roughnessMap, metalnessMap: m.metalnessMap, roughness: m.roughness, metalness: m.metalness, color: m.color.clone(), ns: m.normalScale.clone() };
+      if (on) {
+        const T = (t) => (rp ? uvTex(t, rp[0], rp[1]) : t);
+        if (!o.keepMap) { m.map = s.map; m.color.copy(f.col(s.color)); }
+        m.normalMap = T(s.normalMap); m.roughnessMap = T(s.roughnessMap); m.metalnessMap = T(s.metalnessMap);
+        m.roughness = (o.r ?? 1) * s.roughness; m.metalness = (o.m ?? 1) * s.metalness; m.normalScale.copy(s.normalScale).multiplyScalar(o.ns ?? 1);
+      } else { const k = f.keep; for (const q of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'roughness', 'metalness']) m[q] = k[q]; m.color.copy(k.color); m.normalScale.copy(k.ns); }
+      m.needsUpdate = true;
+    }
+  };
+  // mangueiras de borracha (com pó por cima) e manchas de óleo
+  const mHose = tintG(M.rubber || M.hose, [.42, .42, .42], { uDust: .7, uGrime: .5 }, { roughness: .78 });
+  const oilA = cvs(256, 256, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); for (let i = 0; i < 18; i++) { const cx = w * (.3 + rrC() * .4), cy = h * (.3 + rrC() * .4), r = w * (.06 + rrC() * .2); const gd = x.createRadialGradient(cx, cy, 0, cx, cy, r); gd.addColorStop(0, 'rgba(255,255,255,.7)'); gd.addColorStop(.7, 'rgba(255,255,255,.35)'); gd.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gd; x.fillRect(0, 0, w, h); } }, false);
+  const mOil = std({ color: 0x0c0a09, roughness: .18, metalness: 0, alphaMap: oilA, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const stain = (par, x, y, z, sx, sz, ry = 0, mat = mOil) => { const d = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); d.rotation.set(-Math.PI / 2, ry, 0, 'YXZ'); d.scale.set(sx, sz, 1); d.position.set(x, y + .003, z); d.receiveShadow = true; par.add(d); return d; };
+  // pó de minério acumulado: montinhos achatados irregulares (uma InstancedMesh para todo o setor)
+  const pileGeo = (() => { const gm = new THREE.SphereGeometry(1, 14, 4, 0, TAU, 0, Math.PI / 2), P = gm.attributes.position;
+    for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i), a = Math.atan2(z, x), k = 1 + .2 * Math.sin(a * 3 + 1.3) + .1 * Math.sin(a * 5 + .4); P.setXYZ(i, x * k, y * (y > .9 ? .8 : 1) * (1 + .15 * Math.sin(a * 2)), z * k); }
+    gm.computeVertexNormals(); return flatUV(gm); })();
+  const PLS = [];
+  const pile = (par, x, y, z, rx, rz, h, ry = rrC() * TAU) => PLS.push({ par, m: new THREE.Matrix4().compose(V(x, y, z), new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), ry), V(rx, h, rz)) });
   const mBeige = tint(M.beige, [.97, 1, .93]);                                       // bege-esverdeado claro (HP 400)
   const mMud = tint(M.chute, [1.05, 1, .98]);                                        // flange/orelhas cobertas de lama de minério
   const mBase = tint(M.orange, [.98, .78, .66]);                                     // base soldada laranja-ferrugem (foto 103)
@@ -126,6 +159,10 @@ export function buildCrushers(scene, M) {
     runs(x, w, h, 50, '80,44,28', 0, .3, .2, .9, .6, 1, 4); scr(x, w, h, 120, '230,210,190'); spk(x, w, h, 4000, '60,30,20', .3); grn(x, w, h, 10);
   });
   const mBand = std({ map: bandTex, roughness: .55, metalness: .1 });
+  follow(mBeige, M.steel, pc('#c8c6a8'), { m: .45 }); follow(mBolt, M.steelDk, pc('#a29e88'));
+  follow(mHop, M.orange, mul([.86, .6, .58]), { m: .6 }); follow(mBase, M.orange, mul([.8, .56, .46]), { m: .7 });
+  follow(mHmot, M.steel, pc('#8b958a'), { m: .6 }); follow(mMotDk, M.steelDk, pc('#585b5c'));
+  for (const [m, rp] of [[mShell, [7, .7]], [mRing, [8, .4]], [mDrum, [7, .85]], [mBand, [1.4, .25]]]) follow(m, M.steel, null, { keepMap: true, uv: rp, m: .3, ns: .8 });
   const yLabel = (lines, bg = '#f2c400') => std({ roughness: .5, map: cvs(256, 192, (x, w, h) => { x.fillStyle = bg; x.fillRect(0, 0, w, h); x.strokeStyle = '#111'; x.lineWidth = 6; x.strokeRect(6, 6, w - 12, h - 12); x.fillStyle = '#111'; x.textAlign = 'center'; x.font = 'bold 34px Arial'; x.fillText(lines[0], w / 2, 50, w - 24); x.font = '20px Arial'; lines.slice(1).forEach((l, i) => x.fillText(l, w / 2, 86 + i * 26, w - 24)); blotC(x, w, h, 10, 20, 70, () => `rgba(110,60,30,${.1 + rrC() * .2})`); spk(x, w, h, 1500, '60,40,30', .3); }) });
   const mLblA = yLabel(['ATENÇÃO', 'Partes móveis', 'Não remover a', 'proteção']), mLblB = yLabel(['PERIGO', 'Alta tensão', 'Desligar antes de', 'intervir']);
   const mM2 = std({ roughness: .5, map: cvs(256, 96, (x, w, h) => { x.fillStyle = '#f2c400'; x.fillRect(0, 0, w, h); x.fillStyle = '#111'; x.font = 'bold 70px Arial'; x.textAlign = 'center'; x.fillText('M2', w / 2, 74); spk(x, w, h, 800, '60,40,30', .3); }) });
@@ -158,6 +195,7 @@ export function buildCrushers(scene, M) {
   const mSilo = grimeUV(std({ map: siloTex, roughness: .72, metalness: .3 }), { uDust: .9, uGrime: .6, uDustCol: '#6c3a26', uEdge: 0, uMacro: .16 });
   const mSiloRib = tintG(M.steelDk, null, { uDust: 1.3, uDustCol: '#74402a' });
   const mSiloRoof = tintG(M.steel, [.9, .82, .78], { uDust: 1.7, uGrime: .9, uDustCol: '#7a4430' });
+  follow(mSilo, M.steelDk, null, { keepMap: true, uv: [6, 2.5], m: .5 }); follow(mSiloRib, M.steelDk, mul(null)); follow(mSiloRoof, M.steel, mul([.9, .82, .78]));
   // escada de marinheiro com gaiola, encostada no costado (raio rr) do ângulo a, de y0 a y1 (coordenadas do pai)
   function ladderC(par, a, rS, y0, y1, yShell) {
     const L = radial(par, a), rr = rS + .3, hw = .22;
@@ -225,6 +263,29 @@ export function buildCrushers(scene, M) {
       for (const oz of [-.92, .92]) { const rg = new THREE.Mesh(new THREE.TorusGeometry(.215, .012, 6, 24), mBase); rg.position.set(1.695, by, oz); rg.rotation.y = Math.PI / 2; F.add(rg); }
       for (let j = 0; j < 9; j++) bolt(F, 1.72, BF, -1.6 + j * .4, 0, 1, 0, .026, M.steelDk);
     }
+    // linhas de óleo de lubrificação (alimentação e retorno, mais grosso) saem do quadro principal pelos furos redondos da base
+    // e descem até as luvas de passagem no piso (tubulação enterrada até a unidade de lubrificação)
+    { const ad = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))), aD0 = (DRIVE[c.tag] || [0])[0];
+      const qa = [0, 1, 2, 3].map((k) => k * Math.PI / 2).filter((a) => ad(a, aD0) > .6 && ad(a, aM) > .9).sort((a, b) => ad(a, aF) - ad(b, aF))[0] ?? Math.PI;
+      const F = radial(T, qa);
+      for (const [oz, r] of [[.92, .032], [-.92, .048]]) {
+        const zs = oz * .56, xs = 2.85;
+        const pts = [V(1.5, by, oz), V(1.86, by, oz), V(2.12, by - .1, oz * .97), V(2.36, PT + .1, oz * .86), V(2.62, .44, (oz + zs) / 2), V(xs - .02, .45, zs), V(xs, .36, zs)];
+        F.add(sh(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'centripetal'), 56, r, 10), mHose)));
+        for (const xx of [1.74, 1.8]) cyl(F, r * 1.35, r * 1.35, .05, xx < 1.77 ? mChrome : M.steelDk, xx, by, oz, 12).rotation.z = Math.PI / 2;   // terminal prensado + porca
+        cyl(F, r * 1.4, r * 1.4, .07, mChrome, xs, .37, zs, 12); cyl(F, r * 1.6, r * 1.6, .04, M.steelDk, xs, .32, zs, 6);              // terminal na luva
+        cyl(F, r + .03, r + .03, .3, M.steel, xs, .15, zs, 14); cyl(F, r + .065, r + .065, .03, M.steelDk, xs, .29, zs, 16);            // luva com flange
+        cbox(F, .34, .03, .34, M.steelDk, xs, .015, zs, .006); for (const [ox, oz2] of [[-.12, -.12], [.12, .12], [-.12, .12], [.12, -.12]]) bolt(F, xs + ox, .03, zs + oz2, 0, 1, 0, .016, M.steelDk);
+        stain(F, xs + .1, 0, zs + .05, .55, .45, rrC() * 3); pile(F, xs - .2, 0, zs - oz * .3, .25, .18, .035);
+      }
+      // escorrido de óleo velho na alma da base, abaixo do furo de retorno
+      { const d = new THREE.Mesh(new THREE.PlaneGeometry(.22, .5), mOil); d.position.set(1.71, by - .3, -.92); d.rotation.y = Math.PI / 2; F.add(d); }
+    }
+    // pó de minério acumulado: topo da base, faixa do bloco de concreto e piso em volta
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) pile(T, sx * 1.6, BF, sz * 1.6, .26 + rrC() * .1, .18, .045);
+    for (let i = 0; i < 12; i++) { const ax = rrC() < .5, s1 = rrC() < .5 ? -1 : 1, t1 = (rrC() - .5) * 3.0, d1 = 1.52 + rrC() * .22; pile(T, ax ? s1 * d1 : t1, BF, ax ? t1 : s1 * d1, .12 + rrC() * .16, .08 + rrC() * .06, .02 + rrC() * .025, ax ? 0 : Math.PI / 2); }
+    for (let i = 0; i < 14; i++) { const ax = rrC() < .5, s1 = rrC() < .5 ? -1 : 1, t1 = (rrC() - .5) * 3.9; pile(T, ax ? s1 * 2.0 : t1, PT, ax ? t1 : s1 * 2.0, .14 + rrC() * .2, .07 + rrC() * .04, .02 + rrC() * .03, ax ? Math.PI / 2 : 0); }
+    for (let i = 0; i < 12; i++) { const ax = rrC() < .5, s1 = rrC() < .5 ? -1 : 1, t1 = (rrC() - .5) * 4.6, d1 = 2.3 + rrC() * .35; pile(T, ax ? s1 * d1 : t1, 0, ax ? t1 : s1 * d1, .2 + rrC() * .35, .12 + rrC() * .15, .025 + rrC() * .045); }
     // carcaça principal: flange inferior, corpo com lama escorrida, flange superior marrom com orelhas
     cyl(T, 1.42, 1.44, .1, mMud, 0, BF + .05, 0, 64); boltRing(T, 1.36, BF + .1, 28, .03, M.steelDk);
     { const gm = new THREE.CylinderGeometry(1.29, 1.17, .84, 72, 1, true); const m = sh(new THREE.Mesh(gm, mShell)); m.position.y = BF + .1 + .42; T.add(m); }
@@ -234,7 +295,7 @@ export function buildCrushers(scene, M) {
     const cylA = [...Array(8)].map((_, k) => aM + Math.PI / 8 + k * Math.PI / 4);
     for (const a of cylA) {
       const R = radial(T, a);
-      cbox(R, .62, .24, .4, mMud, 1.78, 2.245, 0, .03);                                // orelha do quadro principal
+      cbox(R, .62, .24, .4, mMud, 1.78, 2.245, 0, .03); pile(R, 1.8, 2.365, 0, .2, .12, .025, 0);   // orelha do quadro principal (com pó)
       cbox(R, .58, .42, .36, mBeige, 1.76, 2.6, 0, .03);                               // orelha do anel de ajuste
       cyl(R, .155, .155, .66, mBeige, 1.85, 1.69, 0, 24); cyl(R, .18, .18, .06, mMud, 1.85, 2.0, 0, 24); cyl(R, .175, .175, .07, mBeige, 1.85, 1.35, 0, 24);
       for (let j = 0; j < 3; j++) cyl(R, .162, .162, .015, mMud, 1.85, 1.5 + j * .16, 0, 24);   // anéis de lama
@@ -283,7 +344,7 @@ export function buildCrushers(scene, M) {
     for (const [oz, ex] of [[-.06, 0], [.06, .25]]) {
       // mangueiras curtas do motor de ajuste até o bloco de válvulas preso na base (antes caíam soltas no piso)
       const pts = [V(1.98, 1.8, oz), V(2.03, 1.58, oz * 1.5), V(2.14, 1.38, oz + .12), V(2.22, 1.2, .3 + ex * .4)];
-      const hm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, .024, 8), M.hose); sh(hm); MG.add(hm);
+      const hm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, .024, 8), mHose); sh(hm); MG.add(hm);
       cyl(MG, .035, .035, .06, mChrome, 1.98, 1.79, oz, 6);
     }
     cbox(MG, .26, .22, .56, mHmot, 2.24, 1.08, .4, .02);   // bloco de válvulas hidráulicas
@@ -297,6 +358,7 @@ export function buildCrushers(scene, M) {
     cyl(DG, .27, .27, .2, mBeige, 1.86, yS, 0, 28).rotation.z = Math.PI / 2; cyl(DG, .05, .05, .3, mChrome, 2.06, yS, 0, 12).rotation.z = Math.PI / 2;
     for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; bolt(DG, 1.45, yS + Math.cos(a) * .25, Math.sin(a) * .25, 1, 0, 0, .02, M.steelDk); }
     beam(DG, V(1.86, BF, 0), V(1.86, yS - .2, 0), .14, mBase);
+    stain(DG, 2.01, PT, 0, .26, .7, 0); stain(DG, 2.5, 0, zM * .55, .7, .9, .4);   // vazamento do retentor do contraeixo
     const sv = new THREE.Mesh(sheaveGeo(.44, .2, 5), M.greyDk); sv.rotation.z = Math.PI / 2; sv.position.set(2.2, yS, 0); sv.userData.keep = true; sh(sv); DG.add(sv); sheaveMarksC(sv, .44); spin.push({ tag: c.tag, o: sv, ax: 'x', w: 9 });
     const mv = new THREE.Mesh(sheaveGeo(.17, .2, 5), M.greyDk); mv.rotation.z = Math.PI / 2; mv.position.set(2.2, yM, zM); mv.userData.keep = true; sh(mv); DG.add(mv); sheaveMarksC(mv, .17); spin.push({ tag: c.tag, o: mv, ax: 'x', w: 24 });
     // correias (trechos retos tangentes)
@@ -346,20 +408,23 @@ export function buildCrushers(scene, M) {
   const mF = flat(M.beige, '#9c6a54', { uDust: .7, uGrime: .8, uDustCol: '#b08a72', uMacro: .22 });             // base metálica marrom-ferrugem
   const mFin = std({ color: 0x2a1a13, roughness: .92 });                                                    // fundo escuro da base
   const mPlV = tintG(M.plinth, [.95, .68, .58], { uDust: .75, uGrime: 1, uDustCol: '#5a3024' });            // concreto manchado de lama
-  const mCream = flat(M.beige, '#d6ccb9', { uDust: .35, uGrime: .45, uDustCol: '#9a7462', uMacro: .12 });       // bege-claro
+  const mCream = flat(M.beige, '#d6ccb9', { uDust: .6, uGrime: .45, uDustCol: '#9a7462', uMacro: .12 });       // bege-claro
   const mFrisoV = flat(M.beige, '#8e5e4d', { uDust: .35, uGrime: .45, uDustCol: '#a48270' });                  // friso marrom-rosado
   const mMotG = flat(M.motor, '#5c625f', { uDust: .35, uGrime: .3, uDustCol: '#7a5a4a' });                    // carcaça aletada cinza-escura
   const mDome = flat(M.beige, '#c9c9c1', { uDust: .25, uGrime: .25, uDustCol: '#8a7468', uMacro: .08 });       // cúpula cinza-clara
+  follow(mF, M.steel, pc('#9c6a54'), { m: .6 }); follow(mCream, M.steel, pc('#d6ccb9'), { m: .4 }); follow(mFrisoV, M.steel, pc('#8e5e4d'), { m: .5 });
+  follow(mMotG, M.steelDk, pc('#5c625f')); follow(mDome, M.steelDk, pc('#c9c9c1'), { m: .5 }); follow(mPlV, M.slab, mul([.95, .68, .58]));
   const wetA = cvs(256, 256, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); for (let i = 0; i < 14; i++) { const cx = w * (.3 + rrC() * .4), cy = h * (.3 + rrC() * .4), r = w * (.12 + rrC() * .18); const gd = x.createRadialGradient(cx, cy, 0, cx, cy, r); gd.addColorStop(0, 'rgba(255,255,255,.55)'); gd.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gd; x.fillRect(0, 0, w, h); } }, false);
   const mWet = std({ color: 0x3a2116, roughness: .1, metalness: 0, alphaMap: wetA, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   const frisoTex = cvs(2048, 128, (x, w, h) => {
     x.fillStyle = '#8f5e4c'; x.fillRect(0, 0, w, h);
     blotC(x, w, h, 90, 10, 60, () => `rgba(205,172,152,${.05 + rrC() * .12})`); blotC(x, w, h, 40, 10, 50, () => `rgba(70,40,30,${.05 + rrC() * .12})`);
     x.fillStyle = 'rgba(232,220,204,.62)'; x.font = '600 28px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText('Barmac B9100SE VSI', w * .935, h * .5, 210);                       // escrita discreta, à esquerda da frente (u ≈ 0,93)
+    x.fillText('BRITADOR VSI', w * .935, h * .5, 210);                       // escrita discreta, à esquerda da frente (u ≈ 0,93)
     runs(x, w, h, 40, '70,40,28', 0, .3, .2, .9, .5, 1, 3); scr(x, w, h, 140, '215,195,178'); spk(x, w, h, 3000, '50,30,20', .3); grn(x, w, h, 8);
   });
   const mFrisoT = grimeUV(std({ map: frisoTex, roughness: .6, metalness: .12 }), { uDust: .3, uGrime: .3, uEdge: 0, uDustCol: '#a48270', uMacro: .08 });
+  follow(mFrisoT, M.steel, null, { keepMap: true, uv: [7, .2], m: .3, ns: .8 });
   const mLblW = std({ roughness: .5, map: cvs(192, 128, (x, w, h) => { x.fillStyle = '#f1efe8'; x.fillRect(0, 0, w, h); x.fillStyle = '#c8102e'; x.fillRect(0, 0, w, 30); x.fillStyle = '#fff'; x.font = 'bold 20px Arial'; x.textAlign = 'center'; x.fillText('BLOQUEIO', w / 2, 22); x.fillStyle = '#222'; x.font = '15px Arial'; ['Ponto de bloqueio', 'elétrico — NR-10', 'M2 · 440 V'].forEach((l, i) => x.fillText(l, w / 2, 56 + i * 22, w - 16)); spk(x, w, h, 900, '60,40,30', .3); }) });
   // tronco de pirâmide (faces planas) — bases trapezoidais dos motores
   const frustGeo = (wb, db, wt, dt, hh) => { const gm = new THREE.BoxGeometry(wb, hh, db); const P = gm.attributes.position; for (let i = 0; i < P.count; i++) if (P.getY(i) > 0) P.setXYZ(i, P.getX(i) * wt / wb, P.getY(i), P.getZ(i) * dt / db); gm.computeVertexNormals(); return flatUV(gm); };
@@ -444,9 +509,15 @@ export function buildCrushers(scene, M) {
         const mk = new THREE.Mesh(new THREE.BoxGeometry(.12, .025, .05), M.yellow); mk.position.x = .2; fz.add(mk); spin.push({ tag: c.tag, o: fz, ax: 'y', w: 25, rpm: true });
         for (const rr of [.12, .22, .3]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, .009, 4, 36), M.yellow); ring.position.set(mx, yP + 1.0, mz); ring.rotation.x = Math.PI / 2; T.add(ring); } }
       cbox(T, .22, .28, .22, mMotG, mx + s * .5, gT + .5, mz, .02);                    // caixa de ligação
-      beam(T, V(mx + s * .5, gT + .36, mz), V(mx + s * .62, gT + .02, mz + .3), .025, M.hose, true);
+      beam(T, V(mx + s * .5, gT + .36, mz), V(mx + s * .62, gT + .02, mz + .3), .025, mHose, true);
     }
     plateMesh(T, M.plateW('BRITADOR SECUNDÁRIO', c.tag), .78, -.425, 1.72, 1.65);
+    // pó de minério acumulado (topo das vigas, placa de assento, faixa do bloco e piso) e óleo junto aos mancais dos motores
+    for (const sz of [-1, 1]) { for (let i = 0; i < 6; i++) pile(T, -2.5 + i * .95 + rrC() * .5, gT, sz * (1.46 + rrC() * .08), .16 + rrC() * .18, .08 + rrC() * .05, .018 + rrC() * .02, 0);
+      for (let i = 0; i < 6; i++) pile(T, -2.45 + i * .95 + rrC() * .4, bh2, sz * 1.88, .15 + rrC() * .25, .08 + rrC() * .06, .02 + rrC() * .03, 0);
+      for (let i = 0; i < 5; i++) pile(T, (rrC() - .5) * 5, 0, sz * (2.25 + rrC() * .35), .2 + rrC() * .35, .12 + rrC() * .12, .025 + rrC() * .04); }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) pile(T, sx * 1.28, yB + .05, sz * 1.34, .14, .1, .022, rrC());
+    for (const sx of [-1, 1]) { stain(T, sx * 2.2, gT, .6, .2, .55, 0); stain(T, sx * 2.82, 0, -.3 + rrC() * .6, .45, .7, rrC()); }
     const b = bc(); b.position.set(.62, 5.0, .2); T.add(b); beacons[c.tag] = b; beam(T, V(.46, 4.8, .2), V(.6, 4.8, .2), .03, M.steelDk, true);
     stream(c.tag, c.x, c.z, 9.4, 5.0);
     silo(c.x, c.z, 1.9, 7.5, 5, { legY: 5.5, legA: [1, 2, 4, 5].map((k) => k * Math.PI / 3), lr: 2.6, ladA: 0 });   // apoiado no deck (+5,5 m)
@@ -466,6 +537,7 @@ export function buildCrushers(scene, M) {
     const mMn = tintG(M.greyDk, [.9, .85, .82], { uDust: .8 });                       // aço-manganês (revestimentos)
     const mWhite = tintG(M.beige, [1.15, 1.15, 1.15], { uDust: .6 });
     const mPipeG = tintG(M.grey, [.55, .9, .6], { uDust: .9 }), mPipeB = tintG(M.grey, [.45, .6, 1.1], { uDust: .9 }), mPipeY = tintG(M.yellow, [1, 1, 1], { uDust: .9 });
+    for (const [m, src, rgb] of [[mRackU, M.grey, [.35, .5, 1.1]], [mRackB, M.orange, [1.1, .85, .7]], [mBinB, M.grey, [.3, .45, 1.15]], [mBinY, M.yellow, [1, .95, .9]], [mRed, M.grey, [1.4, .35, .25]], [mPipeG, M.grey, [.55, .9, .6]], [mPipeB, M.grey, [.45, .6, 1.1]], [mPipeY, M.yellow, null]]) follow(m, src, mul(rgb));
     const torus = (p, r, t, mat, x, y, z) => { const m = sh(new THREE.Mesh(new THREE.TorusGeometry(r, t, 8, 24), mat)); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); p.add(m); return m; };
     const item = (P, x, y, z, room) => {                                              // um item de prateleira; devolve a largura usada
       const t = rrC(), hMax = Math.min(room, .46);
@@ -473,7 +545,7 @@ export function buildCrushers(scene, M) {
       if (t < .4) { const w = .36, h = Math.min(hMax, .24); const mb = rrC() < .6 ? mBinB : mBinY; cbox(P, w, h, .5, mb, x + w / 2, y + h / 2, z, .015); cbox(P, w - .04, .02, .46, mFin, x + w / 2, y + h - .005, z, .002); return w; }
       if (t < .55) { const n = 1 + (rrC() * 3 | 0); for (let i = 0; i < n; i++) { torus(P, .14, .05, M.steelDk, x + .19, y + .05 + i * .1, z); cyl(P, .1, .1, .09, M.steel, x + .19, y + .05 + i * .1, z, 18); } return .38; }
       if (t < .68) { const n = 1 + (rrC() * 2 | 0); for (let i = 0; i < n; i++) cyl(P, .13, .12, Math.min(hMax, .32), rrC() < .5 ? mBinY : mRed, x + .14 + i * .28, y + Math.min(hMax, .32) / 2, z + (rrC() - .5) * .1, 18); return n * .28; }
-      if (t < .8) { const n = 1 + (rrC() * 2 | 0); for (let i = 0; i < n; i++) torus(P, .2, .045, M.hose, x + .25, y + .05 + i * .09, z); return .5; }
+      if (t < .8) { const n = 1 + (rrC() * 2 | 0); for (let i = 0; i < n; i++) torus(P, .2, .045, mHose, x + .25, y + .05 + i * .09, z); return .5; }
       if (t < .92) { const n = 2 + (rrC() * 3 | 0); for (let i = 0; i < n; i++) cbox(P, .5, .045, .34, mMn, x + .26, y + .025 + i * .05, z + (rrC() - .5) * .04, .006); return .52; }
       for (let i = 0; i < 3; i++) cyl(P, .07, .07, .28, mWhite, x + .08 + i * .16, y + .14, z, 14); return .48;
     };
@@ -493,7 +565,7 @@ export function buildCrushers(scene, M) {
       cbox(PL, .4, .3, .35, mWood, .55, .28, .3, .01); cbox(PL, .4, .3, .35, mWood, .55, .28, -.15, .01); cbox(PL, .38, .25, .33, mWood, .55, .555, .1, .01); }
     // unidade hidráulica (HPU) do ajuste/alívio dos HP 400: tanque, motobomba, filtros, acumuladores e manômetros
     const HP = new THREE.Group(); HP.position.set(55.2, 0, 3.3); RM.add(HP);
-    { const mTank = tintG(M.grey, [.42, .56, .9], { uDust: .9 });
+    { const mTank = follow(tintG(M.grey, [.42, .56, .9], { uDust: .9 }), M.grey, mul([.42, .56, .9]));
       cbox(HP, 1.7, .1, .95, M.steelDk, 0, .05, 0, .01); cbox(HP, 1.5, .75, .8, mTank, 0, .5, 0, .03);
       cbox(HP, .04, .3, .06, mWhite, -.4, .55, .405, .005); box(HP, .02, .24, .01, M.black, -.4, .55, .44);          // visor de nível
       const mb = cyl(HP, .17, .17, .5, M.motor, -.35, 1.08, 0, 28); mb.rotation.z = Math.PI / 2; cyl(HP, .2, .2, .04, M.motor, -.1, 1.08, 0, 28).rotation.z = Math.PI / 2;
@@ -515,15 +587,16 @@ export function buildCrushers(scene, M) {
     // HPU → suporte: subida, travessia sob o deck até z 10,2
     for (const [i, zz] of [-.12, 0, .12].entries()) { const xx = 55.75 + i * .1; beam(RM, V(xx, .88, 3.3 + zz), V(xx, 4.62 - i * .06, 3.3 + zz), .022, M.steel, true); beam(RM, V(xx, 4.62 - i * .06, 3.3 + zz), V(xx, 4.62 - i * .06, 10.2), .022, M.steel, true); }
     // descidas para os HP 400 (bloco de válvulas + mangueiras até o anel de ajuste)
-    const hose = (pts, r = .022) => { const m = sh(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, r, 8), M.hose)); RM.add(m); return m; };
+    const hose = (pts, r = .022) => { const m = sh(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, r, 8), mHose)); RM.add(m); return m; };
     CRUSHERS.cones.forEach((c) => {
       const x = c.x + .7; beam(RM, V(x, 4.82, 10.22), V(x, 3.0, 10.22), .032, M.steel, true); beam(RM, V(x, 3.0, 10.22), V(x, 3.0, 9.35), .032, M.steel, true);
       cbox(RM, .22, .26, .16, mHmot, x, 3.0, 9.3, .01); for (const oy of [-.06, .06]) { const v = cyl(RM, .03, .03, .1, M.yellow, x + .14, 3.0 + oy, 9.3, 10); v.rotation.z = Math.PI / 2; }
       hose([V(x - .05, 2.88, 9.24), V(x - .1, 2.55, 9.0), V(x - .25, 2.4, 8.75), V(x - .4, 2.62, 8.5)]);
-      hose([V(x + .05, 2.88, 9.24), V(x + .1, 2.45, 9.05), V(x - .05, 2.2, 8.7), V(x - .2, 2.1, 8.45)], .018);
+      hose([V(x + .05, 2.88, 9.24), V(x + .1, 2.45, 9.05), V(x - .05, 2.25, 8.75), V(x - .2, 2.2, 8.5)], .018);
+      for (const [px, py, pz, r] of [[x - .4, 2.62, 8.5, .022], [x - .2, 2.2, 8.5, .018]]) { const d = V(c.x - px, 0, c.z - pz).normalize(); beam(RM, V(px, py, pz).addScaledVector(d, -.02), V(px, py, pz).addScaledVector(d, .1), r * 1.45, mChrome, true); }   // terminais nas tomadas
       beam(RM, V(x - .25, 4.74, 10.58), V(x - .25, 1.2, 10.58), .055, mPipeG, true);      // água de lavagem com mangueira enrolada
       { const v = cyl(RM, .07, .07, .12, mRed, x - .25, 1.15, 10.58, 12); v.rotation.x = Math.PI / 2; }
-      for (let i = 0; i < 4; i++) torus(RM, .26, .03, M.hose, x - .25, .9 - i * .055, 10.82).rotation.x = Math.PI / 2 + .15;
+      for (let i = 0; i < 4; i++) torus(RM, .26, .03, mHose, x - .25, .9 - i * .055, 10.82).rotation.x = Math.PI / 2 + .15;
     });
     // descidas para os Barmac (lubrificação dos rolamentos + ar de limpeza), mangueiras até o tambor
     CRUSHERS.vsi.forEach((c, i) => {
@@ -534,6 +607,12 @@ export function buildCrushers(scene, M) {
       const dx = c.x - x, sx = Math.sign(dx) || 1, tx = c.x - sx * .85;
       hose([V(x, 2.36, 15.62), V(x + sx * .15, 2.2, 15.9), V(tx - sx * .2, 2.6, 16.2), V(tx, 3.1, 16.35)]);
       hose([V(x + .1, 2.5, 15.62), V(x + .1 + sx * .2, 2.4, 15.95), V(tx - sx * .1, 2.9, 16.25), V(tx + sx * .1, 3.35, 16.3)], .018);
+      { // tomada de lubrificação/ar no costado do tambor: as mangueiras terminam em conexões presas a um bloco aparafusado
+        const PG = new THREE.Group(); PG.position.set(c.x, 0, c.z); RM.add(PG); const aP = Math.atan2(16.32 - c.z, tx - c.x), R = radial(PG, aP);
+        const pr = (px, pz) => { const dx = px - c.x, dz = pz - c.z; return [dx * Math.cos(aP) + dz * Math.sin(aP), -dx * Math.sin(aP) + dz * Math.cos(aP)]; };
+        cbox(R, .1, .5, .26, M.steelDk, 1.36, 3.22, 0, .01); for (const oy of [3.02, 3.42]) for (const oz of [-.09, .09]) bolt(R, 1.41, oy, oz, 1, 0, 0, .016, M.steelDk);
+        for (const [px, py, pz, r] of [[tx, 3.1, 16.35, .022], [tx + sx * .1, 3.35, 16.3, .018]]) { const [lx, lz] = pr(px, pz); const f = cyl(R, r * 1.4, r * 1.4, Math.max(.04, lx - 1.4), mChrome, (lx + 1.41) / 2, py, lz, 10); f.rotation.z = Math.PI / 2; }
+      }
     });
     // refletores LED nas colunas (luz fria pontual sobre os britadores)
     for (const [p, t] of [[[56.35, 4.3, 12.4], [61, 2.2, 17.5]], [[48.35, 4.3, 11.62], [51, 2.4, 7]], [[63.62, 4.3, 11.62], [59, 2.4, 7]], [[48.35, 4.3, 12.4], [52.5, 1.8, 17.5]]]) {
@@ -554,6 +633,10 @@ export function buildCrushers(scene, M) {
     list.forEach((r, i) => { tm.multiplyMatrices(inv, r.par.matrixWorld).multiply(r.m); im.setMatrixAt(i, tm); });
     root.add(im);
   }
+
+  // montinhos de pó (uma chamada de desenho)
+  if (PLS.length) { const im = new THREE.InstancedMesh(pileGeo, M.oreBed || M.ore, PLS.length); im.receiveShadow = true; const inv = new THREE.Matrix4().copy(g.matrixWorld).invert(), tm = new THREE.Matrix4();
+    PLS.forEach((r, i) => { tm.multiplyMatrices(inv, r.par.matrixWorld).multiply(r.m); im.setMatrixAt(i, tm); }); g.add(im); }
 
   // correias: produto dos britadores → retorno às peneiras (circuito fechado)
   const belt = (a, b, w = 1.2) => { const d = new THREE.Vector3().subVectors(b, a), L = d.length(); const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(d, .5); grp.lookAt(b); g.add(grp);
@@ -594,7 +677,7 @@ export function buildCrushers(scene, M) {
   const pick = []; g.updateMatrixWorld(true);
   g.children.forEach((c) => { if (c.userData.pickTag) pick.push({ tag: c.userData.pickTag, box: new THREE.Box3().setFromObject(c) }); });
   return { group: g, hotspots: hot, pick, beacons, update(dt, t, S) {
-    const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 };
+    const E = S ? S.eq : {}, K = S ? S.kpi : { F: 1 }; folSync();
     for (const s of spin) { const e = E[s.tag] || { on: true, flow: 1 }; if (e.on && e.flow > 0) s.o.rotation[s.ax] += dt * s.w * (s.rpm && S ? (S.rpm || 1450) / 1450 : 1); }
     { const anyOn = vbDrive.some((v) => { const e = E[v.tag] || { on: true, flow: 1 }; return e.on && e.flow > 0; }); if (anyOn) vbTexC.offset.y -= dt * 3.2; }
     for (const r of rings) { const tgt = (S ? S.css : 18) * .12; r.ring.rotation.y += (tgt - r.ring.rotation.y) * Math.min(1, dt * 1.5); }

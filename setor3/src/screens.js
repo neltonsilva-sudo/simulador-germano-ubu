@@ -10,8 +10,8 @@
 // · bica de alimentação revestida de borracha, molas helicoidais sob as orelhas de apoio, caixa de descarga;
 // · alimentadores 03AL no piso superior com placa azul e sinaleiro.
 import * as THREE from 'three';
-import { SCREENS, LV } from './layout.js?v=20261025151330';
-import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261025151330';
+import { SCREENS, LV } from './layout.js?v=20261026180016';
+import { V, sh, box, cyl, beam, railing, plateMesh, rockGeometry, oreColors } from './util.js?v=20261026180016';
 
 const SEG = [[2.6, 28], [2.4, 18], [2.3, 9]];   // segmentos da banana: comprimento (m), inclinação (graus)
 const W = SCREENS.w, HW = W / 2, TP = .025;      // largura útil e espessura da chapa lateral
@@ -247,8 +247,11 @@ export function buildScreens(scene, M) {
   const pu2T = TX.puT.clone(); pu2T.repeat.set(2, 2); const pu2N = TX.puN.clone(); pu2N.repeat.set(2, 2);
   const puMat2 = dusty(new THREE.MeshStandardMaterial({ map: pu2T, normalMap: pu2N, roughness: .9, metalness: 0 }), '#6e4430', .5);
   TX.gT.repeat.set(1 / .3, 1 / .3); TX.gN.repeat.set(1 / .3, 1 / .3);
-  const guardMat = dusty(new THREE.MeshStandardMaterial({ map: TX.gT, normalMap: TX.gN, normalScale: new THREE.Vector2(1.2, 1.2), roughness: .55, metalness: .1 }), '#8f5a3a', .7);
-  const houseMat = dusty(new THREE.MeshStandardMaterial({ map: TX.hT, normalMap: TX.hN, normalScale: new THREE.Vector2(1.1, 1.1), roughness: .6, metalness: .08 }), '#7e6450', .5);
+  const guardMat = dusty(new THREE.MeshStandardMaterial({ map: TX.gT, normalMap: TX.gN, normalScale: new THREE.Vector2(1.2, 1.2), color: 0xd2c29e, roughness: .66, metalness: .12 }), '#8f5a3a', .8);
+  const houseMat = dusty(new THREE.MeshStandardMaterial({ map: TX.hT, normalMap: TX.hN, normalScale: new THREE.Vector2(1.1, 1.1), color: 0xd2c29e, roughness: .68, metalness: .1 }), '#7e6450', .7);
+  // molas: aço pintado gasto e empoeirado (não o amarelo limpo), coxim de borracha dentro de cada mola
+  const springMat = dusty(new THREE.MeshStandardMaterial({ color: 0x8e7434, roughness: .64, metalness: .35 }), '#6a4632', .8);
+  const bufGeo = new THREE.CylinderGeometry(.05, .056, .2, 12); bufGeo.translate(0, .1, 0);
   const rockMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .5, metalness: .25, flatShading: true });   // pedras das peneiras: cor por instância (hematita/itabirito), brilho metálico nas faces; escurece com umidade
   const btnMat = new THREE.MeshStandardMaterial({ color: 0xa8180e, roughness: .4 });
   const feedMat = dusty(new THREE.MeshStandardMaterial({ map: TX.fT, color: 0xcdb8a0, roughness: .82, metalness: .12 }), '#7c5e48', .6);
@@ -259,7 +262,7 @@ export function buildScreens(scene, M) {
   const linerGeo = (() => { const N = 24, top = [], bot = []; for (let k = 0; k <= N; k++) { const z = .02 + (ZE - .06) * k / N; bot.push([z, D(z) + .07]); top.push([z, T(z) - .06]); } return plateGeo([...bot, ...top.reverse()], .02, .003); })();
   const guardGeo = roundGeo(.8, .64, .64, .22), cguardGeo = roundGeo(.44, .4, .36, .14), spGeo = springGeo();
   const rockBig = [rockGeoS(3, 1, 6), rockGeoS(8, 1, 5), rockGeoS(15, 1, 7)], rockMed = [rockGeoS(21, 0, 4), rockGeoS(27, 1, 5)], rockFin = rockGeoS(33, 0, 3);
-  const springs = new Inst(), sBolts = new Inst();
+  const springs = new Inst(), sBolts = new Inst(), bufs = new Inst();
   const uvm = (geo, su, sv) => { const u = geo.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * su, u.getY(i) * sv); return geo; };
   const planeY = (w, L) => uvm(new THREE.PlaneGeometry(w, L).rotateX(-Math.PI / 2), w / 1.22, L / 1.22);
 
@@ -277,7 +280,7 @@ export function buildScreens(scene, M) {
       for (const s of [-1, 1]) {
         if (ys > .5) { box(base, .22, ys - .16, .22, StD, s * 2.3, (ys - .16) / 2, zz); box(base, .4, .03, .4, StD, s * 2.3, .015, zz); }
         box(base, .46, .04, .66, StD, s * 1.82, ys + .18, zz);
-        for (const dz of [-.16, .16]) { springs.add(base, s * 1.82, ys + .2, zz + dz); cyl(base, .1, .1, .03, StD, s * 1.82, ys + .215, zz + dz, 14); }
+        for (const dz of [-.16, .16]) { springs.add(base, s * 1.82, ys + .2, zz + dz); bufs.add(base, s * 1.82, ys + .23, zz + dz); cyl(base, .1, .1, .03, StD, s * 1.82, ys + .215, zz + dz, 14); }
         const yb = ys + .2 + .45 + .04 + .025 - Y0;                       // chapa de assento do corpo
         box(body, .52, .05, .7, M.grey, s * (HW + TP + .26), yb, zz);
         for (const dz of [-.16, .16]) cyl(body, .1, .1, .03, M.grey, s * 1.82, yb - .04, zz + dz, 14);
@@ -497,7 +500,7 @@ export function buildScreens(scene, M) {
     // moega de recebimento (bocal do tripper) com minério à vista
     const hz = 1.45, hop = cyl(al, 1.25, .72, .6, feedMat, 0, yS1 + .37, hz, 4); hop.rotation.y = Math.PI / 4;
     box(al, 1.82, .06, .08, StD, 0, yS1 + .68, hz - .9); box(al, 1.82, .06, .08, StD, 0, yS1 + .68, hz + .9); box(al, .08, .06, 1.82, StD, -.9, yS1 + .68, hz); box(al, .08, .06, 1.82, StD, .9, yS1 + .68, hz);
-    box(al, 1.6, .04, 1.6, M.ore, 0, yS1 + .675, hz);
+    { const hp = new THREE.Mesh(new THREE.SphereGeometry(.8, 18, 8, 0, 6.2832, 0, Math.PI / 2), M.ore); hp.scale.y = .28; hp.position.set(0, yS1 + .66, hz); sh(hp); al.add(hp); }
     // capota de cabeça (envolve o tambor motriz e despeja na bica), com flange horizontal parafusado
     const zc0 = zh - .3, zc1 = zh + .62, zcm = (zc0 + zc1) / 2, ycT = 1.75;
     for (const s of [-1, 1]) box(al, .035, ycT, zc1 - zc0, feedMat, s * .82, ycT / 2, zcm);
@@ -527,7 +530,7 @@ export function buildScreens(scene, M) {
     const bc = new THREE.Mesh(new THREE.SphereGeometry(.085, 16, 12), new THREE.MeshStandardMaterial({ color: 0x5ff0ff, emissive: 0x5ff0ff, emissiveIntensity: 4 })); bc.scale.y = 1.25; bc.position.set(.6, ycT + .23, zc1 - .15); bc.userData.keep = true; al.add(bc); beacons[tag] = bc;
     hot.push({ tag: tag.replace('PN', 'AL'), tipo: 'Alimentador da peneira', pos: V(x, LV.L2 + 2.2, 3.2), info: `${tag.replace('PN', 'AL')} · alimentador da peneira ${tag}. Sinaleiro: azul = operando.` });
   });
-  springs.flush(g, spGeo, M.yellowClean || Yel, true);
+  springs.flush(g, spGeo, springMat, true); bufs.flush(g, bufGeo, Rub);
   sBolts.flush(g, boltGeo, M.greyDk);
 
   const COL = { ok: 0x5ff0ff, warn: 0xffb020, crit: 0xff3b2f, off: 0x4a525a };

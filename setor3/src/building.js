@@ -1,8 +1,8 @@
 // Prédio do setor 3: estrutura metálica (perfis I laranja-ferrugem), pisos de concreto/grade, escadas, guarda-corpos,
 // fechamento lateral verde com grandes aberturas, cobertura com treliças e luminárias de galpão.
 import * as THREE from 'three';
-import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261025151330';
-import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261025151330';
+import { B, LV, SCREENS, CRUSHERS } from './layout.js?v=20261026180016';
+import { V, box, beam, ibeam, railing, stairs, cyl, rockGeometry, oreColors } from './util.js?v=20261026180016';
 
 export function buildBuilding(scene, M, opt = {}) {
   const g = new THREE.Group(); scene.add(g);
@@ -22,7 +22,7 @@ export function buildBuilding(scene, M, opt = {}) {
     for (const y of [LV.L1, LV.L2]) box(g, .5, .3, .5, M.steelDk, x, y - .45, z);    // consoles de apoio das vigas
   }
   for (const y of [LV.L1, LV.L2, B.H]) {
-    for (const z of B.colZ) ibeam(g, V(0, y, z), V(B.W, y, z), .55, .3, M.steel).rotation.z = Math.PI / 2;
+    for (const z of B.colZ) ibeam(g, V(0, y, z), V(B.W, y, z), .55, .3, M.steel).rotation.set(Math.PI / 2, 0, Math.PI / 2);   // alma vertical (antes a viga ficava deitada)
     for (const x of B.colX) { const b = ibeam(g, V(x, y, 0), V(x, y, B.D), .55, .3, M.steel); b.rotation.x = Math.PI / 2; b.rotation.z = 0; }
   }
   // contraventamentos em X nas faces
@@ -167,9 +167,11 @@ export function buildBuilding(scene, M, opt = {}) {
   for (let z = 2; z < B.D; z += 3) beam(g, V(0, B.H + .7 - Math.abs(z - 12) / 12 * .7, z), V(B.W, B.H + .7 - Math.abs(z - 12) / 12 * .7, z), .1, M.steelDk);
   // luminárias de galpão (high-bay) sob a cobertura e sob o piso L2
   const lampGeo = new THREE.CylinderGeometry(.35, .5, .35, 18, 1, true);
-  const addLamp = (x, y, z) => { const sh = new THREE.Mesh(lampGeo, M.greyDk); sh.position.set(x, y, z); g.add(sh); const d = new THREE.Mesh(new THREE.CircleGeometry(.42, 18), M.glass); d.rotation.x = Math.PI / 2; d.position.set(x, y - .17, z); g.add(d); lamps.push(V(x, y - .3, z)); };
-  for (let x = 4; x < B.W; x += 8) for (const z of [6, 18]) addLamp(x, B.H - .8, z);
-  for (let x = 4; x < E; x += 8) addLamp(x, LV.L2 - .7, 14);
+  const addLamp = (x, y, z, top) => { const sh = new THREE.Mesh(lampGeo, M.greyDk); sh.position.set(x, y, z); g.add(sh);
+    if (top > y) { box(g, .22, .12, .16, M.greyDk, x, y + .24, z); beam(g, V(x, y + .3, z), V(x, top, z), .012, M.greyDk, true); }   // caixa do reator + haste até a estrutura (antes a luminária flutuava)
+    const d = new THREE.Mesh(new THREE.CircleGeometry(.42, 18), M.glass); d.rotation.x = Math.PI / 2; d.position.set(x, y - .17, z); g.add(d); lamps.push(V(x, y - .3, z)); };
+  for (let x = 4; x < B.W; x += 8) for (const z of [6, 18]) addLamp(x, B.H - .8, z, B.H + .35);
+  for (let x = 4; x < E; x += 8) addLamp(x, LV.L2 - .7, 14, LV.L2 - .3);
   // iluminação local do piso +14: projetores LED presos sob a passarela da correia, entre os alimentadores
   for (const x of [6.25, 17.25, 28.25, 39.25]) {
     const yL = 16.75, zL = 4.6;
@@ -191,11 +193,11 @@ export function buildBuilding(scene, M, opt = {}) {
       if (hs.some((h) => x > h[0] - .25 && x < h[1] + .25)) continue;
       const b = ibeam(g, V(x, yD - .26, z0), V(x, yD - .26, z1), .42, .2, M.steel); b.rotation.x = Math.PI / 2;
     }
-    for (const z of [z0, z1]) ibeam(g, V(x0, yD - .3, z), V(x1, yD - .3, z), .5, .25, M.steel).rotation.z = Math.PI / 2;
+    for (const z of [z0, z1]) ibeam(g, V(x0, yD - .3, z), V(x1, yD - .3, z), .5, .25, M.steel).rotation.set(Math.PI / 2, 0, Math.PI / 2);
   };
   deck(48.6, B.W - .3, 3.2, 10); deck(48.6, B.W - .3, 14, B.D - .3);
-  for (const x of [51, 59]) for (const z of [4.3, 9.6]) addLamp(x, yD - .6, z);
-  for (const x of [52.75, 58.25]) for (const z of [15, 21]) addLamp(x, yD - .6, z);
+  for (const x of [51, 59]) for (const z of [4.3, 9.6]) addLamp(x, yD - .6, z, yD - .04);
+  for (const x of [52.75, 58.25]) for (const z of [15, 21]) addLamp(x, yD - .6, z, yD - .04);
   // tubulação de água/ar ao longo das colunas (detalhe das fotos)
   for (const x of [8, 24, 40, 56]) { beam(g, V(x + .5, 0, 12.4), V(x + .5, LV.L2, 12.4), .05, M.grey, true); }
   // vista em corte: de fora/acima do prédio a cobertura some para mostrar o processo

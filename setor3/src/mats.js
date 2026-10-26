@@ -486,7 +486,7 @@ export function buildMaterials(opt = {}) {
   })();
   M.pu = grime(pm(puT, { r: .82, m: 0, ns: .6 }), { tri: 1 / 1.2, dust: .55, edge: .4, grime: .2, dustCol: '#55413a' });
   const beltT = paint(TINY, { base: '#1d1b1a', dust: 1.2, rust: 0, drip: .4, scratch: .4, chip: 0, mScr: false, r: .85, m: 0, nStr: 1 });
-  M.belt = grime(pm(beltT, beltT.o), { tri: 1, dust: .8, edge: .2, grime: .3 });
+  M.belt = grime(pm(beltT, beltT.o), { tri: 1, dust: .35, edge: .2, grime: .3 });   // lona de borracha escura (pouco pó), contrastando com o leito de minério
   // minério (pedras): hematita/itabirito — marrom-avermelhado escuro a cinza metálico, com brilho especular de hematita
   const oreT = (() => {
     const s = SM, L = layers(s, HI), { A, H, R } = L;
@@ -500,6 +500,7 @@ export function buildMaterials(opt = {}) {
   })();
   M.ore = grime(pm(oreT, { r: .78, m: .25, ns: 1 }), { tri: 3, dust: .3, edge: 0, grime: 0, macro: .2, dustCol: '#5a3020' });
   M.oreBed = grime(pm(oreT, { r: .95, m: .1, ns: .8 }, { color: 0x8c7468 }), { tri: 2.5, dust: .2, edge: 0, grime: 0, macro: .2, dustCol: '#5a3020' });
+  M.oreFine = grime(pm(oreT, { r: .95, m: .1, ns: 1 }, { color: 0x8c7468 }), { tri: 9, dust: .15, edge: 0, grime: 0, macro: 0, dustCol: '#5a3020' });   // leito de minério fino (< 12,5 mm): grão de ~1–2 cm, sem manchas grandes
   const motorT = paint(TINY, { base: '#56606a', dust: 1, rust: .4, drip: 1, scratch: 1, r: .5, m: .5 });
   M.motor = grime(pm(motorT, motorT.o), { tri: 1.2, dust: .8, edge: .9, grime: .6 });
   const motorBT = paint(TINY, { base: '#2f5f9a', dust: 1.1, rust: .3, drip: 1, scratch: 1, r: .45, m: .35 });
