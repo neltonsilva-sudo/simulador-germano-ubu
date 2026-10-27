@@ -1,5 +1,5 @@
-import { call } from './api.js?v=20261026204743';
-import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261026204743';
+import { call } from './api.js?v=20261027162149';
+import { MNT, startMnt, finishMnt, perms, cmd, itemOf } from './sim.js?v=20261027162149';
 // Tela do equipamento: abre ao clicar no equipamento no 3D (ou na etiqueta/tabela). Funcionamento, produção, tendência,
 // manutenção e especificação técnica, com valores ao vivo do modelo de processo. Alimentadores 03AL abrem a tela da peneira.
 

@@ -500,6 +500,7 @@ export function buildMaterials(opt = {}) {
   })();
   M.ore = grime(pm(oreT, { r: .78, m: .25, ns: 1 }), { tri: 3, dust: .3, edge: 0, grime: 0, macro: .2, dustCol: '#5a3020' });
   M.oreBed = grime(pm(oreT, { r: .95, m: .1, ns: .8 }, { color: 0x8c7468 }), { tri: 2.5, dust: .2, edge: 0, grime: 0, macro: .2, dustCol: '#5a3020' });
+  M.oreMid = grime(pm(oreT, { r: .93, m: .12, ns: 1 }, { color: 0x86705f }), { tri: 5, dust: .15, edge: 0, grime: 0, macro: 0, dustCol: '#5a3020' });   // leito de britado médio (12,5–25 mm): sem manchas grandes
   M.oreFine = grime(pm(oreT, { r: .95, m: .1, ns: 1 }, { color: 0x8c7468 }), { tri: 9, dust: .15, edge: 0, grime: 0, macro: 0, dustCol: '#5a3020' });   // leito de minério fino (< 12,5 mm): grão de ~1–2 cm, sem manchas grandes
   const motorT = paint(TINY, { base: '#56606a', dust: 1, rust: .4, drip: 1, scratch: 1, r: .5, m: .5 });
   M.motor = grime(pm(motorT, motorT.o), { tri: 1.2, dust: .8, edge: .9, grime: .6 });

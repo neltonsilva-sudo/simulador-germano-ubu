@@ -7,8 +7,8 @@
 // Minério: leito contínuo (finos) + pedras de granulometria variada por correia (InstancedMesh, só a translação é atualizada),
 // derramamento acumulado sob cabeças, caudas e transferências, e poeira leve nas quedas.
 import * as THREE from 'three';
-import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261026204743';
-import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261026204743';
+import { SCREENS, LV, B, CRUSHERS } from './layout.js?v=20261027162149';
+import { V, box, beam, flatU, rockGeometry } from './util.js?v=20261027162149';
 
 const hashF = (a, b = 0) => { const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return s - Math.floor(s); };
 // pedrisco facetado (icosaedro sem subdivisão), deslocamento coerente por posição (não abre as faces)
@@ -55,7 +55,7 @@ export function buildFlows(scene, M, opt = {}) {
   // escala real (diâmetro ≈ 1,8 × escala): alimentação ≤ 150 mm; retido do 1º deck (HP 400) 25–150 mm; −25,4 +12,5 mm (Barmac); produto < 12,5 mm
   // camada densa (cascalho contínuo) + blocos maiores na alimentação
   const GRADE = { F: [34, .025, .085, 70, .008, .02, .09], T: [34, .025, .085, 70, .008, .02, .09], R1: [30, .02, .085, 50, .008, .016, .07],
-    R2: [95, .0075, .014, 95, .005, .008, .07], P: [170, .0035, .0075, 240, .0025, .0045, .06] };   // produto < 12,5 mm: muitas pedrinhas, leito granular
+    R2: [260, .009, .018, 220, .006, .01, .07],   /* alimentação dos Barmac (retido 2º deck, 12,5–25 mm): leito coberto de pedras */ P: [170, .0035, .0075, 240, .0025, .0045, .06] };   // produto < 12,5 mm: muitas pedrinhas, leito granular
   const dens0 = LOW ? .5 : 1;
   // instâncias estáticas compartilhadas por todas as correias (roletes, rolos de impacto, cavaletes, pedras derramadas)
   const ROLL = [], IMP = [], FRM = [], SPILL = [], RAIL = [];
@@ -180,7 +180,7 @@ export function buildFlows(scene, M, opt = {}) {
     const fac = new Float32Array(bedP.count);
     for (let k = 0; k < bedP.count; k++) { const i = k % NU, j = (k / NU) | 0, u = i / (NU - 1) - .5, z = base[k * 3 + 2], n1 = hashF(i * 3.1 + L, j * 1.7), n2 = hashF(i * .9 + 7, j * 2.9 + L);
       fac[k] = bedTh(u * wo) * (.72 + .45 * n1 + .25 * n2 * n2 + .12 * Math.sin(z * 2.1 + i * .7)); }
-    const bed = new THREE.Mesh(bedG, key === 'P' && M.oreFine ? M.oreFine : M.oreBed); bed.receiveShadow = true; bed.castShadow = !LOW; bed.userData.keep = true; grp.add(bed);
+    const bed = new THREE.Mesh(bedG, key === 'P' && M.oreFine ? M.oreFine : key === 'R2' && M.oreMid ? M.oreMid : M.oreBed); bed.receiveShadow = true; bed.castShadow = !LOW; bed.userData.keep = true; grp.add(bed);
     const setBed = (h) => { for (let k = 0; k < bedP.count; k++) bedP.setY(k, base[k * 3 + 1] + t0 * h * fac[k]); bedP.needsUpdate = true; bedG.computeVertexNormals(); };
     // pedras (blocos e grãos): z inicial estratificado e embaralhado → qualquer fração visível fica espalhada pela correia toda
     const mkRocks = (geo, perM, s0, s1, pal, cast) => {
