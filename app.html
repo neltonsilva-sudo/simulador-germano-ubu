@@ -3616,7 +3616,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261031115349';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261031115659';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4573,10 +4573,9 @@ const DS=grp(-53,70);DS.position.y=H(DS.position.x,DS.position.z)-.05;DS.rotatio
   DS.userData.push={berm,gr,du,g:Array.from({length:48},(_,i)=>({u:Math.random(),s:i%2?1:-1,r:Math.random()*6,o:Math.random()}))};}
 /* ---------- 9 Cava Alegria Sul (slime pond) ---------- */
 const CAVA=grp(-16,70);
-const slimeSurf=(()=>{/* G2-REAL: lama do SDR — marrom-avermelhada, mais clara e seca na praia junto ao talude, com lâmina d'água escura (água clarificada) no ponto baixo */
+const slimeSurf=(()=>{/* G2-REAL: lama do SDR — marrom-avermelhada, mais clara e seca na praia junto ao talude, sem mancha escura (removida a pedido do usuário) */
   const lt=ctex(256,256,(x,w,h)=>{const g=x.createRadialGradient(w*.5,h*.5,w*.08,w*.5,h*.5,w*.5);g.addColorStop(0,'#7e3a20');g.addColorStop(.7,'#8c4626');g.addColorStop(.9,'#a3603a');g.addColorStop(1,'#b0714a');x.fillStyle=g;x.fillRect(0,0,w,h);
-    for(let i=0;i<900;i++){x.fillStyle=`rgba(${Math.random()<.5?'60,24,12':'190,120,80'},${.04+Math.random()*.08})`;x.beginPath();x.arc(Math.random()*w,Math.random()*h,2+Math.random()*9,0,7);x.fill();}
-    const p=x.createRadialGradient(w*.3,h*.66,4,w*.3,h*.66,w*.15);p.addColorStop(0,'rgba(86,70,54,.92)');p.addColorStop(.86,'rgba(100,72,52,.85)');p.addColorStop(1,'rgba(110,60,36,0)');x.fillStyle=p;x.fillRect(0,0,w,h);});
+    for(let i=0;i<900;i++){x.fillStyle=`rgba(${Math.random()<.5?'60,24,12':'190,120,80'},${.04+Math.random()*.08})`;x.beginPath();x.arc(Math.random()*w,Math.random()*h,2+Math.random()*9,0,7);x.fill();}});
   const m=mesh(new THREE.CircleGeometry(9.5,48),std(0xffffff,.05,.2,{map:lt}),0,-4.2,0,CAVA);/* lama do SDR Alegria Sul: vermelho-alaranjada (foto Samarco) */m.rotation.x=-Math.PI/2;m.receiveShadow=true;m.castShadow=false;return m;})();
 /* ---------- 10 Pump station ---------- */
 const PS=grp(-24,6);
