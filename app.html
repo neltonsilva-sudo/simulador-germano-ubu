@@ -3616,7 +3616,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261031115031';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261031115349';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -4837,24 +4837,7 @@ function pipe(key,type,pts,r=.3,sup=true){
   pipe('tank','conc',[P(-28,1,12.8),P(-28,1,6),P(-28.5,1,6)],.4);
   pipe('wMG','water',[P(-36,3.2,13.6),P(-36,6,13.6),P(-36,6,-3),P(-38,6,-3)],.3);
   // mineroduto: three parallel lines following the terrain over the ridge
-  /* mineroduto enterrado: as 3 linhas seguem rentes ao chão (só o dorso da vala aparece, cor de terra/capim) dentro de uma faixa de servidão aberta na mata, com marcos de sinalização */
-  const MRMAT=std(0x8c8460,0,.97);
-  for(const off of [-1,0,1]){const pts=[];for(let x=-19.5;x<=9;x+=1){const z=6+off*1.1-Math.sin((x+19.5)/28.5*Math.PI)*3.5+(x>4?(x-4)*-.6:0);{const q=layDelta(x,z);pts.push(P(x,H(x+q.x,z+q.z)-ALT(x+q.x)+(x<-18.6||x>7.6?.95:-.2),z));}}pts.push(P(10,1.2,2+off*1.1));const pp=pipe('pipe'+(off+1),'conc',pts,.38,false);pp.tube.material=MRMAT;}
-  {/* faixa de servidão: capim baixo mais claro que a mata, com trilha de manutenção em terra; acompanha o relevo */
-    const tx=ctex(64,256,(x,w,h)=>{x.fillStyle='#939a63';x.fillRect(0,0,w,h);for(let i=0;i<900;i++){const v=rnd();x.fillStyle=v<.5?`rgba(120,132,70,${.25+rnd()*.3})`:v<.8?`rgba(170,160,105,${.2+rnd()*.3})`:`rgba(92,104,58,${.3+rnd()*.3})`;x.fillRect(rnd()*w,rnd()*h,1+rnd()*3,1+rnd()*4);}
-      x.fillStyle='rgba(150,122,86,.85)';x.fillRect(w*.70,0,w*.06,h);x.fillRect(w*.80,0,w*.06,h);x.fillStyle='rgba(140,128,90,.35)';x.fillRect(w*.38,0,w*.24,h);
-      x.fillStyle='rgba(70,82,44,.35)';x.fillRect(0,0,w*.06,h);x.fillRect(w*.94,0,w*.06,h);},{rep:[1,6]});
-    const cen=[];for(let x=-19;x<=8.6;x+=.5){const z=6-Math.sin((x+19.5)/28.5*Math.PI)*3.5+(x>4?(x-4)*-.6:0),q=layDelta(x,z);cen.push([x+q.x,z+q.z]);}
-    const NW=7,HW=3.4,pos=[],uv=[],idx=[];let acc=0;
-    cen.forEach((c,i)=>{const a=cen[Math.max(0,i-1)],b=cen[Math.min(cen.length-1,i+1)];let dx=b[0]-a[0],dz=b[1]-a[1];const L=Math.hypot(dx,dz)||1;dx/=L;dz/=L;if(i)acc+=Math.hypot(c[0]-cen[i-1][0],c[1]-cen[i-1][1]);
-      for(let j=0;j<NW;j++){const s=j/(NW-1)*2-1,px=c[0]-dz*s*HW,pz=c[1]+dx*s*HW;pos.push(px,H(px,pz)+.1,pz);uv.push(j/(NW-1),acc/12);}});
-    for(let i=0;i<cen.length-1;i++)for(let j=0;j<NW-1;j++){const a=i*NW+j,b=a+NW;idx.push(a,a+1,b,a+1,b+1,b);}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
-    tx.repeat.set(1,1);const m=new THREE.MeshStandardMaterial({map:tx,roughness:1,metalness:0,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
-    const rw=new THREE.Mesh(g,m);rw.receiveShadow=true;root.add(rw);
-    /* marcos de sinalização do duto (postes baixos amarelos com topo laranja), alternados nas bordas da faixa */
-    const mk=[];for(let i=4;i<cen.length-4;i+=6){const c=cen[i],b=cen[i+1];let dx=b[0]-c[0],dz=b[1]-c[1];const L=Math.hypot(dx,dz)||1;const s=(i/6)%2?1:-1,px=c[0]-dz/L*s*2.4,pz=c[1]+dx/L*s*2.4;mk.push([px,H(px,pz),pz]);}
-    const mkM=new THREE.InstancedMesh(new THREE.CylinderGeometry(.09,.09,.9,6),std(0xe0a81c,.1,.6),mk.length),M4=new THREE.Matrix4();mk.forEach(([x,y,z],i)=>{M4.makeTranslation(x,y+.45,z);mkM.setMatrixAt(i,M4);});mkM.castShadow=true;root.add(mkM);}
+  for(const off of [-1,0,1]){const pts=[];for(let x=-19.5;x<=9;x+=1){const z=6+off*1.1-Math.sin((x+19.5)/28.5*Math.PI)*3.5+(x>4?(x-4)*-.6:0);{const q=layDelta(x,z);pts.push(P(x,H(x+q.x,z+q.z)-ALT(x+q.x)+.95,z));}}pts.push(P(10,1.2,2+off*1.1));pipe('pipe'+(off+1),'conc',pts,.38,false);}
   {const q=LP(V3(10.5,1.2,2));box(1,1.6,4.4,MAT.pipeC,q.x,q.y,q.z,root);}pipe('riser','conc',[P(11,1.2,1),P(11,1.2,-1),P(11,20.2,-1)],.45,false);
   pipe('tw12','conc',[P(12,19,-2),P(14.5,19,-2),P(14.5,4,-2),P(14.5,4,-9.6),P(18,3.6,-10)],.45);
   pipe('uf6','conc',[P(-31.4,.8,20),P(-28,.8,20),P(-28,.8,19)],.35);
@@ -4867,7 +4850,7 @@ function pipe(key,type,pts,r=.3,sup=true){
 }
 
 // Estação de Bombas 2 (Matipó) e estações de válvulas (Guaçuí, Alegre) ao longo dos minerodutos
-{const SB=grp(0,0);const grav=std(0xa9a69c,0,.95);for(const [x,z,w,h] of [[-10,1,5,3.2],[-2,1.2,3,2.2],[4,-.8,3,2.2]]){const y=H(x,z);bld(SB,x,z,w,3.5,h,{y:y-.2,win:false,wall:MAT.wall2});/* pátio de brita da estação */const pd=box(w+3,.5,6.5,grav,x,y-.2,z,SB);pd.castShadow=false;}}
+{const SB=grp(0,0);for(const [x,z,w,h] of [[-10,1,5,3.2],[-2,1.2,3,2.2],[4,-.8,3,2.2]]){const y=H(x,z);bld(SB,x,z,w,3.5,h,{y:y-.2,win:false,wall:MAT.wall2});}}
 /* ============ REGISTRY ============ */
 const UNITS={
   conc:[{k:'c1',name:'Concentrador 1',st:'Em revitalização · retorno previsto para 2028'},{k:'c2',name:'Concentrador 2',st:'Reativado em dez/2024'},{k:'c3',name:'Concentrador 3',st:'Em operação desde a retomada, dez/2020'}],
