@@ -3616,7 +3616,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261031115659';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261031121735';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -3708,7 +3708,7 @@ let seed=23;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/21474836
 if(THREE.ColorManagement)THREE.ColorManagement.legacyMode=false;
 const stage=$('#stage');
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));/* modo econômico: até 1,25 na tela Retina */
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;let shT=0;
@@ -6205,11 +6205,14 @@ function applyQuality(){
   if(window.__water){window.__water.visible=HQ;window.__seaStd.visible=!HQ;}
   if(HQ&&!composer&&!buildComposer())HQ=false;if(typeof applyTOD==='function')applyTOD(0,true);
   renderer.toneMapping=HQ?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;
-  renderer.setPixelRatio(HQ?Math.min(window.devicePixelRatio||1,1.5):Math.min(window.devicePixelRatio||1,2));
+  renderer.setPixelRatio(HQ?Math.min(window.devicePixelRatio||1,1.5):Math.min(window.devicePixelRatio||1,1.25));
   scene.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true);}});
   const b=$('#qBtn');b.setAttribute('aria-pressed',HQ);b.textContent=HQ?'Qualidade ✓':'Qualidade';b.title=HQ?'Qualidade da imagem: alta (clique para leve)':'Qualidade da imagem: leve (clique para alta)';resize();
 }
 let fpsAcc=0,fpsN=0,fpsLowT=0,PRLOW=0,PRNEXT=0;
+/* modo econômico: limita os quadros por segundo (30 no modo leve, 60 em Qualidade; 20 parado há 1 min; 10 com a janela fora de foco) — reduz o aquecimento do computador */
+let ECO_LAST=0,ECO_IN=performance.now(),ECO_FOC=true;['pointerdown','pointermove','wheel','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{ECO_IN=performance.now();ECO_FOC=true;},{passive:true}));addEventListener('blur',()=>{ECO_FOC=false;});addEventListener('focus',()=>{ECO_FOC=true;});
+function ecoSkip(){const n=performance.now(),cap=!ECO_FOC?10:(n-ECO_IN>60000&&!touring?20:(HQ?60:30));window.__ecoCap=cap;if(n-ECO_LAST<1000/cap-2)return true;ECO_LAST=n;return false;}
 function renderFrame(dt){
   if(window.__scrOpen&&!$('#scr').hidden){if(SALA.tab==='geral')try{scrCams();}catch(e){}return;}
   if(HQ&&composer){composer.render(dt);}else renderer.render(scene,camera);
@@ -6221,6 +6224,7 @@ function frame(){
   requestAnimationFrame(frame);
   /* tela de acesso aberta: não desenha o 3D por trás (economiza GPU/CPU até o login) */
   if(document.getElementById('gateOv')||document.documentElement.classList.contains('gpre')){clock.getDelta();return;}
+  if(ecoSkip())return;
   const rawDt=Math.min(clock.getDelta(),1);const dt=Math.min(rawDt,.05);t+=dt;
   let sdt=paused?0:rawDt*speed;ST.simT+=sdt;fpsAcc+=rawDt;fpsN++;
   // integrate in sub-steps for stability at high speed
@@ -6318,7 +6322,7 @@ function updateUI(){
   const c=CUR,G=c.G,U=c.U;evalAlarms();renderAlarms();try{mgpUpdate();}catch(e){}
   const d=Math.floor(ST.simT/86400)+1,hh=Math.floor(ST.simT%86400/3600),mm=Math.floor(ST.simT%3600/60);
   if(fpsAcc>1){window.__fps=fpsN/fpsAcc;fpsAcc=0;fpsN=0;
-    if(!HQ){const pr=renderer.getPixelRatio();PRLOW=window.__fps<40?PRLOW+1:0;if(PRLOW>=4&&pr>1.01){PRNEXT=Math.max(1,pr-.25);PRLOW=0;}}}
+    if(!HQ){const pr=renderer.getPixelRatio();PRLOW=window.__fps<(window.__ecoCap||60)*.66?PRLOW+1:0;if(PRLOW>=4&&pr>1.01){PRNEXT=Math.max(1,pr-.25);PRLOW=0;}}}
   {const ck=$('#clock'),key=`${d}|${fmtD()}|${hh}:${mm}`;if(ck.dataset.k!==key){ck.dataset.k=key;
     ck.innerHTML=`<span class="ck"><small>Dia</small><b>${d}</b></span><span class="ck"><small>Data</small><b>${DOW[simDate().getUTCDay()]} ${fmtD()}</b></span><span class="ck"><small>Hora</small><b>${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}</b></span>`;}
    ck.title=`Tempo simulado: Dia ${d} = ${fmtD()} (o Dia 1 é ajustável em Gêmeo digital → Clima e chuva)`+(window.__fps?` · ${Math.round(window.__fps)} fps`:'');}
@@ -8683,7 +8687,7 @@ const SIM_REAL=(()=>{try{return localStorage.getItem('simReal')!=='0';}catch(e){
   /* área 3 embutida: as mesmas texturas do modo realista do gêmeo (piso de concreto e estruturas pintadas com ferrugem) */
   try{const M=S3&&S3.M;if(M)[['floor','concrete_floor_worn_001',0xd2ad96],['slab','concrete_floor_worn_001',0xd8c0b0],['steel','rusty_painted_metal',null],['steelDk','rusty_painted_metal',0x8c7c72]].forEach(([k,a,tint])=>{const m=M[k];if(!m||!m.map)return;m.map=tex(a+'_diff_1k.jpg',true);if(tint!=null)m.color.set(tint);m.needsUpdate=true;});}catch(e){console.warn('real s3',e);}
 })();
-window.__sim={surgeFacts:()=>surgeFacts(),renderAI:r=>renderAI(r),setCollapsed:(a,b)=>setCollapsed(a,b),AMB,SITE,sunTimes,altFiltF,loadPlan:(a,b)=>loadPlan(a,b),wxApply,wxAt,wxDaily,loadWx,rainFrame,rainVis,applyTOD,RAIN,romM,acc,LOOPS,MPC,EXPERT,DIST,LAG,perfStats,lvl6,lvlH,cw6,buildContext,HIST,ADV,GEO,FAULT,INSTR,VS,get REC(){return REC;},get FC(){return FC;},forecast,recTick,vsTick,pbmRun,pipeHydraulics,furnaceModel,finishTween(){if(tween){camera.position.copy(tween.p1);controls.target.copy(tween.t1);tween=null;controls.update();}},enterArea,exitArea,get AREA(){return AREA;},step,seedPipe,pilotConcentrate,get PCAL(){return PCAL;},calibrate,synthData,setCal(d){CALDATA=d;},get CALRES(){return CALRES;},setTOD(m){todMode=m;applyTOD(0,true);},openDash,camera,controls,EQ,select,P,RUN,ST,get CUR(){return CUR;},scene,H,renderer,setHQ(v){HQ=v;applyQuality();},capture(w=1600,h=1000){renderer.shadowMap.needsUpdate=true;renderer.setPixelRatio(1);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(HQ&&composer){setComposerSize(w,h,1);composer.render(0);}else renderer.render(scene,camera);const u=renderer.domElement.toDataURL('image/jpeg',.88);renderer.setPixelRatio(HQ?Math.min(window.devicePixelRatio||1,1.5):Math.min(window.devicePixelRatio||1,2));resize();return u;},get HQ(){return HQ;},ssao:()=>ssao,outPass:()=>outPass};
+window.__sim={surgeFacts:()=>surgeFacts(),renderAI:r=>renderAI(r),setCollapsed:(a,b)=>setCollapsed(a,b),AMB,SITE,sunTimes,altFiltF,loadPlan:(a,b)=>loadPlan(a,b),wxApply,wxAt,wxDaily,loadWx,rainFrame,rainVis,applyTOD,RAIN,romM,acc,LOOPS,MPC,EXPERT,DIST,LAG,perfStats,lvl6,lvlH,cw6,buildContext,HIST,ADV,GEO,FAULT,INSTR,VS,get REC(){return REC;},get FC(){return FC;},forecast,recTick,vsTick,pbmRun,pipeHydraulics,furnaceModel,finishTween(){if(tween){camera.position.copy(tween.p1);controls.target.copy(tween.t1);tween=null;controls.update();}},enterArea,exitArea,get AREA(){return AREA;},step,seedPipe,pilotConcentrate,get PCAL(){return PCAL;},calibrate,synthData,setCal(d){CALDATA=d;},get CALRES(){return CALRES;},setTOD(m){todMode=m;applyTOD(0,true);},openDash,camera,controls,EQ,select,P,RUN,ST,get CUR(){return CUR;},scene,H,renderer,setHQ(v){HQ=v;applyQuality();},capture(w=1600,h=1000){renderer.shadowMap.needsUpdate=true;renderer.setPixelRatio(1);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(HQ&&composer){setComposerSize(w,h,1);composer.render(0);}else renderer.render(scene,camera);const u=renderer.domElement.toDataURL('image/jpeg',.88);renderer.setPixelRatio(HQ?Math.min(window.devicePixelRatio||1,1.5):Math.min(window.devicePixelRatio||1,1.25));resize();return u;},get HQ(){return HQ;},ssao:()=>ssao,outPass:()=>outPass};
 $('#qBtn').addEventListener('click',()=>{HQ=!HQ;fpsLowT=0;applyQuality();});
 /* Sair: encerra a sessão e volta para a tela de acesso (GitHub: mesma página sem a chave; Apps Script: endereço do simulador) */
 $('#exitBtn').addEventListener('click',()=>confirmCmd('Sair do simulador?','A sessão será encerrada e você volta para a tela de acesso (será preciso digitar a senha de novo).',()=>{

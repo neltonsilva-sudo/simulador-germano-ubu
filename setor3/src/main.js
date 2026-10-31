@@ -1,13 +1,13 @@
 // Orquestrador: cena, câmera (órbita / caminhar por nível), vistas das fotos, etiquetas dos equipamentos e painel de informação.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { B, LV, CAMS } from './layout.js?v=20261027162149';
-import { createRenderer, buildLighting, createComposer } from './render.js?v=20261027162149';
-import { buildSetor3, sim, stepSim } from './lib.js?v=20261027162149';
-import { buildUI } from './ui.js?v=20261027162149';
-import { gate } from './gate.js?v=20261027162149';
-import { buildContext } from './context.js?v=20261027162149';
-import { buildAmbience } from './ambience.js?v=20261027162149';
+import { B, LV, CAMS } from './layout.js?v=20261031121735';
+import { createRenderer, buildLighting, createComposer } from './render.js?v=20261031121735';
+import { buildSetor3, sim, stepSim } from './lib.js?v=20261031121735';
+import { buildUI } from './ui.js?v=20261031121735';
+import { gate } from './gate.js?v=20261031121735';
+import { buildContext } from './context.js?v=20261031121735';
+import { buildAmbience } from './ambience.js?v=20261031121735';
 const REAL0 = new URLSearchParams(location.search).get('real') === '1';   // lido antes do gate, que limpa o endereço
 gate();
 
@@ -82,7 +82,12 @@ function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProje
 addEventListener('resize', resize); resize();
 
 const clock = new THREE.Clock(); let frames = 0, acc = 0;
+/* modo econômico: limita os quadros por segundo (30; 20 parado há 1 min; 10 com a janela fora de foco) — reduz aquecimento e consumo do computador */
+let ecoLast = 0, ecoInput = performance.now(), ecoFoc = true; for (const ev of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) addEventListener(ev, () => { ecoInput = performance.now(); ecoFoc = true; }, { passive: true });
+addEventListener('blur', () => { ecoFoc = false; }); addEventListener('focus', () => { ecoFoc = true; });   // dentro de iframe (Apps Script/Artifact) document.hasFocus() começa falso
+const ecoSkip = () => { const n = performance.now(), cap = !ecoFoc ? 10 : n - ecoInput > 60000 ? 20 : (window.__ecoMax || 30); window.__ecoCap = cap; if (n - ecoLast < 1000 / cap - 2) return true; ecoLast = n; return false; };
 function frame() {
+  if (ecoSkip() && !Q.get('shot')) { requestAnimationFrame(frame); return; }
   const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
   if (tween) { tween.k = Math.min(1, tween.k + dt / 1.4); const e = tween.k * tween.k * (3 - 2 * tween.k);
     camera.position.lerpVectors(tween.p0, tween.to.p, e); controls.target.lerpVectors(tween.t0, tween.to.t, e); camera.fov = THREE.MathUtils.lerp(tween.f0, tween.to.fov, e); camera.updateProjectionMatrix(); if (tween.k >= 1) tween = null; }

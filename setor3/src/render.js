@@ -14,10 +14,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { B, LV } from './layout.js?v=20261027162149';
-import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261027162149';
-import { PhoneShader } from './render_post.js?v=20261027162149';
-import { UpscaleShader } from './render_upscale.js?v=20261027162149';
+import { B, LV } from './layout.js?v=20261031121735';
+import { installBoxProjection, buildEnvironment, OPEN } from './render_env.js?v=20261031121735';
+import { PhoneShader } from './render_post.js?v=20261031121735';
+import { UpscaleShader } from './render_upscale.js?v=20261031121735';
 
 const Q = new URLSearchParams(location.search);
 const MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -335,7 +335,7 @@ export function createComposer(renderer, scene, camera) {
   }
   function adapt() {
     const now = performance.now(), dt = now - fps.last; fps.last = now;
-    if (forced != null || document.hidden || dt > 250) return;          // ignora pausas e o modo sem GPU
+    if (forced != null || document.hidden || dt > 250 || (window.__ecoCap && window.__ecoCap < 50)) return;   // com o modo econômico, o fps baixo é proposital          // ignora pausas e o modo sem GPU
     fps.n++; fps.t += dt; if (now < fps.next) return;
     const avg = 1000 / (fps.t / fps.n); fps.n = 0; fps.t = 0; fps.next = now + 2000;
     // histerese: só reduz após 2 janelas seguidas abaixo de 36 fps e só aumenta após 4 janelas acima de 58 fps,
