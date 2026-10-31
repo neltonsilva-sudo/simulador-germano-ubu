@@ -3616,7 +3616,7 @@ return {buildSetor3, sim, stepSim, startMnt, finishMnt, MNT, LAYOUT:{B,LV,SCREEN
 })(window.THREE);
 </script>
 <script>/* versão publicada: se o navegador abriu uma cópia antiga em cache (GitHub guarda ~10 min), recarrega sozinho com a versão nova */
-var BUILD_ID='20261031121735';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
+var BUILD_ID='20261031123453';(function(){if(!/github\.io$/.test(location.hostname))return;try{fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var BUILD_ID='(\d+)'/);if(m&&m[1]!==BUILD_ID&&sessionStorage.getItem('bld')!==m[1]){sessionStorage.setItem('bld',m[1]);var u=new URL(location.href);u.searchParams.set('v',m[1]);location.replace(u.toString());}}).catch(function(){});}catch(e){}})();
 </script>
 <script>var ACC_SLOT_=0;
 /* Ponte para hospedagem fora do Apps Script (GitHub Pages): google.script.run → API do Apps Script + telas de acesso */
@@ -6290,7 +6290,7 @@ function frame(){
   if(touring){tourT+=dt;if(tourT>6){tourT=0;tourI=(tourI+1)%TOUR.length;select(TOUR[tourI],true);tourMin();}}
   applyTOD(dt,false);if(window.__rainOK){rainFrame(dt);}if(window.__seaNrm){window.__seaNrm.offset.x+=dt*.006;window.__seaNrm.offset.y-=dt*.004;}
   controls.update();{const gy=H(camera.position.x,camera.position.z)+7;if(camera.position.y<gy)camera.position.y=gy;}
-  shT+=dt;if(shT>.1){shT=0;renderer.shadowMap.needsUpdate=true;}
+  shT+=dt;if(shT>(tween||touring?.15:.5)){shT=0;renderer.shadowMap.needsUpdate=true;}/* sombras: 2×/s parado (o sol anda devagar; a imagem não muda) e mais rápido só em movimento de câmera — corta ~80 % do custo do mapa de sombras */
   if(PRNEXT){renderer.setPixelRatio(PRNEXT);PRNEXT=0;resize();}/* troca de resolução ANTES de desenhar (depois, o quadro some e a tela pisca) */
   renderFrame(dt);updateLabels(dt);updateHotspots();ANIM_IN.forEach(f=>f(t));
   uiT+=dt;if(uiT>.25){uiT=0;updateUI();}
